@@ -78,3 +78,54 @@ Requires a valid Firebase ID token (`Authorization: Bearer <token>`) AND that th
 - Maintain a single `PLAN.md` at the project root. Overwrite it in-place rather than creating dated archive files.
 - Do NOT generate `.docx`, `.pdf`, or standalone audit report files inside the repository.
 - Rely on git commits for historical record; never create `docs/archive/` or timestamped markdown files.
+
+## Repository layout & documentation
+
+Code stays where the build expects it: **frontend = `src/`**, **backend = `api/`** (Vercel functions), Cloud Functions source = `functions/` (none exist; see `docs/01_architecture/GCP_INVENTORY.md`). Everything written about the system lives in the structure below; put new findings, maps and notes there, not in ad hoc files. Start at `PROJECT_INDEX.md`.
+
+```
+erp-system/
+├── CLAUDE.md               shared instructions (this file)
+├── CLAUDE.local.md         personal, gitignored
+├── PROJECT_INDEX.md        links every doc
+├── CHANGELOG.md
+├── PLAN.md                 single progress tracker, overwritten in place
+├── docs/
+│   ├── 01_architecture/    SYSTEM_OVERVIEW, GCP_INVENTORY, CROSS_MODULE_TRIGGERS
+│   ├── 02_modules/         <module>.md, plus <module>/CLAUDE.md (under 200 lines)
+│   ├── 03_security/        RBAC_MODEL, FIRESTORE_RULES_NOTES
+│   ├── 04_workflows/       GIT_WORKFLOW, DEPLOY_PROCESS
+│   └── 05_decisions/       NNNN-title.md (4-digit, no dates)
+├── src/  api/  functions/
+└── .claude/                settings.json (committed), settings.local.json (gitignored),
+                            rules/, skills/, agents/, worktrees/ (gitignored)
+```
+
+Standing rules when working in this repo:
+
+- Investigation output goes into the matching `docs/` file (functions and triggers into `GCP_INVENTORY.md`, trigger chains into `CROSS_MODULE_TRIGGERS.md`, a module's findings into `docs/02_modules/<module>.md`). Do not create `docs/module-map/`.
+- Before editing a module, read its `docs/02_modules/<module>/CLAUDE.md` (index below; not auto-loaded because it sits under `docs/`). If you change the module's behaviour, update that module's doc and `CLAUDE.md` in the same change.
+- Update `PROJECT_INDEX.md` when a doc is added or moved, and `CHANGELOG.md` with each change. Design "why" notes go in `docs/05_decisions/` as numbered files.
+- State only what was read in code; mark anything unverified as such. There are no Cloud Functions, so automation is client code in `src/` or `api/*.js`.
+- Committed docs describe the repo, not secrets: variable names only, never values.
+
+Module index (per-module instructions):
+
+| Module | Notes |
+|---|---|
+| auth | [docs/02_modules/auth/CLAUDE.md](docs/02_modules/auth/CLAUDE.md) |
+| cost-calculator-quotation | [docs/02_modules/cost-calculator-quotation/CLAUDE.md](docs/02_modules/cost-calculator-quotation/CLAUDE.md) |
+| customers | [docs/02_modules/customers/CLAUDE.md](docs/02_modules/customers/CLAUDE.md) |
+| deals | [docs/02_modules/deals/CLAUDE.md](docs/02_modules/deals/CLAUDE.md) |
+| employees | [docs/02_modules/employees/CLAUDE.md](docs/02_modules/employees/CLAUDE.md) |
+| internal-messaging | [docs/02_modules/internal-messaging/CLAUDE.md](docs/02_modules/internal-messaging/CLAUDE.md) |
+| invoicing | [docs/02_modules/invoicing/CLAUDE.md](docs/02_modules/invoicing/CLAUDE.md) |
+| leads | [docs/02_modules/leads/CLAUDE.md](docs/02_modules/leads/CLAUDE.md) |
+| notifications | [docs/02_modules/notifications/CLAUDE.md](docs/02_modules/notifications/CLAUDE.md) |
+| operations-fabrication | [docs/02_modules/operations-fabrication/CLAUDE.md](docs/02_modules/operations-fabrication/CLAUDE.md) |
+| operations-inspection | [docs/02_modules/operations-inspection/CLAUDE.md](docs/02_modules/operations-inspection/CLAUDE.md) |
+| operations-logistics | [docs/02_modules/operations-logistics/CLAUDE.md](docs/02_modules/operations-logistics/CLAUDE.md) |
+| partners | [docs/02_modules/partners/CLAUDE.md](docs/02_modules/partners/CLAUDE.md) |
+| profile-settings | [docs/02_modules/profile-settings/CLAUDE.md](docs/02_modules/profile-settings/CLAUDE.md) |
+| receipts | [docs/02_modules/receipts/CLAUDE.md](docs/02_modules/receipts/CLAUDE.md) |
+| user-management-rbac | [docs/02_modules/user-management-rbac/CLAUDE.md](docs/02_modules/user-management-rbac/CLAUDE.md) |

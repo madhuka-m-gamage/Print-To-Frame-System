@@ -1,0 +1,27 @@
+# Cost Calculator & Quotation: module notes for Claude
+
+Full map: [../cost-calculator-quotation.md](../cost-calculator-quotation.md). Cross-module chains: [CROSS_MODULE_TRIGGERS.md](../../01_architecture/CROSS_MODULE_TRIGGERS.md). There are no Cloud Functions; all automation is client code (`src/App.jsx`, components) or `api/*.js`.
+
+## What it does
+
+Computes price from sq ft via a five-tier engine, then staff draft versioned quotations (manually or with Gemini). An Accepted quotation produces the 75% Advance invoice.
+
+## Code
+
+- `src/components/tools/CostCalculator.jsx`, `src/components/crm/QuotationBuilder.jsx`
+- `src/services/pricingEngine.js`, `gemini.js`
+
+## Firestore collections it owns or writes
+
+- Owns `quotations` (ids `QT-xxxxxx`, versions via `parentQuoteId`). Writes `invoices` and `auditLog` through `handleSaveInvoice`.
+
+## Triggers and side effects
+
+- AI draft: `generateStructuredQuotation` -> `/api/generate`.
+- Advance invoice needs status `Accepted`; the 75 / 25 split is computed here at `QuotationBuilder.jsx` 89-90.
+
+## Before you edit
+
+- Pricing constants (118.5 manufacturing per sq ft, tier table, 53.5 commission, 15% discount) live in `pricingEngine.js`.
+- `cutListEngine.js` and `FrameBlueprintPreview.jsx` belong to Fabrication; `companyInfo.js` is unused.
+- `quotations` rules allow any authenticated user to read and write; there is no `quotations` permission module.
