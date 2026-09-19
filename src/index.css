@@ -1,0 +1,214 @@
+/**
+ * ============================================================
+ * Print To Frame ERP — Stylesheet (Tailwind CSS Source)
+ * ============================================================
+ * 
+ * This is the Tailwind CSS source file. When compiled via
+ * `npm run build`, Tailwind scans src for js/jsx files for class
+ * names and generates the optimized CSS in dist/assets/.
+ * 
+ * The compiled dist/assets/index-DgfS-bfm.css (52KB) contains
+ * the full production stylesheet used by the running app.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-surface: 11 14 20;
+  --color-surface-dim: 9 11 16;
+  --color-surface-bright: 21 26 36;
+  --color-surface-container-lowest: 6 8 10;
+  --color-surface-container-low: 13 17 24;
+  --color-surface-container: 20 27 38;
+  --color-surface-container-high: 28 38 54;
+  --color-surface-container-highest: 40 52 74;
+  --color-on-surface: 248 250 252;
+  --color-on-surface-variant: 185 192 205;
+  --color-outline: 65 84 116;
+  --color-outline-variant: 42 54 75;
+  --color-primary: 0 218 243;
+  --color-on-primary: 0 0 0;
+
+  /* Status accents. `-on` is the readable text colour for that bucket and is
+     the pair that flips between themes; the accent itself is reused at low
+     alpha for badge backgrounds and borders. */
+  --color-status-success: 16 185 129;
+  --color-status-success-on: 52 211 153;
+  --color-status-ready: 6 182 212;
+  --color-status-ready-on: 103 232 249;
+  --color-status-warning: 245 158 11;
+  --color-status-warning-on: 252 211 77;
+  --color-status-danger: 244 63 94;
+  --color-status-danger-on: 253 164 175;
+  --color-status-info: 99 102 241;
+  --color-status-info-on: 165 180 252;
+  --color-status-progress: 0 218 243;
+  --color-status-progress-on: 0 218 243;
+}
+
+[data-theme='light'] {
+  --color-surface: 248 250 252;
+  --color-surface-dim: 241 245 249;
+  --color-surface-bright: 255 255 255;
+  --color-surface-container-lowest: 255 255 255;
+  --color-surface-container-low: 248 250 252;
+  --color-surface-container: 255 255 255;
+  --color-surface-container-high: 241 245 249;
+  --color-surface-container-highest: 226 232 240;
+  --color-on-surface: 15 23 42;
+  --color-on-surface-variant: 51 65 85;
+  --color-outline: 148 163 184;
+  --color-outline-variant: 203 213 225;
+  --color-primary: 2 132 199;
+  --color-on-primary: 255 255 255;
+
+  /* Darker text variants so status badges clear WCAG AA on light surfaces;
+     the 300/400-level values used in dark mode sit near 1.8:1 here. */
+  --color-status-success-on: 4 120 87;
+  --color-status-ready-on: 14 116 144;
+  --color-status-warning-on: 146 64 14;
+  --color-status-danger-on: 190 18 60;
+  --color-status-info-on: 67 56 202;
+  /* Brand primary itself only reaches 3.46:1 on a light surface, so the
+     in-progress badge needs its own darker text value. */
+  --color-status-progress: 2 132 199;
+  --color-status-progress-on: 7 89 133;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: rgb(var(--color-surface));
+  color: rgb(var(--color-on-surface));
+}
+
+/* ── Custom scrollbar styling ─────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ── Custom animations ────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.2s ease-out forwards;
+}
+
+/* ── Portal Login Styles ────────────────────────────────────── */
+.technical-grid {
+  background-image: linear-gradient(rgba(39, 39, 42, 0.5) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(39, 39, 42, 0.5) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center;
+}
+.text-glow {
+  text-shadow: 0 0 15px rgba(0, 218, 243, 0.6), 0 0 5px rgba(0, 218, 243, 0.2);
+}
+
+/* Sidebar scrollbar styling */
+.sidebar-scroll {
+  direction: rtl;
+  overflow-x: hidden !important;
+}
+.sidebar-scroll > * {
+  direction: ltr;
+}
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 218, 243, 0.5); /* Primary color */
+}
+
+/* ── Mobile Touch & Momentum Scrolling ──────────────────────── */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.custom-scrollbar {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Safe area insets for mobile notches and bottom home indicators */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Smooth horizontal snap scrolling for Kanban on mobile */
+.snap-x-mandatory {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.snap-start-card {
+  scroll-snap-align: start;
+}
+
+/* ── Accessibility: Reduced Motion Support ─────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Accessibility: Standard Focus Visible Rings ──────────── */
+:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
+}
+
