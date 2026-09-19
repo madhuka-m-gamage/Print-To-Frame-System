@@ -1,0 +1,240 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper Functions ──────────────────────────────────
+    
+    // Check if the user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if the user has a specific role
+    function hasRole(role) {
+      return isAuthenticated() 
+        && exists(/databases/$(database)/documents/users/$(request.auth.token.email))
+        && get(/databases/$(database)/documents/users/$(request.auth.token.email)).data.role == role;
+    }
+    
+    // Check if the user is an Admin
+    function isAdmin() {
+      return hasRole('admin') || hasRole('Admin');
+    }
+
+    // The two hardcoded owner emails the client app itself treats as a bootstrap/
+    // self-healing super-admin (see App.jsx "Self-Healing Super Admin Guard").
+    // Mirrored here so the rules stay consistent with that one intentional exception
+    // instead of trusting the client to enforce it.
+    function isBootstrapSuperAdmin(email) {
+      return email == 'madhukagamage6@gmail.com' || email == 'madhukagamage@gmail.com';
+    }
+
+    // Dynamic Permission Check (supports both new granular {view, create, edit, delete, export} and legacy {read, write})
+    function checkPermission(module, action) {
+      return isAdmin() || (
+        isAuthenticated() 
+        && exists(/databases/$(database)/documents/users/$(request.auth.token.email))
+        && exists(/databases/$(database)/documents/settings/permissions)
+        && (
+             // Direct key match (e.g. view, create, edit, delete, export, read, write)
+             get(/databases/$(database)/documents/settings/permissions).data
+               .get(get(/databases/$(database)/documents/users/$(request.auth.token.email)).data.role, {})
+               .get(module, {})
+               .get(action, false) == true
+             // If checking 'read', also accept 'view'
+             || (action == 'read' && get(/databases/$(database)/documents/settings/permissions).data
+                  .get(get(/databases/$(database)/documents/users/$(request.auth.token.email)).data.role, {})
+                  .get(module, {})
+                  .get('view', false) == true)
+             // If checking 'write', also accept 'create' or 'edit'
+             || (action == 'write' && (
+                  get(/databases/$(database)/documents/settings/permissions).data
+                    .get(get(/databases/$(database)/documents/users/$(request.auth.token.email)).data.role, {})
+                    .get(module, {})
+                    .get('create', false) == true
+                  || get(/databases/$(database)/documents/settings/permissions).data
+                    .get(get(/databases/$(database)/documents/users/$(request.auth.token.email)).data.role, {})
+                    .get(module, {})
+                    .get('edit', false) == true
+                ))
+        )
+      );
+    }
+
+    // ── Settings (Dynamic Permissions) ────────────────────
+    // This document IS the RBAC matrix that checkPermission() reads for every other
+    // collection below — it must only ever be writable by an Admin. (Previously
+    // `if isAuthenticated()` let ANY signed-in user of ANY role grant themselves
+    // full access to everything by rewriting this document directly.)
+    match /settings/permissions {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── User Profiles ─────────────────────────────────────
+    // SECURITY: `role`, `isApproved`, and `status` must never be settable by the user
+    // themselves except through the two narrow, intentional self-service paths the app
+    // already relies on:
+    //   1. A brand-new Google sign-in self-provisions its own profile as 'Customer',
+    //      unapproved and pending (isApproved: false, status: 'Pending').
+    //   2. The two hardcoded owner emails self-heal back to 'Admin'/Active if ever changed.
+    // Anything else — including a non-admin flipping their own role to 'Admin', or
+    // self-approving / self-reactivating after being deactivated, via the Firestore SDK
+    // directly (bypassing the UI) — is rejected.
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+
+      allow create: if isAdmin()
+        || (isAuthenticated() && request.auth.token.email == userId && (
+             (request.resource.data.role == 'Customer'
+               && request.resource.data.isApproved == false
+               && request.resource.data.status == 'Pending')
+             || (isBootstrapSuperAdmin(userId) && request.resource.data.role == 'Admin')
+           ));
+
+      allow update: if isAdmin()
+        || (isAuthenticated() && request.auth.token.email == userId && (
+             (request.resource.data.role == resource.data.role
+               && request.resource.data.isApproved == resource.data.isApproved
+               && request.resource.data.status == resource.data.status)
+             || (isBootstrapSuperAdmin(userId) && request.resource.data.role == 'Admin')
+           ));
+
+      allow delete: if isAdmin();
+    }
+
+    // ── Pending Users ─────────────────────────────────────
+    match /pendingUsers/{userId} {
+      allow create: if true;
+      allow read: if isAuthenticated() && request.auth.token.email == userId;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ── Partner Applications (public "Register Partner" request form) ────
+    // Submitted anonymously by prospective partners, then reviewed and
+    // approved/rejected only from User Management (see AgentDatabase.jsx) —
+    // same review-queue shape as pendingUsers above.
+    match /partner_applications/{applicationId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ── Leads (CRM) ──────────────────────────────────────
+    match /leads/{leadId} {
+      allow read: if checkPermission('leads', 'view') || checkPermission('leads', 'read');
+      allow create: if checkPermission('leads', 'create') || checkPermission('leads', 'write') || (request.resource.data.source == 'Referral');
+      allow update: if checkPermission('leads', 'edit') || checkPermission('leads', 'write');
+      allow delete: if isAdmin();
+    }
+
+    // ── Deals ────────────────────────────────────────────
+    match /deals/{dealId} {
+      allow read: if checkPermission('pipeline', 'view') || checkPermission('pipeline', 'read');
+      allow create, update: if checkPermission('pipeline', 'create') || checkPermission('pipeline', 'edit') || checkPermission('pipeline', 'write');
+      allow delete: if isAdmin();
+    }
+
+    // ── Quotations ────────────────────────────────────────
+    match /quotations/{quotationId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // ── Sequential-ID counters (e.g. invoice numbering) ──────
+    // Holds only a single incrementing integer per prefix — no business
+    // data — written via a Firestore transaction from generateInvoiceId().
+    match /counters/{counterId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // ── Invoices ─────────────────────────────────────────
+    match /invoices/{invoiceId} {
+      allow read: if checkPermission('invoices', 'view') || checkPermission('invoices', 'read') || (isAuthenticated() && resource.data.customerId == request.auth.token.email) || (isAuthenticated() && resource.data.partnerId == request.auth.token.email);
+      allow create, update: if checkPermission('invoices', 'create') || checkPermission('invoices', 'edit') || checkPermission('invoices', 'write');
+      allow delete: if isAdmin();
+    }
+
+    // ── Receipts (payment-received records issued against paid invoices) ──
+    match /receipts/{receiptId} {
+      allow read: if checkPermission('receipts', 'view') || checkPermission('receipts', 'read')
+        || (isAuthenticated() && resource.data.customerId == request.auth.token.email)
+        || (isAuthenticated() && resource.data.partnerId == request.auth.token.email);
+      allow create, update: if checkPermission('receipts', 'create') || checkPermission('receipts', 'edit') || checkPermission('receipts', 'write');
+      allow delete: if isAdmin();
+    }
+
+    // ── Customers ────────────────────────────────────────
+    match /customers/{customerId} {
+      allow read: if checkPermission('customers', 'view') || checkPermission('customers', 'read');
+      allow create, update: if checkPermission('customers', 'create') || checkPermission('customers', 'edit') || checkPermission('customers', 'write');
+      allow delete: if checkPermission('customers', 'delete') || isAdmin();
+    }
+
+    // ── Partners & Commission Ledgers ────────────────────
+    match /partners/{partnerId} {
+      allow read: if checkPermission('partners', 'view') || checkPermission('partners', 'read') || (isAuthenticated() && partnerId == request.auth.token.email);
+      allow create, update: if checkPermission('partners', 'create') || checkPermission('partners', 'edit') || checkPermission('partners', 'write');
+      allow delete: if checkPermission('partners', 'delete') || isAdmin();
+    }
+
+    // ── Fabrication / Projects ───────────────────────────
+    match /projects/{projectId} {
+      allow read: if checkPermission('projects', 'view') || checkPermission('projects', 'read') || (isAuthenticated() && resource.data.customerId == request.auth.token.email);
+      allow create, update: if checkPermission('projects', 'create') || checkPermission('projects', 'edit') || checkPermission('projects', 'write');
+      allow delete: if isAdmin();
+    }
+
+    // ── Logistics ────────────────────────────────────────
+    match /logistics/{logId} {
+      allow read: if checkPermission('logistics', 'view') || checkPermission('logistics', 'read') || (isAuthenticated() && resource.data.customerId == request.auth.token.email);
+      allow create, update: if checkPermission('logistics', 'create') || checkPermission('logistics', 'edit') || checkPermission('logistics', 'write');
+      allow delete: if isAdmin();
+    }
+
+    // ── Pricing Config (Admin-only write) ────────────────
+    match /pricing/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // ── Messages (Real-Time Internal Chat) ─────────────────
+    // `update` used to be open to any authenticated user for any message — that let
+    // anyone silently rewrite someone else's message content after the fact. Now only
+    // the original sender (or an Admin) can edit a message. A conversation participant
+    // may still update a message that isn't theirs, but ONLY to touch `readBy` — this is
+    // what markChatAsRead() needs to record read receipts on the other party's messages.
+    match /messages/{messageId} {
+      allow read, create: if isAuthenticated();
+      allow update: if isAdmin()
+        || (isAuthenticated() && resource.data.fromId == request.auth.token.email)
+        || (isAuthenticated() && request.auth.token.email in resource.data.participants
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy']));
+      allow delete: if isAdmin() || (
+        isAuthenticated() &&
+        resource.data.fromId == request.auth.token.email &&
+        (request.time.toMillis() - resource.data.timestamp) < 900000
+      );
+    }
+
+    // ── Typing Indicators ────────────────────────────────
+    match /typing_indicators/{indicatorId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // ── Audit Log ────────────────────────────────────────
+    match /auditLog/{logId} {
+      allow create: if isAuthenticated();
+      allow read: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // ── Test Connection ──────────────────────────────────
+    match /test/{docId} {
+      allow read: if true;
+    }
+
+    // ── Catch-all: deny everything else ──────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Login - Print To Frame</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                        display: ['"Hanken Grotesk"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        'surface': '#0b0e14',
+                        'surface-dim': '#090b10',
+                        'surface-bright': '#151a24',
+                        'surface-container-lowest': '#06080a',
+                        'surface-container-low': '#0b0e14',
+                        'surface-container': '#121822',
+                        'surface-container-high': '#1a2230',
+                        'surface-container-highest': '#232e42',
+                        'on-surface': '#f4f4f5',
+                        'on-surface-variant': '#a1a1aa',
+                        'outline': '#384661',
+                        'outline-variant': '#1e2838',
+                        'primary': '#00daf3',
+                        'on-primary': '#000000',
+                        'primary-container': '#00daf3',
+                        'on-primary-container': '#000000',
+                        'secondary': '#34d399',
+                        'on-secondary': '#000000',
+                        'error': '#fca5a5',
+                        'on-error': '#450a0a',
+                        'error-container': '#7f1d1d',
+                        'on-error-container': '#fecaca',
+                        'primary-fixed': '#00daf3',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0b0e14;
+            color: #f4f4f5;
+        }
+        /* Grid background */
+        .technical-grid {
+            background-image: linear-gradient(rgba(39, 39, 42, 0.5) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(39, 39, 42, 0.5) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: center;
+        }
+        .text-glow {
+            text-shadow: 0 0 15px rgba(0, 218, 243, 0.6), 0 0 5px rgba(0, 218, 243, 0.2);
+        }
+    </style>
+    <!-- Icons (Lucide icons via CDN) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="font-sans antialiased relative min-h-screen flex flex-col items-center justify-center p-4 overflow-x-hidden">
+    <!-- Grid background -->
+    <div class="fixed inset-0 technical-grid opacity-15 pointer-events-none z-0"></div>
+
+    <div class="w-full max-w-[440px] relative z-10 text-center flex flex-col items-center">
+        <!-- Logo Header -->
+        <div class="mb-12 inline-block">
+            <div class="flex justify-center mb-6">
+                <img src="./logo-dark.png" alt="Print2Frame Logo" class="h-20 sm:h-24 w-auto object-contain transition-transform duration-300 hover:scale-105" />
+            </div>
+            <h1 class="text-3xl font-display font-bold text-white tracking-tight">Print To Frame</h1>
+            <p class="font-mono text-xs text-primary tracking-[0.2em] uppercase mt-1">Fabrication Portal</p>
+        </div>
+
+        <!-- Main Form Container -->
+        <div class="w-full bg-surface-container/60 backdrop-blur-md border border-outline-variant/50 rounded-2xl p-8 shadow-2xl relative overflow-hidden group">
+            
+            <h2 class="text-xl font-display font-semibold text-on-surface mb-2" id="form-title">
+                Print To Frame
+            </h2>
+            <p class="text-on-surface-variant text-sm mb-8" id="form-subtitle">
+                Sign in to the portal
+            </p>
+
+            <form class="space-y-4 text-left" onsubmit="event.preventDefault();">
+                <!-- Signup fields hidden by default -->
+                <div id="signup-fields" class="space-y-4 hidden">
+                    <div>
+                        <label class="font-sans text-xs text-on-surface-variant block mb-1.5 ml-1">Full Name</label>
+                        <div class="relative">
+                            <i data-lucide="user" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-outline/60"></i>
+                            <input type="text" placeholder="Your Name" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg py-2.5 pl-10 pr-3 text-sm text-on-surface outline-none focus:border-primary-container transition-all" />
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="font-sans text-xs text-on-surface-variant block mb-1.5 ml-1">Mobile Number</label>
+                        <div class="relative">
+                            <i data-lucide="phone" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-outline/60"></i>
+                            <input type="tel" placeholder="+94 7X XXX XXXX" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg py-2.5 pl-10 pr-3 text-sm text-on-surface outline-none focus:border-primary-container transition-all" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="font-sans text-xs text-on-surface-variant block mb-1.5 ml-1">User Role</label>
+                        <div class="relative">
+                            <i data-lucide="briefcase" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-outline/60"></i>
+                            <select class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg py-2.5 pl-10 pr-3 text-sm text-on-surface outline-none focus:border-primary-container transition-all appearance-none">
+                                <option value="Admin">Admin</option>
+                                <option value="Support">Support</option>
+                                <option value="Accounts">Accounts</option>
+                                <option value="Operations">Operations</option>
+                                <option value="Logistics">Logistics</option>
+                                <option value="Partners">Partners</option>
+                                <option value="Customer">Customer</option>
+                                <option value="Business Client">Business Client</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Always visible fields -->
+                <div>
+                    <label class="font-sans text-xs text-on-surface-variant block mb-1.5 ml-1">Email or Mobile</label>
+                    <div class="relative">
+                        <i data-lucide="mail" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-outline/60"></i>
+                        <input type="text" placeholder="admin or email..." class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg py-2.5 pl-10 pr-3 text-sm text-on-surface outline-none focus:border-primary-container transition-all" />
+                    </div>
+                </div>
+
+                <div>
+                    <label class="font-sans text-xs text-on-surface-variant block mb-1.5 ml-1">Password</label>
+                    <div class="relative">
+                        <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-outline/60"></i>
+                        <input type="password" placeholder="********" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg py-2.5 pl-10 pr-3 text-sm text-on-surface outline-none focus:border-primary-container transition-all" />
+                    </div>
+                </div>
+
+                <button type="submit" id="submit-btn" class="w-full bg-primary-fixed/20 border border-primary-fixed/40 text-primary-container hover:bg-primary-fixed/30 py-2.5 rounded-lg text-sm font-semibold transition-all mt-6 shadow-[0_0_15px_rgba(0,218,243,0.1)] hover:shadow-[0_0_20px_rgba(0,218,243,0.25)]">
+                    Login
+                </button>
+            </form>
+
+            <!-- Google Login Section -->
+            <div id="google-login-section" class="mt-8 pt-6 border-t border-outline-variant/20">
+                <p class="font-sans text-xs text-on-surface-variant mb-4">
+                    Or securely authenticate with ERP credentials:
+                </p>
+                <button class="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 text-gray-600 font-sans text-[15px] font-medium py-2.5 px-4 rounded shadow-[0_1px_3px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.24)] hover:shadow-[0_2px_4px_rgba(0,0,0,0.15),0_2px_3px_rgba(0,0,0,0.2)] transition-all">
+                    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="w-[22px] h-[22px]">
+                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                        <path fill="none" d="M0 0h48v48H0z"></path>
+                    </svg>
+                    <span>Login with Google</span>
+                </button>
+            </div>
+
+            <!-- Toggle Mode -->
+            <div class="mt-8 font-sans text-sm">
+                <p class="text-on-surface-variant" id="toggle-text">
+                    Don't have an account? <button onclick="toggleMode()" id="toggle-btn" class="text-primary hover:underline font-medium">Register</button>
+                </p>
+            </div>
+
+        </div>
+        
+        <p class="mt-8 font-sans text-xs text-on-surface-variant/60">
+            © 2024 Print To Frame Pvt Ltd. All rights reserved.
+        </p>
+    </div>
+
+    <!-- Initialize Lucide Icons -->
+    <script>
+        lucide.createIcons();
+
+        let mode = 'signin';
+        
+        function toggleMode() {
+            mode = mode === 'signin' ? 'signup' : 'signin';
+            
+            const signupFields = document.getElementById('signup-fields');
+            const googleLogin = document.getElementById('google-login-section');
+            const formTitle = document.getElementById('form-title');
+            const formSubtitle = document.getElementById('form-subtitle');
+            const submitBtn = document.getElementById('submit-btn');
+            const toggleText = document.getElementById('toggle-text');
+            
+            if (mode === 'signup') {
+                signupFields.classList.remove('hidden');
+                googleLogin.classList.add('hidden');
+                formTitle.innerText = 'Request Access';
+                formSubtitle.innerText = 'Request access to specialized framing services';
+                submitBtn.innerText = 'Request Access';
+                toggleText.innerHTML = 'Already have an account? <button onclick="toggleMode()" class="text-primary hover:underline font-medium">Login</button>';
+            } else {
+                signupFields.classList.add('hidden');
+                googleLogin.classList.remove('hidden');
+                formTitle.innerText = 'Print To Frame';
+                formSubtitle.innerText = 'Sign in to the portal';
+                submitBtn.innerText = 'Login';
+                toggleText.innerHTML = 'Don\'t have an account? <button onclick="toggleMode()" class="text-primary hover:underline font-medium">Register</button>';
+            }
+        }
+    </script>
+</body>
+</html>

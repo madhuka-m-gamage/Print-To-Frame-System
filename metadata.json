@@ -1,0 +1,10 @@
+{
+  "name": "Print To Frame ERP",
+  "description": "Specialized Steel Framing Hub for Digital Art in Sri Lanka",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

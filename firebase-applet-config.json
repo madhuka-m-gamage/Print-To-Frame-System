@@ -1,0 +1,12 @@
+{
+  "projectId": "print-to-frame-erp",
+  "appId": "1:1040802185414:web:be9bc5ca65bd8bd83397c7",
+  "apiKey": "AIzaSyCkSe1u8QNM_05D_3AXytHRnwBj22SG_jA",
+  "authDomain": "auth.print2frame.xyz",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "print-to-frame-erp.firebasestorage.app",
+  "messagingSenderId": "1040802185414",
+  "measurementId": "G-Y2S2P1YFWW",
+  "oAuthClientId": "1040802185414-icq3kmnknsms2viieic0e9nqtkutroh1.apps.googleusercontent.com",
+  "recaptchaSiteKey": ""
+}

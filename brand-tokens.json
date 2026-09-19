@@ -1,0 +1,37 @@
+{
+  "_comment": "Canonical brand tokens for Print To Frame. COPY — the source of truth for these values lives in the 'Print To Frame Website' repo (src/index.css @theme, mirrored to brand-tokens.json there). If you change a value here, copy the same change to that file too so the marketing site and the portal never visually drift apart. These two repos stay separate projects; this file is the only thing that has to be kept manually in sync between them.",
+  "fonts": {
+    "sans": "Inter, ui-sans-serif, system-ui, sans-serif",
+    "display": "Hanken Grotesk, sans-serif",
+    "mono": "JetBrains Mono, monospace"
+  },
+  "colors": {
+    "surface": "#0b0e14",
+    "surfaceDim": "#090b10",
+    "surfaceBright": "#151a24",
+    "surfaceContainerLowest": "#06080a",
+    "surfaceContainerLow": "#0b0e14",
+    "surfaceContainer": "#121822",
+    "surfaceContainerHigh": "#1a2230",
+    "surfaceContainerHighest": "#232e42",
+    "onSurface": "#f4f4f5",
+    "onSurfaceVariant": "#a1a1aa",
+    "outline": "#384661",
+    "outlineVariant": "#1e2838",
+    "primary": "#00daf3",
+    "onPrimary": "#000000",
+    "primaryContainer": "#00daf3",
+    "onPrimaryContainer": "#000000",
+    "inversePrimary": "#0093a8",
+    "secondary": "#34d399",
+    "onSecondary": "#000000",
+    "secondaryContainer": "#10b981",
+    "onSecondaryContainer": "#ffffff",
+    "tertiary": "#f4f4f5",
+    "onTertiary": "#0b0e14",
+    "error": "#fca5a5",
+    "onError": "#450a0a",
+    "errorContainer": "#7f1d1d",
+    "onErrorContainer": "#fecaca"
+  }
+}

@@ -1,0 +1,194 @@
+{
+  "entities": {
+    "Lead": {
+      "title": "Lead",
+      "description": "CRM Lead entity",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "company": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "status": { "type": "string" },
+        "value": { "type": "number" },
+        "notes": { "type": "string" },
+        "source": { "type": "string" }
+      }
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "ERP Customer Profile",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "company": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "tier": { "type": "string" },
+        "balance": { "type": "number" }
+      }
+    },
+    "Partner": {
+      "title": "Partner",
+      "description": "Fabrication Partner & Commission details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "commissionRate": { "type": "number" },
+        "totalPaid": { "type": "number" }
+      }
+    },
+    "Project": {
+      "title": "Project",
+      "description": "Steel Framing & Fabrication Project Order",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "customer": { "type": "string" },
+        "customerId": { "type": "string" },
+        "stage": { "type": "string" },
+        "budget": { "type": "number" },
+        "dimensions": { "type": "string" },
+        "profile": { "type": "string" },
+        "status": { "type": "string" }
+      }
+    },
+    "Logistics": {
+      "title": "Logistics",
+      "description": "Shipment and delivery tracking item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "trackingNumber": { "type": "string" },
+        "destination": { "type": "string" },
+        "status": { "type": "string" },
+        "eta": { "type": "string" },
+        "carrier": { "type": "string" }
+      }
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Financial invoice and billing record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "customerId": { "type": "string" },
+        "amount": { "type": "number" },
+        "status": { "type": "string" },
+        "dueDate": { "type": "string" },
+        "items": { "type": "string" }
+      }
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Internal collaboration message",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fromId": { "type": "string" },
+        "fromName": { "type": "string" },
+        "text": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "channel": { "type": "string" }
+      }
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "System operational audit event",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "action": { "type": "string" },
+        "userId": { "type": "string" },
+        "details": { "type": "string" },
+        "timestamp": { "type": "string" }
+      }
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile and role record",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "status": { "type": "string" }
+      }
+    },
+    "Permissions": {
+      "title": "Permissions",
+      "description": "Role-based access control matrix",
+      "type": "object",
+      "properties": {
+        "Admin": { "type": "object" },
+        "Manager": { "type": "object" },
+        "Sales": { "type": "object" },
+        "Operations": { "type": "object" }
+      }
+    },
+    "TestConnection": {
+      "title": "TestConnection",
+      "description": "Health check connection document",
+      "type": "object",
+      "properties": {
+        "status": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/leads/{leadId}": {
+      "schema": "Lead",
+      "description": "CRM leads collection"
+    },
+    "/customers/{customerId}": {
+      "schema": "Customer",
+      "description": "Customer accounts"
+    },
+    "/partners/{partnerId}": {
+      "schema": "Partner",
+      "description": "Fabricator partner records"
+    },
+    "/projects/{projectId}": {
+      "schema": "Project",
+      "description": "Steel frame fabrication projects"
+    },
+    "/logistics/{logId}": {
+      "schema": "Logistics",
+      "description": "Logistics & dispatch items"
+    },
+    "/invoices/{invoiceId}": {
+      "schema": "Invoice",
+      "description": "Invoices and payments"
+    },
+    "/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Live messaging collection"
+    },
+    "/auditLog/{logId}": {
+      "schema": "AuditLog",
+      "description": "System audit trail"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and assigned roles"
+    },
+    "/pendingUsers/{userId}": {
+      "schema": "User",
+      "description": "Pending user registrations"
+    },
+    "/settings/permissions": {
+      "schema": "Permissions",
+      "description": "Role permission matrices"
+    },
+    "/test/{docId}": {
+      "schema": "TestConnection",
+      "description": "Connection test heartbeat"
+    }
+  }
+}

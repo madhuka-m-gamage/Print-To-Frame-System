@@ -1,0 +1,52 @@
+{
+  "name": "mcp-erp-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 3000",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview --host 0.0.0.0 --port 3000",
+    "test": "vitest run tests/unit",
+    "test:watch": "vitest tests/unit",
+    "test:rules": "firebase emulators:exec --project demo-print2frame-test --only firestore,auth \"vitest run tests/integration\"",
+    "test:all": "npm run test && npm run test:rules",
+    "push:staging": "git add . && git commit -m \"chore: update staging build\" && git push origin staging",
+    "deploy:live": "git checkout main && git merge staging && git push origin main && git checkout staging"
+  },
+  "dependencies": {
+    "@google/genai": "^1.47.0",
+    "@sentry/react": "^10.66.0",
+    "docx": "^9.7.1",
+    "firebase": "^10.11.0",
+    "firebase-admin": "^13.10.0",
+    "lucide-react": "^0.469.0",
+    "nodemailer": "^10.0.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "recharts": "^3.9.2",
+    "sonner": "^2.0.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@firebase/rules-unit-testing": "^3.0.4",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^10.0.3",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.16",
+    "glob": "^13.0.6",
+    "globals": "^15.14.0",
+    "jsdom": "^29.1.1",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "vite": "^6.0.5",
+    "vitest": "^4.1.11",
+    "wait-on": "^9.0.10"
+  }
+}
