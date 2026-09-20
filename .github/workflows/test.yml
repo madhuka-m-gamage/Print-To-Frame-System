@@ -1,0 +1,57 @@
+name: test
+
+on:
+  pull_request:
+    branches: [staging, main]
+  push:
+    branches: [staging]
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+# Tests only. No secrets are used or needed: nothing here talks to real Firebase,
+# Gemini or SMTP, and the rules job runs against the fake demo-print2frame-test project.
+permissions:
+  contents: read
+
+jobs:
+  lint-unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run coverage
+      - run: npm run test:api
+      - run: npm run test:component
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage/
+          if-no-files-found: ignore
+
+  rules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      # firebase-tools is not a project dependency; test:rules calls the `firebase` CLI.
+      - run: npm install -g firebase-tools@15
+      - run: npm ci
+      - run: npm run test:rules

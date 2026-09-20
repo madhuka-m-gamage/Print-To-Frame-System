@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- CI (A7): `.github/workflows/test.yml` with `lint-unit` and `rules` jobs for pull requests to `staging`/`main`; README "Running the tests" section.
 - Rules test harness (A4): `tests/helpers/emulator.js` (`setupRulesEnv`, `seedPermissions`, `asRole`, `clearAll`); `firestoreRules` and `invoiceNumbering` integration tests now use it with unchanged assertions.
 - Component test layer (A3): `vitest.component.config.js` (jsdom), `tests/helpers/setupComponent.js`, `renderWithProviders`, `npm run test:component`, RTL devDependencies, and a StatusBadge smoke test. Pinned `jsdom` to `^26`: v29 needs Node >= 20.19 and crashed under the local Node 20.18.
 - API test layer (A2): `tests/helpers/mockHttp.js`, `npm run test:api`, `tests/api/README.md`, and a gate smoke test for `api/admin-user.js`; `test:all` and `coverage` now include the API tests.
