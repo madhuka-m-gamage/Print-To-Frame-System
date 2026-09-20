@@ -42,6 +42,7 @@ export default function Receipts({ receipts = [], currentUser }) {
   });
 
   const handleExportCsv = () => {
+    if (filteredReceipts.length === 0) return;
     const exportColumns = [
       { key: 'id', label: 'Receipt ID' },
       { key: 'invoiceId', label: 'Invoice ID' },
@@ -53,8 +54,13 @@ export default function Receipts({ receipts = [], currentUser }) {
       { key: 'date', label: 'Date' },
       { key: 'partnerId', label: 'Referring Partner' },
     ];
-    exportToCsv(filteredReceipts, exportColumns, 'Receipts_Export');
-    toast.success(`Exported ${filteredReceipts.length} receipts to CSV`);
+    try {
+      exportToCsv(filteredReceipts, exportColumns, 'Receipts_Export');
+      toast.success(`Exported ${filteredReceipts.length} receipts to CSV`);
+    } catch (err) {
+      console.error('Receipts CSV export failed:', err);
+      toast.error('Could not export receipts: ' + err.message);
+    }
   };
 
   const handleDelete = async () => {
@@ -64,7 +70,7 @@ export default function Receipts({ receipts = [], currentUser }) {
       toast.success('Receipt deleted successfully');
       await logActivity(
         currentUser?.identifier || currentUser?.email || 'unknown',
-        currentUser?.name || 'Unknown',
+        currentUser?.name || currentUser?.identifier || 'Unknown',
         'RECEIPT_DELETED',
         'Receipts',
         `Receipt ${deleteId} permanently deleted`
@@ -98,7 +104,8 @@ export default function Receipts({ receipts = [], currentUser }) {
         actions={
           <button
             onClick={handleExportCsv}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-surface-container border border-outline-variant hover:border-primary/40 text-on-surface rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 flex-shrink-0"
+            disabled={filteredReceipts.length === 0}
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-surface-container border border-outline-variant hover:border-primary/40 text-on-surface rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
             title="Export filtered receipts to CSV"
           >
             <Download size={15} className="text-primary" />

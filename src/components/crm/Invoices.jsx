@@ -19,7 +19,7 @@ export default function Invoices({ invoices = [], setInvoices, onMarkPaid, curre
   const [mobileView, setMobileView] = useState('list');
   const [deleteId, setDeleteId] = useState(null);
   const [showReceiptForm, setShowReceiptForm] = useState(false);
-  const [receiptFormData, setReceiptFormData] = useState({ amountReceived: 0, paymentMethod: 'Cash', date: new Date().toISOString().split('T')[0] });
+  const [receiptFormData, setReceiptFormData] = useState({ amountReceived: 0, paymentMethod: 'Cash', date: new Date().toISOString().split('T')[0], notes: '' });
   const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -483,7 +483,7 @@ export default function Invoices({ invoices = [], setInvoices, onMarkPaid, curre
                     return (
                       <button
                         onClick={() => {
-                          setReceiptFormData({ amountReceived: Number(selectedInvoice.amount) || 0, paymentMethod: 'Cash', date: new Date().toISOString().split('T')[0] });
+                          setReceiptFormData({ amountReceived: Number(selectedInvoice.amount) || 0, paymentMethod: 'Cash', date: new Date().toISOString().split('T')[0], notes: '' });
                           setShowReceiptForm(true);
                         }}
                         className="flex-1 sm:flex-initial bg-primary/10 text-primary hover:bg-primary/20 border border-primary/30 px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 transition-all active:scale-95"
@@ -497,14 +497,15 @@ export default function Invoices({ invoices = [], setInvoices, onMarkPaid, curre
               </div>
 
               {selectedInvoice.status === 'Paid' && showReceiptForm && !receipts.find(r => r.invoiceId === (selectedInvoice.id || selectedInvoice._firestoreId)) && (
-                <div className="mt-3 p-3 bg-surface-container-high/60 border border-outline rounded-xl grid grid-cols-1 sm:grid-cols-4 gap-2 items-end">
+                <div className="mt-3 p-3 bg-surface-container-high/60 border border-outline rounded-xl grid grid-cols-1 sm:grid-cols-5 gap-2 items-end">
                   <div className="flex flex-col gap-1">
                     <label className="text-[9px] uppercase font-bold text-on-surface-variant">Amount</label>
                     <input
                       type="number"
                       value={receiptFormData.amountReceived}
-                      onChange={(e) => setReceiptFormData(prev => ({ ...prev, amountReceived: e.target.value }))}
-                      className="px-2 py-1.5 bg-surface-container rounded-lg text-xs border border-outline-variant"
+                      readOnly
+                      title="A receipt records the full invoice amount"
+                      className="px-2 py-1.5 bg-surface-container-high rounded-lg text-xs border border-outline-variant opacity-80 cursor-not-allowed"
                     />
                   </div>
                   <div className="flex flex-col gap-1">
@@ -526,6 +527,16 @@ export default function Invoices({ invoices = [], setInvoices, onMarkPaid, curre
                       type="date"
                       value={receiptFormData.date}
                       onChange={(e) => setReceiptFormData(prev => ({ ...prev, date: e.target.value }))}
+                      className="px-2 py-1.5 bg-surface-container rounded-lg text-xs border border-outline-variant"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[9px] uppercase font-bold text-on-surface-variant">Notes / Reference</label>
+                    <input
+                      type="text"
+                      value={receiptFormData.notes}
+                      onChange={(e) => setReceiptFormData(prev => ({ ...prev, notes: e.target.value }))}
+                      placeholder="Optional"
                       className="px-2 py-1.5 bg-surface-container rounded-lg text-xs border border-outline-variant"
                     />
                   </div>
