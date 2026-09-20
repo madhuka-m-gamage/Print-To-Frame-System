@@ -32,3 +32,4 @@ Fabrication Kanban over `projects` (Pending, Ongoing, Ready For Inspection, Revi
 - Stock bars: `packStockBars` in `src/utils/cutListEngine.js` packs pieces first-fit-decreasing, one kerf per cut.
 
 - A job with only `totalSqFt` gets a 3:2 default frame of that full area (`defaultFrameDimensions`). `calculateCutList` returns `vRibCount` / `hRibCount`, which the blueprint draws. New projects carry `customerId` (email, else NIC). Job deletion is Admin only (case-insensitive) and audit logged as `PROJECT_DELETED`.
+- Frame width and height come from the lead's measured size (`dimensionsFromLead`) and are read-only here when `dimensionsLocked`. A manual job is linked to a deal (`dealId`, billed through the deal, no value) or non-billable (`billable: false`); never enter a price on a fabrication job. Blueprints upload to Storage (`blueprints/<jobNo>/`), with an inline fallback under 500KB.

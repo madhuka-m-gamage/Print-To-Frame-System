@@ -42,6 +42,7 @@ import { stripEmojis, sanitizeTechnicalScope } from '../../utils/validation';
 import { generateText } from '../../services/gemini';
 import { getExistingFinalInvoice } from '../../utils/entityUtils';
 import { logActivity } from '../../services/auditLog';
+import { NON_BILLABLE, resolveManualJobLink } from '../../utils/fabricationLink';
 import { STEEL_PROFILES, calculateCutList, mmToFtIn } from '../../utils/cutListEngine';
 
 const STAGES = ["Pending", "Ongoing", "Ready For Inspection", "Revision", "Completed"];
@@ -357,6 +358,7 @@ export default function FabricationWorks({
   partners, 
   currentUser,
   invoices = [],
+  deals = [],
   onSaveInvoice 
 }) {
   const isAdmin = String(currentUser?.role || "").toLowerCase() === "admin";
@@ -380,7 +382,7 @@ export default function FabricationWorks({
     note: "",
     assignee: "",
     flexReceived: false,
-    value: 0,
+    billingLink: "",
     totalSqFt: 0,
     frameWidth: 900,
     frameHeight: 600,
@@ -437,6 +439,11 @@ export default function FabricationWorks({
       toast.error("Please provide at least a title or brief scope for the fabrication job.");
       return;
     }
+    const link = resolveManualJobLink(form.billingLink, deals);
+    if (!link.ok) {
+      toast.error(link.error);
+      return;
+    }
     let jobNo;
     try {
       jobNo = await generateAtomicId('PTF');
@@ -450,7 +457,7 @@ export default function FabricationWorks({
     // Resolve customer info
     const custNic = form.customerNic || form.clientNIC || "";
     const custObj = customers?.find(c => c.nic === custNic);
-    const custName = custObj ? (custObj.type === "Business" ? custObj.businessName : custObj.name) : "Direct Customer";
+    const custName = custObj ? (custObj.type === "Business" ? custObj.businessName : custObj.name) : (link.billable ? "Direct Customer" : "Internal / extra work");
 
     // Auto-compute cut-list
     const initialCutList = calculateCutList({
@@ -480,7 +487,7 @@ export default function FabricationWorks({
       note: form.note || "",
       assignee: form.assignee || "",
       flexReceived: form.flexReceived || false,
-      value: Number(form.value) || 0,
+      value: 0,
       totalSqFt: Number(form.totalSqFt) || Math.round((Number(form.frameWidth) / 304.8) * (Number(form.frameHeight) / 304.8) * 10) / 10,
       frameWidth: Number(form.frameWidth) || 900,
       frameHeight: Number(form.frameHeight) || 600,
@@ -494,6 +501,7 @@ export default function FabricationWorks({
         qaPassed: false,
       },
       createdAt: now,
+      ...link.fields,
     };
 
     setProjects([newJob, ...projects]);
@@ -514,7 +522,7 @@ export default function FabricationWorks({
       note: "",
       assignee: "",
       flexReceived: false,
-      value: 0,
+      billingLink: "",
       totalSqFt: 0,
       frameWidth: 900,
       frameHeight: 600,
@@ -1564,15 +1572,19 @@ export default function FabricationWorks({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">
-                  Total Job Value (LKR)
+                  Billing
                 </label>
-                <input
-                  type="number"
-                  value={form.value}
-                  onChange={(e) => setForm({ ...form, value: parseFloat(e.target.value) || 0 })}
+                <select
+                  value={form.billingLink}
+                  onChange={(e) => setForm({ ...form, billingLink: e.target.value })}
                   className="w-full p-3 bg-surface-container-low border border-outline-variant rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-on-surface"
-                  placeholder="e.g. 150000"
-                />
+                >
+                  <option value="">Select a deal or non-billable…</option>
+                  <option value={NON_BILLABLE}>Non-billable (internal / extra work)</option>
+                  {deals.map(d => (
+                    <option key={d.id} value={d.id}>{d.jobNo || d.id} · {d.name || 'Unnamed'}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
