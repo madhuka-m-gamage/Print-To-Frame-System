@@ -15,7 +15,9 @@ Progress tracker, overwritten in place. Outputs go into the structure listed in 
 
 ## Testing and remediation tracks
 
-The suite is built first (Part A), then characterisation tests are written (Part B, deadlines noted), then Phase 7 fixes land against that safety net. Guide: [docs/04_workflows/TESTING.md](docs/04_workflows/TESTING.md). One branch per item from `claude/dev`, one PR each; never push to `main`, never deploy rules without approval.
+The suite is built first (Part A), then characterisation tests are written (Part B, deadlines noted), then Phase 7 fixes land against that safety net. Guide: [docs/04_workflows/TESTING.md](docs/04_workflows/TESTING.md). One branch per item from `claude/dev`, one PR each into `staging`; never push to `main`, never deploy rules without approval.
+
+Workflow per item: build on its branch, test locally (`npm run lint`, `npm run test:all`, `npm run build`, `npm run test:e2e` when visible), merge to `staging` and verify there, then promote to `main`. Decisions: keep the x0.25 invoice print scaling; lead stage advance stays manual; Managers may administer users (not Admins, not their own role); `users` readable by Admin, self, or roles with `agents:view` / `messages:view`; final-invoice guard is client-side `getExistingFinalInvoice`. Separate staging/production environments (Firebase, Vercel, domain) are a later, independent track, so until then rules deploys and matrix writes hit the live project and are checked by hand.
 
 ### Part A: testing suite setup
 Order: A1, then A2/A3/A4 (any order), then A7 (CI), then A5 -> A6 whenever browser tests are wanted.
@@ -27,8 +29,10 @@ Order: A1, then A2/A3/A4 (any order), then A7 (CI), then A5 -> A6 whenever brows
 - [x] A5: emulator wiring in `src/services/firebase.js` + seed data (only `src` change in Part A)
 - [x] A6: Playwright runner and sign-in smoke journey (needs A5)
 
+- [x] T0: suite on `main` (PRs #4, #5); verified on Node 22: lint clean, unit 57, api 3, component 3, rules 20, build OK
+
 ### Part B: test authoring
-- [ ] B1: money-path unit tests (before Phase 7 phases 2.1-2.4)
+- [ ] B1: money-path unit tests (before Phase 7 phases 2.1-2.4; characterisation first)
 - [ ] B2: supporting-module unit tests (before 6.3 / 6.6)
 - [ ] B3: API handler cases (before 3.6)
 - [ ] B4: Firestore rules cases (before 3.4 / 3.5; replaces Phase 7 prompt 3.1)
@@ -45,11 +49,12 @@ Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 be
 - [ ] 2.4: Deals pricing and commission
 - [ ] 2.5: receipts
 - [ ] 2.6: invoice edit policy
-- [ ] 3.1: superseded by B4
+- [x] 3.1: superseded by B4
+- Dependencies: B1 before 2.1-2.4; B3 before 3.6; B4 before 3.4/3.5; B5 before 4.1; B2 before 6.3/6.6; 3.2 and 3.3 before 3.5; 3.4d before 4.x, 5.2, 6.2; 3.5d and 3.6 before 5.3
 - [ ] 3.2: client RBAC prerequisites and matrix defaults
 - [ ] 3.3: live permissions migration (needs approval to write)
 - [ ] 3.4 / 3.4d: additive rules, then deploy (needs approval)
-- [ ] 3.5 / 3.5d: restrictive rules, staging smoke test, then deploy (needs approval)
+- [ ] 3.5 / 3.5d: restrictive rules, RBAC E2E on the emulator, deploy (needs approval), then manual role check on the live site
 - [ ] 3.6: admin API
 - [ ] 4.1-4.3: payouts, referral lineage, claims and notifications
 - [ ] 5.1-5.3: Google scopes, registration, user lifecycle
