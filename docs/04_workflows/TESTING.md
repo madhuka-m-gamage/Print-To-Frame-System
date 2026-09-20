@@ -116,7 +116,7 @@ npm run dev:emulated                                                            
 `.nvmrc` pins Node 22 and CI reads it (`node-version-file`). Some test dependencies need a recent Node: `jsdom` 29 needs 20.19 or later, and crashes on older 20.x. `package.json` deliberately has no `engines` field, because Vercel picks its build runtime from it and this change is about tests only.
 
 ## Coverage map
-Snapshot from `npm run coverage` (unit and API tests only; overall about 6% of `src` and `api`, almost all in `utils`). "Real" means the tests assert intended behaviour; "characterisation" means they record current behaviour, defects included. Refresh this table when tests land.
+Snapshot from `npm run coverage` (unit and API tests only, so the component and rules layers are not counted; overall about 9% of `src` and `api` statements, almost all in `utils`; refreshed after Phase 7 step 2). "Real" means the tests assert intended behaviour; "characterisation" means they record current behaviour, defects included. Refresh this table when tests land.
 
 | Code | Covered by | Kind | Gaps |
 |---|---|---|---|
@@ -171,9 +171,9 @@ Tests that deliberately lock in a known defect, with the finding that will chang
 Planned entries (later Part B): open `quotations`, `messages`, `users` and `counters` rules (B4).
 
 ## Roadmap
-Part A (setup) is done: all five layers and CI exist. Part B fills them in; each item is independent. B1 and B4 have deadlines because Phase 7 changes the behaviour they record.
-- **B1** money-path unit tests (before Phase 7 items 2.1 to 2.4) and **B4** rules cases (before 3.4 and 3.5)
-- **B3** API handler cases (before 3.6), **B5** component cases (before 4.1), **B2** supporting unit tests (before 6.3 and 6.6), **B6** E2E journeys
+Part A (setup) is done: all five layers and CI exist. Part B status:
+- **Done:** B1 money-path unit tests, B3 API handler cases, B4 rules cases, B5 component wiring cases.
+- **Open:** B2 supporting unit tests (before Phase 7 6.3 and 6.6) and B6 E2E journeys (money journey after Phase 7 step 2, RBAC journey after 3.5d).
 Progress is tracked in `PLAN.md`.
 
 ## Gotchas
