@@ -11,7 +11,7 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { PageHeader, FilterBar, StatusBadge, UserAvatar, EmailTemplateModal } from "../common/ui";
 import { useMessaging, getChannelId } from "../../context/MessagingContext";
 
-export default function Messages({ users = [], currentUser, onUnreadCountChange }) {
+export default function Messages({ users = [], currentUser }) {
   const { 
     messages, 
     unreadCounts, 
@@ -346,7 +346,7 @@ export default function Messages({ users = [], currentUser, onUnreadCountChange 
                   <div className="py-16 text-center text-on-surface-variant text-xs">
                     <MessageSquare size={36} className="mx-auto mb-2 opacity-25" aria-hidden="true" />
                     <p className="font-bold text-on-surface">Start a conversation with {activeUser.name}</p>
-                    <p className="text-[11px] text-on-surface-variant mt-0.5">Direct messages are encrypted and synchronized across all devices in real time.</p>
+                    <p className="text-[11px] text-on-surface-variant mt-0.5">Direct messages are synchronized across all devices in real time.</p>
                   </div>
                 ) : (
                   activeChannelMessages.map((msg, idx) => {

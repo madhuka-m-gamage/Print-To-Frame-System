@@ -163,7 +163,7 @@ Tests that deliberately lock in a known defect, with the finding that will chang
 | `Deals.test.jsx` "creates another Final invoice even when the deal already has one" | deal completion never checks existing Final invoices | invoicing D-1, deals D-1 (Phase 7 2.1) |
 | `FabricationWorks.test.jsx` "creates a Final invoice even when one already exists for the job" | QA pass is never given the invoices list | invoicing D-1, fabrication F-1 (Phase 7 2.1) |
 | `Partners.test.jsx` "shows a success toast on Disburse Payout but writes nothing" | Disburse Payout is a toast only | partners D-1 (Phase 7 4.1) |
-| `App.signOut.test.jsx` "keeps the previous user's unread notification count after sign-out" | `handleSignOut` does not clear notifications | notifications NOTIF-01 (Phase 7 1) |
+| ~~`App.signOut.test.jsx` keeps the previous user's unread count~~ | flipped in Phase 7 1: `handleSignOut` now clears notifications, and the test asserts the count is gone | notifications NOTIF-01 |
 | `adminUserAuth.test.js` "lets a Deactivated caller with isApproved true through the approval gate" | `admin-user.js` trusts `isApproved` and ignores `status: 'Deactivated'` | user-management-rbac finding 1 (Phase 7 3.6) |
 | `adminUserAuth.test.js` "rejects a Manager caller today because only Admin is allowed" | only Admin may call the endpoint | employees D4 (Phase 7 3.6) |
 | `logisticsEngine.test.js` "reports nothing to collect for a job with only a paid Advance invoice" | advance-only job shows "all settled" | logistics D-4 (Phase 7 2.3) |
