@@ -31,7 +31,7 @@ export const DEFAULT_PERMISSIONS = {
     dashboard: full(), notifications: full(), messages: full(),
     leads: full(), pipeline: full(), customers: full(), partners: full(),
     invoices: full(), receipts: { ...full(), delete: false }, projects: full(), logistics: full(),
-    agents: read(), calculator: full(), admin: none(),
+    agents: full(), calculator: full(), admin: none(),
   },
   Sales: {
     quotations: full(),

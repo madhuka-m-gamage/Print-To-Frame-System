@@ -129,7 +129,7 @@ Snapshot from `npm run coverage` (unit and API tests only, so the component and 
 | `api/_lib/firebaseAdmin.js` | `tests/unit/firebaseAdmin.test.js` | real | initialisation paths |
 | `api/admin-user.js` | `tests/api/adminUser.test.js` (405, missing token, CORS), `adminUserAuth.test.js` (invalid token, pending, deactivated, Manager rules, payload checks), `tests/integration/adminUser.test.js` (Admin SDK calls) | real | create, reset and delete are covered only by the emulator file |
 | `api/generate.js`, `api/send-email.js` | `tests/api/generate.test.js`, `sendEmail.test.js` | real | generate: auth gate, origin echo, oversize audio, model fallback (400 stops; 404, 503, 429 fall through); send-email: auth gate, payload checks, template render, missing SMTP env. The hardcoded origin list is asserted only through generate |
-| `firestore.rules` | `tests/integration/firestoreRules.test.js` (`users`, catch-all), `invoiceNumbering.test.js` (`counters`), `rulesAccess.test.js` (leads, invoices, partners, settings, audit log, public forms) | real, plus characterisation of 13 known gaps; 12 `it.todo` entries name the Phase 7 target | `deals`, `customers`, `receipts`, `projects`, `logistics`, `pricing`, `typing_indicators` blocks not exercised directly |
+| `firestore.rules` | `tests/integration/firestoreRules.test.js` (`users`, catch-all), `invoiceNumbering.test.js` (`counters`), `rulesAccess.test.js` (leads, invoices, partners, users, messages, quotations, counters, payouts and claims, settings, audit log, public forms) | real, including the Phase 7 3.4 and 3.5 rules; a few characterisation rows remain (see the register); 2 `it.todo` entries name follow-ups | `deals`, `customers`, `receipts`, `projects`, `logistics`, `pricing`, `typing_indicators` blocks not exercised directly |
 | `src/services/pricingEngine.js` | `tests/unit/pricingEngine.test.js` | real (tiers, cost stack) plus characterisation (discount, commission, Profit/SQ) | rows above |
 | `src/utils/invoiceTemplate.js`, `receiptTemplate.js`, `dealSettlement.js`, `invoiceSettlement.js` | `tests/unit/invoiceTemplate.test.js`, `receiptTemplate.test.js`, `dealSettlement.test.js`, `invoiceSettlement.test.js` | real (milestone maths incl. discount and tax, words, labels, deal final amounts and commission) | print output only asserted by substring |
 | `src/utils/validation.js`, `stringMatch.js`, `csvExport.js` | none | | (B2) |
@@ -147,20 +147,20 @@ Tests that deliberately lock in a known defect, with the finding that will chang
 | `pricingEngine.test.js` "computes Profit / SQ as (grossProfit + logistics + qa + salesCost) / sqFt" | `internalCostPerSq` includes costs the audit says it should not | cost-calculator-quotation finding 1 (Phase 7 6.6) |
 | ~~`invoiceTemplate.test.js` scales each line item and ignores discountPct and taxPct~~ | flipped in Phase 7 2.4: line totals apply discount and tax before the milestone scaling | invoicing Phase 2 item 5 |
 | ~~`logisticsEngine.test.js` doubles the COD balance for two unpaid Finals~~ | flipped in Phase 7 2.3: only the latest unpaid Final counts | invoicing D-2, logistics D-4 |
-| `rulesAccess.test.js` "lets a Customer read and write quotations" | `/quotations` open to any signed-in user | rbac finding 5 (Phase 7 3.5) |
-| `rulesAccess.test.js` "lets any signed-in user read a conversation they are not in and forge a sender" | `/messages` read and create open | messaging D-MSG-01, D-MSG-02 (3.5) |
-| `rulesAccess.test.js` "lets a Customer read another user's profile" | `/users` read open | rbac finding 12 (3.5) |
+| ~~rulesAccess.test.js lets a Customer read and write quotations~~ | flipped in Phase 7 3.5: quotations follow the quotations permission | rbac finding 5 |
+| ~~rulesAccess.test.js lets any signed-in user read a conversation they are not in and forge a sender~~ | flipped in Phase 7 3.5: participants only, and sending as yourself | messaging D-MSG-01, D-MSG-02 |
+| ~~rulesAccess.test.js lets a Customer read another user's profile~~ | flipped in Phase 7 3.5: Admin, self, or agents/messages view | rbac finding 12 |
 | ~~`rulesAccess.test.js` lets a Customer write any counter to any value~~ | flipped in Phase 7 3.4: known prefixes only and at most one step ahead |
 | `rulesAccess.test.js` "still lets a signed-in user lower a counter" | the counters rule has no lower bound (it would reject legitimate writes under transaction contention) | numbering moved server-side (not planned yet) |
 | ~~`rulesAccess.test.js` denies partner_payouts and referral_claims to everyone~~ | flipped in Phase 7 3.4: new match blocks | partners D-6 |
-| `rulesAccess.test.js` "lets a Deactivated user with a permitted role still create a lead" | rules ignore `status` | rbac finding 1 (3.5) |
+| ~~rulesAccess.test.js lets a Deactivated user with a permitted role still create a lead~~ | flipped in Phase 7 3.5: Deactivated and Disabled are denied everywhere | rbac finding 1 |
 | ~~`rulesAccess.test.js` does not treat the bootstrap email as Admin~~ | flipped in Phase 7 3.4: `isAdmin()` accepts the bootstrap emails | auth DP-06 |
 | ~~`rulesAccess.test.js` rejects a pending applicant updating their own pendingUsers document~~ | flipped in Phase 7 3.4: self-update allowed, approval not | auth DP-02 |
-| `rulesAccess.test.js` "rejects a Manager changing or deleting another user" | user administration is Admin-only | employees D4 (3.5) |
-| `rulesAccess.test.js` "blocks a Manager with invoices:delete ... from deleting an invoice" | delete is Admin-only on invoices | rbac finding 6 (3.5) |
-| `rulesAccess.test.js` "denies a lead read to a role that has pipeline view but not leads view" | leads read needs the leads permission | deals D-8 (3.5) |
+| ~~rulesAccess.test.js rejects a Manager changing or deleting another user~~ | flipped in Phase 7 3.5: Managers administer non-Admin users within guards | employees D4 |
+| ~~rulesAccess.test.js blocks a Manager with invoices:delete ... from deleting an invoice~~ | flipped in Phase 7 3.5: delete follows the module's delete permission | rbac finding 6 |
+| ~~rulesAccess.test.js denies a lead read to a role that has pipeline view but not leads view~~ | flipped in Phase 7 3.5: leads OR pipeline reads; writes follow isDeal | deals D-8 |
 | `rulesAccess.test.js` "denies an anonymous read of an Active partner" | partners are never public; D-5 is held because a partner document holds bank details | a decision on a public partner-profile document |
-| `rulesAccess.test.js` "lets a Partner read another partner's document ..." | the rule checks the partners permission, not record ownership (the matrix now grants Partner view and edit only) | Phase 7 3.5 |
+| `rulesAccess.test.js` "lets a Partner read another partner's document ..." | the rule checks the partners permission, not record ownership (the matrix now grants Partner view and edit only) | follow-up: Partners screen queries its own document, then the rule is limited to it |
 | ~~`Deals.test.jsx` creates another Final invoice when the deal already has one~~ | flipped in Phase 7 2.1: completion skips the create when `getExistingFinalInvoice` finds one | invoicing D-1, deals D-1 |
 | ~~`FabricationWorks.test.jsx` creates a Final invoice when one already exists~~ | flipped in Phase 7 2.1: App passes invoices and QA pass skips the create | invoicing D-1, fabrication F-1 |
 | `Partners.test.jsx` "shows a success toast on Disburse Payout but writes nothing" | Disburse Payout is a toast only | partners D-1 (Phase 7 4.1) |

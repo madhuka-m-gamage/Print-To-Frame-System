@@ -49,10 +49,12 @@ vi.mock('../../src/context/MessagingContext', () => ({
 
 const { default: App } = await import('../../src/App');
 const { subscribeToCollection } = await import('../../src/services/firestoreSync');
+const { collection } = await import('firebase/firestore');
 
 const listenersFor = async (role) => {
   authState.role = role;
   subscribeToCollection.mockClear();
+  collection.mockClear();
   render(<PermissionsProvider><App /></PermissionsProvider>);
   await waitFor(() => expect(authState.callback).toBeTruthy());
   await act(async () => { await authState.callback({ email: 'user@example.com', displayName: 'User' }, 'token'); });
@@ -87,5 +89,21 @@ describe('App Firestore listeners follow the role permissions', () => {
     for (const name of ['customers', 'partners', 'projects', 'logistics', 'leads', 'invoices', 'receipts', 'quotations', 'partner_applications']) {
       expect(opened.has(name), name).toBe(true);
     }
+  });
+
+  it('lists the users collection only for roles that manage users or use messaging', async () => {
+    const collectionNames = () => collection.mock.calls.map(([, name]) => name);
+    await listenersFor('Sales');
+    expect(collectionNames()).toContain('users');
+    await listenersFor('Partner');
+    expect(collectionNames()).not.toContain('users');
+  });
+
+  it('opens the pending sign-up listener for Admin and for roles that can edit users, not for Sales', async () => {
+    const collectionNames = () => collection.mock.calls.map(([, name]) => name);
+    await listenersFor('Manager');
+    expect(collectionNames()).toContain('pending_users');
+    await listenersFor('Sales');
+    expect(collectionNames()).not.toContain('pending_users');
   });
 });
