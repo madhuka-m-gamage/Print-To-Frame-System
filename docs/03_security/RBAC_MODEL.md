@@ -54,3 +54,13 @@ Two hardcoded owner emails are treated as a self-healing super-admin: forced bac
 
 - The live `settings/permissions` document may differ from the defaults above; it has not been read.
 - `CLAUDE.md` says approval auto-provisions partners / customers records; the code pre-fills forms instead ([user-management-rbac.md](../02_modules/user-management-rbac.md)).
+
+## Live matrix drift (read-only fetch of `settings/permissions`, 2026-09-20)
+
+`settings/permissions` is world-readable by the rules, so it was read without credentials and compared with `DEFAULT_PERMISSIONS` after Phase 7 step 3.2. Facts read from the live document (not from the repo):
+
+- It has no `receipts` and no `quotations` module for any role. Under the rules a non-Admin has no receipt access, and `quotations` will need the key when step 3.5 checks it.
+- It grants more than the defaults in several places: Support has view, create and edit on most modules (including `agents`); Operations has view, create and edit on `leads`, `pipeline` and `agents`; Logistics has full access to `invoices` and `calculator` and view, create, edit on `partners`; Manager has full `agents` and `admin`; Customer and Business Client have full `messages`.
+- It grants less in others: Customer and Business Client have no view of `invoices`, `projects` or `logistics`, where the defaults give read.
+
+Applying the defaults wholesale would change 58 role and module cells, most of them removals of access that roles hold today. The safe first step is additive only (the two missing modules, via the Permissions Manager button); the removals are a business decision to make role by role before the restrictive rules ship.

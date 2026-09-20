@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Phase 7 step 3.3 (prepared, no live write): Permissions Manager shows a banner and an "Add N missing modules with defaults" button when the saved matrix lacks modules (today `receipts` and `quotations`); it fills only absent cells from `DEFAULT_PERMISSIONS`, leaves the rest untouched, and nothing is saved until an Admin reviews and clicks Save.
 - Phase 7 step 3.6 (`api/admin-user.js`): a Deactivated or Disabled caller is rejected even with `isApproved: true`; Managers may now call the endpoint but cannot grant Admin or act on an Admin's account; the token email is trimmed and lowercased before lookups. Two B3 characterisation tests flipped.
 - Phase 7 step 3.2 (client RBAC): App opens each Firestore listener only when the role can read it (quotations follow leads/pipeline until every live matrix has a `quotations` module; partner applications are Admin only); `DEFAULT_PERMISSIONS` gains a `quotations` module and changes Manager receipts delete to false, Manager `admin` to none, Operations invoices to view+create, Logistics invoices to read, Partner partners to view+edit, Customer and Business Client receipts and messages to none; PermissionsManager adds the Quotations row and locks the System Overview module to Admin. `PERMISSIONS_FIXTURE` synced. **The live `settings/permissions` document is unchanged; it needs step 3.3.**
 - Coverage map refreshed after Phase 7 step 2 (about 9% of `src` and `api` statements from unit and API tests); roadmap in `TESTING.md` now lists B2 and B6 as the open items.
