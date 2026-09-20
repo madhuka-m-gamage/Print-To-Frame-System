@@ -237,3 +237,15 @@ export function calculateCODFromInvoices(invoices = [], linkedJobNo = '', custom
   };
 }
 
+/**
+ * The one invoice a driver can record cash against: the primary invoice, when it is genuinely
+ * unpaid. Nothing is collectable while the Final invoice has not been created yet (there is
+ * nothing to mark paid), or once the invoice is paid, cancelled or void.
+ */
+export function getCollectableInvoice({ primaryInvoice, finalInvoicePending } = {}) {
+  if (!primaryInvoice || finalInvoicePending) return null;
+  const status = String(primaryInvoice.status || '').toLowerCase();
+  if (status === 'paid' || status === 'cancelled' || status === 'void') return null;
+  return primaryInvoice;
+}
+

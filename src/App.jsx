@@ -567,9 +567,52 @@ function App() {
           ? `${targetInvoice.type || 'Invoice'} payment recorded — deal fully settled!`
           : `${targetInvoice.type || 'Invoice'} payment recorded and synchronized.`
       );
+      return true;
     } catch (err) {
       console.error("Error syncing paid status to lead/invoices:", err);
       toast.error("Failed to update payment status: " + err.message);
+      return false;
+    }
+  };
+
+  // Cash collected by the driver on delivery: marks the invoice Paid through the same handler the
+  // Invoices screen uses (so the lead, full-settlement and commission effects all fire), records
+  // who collected and how, then issues the receipt. A receipt is only issued once the payment is saved.
+  const handleCollectCod = async (invoice, { collectedBy } = {}) => {
+    const docId = invoice?._firestoreId || invoice?.id;
+    if (!docId) return false;
+    if (invoice.status === 'Paid') {
+      toast.info(`Invoice ${docId} is already paid.`);
+      return false;
+    }
+    const collector = collectedBy || currentUser?.name || 'Driver';
+    try {
+      const paid = invoice.leadId
+        ? await handleMarkInvoicePaid(invoice.leadId, docId)
+        : (await updateDocument(COLLECTIONS.INVOICES, docId, { status: 'Paid' }), true);
+      if (paid === false) return false;
+
+      const paidAt = new Date().toISOString();
+      const details = { paidAt, paymentMethod: 'Cash (COD)', collectedBy: collector };
+      await updateDocument(COLLECTIONS.INVOICES, docId, details);
+      setInvoices(prev => prev.map(inv => ((inv._firestoreId || inv.id) === docId ? { ...inv, status: 'Paid', ...details } : inv)));
+
+      await handleGenerateReceipt(
+        { ...invoice, status: 'Paid' },
+        { amountReceived: invoice.amount, paymentMethod: 'Cash (COD)', notes: `Collected on delivery by ${collector}` }
+      );
+      await logActivity(
+        currentUser?.email || currentUser?.identifier || 'unknown',
+        currentUser?.name || 'Unknown',
+        'COD_COLLECTED',
+        'Logistics',
+        `Cash collected on delivery for invoice ${docId}: LKR ${invoice.amount}, by ${collector}`
+      );
+      return true;
+    } catch (err) {
+      console.error('Failed to record the cash collection:', err);
+      toast.error('Failed to record the cash collection: ' + err.message);
+      return false;
     }
   };
 
@@ -1409,6 +1452,7 @@ function App() {
               setProjects={setProjects}
               invoices={invoices}
               partners={partners}
+              onCollectCod={handleCollectCod}
             />
           )}
 

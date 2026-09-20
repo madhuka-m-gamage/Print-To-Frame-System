@@ -191,3 +191,21 @@ describe('logisticsEngine', () => {
   });
 });
 
+
+describe('getCollectableInvoice (Phase 7 6.5b)', () => {
+  it('offers only a genuinely unpaid primary invoice', async () => {
+    const { getCollectableInvoice } = await import('../../src/utils/logisticsEngine');
+    const unpaid = { id: 'INV-FIN-0001', status: 'Unpaid' };
+    expect(getCollectableInvoice({ primaryInvoice: unpaid })).toBe(unpaid);
+    expect(getCollectableInvoice({ primaryInvoice: { status: 'Paid' } })).toBeNull();
+    expect(getCollectableInvoice({ primaryInvoice: { status: 'Cancelled' } })).toBeNull();
+    expect(getCollectableInvoice({ primaryInvoice: { status: 'Void' } })).toBeNull();
+  });
+
+  it('offers nothing while the Final invoice does not exist yet, or when there is no invoice', async () => {
+    const { getCollectableInvoice } = await import('../../src/utils/logisticsEngine');
+    expect(getCollectableInvoice({ primaryInvoice: { status: 'Unpaid' }, finalInvoicePending: true })).toBeNull();
+    expect(getCollectableInvoice({})).toBeNull();
+    expect(getCollectableInvoice()).toBeNull();
+  });
+});
