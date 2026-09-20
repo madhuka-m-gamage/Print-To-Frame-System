@@ -28,7 +28,7 @@ Map, then per-module Claude instructions.
 
 - [auth](docs/02_modules/auth.md) | [instructions](docs/02_modules/auth/CLAUDE.md) | [findings](docs/02_modules/auth/FINDINGS.md)
 - [cost-calculator-quotation](docs/02_modules/cost-calculator-quotation.md) | [instructions](docs/02_modules/cost-calculator-quotation/CLAUDE.md)
-- [customers](docs/02_modules/customers.md) | [instructions](docs/02_modules/customers/CLAUDE.md)
+- [customers](docs/02_modules/customers.md) | [instructions](docs/02_modules/customers/CLAUDE.md) | [findings](docs/02_modules/customers/FINDINGS.md)
 - [deals](docs/02_modules/deals.md) | [instructions](docs/02_modules/deals/CLAUDE.md) | [findings](docs/02_modules/deals/FINDINGS.md)
 - [employees](docs/02_modules/employees.md) | [instructions](docs/02_modules/employees/CLAUDE.md)
 - [internal-messaging](docs/02_modules/internal-messaging.md) | [instructions](docs/02_modules/internal-messaging/CLAUDE.md)
