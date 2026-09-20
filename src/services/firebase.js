@@ -5,9 +5,9 @@
  */
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, deleteDoc, getDocFromServer } from 'firebase/firestore';
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { getStorage } from 'firebase/storage';
+import { getFirestore, connectFirestoreEmulator, collection, addDoc, getDocs, updateDoc, doc, deleteDoc, getDocFromServer } from 'firebase/firestore';
+import { getAuth, connectAuthEmulator, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { getStorage, connectStorageEmulator } from 'firebase/storage';
 
 import fallbackConfig from '../../firebase-applet-config.json';
 
@@ -38,6 +38,21 @@ const getDatabaseInstance = () => {
 export const db = getDatabaseInstance();
 export const auth = getAuth(app);
 export const storage = getStorage(app);
+
+// Test-only: point every Firebase client at the local emulators. Fails closed: it needs the
+// explicit flag AND either the dev server or a demo- project id, so a production build with a
+// real project id can never attach to (or be silently redirected to) an emulator.
+if (
+  import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true' &&
+  (import.meta.env.DEV || String(firebaseConfig.projectId).startsWith('demo-'))
+) {
+  connectFirestoreEmulator(db, '127.0.0.1', 8080);
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+  connectStorageEmulator(storage, '127.0.0.1', 9199);
+  console.warn(
+    `[firebase] USING EMULATORS for project "${firebaseConfig.projectId}": firestore 127.0.0.1:8080, auth 127.0.0.1:9099, storage 127.0.0.1:9199. Production Firebase is NOT in use.`
+  );
+}
 
 // Google Auth Provider (Standard Identity Scopes)
 const provider = new GoogleAuthProvider();

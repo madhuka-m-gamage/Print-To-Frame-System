@@ -29,8 +29,13 @@ View your app in AI Studio: https://ai.studio/apps/66900443-b6c9-4743-892c-f50b5
 5. Run the app:
    `npm run dev`
 
-## Testing
+## Running the tests
 
-- `npm test` — Vitest unit tests for pure logic (email templates, RBAC permission shape). No setup needed.
-- `npm run test:rules` — integration tests against a real local Firebase Emulator, proving `firestore.rules` actually enforces what it claims to (e.g. that a non-admin can't grant themselves Admin via a direct Firestore write). Requires Java (for the emulator) but no real Firebase project or credentials — `firebase-tools` and the emulator config are already checked in.
-- `npm run test:all` — both, in sequence.
+- `npm test` — Vitest unit tests for pure logic. No setup needed.
+- `npm run test:api` — API handler tests (`api/*.js`) with mocked Firebase Admin, Gemini and SMTP.
+- `npm run test:component` — React component tests (jsdom + React Testing Library).
+- `npm run test:rules` — integration tests against a real local Firebase Emulator, proving `firestore.rules` enforces what it claims to (e.g. that a non-admin can't grant themselves Admin via a direct Firestore write). Needs Java and the `firebase` CLI (`npm install -g firebase-tools`), but no real Firebase project or credentials.
+- `npm run test:all` — all of the above, in sequence.
+- `npm run coverage` — unit and API tests with a coverage report in `coverage/` (no threshold).
+
+CI (`.github/workflows/test.yml`) runs lint, unit, API, component, build and the rules suite on pull requests to `staging` and `main`. See `docs/04_workflows/TESTING.md` for adding tests.
