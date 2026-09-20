@@ -26,6 +26,7 @@ One-stop map of every document in this repo. Update this file whenever a doc is 
 
 Map, then per-module Claude instructions.
 
+<<<<<<< HEAD
 - [auth](docs/02_modules/auth.md) | [instructions](docs/02_modules/auth/CLAUDE.md) | [findings](docs/02_modules/auth/FINDINGS.md)
 - [cost-calculator-quotation](docs/02_modules/cost-calculator-quotation.md) | [instructions](docs/02_modules/cost-calculator-quotation/CLAUDE.md) | [findings](docs/02_modules/cost-calculator-quotation/FINDINGS.md)
 - [customers](docs/02_modules/customers.md) | [instructions](docs/02_modules/customers/CLAUDE.md) | [findings](docs/02_modules/customers/FINDINGS.md)
@@ -42,6 +43,24 @@ Map, then per-module Claude instructions.
 - [profile-settings](docs/02_modules/profile-settings.md) | [instructions](docs/02_modules/profile-settings/CLAUDE.md) | [findings](docs/02_modules/profile-settings/FINDINGS.md)
 - [receipts](docs/02_modules/receipts.md) | [instructions](docs/02_modules/receipts/CLAUDE.md) | [findings](docs/02_modules/receipts/FINDINGS.md)
 - [user-management-rbac](docs/02_modules/user-management-rbac.md) | [instructions](docs/02_modules/user-management-rbac/CLAUDE.md) | [findings](docs/02_modules/user-management-rbac/FINDINGS.md)
+=======
+- [auth](docs/02_modules/auth.md) | [instructions](docs/02_modules/auth/CLAUDE.md)
+- [cost-calculator-quotation](docs/02_modules/cost-calculator-quotation.md) | [instructions](docs/02_modules/cost-calculator-quotation/CLAUDE.md)
+- [customers](docs/02_modules/customers.md) | [instructions](docs/02_modules/customers/CLAUDE.md)
+- [deals](docs/02_modules/deals.md) | [instructions](docs/02_modules/deals/CLAUDE.md)
+- [employees](docs/02_modules/employees.md) | [instructions](docs/02_modules/employees/CLAUDE.md) | [findings](docs/02_modules/employees/FINDINGS.md)
+- [internal-messaging](docs/02_modules/internal-messaging.md) | [instructions](docs/02_modules/internal-messaging/CLAUDE.md)
+- [invoicing](docs/02_modules/invoicing.md) | [instructions](docs/02_modules/invoicing/CLAUDE.md)
+- [leads](docs/02_modules/leads.md) | [instructions](docs/02_modules/leads/CLAUDE.md)
+- [notifications](docs/02_modules/notifications.md) | [instructions](docs/02_modules/notifications/CLAUDE.md)
+- [operations-fabrication](docs/02_modules/operations-fabrication.md) | [instructions](docs/02_modules/operations-fabrication/CLAUDE.md)
+- [operations-inspection](docs/02_modules/operations-inspection.md) | [instructions](docs/02_modules/operations-inspection/CLAUDE.md)
+- [operations-logistics](docs/02_modules/operations-logistics.md) | [instructions](docs/02_modules/operations-logistics/CLAUDE.md)
+- [partners](docs/02_modules/partners.md) | [instructions](docs/02_modules/partners/CLAUDE.md)
+- [profile-settings](docs/02_modules/profile-settings.md) | [instructions](docs/02_modules/profile-settings/CLAUDE.md)
+- [receipts](docs/02_modules/receipts.md) | [instructions](docs/02_modules/receipts/CLAUDE.md)
+- [user-management-rbac](docs/02_modules/user-management-rbac.md) | [instructions](docs/02_modules/user-management-rbac/CLAUDE.md)
+>>>>>>> review-employees
 
 ## Security
 
