@@ -9,7 +9,7 @@ import DeleteModal from '../common/DeleteModal';
 import { PageHeader, FilterBar, StatusBadge, KanbanColumn, KanbanCard, DetailModalLayout, DetailModalHeader, DetailModalFooter } from '../common/ui';
 import SortableTable from '../common/ui/SortableTable';
 import { addDocument, updateDocument, deleteDocument, COLLECTIONS } from '../../services/firestoreSync';
-import { sanitizeTechnicalScope, stripEmojis } from '../../utils/validation';
+import { sanitizeTechnicalScope, stripEmojis, phonesMatch } from '../../utils/validation';
 import { exportToCsv } from '../../utils/csvExport';
 import { logActivity } from '../../services/auditLog';
 import { matchesEntity } from '../../utils/entityUtils';
@@ -441,7 +441,7 @@ export default function Leads({
     if (updatedLead.name && setCustomers) {
       const match = customers.find(c => 
         (updatedLead.email && c.email === updatedLead.email) || 
-        (updatedLead.phone && c.phone === updatedLead.phone)
+        phonesMatch(c.phone, updatedLead.phone)
       );
 
       if (match) {
@@ -533,7 +533,7 @@ export default function Leads({
     if (convertedLead.name && setCustomers) {
       const match = customers.find(c => 
         (convertedLead.email && c.email === convertedLead.email) || 
-        (convertedLead.phone && c.phone === convertedLead.phone)
+        phonesMatch(c.phone, convertedLead.phone)
       );
 
       if (match) {
