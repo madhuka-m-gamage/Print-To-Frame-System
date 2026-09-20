@@ -33,6 +33,7 @@ import { doc, getDoc, setDoc, collection, getDocs, deleteDoc, onSnapshot } from 
 import { subscribeToCollection, addDocument, updateDocument, batchWrite, COLLECTIONS, generateInvoiceId, deriveReceiptId, createDocumentIfAbsent } from "./services/firestoreSync";
 import { toast } from "./utils/toast";
 import { isFullyPaid } from "./utils/invoiceSettlement";
+import { newUserAction, shouldEvict } from "./utils/authFlow";
 import { UserAvatar } from "./components/common/ui";
 
 // Components
@@ -234,6 +235,7 @@ function App() {
   const [pendingUsers, setPendingUsers] = useState([]);
 
   const [loginError, setLoginError] = useState("");
+  const registeringRef = useRef(false);
   const [registerSuccess, setRegisterSuccess] = useState("");
 
   
@@ -670,6 +672,7 @@ function App() {
 
             if (userData.isApproved || userData.status === 'Active' || userData.status === undefined || isSuperAdmin) {
               setCurrentUser({ ...userData, role: isSuperAdmin ? 'Admin' : userData.role, isApproved: true, status: 'Active' });
+              logActivity(emailKey, userData.name || user.displayName || emailKey, 'LOGIN', 'Auth', 'User session authenticated.');
             } else {
               logout();
               setLoginError("Your account has been disabled or deactivated.");
@@ -685,11 +688,15 @@ function App() {
             } else {
               console.log("3. User not found, checking admin conditions");
               const isAdminEmail = isSuperAdminEmail(emailKey);
+              const action = newUserAction({ isBootstrapAdmin: isAdminEmail, registering: registeringRef.current });
 
               // Only the bootstrap-admin emails skip the pendingUsers approval queue.
               // Every other first-time sign-in — Google OAuth included — must be
               // approved by an admin, same as the email/password path below.
-              if (isAdminEmail) {
+              if (action === 'wait_for_registration') {
+                // handleRegister writes the complete pending record and signs the user out itself.
+                return;
+              } else if (action === 'create_admin') {
                 console.log("4. Creating new admin user profile");
                 const newUser = {
                   identifier: emailKey,
@@ -746,6 +753,11 @@ function App() {
       // Keeps currentUser in step with its own users document (photo, role, name, preset).
       const syncSelf = (data) => {
         if (!currentUser?.identifier || data.identifier !== currentUser.identifier) return;
+        // An administrator deactivating an account signs that person out at once, not on their next login.
+        if (!isSuperAdminEmail(data.identifier) && shouldEvict(data)) {
+          handleSignOut().then(() => setLoginError("Your account has been deactivated by an administrator."));
+          return;
+        }
         setCurrentUser(prev => {
           if (!prev) return data;
           if (
@@ -834,8 +846,8 @@ function App() {
     setRegisterSuccess("");
     
     try {
+      // The LOGIN audit entry is written by the auth listener once the session is approved.
       await emailLogin(username, password);
-      logActivity(username, username, 'LOGIN', 'Auth', 'User logged in successfully.');
       setLoginError("");
     } catch (err) {
       setLoginError("Invalid credentials or Firebase error: " + err.message);
@@ -844,6 +856,7 @@ function App() {
 
   const handleRegister = async (rawRegData) => {
     const regData = { ...rawRegData, identifier: String(rawRegData.identifier || '').trim().toLowerCase() };
+    registeringRef.current = true;
     try {
       // Create user in Firebase Auth (throws if already exists)
       await emailRegister(regData.identifier, regData.password);
@@ -856,7 +869,8 @@ function App() {
       
       await setDoc(doc(db, COLLECTIONS.PENDING_USERS, regData.identifier), completeRegData);
       
-      logActivity(regData.identifier, regData.name, 'REGISTER', 'Auth', 'User requested access via registration form.');
+      // Awaited before signing out: an audit write started after the session ends can be rejected.
+      await logActivity(regData.identifier, regData.name, 'REGISTER', 'Auth', 'User requested access via registration form.');
       setRegisterSuccess("Registration submitted successfully. Please wait for admin approval.");
       setLoginError("");
       
@@ -867,6 +881,8 @@ function App() {
       } else {
         setLoginError(err.message);
       }
+    } finally {
+      registeringRef.current = false;
     }
   };
 

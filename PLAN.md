@@ -57,7 +57,7 @@ Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 be
 - [ ] 3.5 / 3.5d: restrictive rules written and tested (not deployed); needs 3.3 and 3.4d first, then the RBAC E2E, your approval to deploy, and a manual role check on the live site
 - [x] 3.6: admin API
 - [ ] 4.1-4.3: payouts, referral lineage, claims and notifications
-- [ ] 5.1-5.3: Google scopes, registration, user lifecycle
+- [x] 5.1-5.3: Google scopes, registration, user lifecycle
 - [ ] 6.1-6.6: leads, atomic ids, customers, deals/fabrication/inspection, logistics (6.1, 6.2, 6.3, 6.4, 6.6 done in PRs; 6.5 logistics not started)
 - [ ] 7: UX and feature backlog
 - [ ] 8.1 / 8.2: docs sync, folder move

@@ -3,20 +3,22 @@ import { CircleAlert, CircleCheckBig, User, Briefcase, Mail, Lock, Phone, Buildi
 import { googleSignIn } from '../../services/firebase';
 import { PUBLIC_REGISTRATION_ROLES } from '../../constants/roles';
 
+const EMPTY_FORM = {
+  identifier: "",
+  password: "",
+  name: "",
+  mobile: "",
+  company: "",
+  specialty: "",
+  role: PUBLIC_REGISTRATION_ROLES[0],
+};
+
 export default function Login({ onLogin, onRegister, errorMsg, successMsg }) {
   const [isLoginView, setIsLoginView] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [localError, setLocalError] = useState("");
   
-  const [form, setForm] = useState({
-    identifier: "",
-    password: "",
-    name: "",
-    mobile: "",
-    company: "",
-    specialty: "",
-    role: "Partner",
-  });
+  const [form, setForm] = useState(EMPTY_FORM);
 
   const roles = PUBLIC_REGISTRATION_ROLES;
 
@@ -260,13 +262,7 @@ export default function Login({ onLogin, onRegister, errorMsg, successMsg }) {
               <button
                 onClick={() => {
                   setIsLoginView(!isLoginView);
-                  setForm({
-                    identifier: "",
-                    password: "",
-                    name: "",
-                    mobile: "",
-                    role: "Customer",
-                  });
+                  setForm(EMPTY_FORM);
                   setLocalError("");
                 }}
                 className="text-primary hover:underline font-medium"
