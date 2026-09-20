@@ -19,7 +19,8 @@ vi.mock('../../src/utils/toast', () => ({
 vi.mock('../../src/components/operations/FabricationCardDetails', () => ({ default: () => null }));
 vi.mock('../../src/components/common/FrameBlueprintPreview', () => ({ default: () => null }));
 
-const { generateInvoiceId } = await import('../../src/services/firestoreSync');
+const { generateInvoiceId, generateAtomicId } = await import('../../src/services/firestoreSync');
+const { toast } = await import('../../src/utils/toast');
 const { default: FabricationWorks } = await import('../../src/components/operations/FabricationWorks');
 
 const admin = { role: 'Admin', name: 'Admin', identifier: 'admin@example.com' };
@@ -76,3 +77,39 @@ function renderFabricationWith(status) {
     { role: 'Admin' }
   );
 }
+
+describe('FabricationWorks manual job billing link (Phase 7 6.4b, F-4)', () => {
+  const deal = { id: 'D-0001', jobNo: 'PTF-0001', name: 'Client One', originalLeadId: 'L-0001', isDeal: true, pricingMetadata: { dimensions: { length: 4, height: 3 } } };
+
+  const openForm = (props) => {
+    const ctx = renderFabrication({ deals: [deal], ...props });
+    fireEvent.click(screen.getByRole('button', { name: /New Job Request/i }));
+    fireEvent.change(screen.getByPlaceholderText(/Box Iron Frame \(10' × 4'\)/), { target: { value: 'Extra brace work' } });
+    return ctx;
+  };
+
+  it('has no price field and refuses a job that is neither linked to a deal nor non-billable', async () => {
+    const { setProjects } = openForm();
+    expect(screen.queryByText(/Total Job Value/i)).toBeNull();
+    fireEvent.click(await screen.findByRole('button', { name: /Generate Work Order/i }));
+    expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/deal, or mark it non-billable/i));
+    expect(setProjects).not.toHaveBeenCalled();
+    expect(generateAtomicId).not.toHaveBeenCalled();
+  });
+
+  it('creates a non-billable internal job with no value', async () => {
+    const { setProjects } = openForm();
+    fireEvent.change(await screen.findByDisplayValue(/Select a deal or non-billable/i), { target: { value: 'NON_BILLABLE' } });
+    fireEvent.click(screen.getByRole('button', { name: /Generate Work Order/i }));
+    await waitFor(() => expect(setProjects).toHaveBeenCalledTimes(1));
+    expect(setProjects.mock.calls[0][0][0]).toMatchObject({ billable: false, origin: 'manual', value: 0 });
+  });
+
+  it('links extra work to a deal and locks the size it inherits', async () => {
+    const { setProjects } = openForm();
+    fireEvent.change(await screen.findByDisplayValue(/Select a deal or non-billable/i), { target: { value: 'D-0001' } });
+    fireEvent.click(screen.getByRole('button', { name: /Generate Work Order/i }));
+    await waitFor(() => expect(setProjects).toHaveBeenCalledTimes(1));
+    expect(setProjects.mock.calls[0][0][0]).toMatchObject({ dealId: 'D-0001', leadId: 'L-0001', billable: true, value: 0, dimensionsLocked: true, frameWidth: 1219, frameHeight: 914 });
+  });
+});

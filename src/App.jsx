@@ -1392,6 +1392,7 @@ function App() {
               partners={partners}
               currentUser={currentUser}
               invoices={invoices}
+              deals={leads.filter(l => l.isDeal && l.stage !== 'Completed')}
               onSaveInvoice={handleSaveInvoice}
             />
           )}

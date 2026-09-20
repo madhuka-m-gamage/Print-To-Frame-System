@@ -9,6 +9,7 @@ import DeleteModal from '../common/DeleteModal';
 import { PageHeader, FilterBar, StatusBadge, KanbanColumn, KanbanCard, DetailModalLayout, DetailModalHeader, DetailModalFooter } from '../common/ui';
 import SortableTable from '../common/ui/SortableTable';
 import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateAtomicId } from '../../services/firestoreSync';
+import { dimensionsFromLead } from '../../utils/fabricationLink';
 import { sanitizeTechnicalScope, stripEmojis, phonesMatch } from '../../utils/validation';
 import { exportToCsv } from '../../utils/csvExport';
 import { logActivity } from '../../services/auditLog';
@@ -555,6 +556,7 @@ export default function Leads({
         totalSqFt: convertedLead.totalSqFt || 0,
         leadId: convertedLead.id,
         dealId: dealId,
+        ...(dimensionsFromLead(convertedLead) ? { ...dimensionsFromLead(convertedLead), dimensionsLocked: true } : {}),
         customerId: String(convertedLead.email || '').trim().toLowerCase() || convertedLead.nic || '',
         customerName: convertedLead.name || "",
         customerPhone: convertedLead.phone || "",

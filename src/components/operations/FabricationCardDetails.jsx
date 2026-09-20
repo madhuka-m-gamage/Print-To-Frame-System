@@ -35,6 +35,8 @@ import {
   StatusBadge 
 } from '../common/ui';
 import { toast } from '../../utils/toast';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../../services/firebase';
 import { stripEmojis, sanitizeTechnicalScope } from '../../utils/validation';
 import { calculateCutList, defaultFrameDimensions, mmToFtIn, STEEL_PROFILES } from '../../utils/cutListEngine';
 
@@ -123,28 +125,38 @@ export default function FabricationCardDetails({
     handleFiles(files);
   };
 
-  const handleFiles = (files) => {
+  // Blueprints go to Firebase Storage and only the URL is kept on the job. If Storage refuses the
+  // upload, a small file (under 500KB) is still kept inline so nothing breaks; a larger one is
+  // rejected, because inline data past Firestore's 1MB document limit would fail every save.
+  const MAX_INLINE_BYTES = 500 * 1024;
+  const readAsDataUrl = (f) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(f);
+  });
+
+  const handleFiles = async (files) => {
     const validFiles = files.filter(f => f.type.includes('image') || f.type.includes('pdf'));
-    Promise.all(validFiles.map(f => {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          resolve({
-            name: f.name,
-            type: f.type,
-            size: f.size,
-            data: e.target.result
-          });
-        };
-        reader.readAsDataURL(f);
-      });
-    })).then(newFiles => {
-      setForm(prev => ({
-        ...prev,
-        blueprints: [...prev.blueprints, ...newFiles]
-      }));
-      toast.success(`${newFiles.length} file(s) attached successfully!`);
-    });
+    const attached = [];
+    for (const f of validFiles) {
+      const meta = { name: f.name, type: f.type, size: f.size };
+      try {
+        const fileRef = ref(storage, `blueprints/${job.jobNo}/${Date.now()}_${f.name}`);
+        await uploadBytes(fileRef, f);
+        attached.push({ ...meta, url: await getDownloadURL(fileRef) });
+      } catch (err) {
+        console.warn('Blueprint upload to Storage failed:', err);
+        if (f.size > MAX_INLINE_BYTES) {
+          toast.error(`${f.name} could not be uploaded and is too large to keep inline (over 500KB).`);
+          continue;
+        }
+        attached.push({ ...meta, data: await readAsDataUrl(f) });
+      }
+    }
+    if (!attached.length) return;
+    setForm(prev => ({ ...prev, blueprints: [...prev.blueprints, ...attached] }));
+    toast.success(`${attached.length} file(s) attached successfully!`);
   };
 
   const removeBlueprint = (index) => {
@@ -639,7 +651,9 @@ export default function FabricationCardDetails({
                     name="frameWidth"
                     value={form.frameWidth}
                     onChange={handleChange}
-                    className="w-full p-2 bg-surface-container-highest/60 border border-outline rounded-lg text-xs font-mono text-on-surface font-bold focus:outline-none focus:ring-1 focus:ring-primary"
+                    readOnly={!!job.dimensionsLocked}
+                    title={job.dimensionsLocked ? 'Set on the lead; not editable here' : undefined}
+                    className={`w-full p-2 bg-surface-container-highest/60 border border-outline rounded-lg text-xs font-mono text-on-surface font-bold focus:outline-none focus:ring-1 focus:ring-primary ${job.dimensionsLocked ? 'opacity-60 cursor-not-allowed' : ''}`}
                   />
                   <span className="text-[9px] font-mono text-on-surface-variant block mt-0.5">
                     ≈ {mmToFtIn(form.frameWidth)}
@@ -654,7 +668,9 @@ export default function FabricationCardDetails({
                     name="frameHeight"
                     value={form.frameHeight}
                     onChange={handleChange}
-                    className="w-full p-2 bg-surface-container-highest/60 border border-outline rounded-lg text-xs font-mono text-on-surface font-bold focus:outline-none focus:ring-1 focus:ring-primary"
+                    readOnly={!!job.dimensionsLocked}
+                    title={job.dimensionsLocked ? 'Set on the lead; not editable here' : undefined}
+                    className={`w-full p-2 bg-surface-container-highest/60 border border-outline rounded-lg text-xs font-mono text-on-surface font-bold focus:outline-none focus:ring-1 focus:ring-primary ${job.dimensionsLocked ? 'opacity-60 cursor-not-allowed' : ''}`}
                   />
                   <span className="text-[9px] font-mono text-on-surface-variant block mt-0.5">
                     ≈ {mmToFtIn(form.frameHeight)}
