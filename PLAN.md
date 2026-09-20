@@ -36,7 +36,7 @@ Order: A1, then A2/A3/A4 (any order), then A7 (CI), then A5 -> A6 whenever brows
 - [ ] B2: supporting-module unit tests (before 6.3 / 6.6)
 - [x] B3: API handler cases (before 3.6)
 - [x] B4: Firestore rules cases (before 3.4 / 3.5; replaces Phase 7 prompt 3.1)
-- [ ] B5: component cases (before 4.1)
+- [x] B5: component cases (before 4.1)
 - [ ] B6: E2E journeys (needs A6)
 - [ ] Refresh the `TESTING.md` coverage map and characterisation register (manual, run on request after Part B phases land). Prompt: "Refresh docs/04_workflows/TESTING.md: run npm run coverage and update the coverage map (files, tests, kind, gaps), update the characterisation register from the tests that carry a finding comment, and tick the roadmap. Docs only; state only what you read; commit."
 
