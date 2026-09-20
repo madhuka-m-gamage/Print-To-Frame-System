@@ -90,7 +90,7 @@ it('lets Sales create an invoice but not delete one', async () => {
 `PERMISSIONS_FIXTURE` is an independent copy of the matrix for the modules the rules check; it does not import `DEFAULT_PERMISSIONS` because that module initialises real Firebase. Update it when the matrix changes. Run with `npm run test:rules` (needs Java).
 
 ## CI
-`.github/workflows/test.yml` runs on pull requests to `staging` and `main`, and on pushes to `staging`.
+`.github/workflows/test.yml` runs on pull requests to `staging` and `main` (not on pushes to `staging`, which the pull request already covered) and on manual dispatch. A `changes` job skips the three jobs below for a pull request that only touches `docs/` or `*.md` files; skipped jobs still report, so they can be required checks later.
 - `lint-unit`: `npm run lint`, `npm run coverage` (unit and API, coverage uploaded as an artifact), `npm run test:api`, `npm run test:component`, `npm run build`.
 - `rules`: Java 21 and `firebase-tools`, then `npm run test:rules` against the emulator with the fake `demo-print2frame-test` project.
 - `e2e`: Playwright against the emulators, for pull requests to `main` and manual dispatch only, so a flaky browser run never blocks staging work.
