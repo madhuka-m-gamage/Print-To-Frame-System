@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Phase 7 step 2.2: Deals and Fabrication no longer offer a backward move out of Completed; bulk stage change rejects Completed; deal completion records `commissionAccrued` and never accrues partner commission twice. No test for the bulk-change rejection (table selection UI not exercised).
 - Phase 7 step 2.1: `getExistingFinalInvoice` in `entityUtils`; deal completion and job QA pass no longer create a second Final invoice (FabricationWorks now receives `invoices`), and the quotation "25% Final Settlement" button shows only for a Deal or after the Advance is paid. The guard is client-side, so a race between two sessions is still possible. Two B5 characterisation tests flipped.
 - Phase 7 step 1 (quick wins): sign-out clears notifications; mobile dock uses the `projects` module and Partners get a Profile button instead of Messages; the WhatsApp update and route-insight AI calls go through `generateText` (bearer token attached); registration email is trimmed and lowercased; the notification feed drops the user's own messages; removed the dead `onUnreadCountChange` prop and the false "encrypted" copy in Messages.
 - B5 component wiring tests: `Deals`, `FabricationWorks`, `Partners` and an `App` sign-out flow rendered with `firestoreSync`, toast and audit log mocked; four characterisation tests (duplicate Final invoice from deal completion and QA pass, phantom payout, sign-out notification leak). No `src/` changes.

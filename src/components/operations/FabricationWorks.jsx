@@ -334,7 +334,7 @@ function FabricationColumn({
             details={details}
             customActions={customActions}
             onClick={() => onCardClick(job)}
-            onMoveBack={() => onMoveBack(job.jobNo)}
+            onMoveBack={isLastStage ? null : () => onMoveBack(job.jobNo)}
             onMoveForward={() => onMove(job.jobNo)}
             onDelete={() => onDelete(job.jobNo)}
             isAdmin={isAdmin}
@@ -641,7 +641,6 @@ export default function FabricationWorks({
     if (currentStatus === "Ongoing") prevStatusStr = "Pending";
     else if (currentStatus === "Ready For Inspection") prevStatusStr = "Ongoing";
     else if (currentStatus === "Revision") prevStatusStr = "Ongoing";
-    else if (currentStatus === "Completed") prevStatusStr = "Ready For Inspection";
 
     if (!prevStatusStr) return;
 

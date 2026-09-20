@@ -58,3 +58,21 @@ describe('FabricationWorks QA pass wiring', () => {
     expect(onSaveInvoice).not.toHaveBeenCalled();
   });
 });
+
+describe('FabricationWorks Completed-stage lock', () => {
+  it('offers a backward move from Ongoing but not from Completed', () => {
+    const ongoing = renderFabricationWith('Ongoing');
+    expect(screen.queryByRole('button', { name: /backward/i })).toBeInTheDocument();
+    ongoing.unmount();
+    renderFabricationWith('Completed');
+    expect(screen.queryByRole('button', { name: /backward/i })).not.toBeInTheDocument();
+  });
+});
+
+function renderFabricationWith(status) {
+  const project = makeProject({ jobNo: 'PTF-2002', title: 'Gallery Canvas', status });
+  return renderWithProviders(
+    <FabricationWorks projects={[project]} setProjects={vi.fn()} customers={[]} partners={[]} currentUser={admin} onSaveInvoice={vi.fn()} />,
+    { role: 'Admin' }
+  );
+}

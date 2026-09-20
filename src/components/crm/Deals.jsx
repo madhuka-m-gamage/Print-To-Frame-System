@@ -156,7 +156,7 @@ function DealColumn({
             badges={badges}
             metrics={metrics}
             onClick={() => onCardClick(deal)}
-            onMoveBack={() => onMoveBack(deal.id)}
+            onMoveBack={isLastStage ? null : () => onMoveBack(deal.id)}
             onMoveForward={movingDealIds.has(deal.id) ? null : () => onMove(deal.id)}
             onDelete={() => onDelete(deal.id)}
             isAdmin={isAdmin}
@@ -197,6 +197,10 @@ export default function Deals({
 
   const handleBulkStageChange = async (targetStage) => {
     if (!selectedDealIds.length) return;
+    if (targetStage === "Completed") {
+      toast.error('Deals can only be completed one at a time, so the final invoice and commission are generated.');
+      return;
+    }
     const now = new Date().toISOString();
     setLeads(prev => prev.map(d => selectedDealIds.includes(d.id) ? { ...d, stage: targetStage, stageEnteredAt: now } : d));
     try {
@@ -331,7 +335,12 @@ export default function Deals({
       }
 
       persistedStage = liveNextStage;
-      updatedDealObj = { ...deal, stage: liveNextStage, stageEnteredAt: now };
+      updatedDealObj = {
+        ...deal,
+        stage: liveNextStage,
+        stageEnteredAt: now,
+        ...(liveNextStage === "Completed" ? { commissionAccrued: true } : {}),
+      };
 
       if (liveNextStage === "Completed") {
         if (onSaveInvoice && finalInvId) {
@@ -363,7 +372,7 @@ export default function Deals({
           });
         }
 
-        if (deal.agentId && partners.length && setPartners) {
+        if (deal.agentId && partners.length && setPartners && !deal.commissionAccrued) {
           const sqFt = Number(deal.totalSqFt) || 0;
           const agent = partners.find(p => p.partnerId === deal.agentId);
           // Always the partner's CURRENT live rate, not a hardcoded default —
@@ -405,7 +414,8 @@ export default function Deals({
       try {
         await updateDocument(COLLECTIONS.LEADS, updatedDealObj._firestoreId || updatedDealObj.id, {
           stage: persistedStage,
-          stageEnteredAt: now
+          stageEnteredAt: now,
+          ...(persistedStage === "Completed" ? { commissionAccrued: true } : {})
         });
       } catch (err) {
         console.error("Deal move forward error:", err);
