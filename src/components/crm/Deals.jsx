@@ -12,6 +12,8 @@ import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateInvoi
 import { exportToCsv } from '../../utils/csvExport';
 import { matchesEntity, getExistingFinalInvoice } from '../../utils/entityUtils';
 import { getFinalInvoiceAmounts, calculateDealCommission } from '../../utils/dealSettlement';
+import { projectStatusForDealStage } from '../../utils/dealProjectSync';
+import { logActivity } from '../../services/auditLog';
 
 const DEALS_STAGES = ["Waiting", "Fabricating", "Ready To Load", "Hand Over", "Completed"];
 
@@ -179,6 +181,8 @@ export default function Deals({
   currentUser,
   partners = [],
   setPartners,
+  projects = [],
+  setProjects,
   customers = [],
   setCustomers,
   quotations = [],
@@ -422,6 +426,17 @@ export default function Deals({
       } catch (err) {
         console.error("Deal move forward error:", err);
       }
+
+      const project = projects.find(p => (p.jobNo || p.id) === (updatedDealObj.jobNo || updatedDealObj.linkedJobNo));
+      const syncedStatus = projectStatusForDealStage(persistedStage, project?.status);
+      if (project && syncedStatus) {
+        setProjects?.(prev => prev.map(p => p === project ? { ...p, status: syncedStatus } : p));
+        try {
+          await updateDocument(COLLECTIONS.PROJECTS, project._firestoreId || project.id || project.jobNo, { status: syncedStatus });
+        } catch (err) {
+          console.error("Project status sync error:", err);
+        }
+      }
     }
   };
 
@@ -490,9 +505,34 @@ export default function Deals({
   const handleDeleteConfirm = async () => {
     if (deleteDealId) {
       const targetDeal = leads.find(l => l.id === deleteDealId);
-      setLeads(prev => prev.filter(deal => deal.id !== deleteDealId));
-      
+      const originalLead = targetDeal?.originalLeadId ? leads.find(l => l.id === targetDeal.originalLeadId) : null;
+      const project = targetDeal ? projects.find(p => (p.jobNo || p.id) === (targetDeal.jobNo || targetDeal.linkedJobNo)) : null;
+      setLeads(prev => prev.filter(deal => deal.id !== deleteDealId).map(l => (
+        originalLead && l.id === originalLead.id ? { ...l, convertedToDeal: false, convertedDealId: null } : l
+      )));
+
       if (targetDeal) {
+        logActivity(currentUser?.identifier, currentUser?.name, 'DEAL_DELETED', 'Deals', `Deal ${targetDeal.id} (${targetDeal.name || 'unnamed'}) deleted`);
+        // Invoices, receipts and logistics are financial records and are never cascade-deleted.
+        // The lead is released so it is not orphaned, and the project is cancelled, not removed.
+        if (originalLead) {
+          try {
+            await updateDocument(COLLECTIONS.LEADS, originalLead._firestoreId || originalLead.id, { convertedToDeal: false, convertedDealId: null });
+          } catch (err) {
+            console.error("Could not release the original lead:", err);
+          }
+        }
+        if (project) {
+          setProjects?.(prev => prev.map(p => p === project ? { ...p, status: 'Cancelled' } : p));
+          try {
+            await updateDocument(COLLECTIONS.PROJECTS, project._firestoreId || project.id || project.jobNo, {
+              status: 'Cancelled',
+              cancelledReason: `Deal ${targetDeal.id} deleted`,
+            });
+          } catch (err) {
+            console.error("Could not cancel the project:", err);
+          }
+        }
         try {
           await deleteDocument(COLLECTIONS.LEADS, targetDeal._firestoreId || targetDeal.id);
           toast.success("Deal deleted successfully");

@@ -1300,6 +1300,7 @@ function App() {
             <Deals
               leads={leads}
               setLeads={setLeads}
+              projects={projects}
               setProjects={setProjects}
               logisticsJobs={logisticsJobs}
               setLogisticsJobs={setLogisticsJobs}

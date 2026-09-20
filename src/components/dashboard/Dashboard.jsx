@@ -125,7 +125,7 @@ export default function Dashboard({
 
   const dealsActionQueue = useMemo(() => {
     return leads
-      .filter(l => l.isDeal && ["Waiting", "Fabricating", "Ready To Load"].includes(l.stage))
+      .filter(l => l.isDeal && ["Waiting", "Fabricating", "Ready To Load", "Hand Over"].includes(l.stage))
       .filter(l => {
         if (!searchQuery) return true;
         const q = searchQuery.toLowerCase();

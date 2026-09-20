@@ -26,6 +26,7 @@ import QuotationBuilder from './QuotationBuilder';
 import { downsampleAudio } from '../../utils/audioProcessing';
 import { toDateObj } from '../../utils/dateUtils';
 import { buildInvoiceHtml, openInvoicePrintWindow } from '../../utils/invoiceTemplate';
+import { resolveInvoiceForPrint } from '../../utils/invoicePrintData';
 import { buildReceiptHtml } from '../../utils/receiptTemplate';
 
 export default function LeadCardDetails({ 
@@ -702,20 +703,14 @@ export default function LeadCardDetails({
 
   // Redesigned Print Invoice PDF Styling (Clean, Premium, Modern, Matching Both 75% Advance and 25% Final)
   const printInvoice = (invoiceType = 'Advance') => {
-    const isFinal = invoiceType === 'Final';
-
     // Print the REAL persisted invoice's own fields whenever one exists, so
     // the document always matches what's saved in Firestore and shown in the
     // Invoices module — never mint independent numbers/amounts here. Only
     // before the invoice has actually been converted/saved (via the
     // Line-Item Quote panel) does this fall back to computed draft values,
     // clearly marked with a DRAFT- id that's never mistaken for a real one.
-    const realInvoice = isFinal ? finalInvoice : advanceInvoice;
+    const realInvoice = invoiceType === 'Final' ? finalInvoice : advanceInvoice;
     const totalVal = Number(formData.value || lead.value || 0);
-    const advanceAmount = totalVal * 0.75;
-    const balanceAmount = totalVal * 0.25;
-    const invoiceAmount = isFinal ? balanceAmount : advanceAmount;
-
     // Same "pick the newest, not just the first array match" fix as
     // advanceInvoice/finalInvoice above — multiple quote versions can exist
     // for the same lead, and .find() isn't guaranteed to land on the latest.
@@ -723,24 +718,10 @@ export default function LeadCardDetails({
     const activeQuote = matchingQuotes.length <= 1
       ? (matchingQuotes[0] || null)
       : matchingQuotes.reduce((latest, q) => (Number(q.version) || 0) > (Number(latest.version) || 0) ? q : latest);
-    const lineItemsToPrint = activeQuote?.lineItems && activeQuote.lineItems.length > 0 ? activeQuote.lineItems : null;
 
-    const invoiceForPrint = {
-      id: realInvoice?.id || realInvoice?._firestoreId || `DRAFT-${isFinal ? 'FINAL' : 'ADVANCE'}`,
-      type: isFinal ? 'Final' : 'Advance',
-      status: realInvoice?.status,
-      date: realInvoice?.date,
-      dueDate: realInvoice?.dueDate,
-      amount: realInvoice?.amount ?? invoiceAmount,
-      totalValue: realInvoice?.totalValue ?? totalVal,
-      lineItems: lineItemsToPrint || realInvoice?.lineItems,
-      aiDraft: realInvoice?.aiDraft || `Scope: ${formData.jobScope || 'Custom metal framing work'}`,
-      customerName: formData.name,
-      company: formData.company,
-      linkedJobNo: realInvoice?.linkedJobNo,
-    };
+    const invoiceForPrint = resolveInvoiceForPrint({ realInvoice, type: invoiceType, formData, activeQuote, draftTotal: totalVal });
 
-    const html = buildInvoiceHtml({ invoice: invoiceForPrint, customerPhone: formData.phone });
+    const html = buildInvoiceHtml({ invoice: invoiceForPrint, customerPhone: invoiceForPrint.phone });
     openInvoicePrintWindow(html);
   };
 

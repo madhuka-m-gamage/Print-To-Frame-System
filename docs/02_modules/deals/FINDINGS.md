@@ -316,13 +316,13 @@ const dealsActionQueue = useMemo(() => {
 
 > All items in §5 are **accepted**. The following checklist tracks execution status. Mark `[x]` when a change is committed to `review-deals` branch.
 
-- [ ] **D-1** — Add `getExistingFinalInvoice` helper to `entityUtils.js`; guard Deals.jsx and FabricationWorks.jsx before invoice generation.
-- [ ] **D-2** — Fix fallback `lineItems[0].unitPrice` in `Deals.jsx:L357` (`finalAmount` → `deal.value`).
-- [ ] **D-3** — Derive `finalAmount` from `linkedQuote.grandTotal * 0.25` in `handleMoveForwardInner`; filter quotation match to `Accepted` status, highest version; sync `deal.value` on completion.
-- [ ] **D-4** — Pass `onMoveBack={isLastStage ? null : handleMoveBackward}` in `DealColumn`.
-- [ ] **D-5** — Guard `handleBulkStageChange` against `targetStage === 'Completed'` with toast error.
-- [ ] **D-6** — Add project status sync writes in `handleMoveForwardInner` for `Fabricating` → `Ongoing`, `Ready To Load` → `Ready For Inspection`, `Completed` → `Completed`.
-- [ ] **D-7** — Add `(deal.value / 850) * commRate` fallback when `totalSqFt <= 0` in commission block.
-- [ ] **D-8** — Widen `match /leads/{leadId}` in `firestore.rules` to accept `pipeline` permissions.
-- [ ] **D-9** — Add `"Hand Over"` to `dealsActionQueue` filter in `Dashboard.jsx`.
-- [ ] **D-10** — Extend `handleDeleteConfirm`: audit log, lead lock-clear, project cancel.
+- [x] **D-1** — Add `getExistingFinalInvoice` helper to `entityUtils.js`; guard Deals.jsx and FabricationWorks.jsx before invoice generation.
+- [x] **D-2** — Fix fallback `lineItems[0].unitPrice` in `Deals.jsx:L357` (`finalAmount` → `deal.value`).
+- [x] **D-3** — Derive `finalAmount` from `linkedQuote.grandTotal * 0.25` in `handleMoveForwardInner`; filter quotation match to `Accepted` status, highest version; sync `deal.value` on completion.
+- [x] **D-4** — Pass `onMoveBack={isLastStage ? null : handleMoveBackward}` in `DealColumn`.
+- [x] **D-5** — Guard `handleBulkStageChange` against `targetStage === 'Completed'` with toast error.
+- [x] **D-6** — Add project status sync writes in `handleMoveForwardInner` for `Fabricating` → `Ongoing`, `Ready To Load` → `Ready For Inspection`, `Completed` → `Completed`.
+- [x] **D-7** — Add `(deal.value / 850) * commRate` fallback when `totalSqFt <= 0` in commission block.
+- [x] **D-8** — Widen `match /leads/{leadId}` in `firestore.rules` to accept `pipeline` permissions.
+- [x] **D-9** — Add `"Hand Over"` to `dealsActionQueue` filter in `Dashboard.jsx`.
+- [x] **D-10** — Extend `handleDeleteConfirm`: audit log, lead lock-clear, project cancel.
