@@ -332,7 +332,7 @@ export default function LeadCardDetails({
       let finalMime = detectedMime;
       let isCompressed = false;
 
-      if (!isAlreadyCompressed && file.size > MAX_PAYLOAD_RAW_SIZE) {
+      if (file.size > MAX_PAYLOAD_RAW_SIZE) {
         setUploadProgress(60);
         setUploadStage('compressing');
         setUploadStageText(`Optimizing audio (${(file.size / 1024 / 1024).toFixed(1)}MB)...`);
@@ -534,9 +534,9 @@ export default function LeadCardDetails({
       const ext = (file.name || '').split('.').pop()?.toLowerCase();
       const detectedMime = file.type || EXTENSION_MIME_MAP[ext] || 'audio/mpeg';
 
-      // CRITICAL FIX: If the file is already a compressed format (MP3, M4A, AAC, OGG, WEBM)
-      // and under 3.2MB, NEVER decode it to uncompressed WAV (which expands 2.8MB MP3 to 10.2MB WAV).
-      // Keep it in its original compressed stream!
+      // Compressed files under 3.2MB are sent as-is (decoding a 2.8MB MP3 to WAV would grow it to
+      // ~10MB). Anything over the limit is downsampled, never rejected: a call recording has no
+      // other source.
       const COMPRESSED_FORMATS = ['mp3', 'm4a', 'aac', 'ogg', 'webm'];
       const isAlreadyCompressed = COMPRESSED_FORMATS.includes(ext) || (file.type && !file.type.includes('wav'));
       const MAX_PAYLOAD_RAW_SIZE = 3.2 * 1024 * 1024; // 3.2MB (translates to ~4.2MB Base64, fitting under Vercel's 4.5MB limit)
@@ -552,7 +552,7 @@ export default function LeadCardDetails({
       let finalMime = detectedMime;
       let isCompressed = false;
 
-      if (!isAlreadyCompressed && file.size > MAX_PAYLOAD_RAW_SIZE) {
+      if (file.size > MAX_PAYLOAD_RAW_SIZE) {
         // Large uncompressed WAV file: downsample to 8kHz mono WAV (telecom speech standard)
         setUploadProgress(60);
         setUploadStage('compressing');
@@ -1754,7 +1754,7 @@ export default function LeadCardDetails({
       {/* Universal Footer */}
       <DetailModalFooter
         secondaryActions={
-          !lead.isDeal && !isDeal && !lead.convertedToDeal ? (
+          !lead.isDeal && !isDeal && !lead.convertedToDeal && lead.stage === 'Received' ? (
             <button 
               type="button"
               onClick={handleConvertClick}

@@ -436,39 +436,6 @@ export default function Leads({
       console.error("Failed to update lead in DB:", error);
       toast.error("Failed to save changes to database");
     }
-
-    // Save lead details must auto-create client in customer database if doesn't exist
-    if (updatedLead.name && setCustomers) {
-      const match = customers.find(c => 
-        (updatedLead.email && c.email === updatedLead.email) || 
-        phonesMatch(c.phone, updatedLead.phone)
-      );
-
-      if (match) {
-        console.log('Customer already exists in DB:', match.name);
-      } else {
-        // Create new customer
-        const nicId = `AUTO-${Math.floor(100000 + Math.random() * 900000)}`;
-        const newCustomer = {
-          nic: nicId,
-          name: updatedLead.name,
-          company: updatedLead.company,
-          phone: updatedLead.phone,
-          email: updatedLead.email,
-          type: updatedLead.company ? "Business" : "Individual",
-          businessName: updatedLead.company || "",
-          orders: 1,
-          dateJoined: new Date().toISOString().split('T')[0]
-        };
-        setCustomers(prev => [...prev, newCustomer]);
-        try {
-          await addDocument(COLLECTIONS.CUSTOMERS, newCustomer, nicId);
-          console.log('Automatically created customer profile:', newCustomer.name);
-        } catch (err) {
-          console.error("Failed to auto-create customer:", err);
-        }
-      }
-    }
   };
 
   const handleConvertConfirm = async (convertedLead) => {
