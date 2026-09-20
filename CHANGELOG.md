@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- CI trimmed: the workflow no longer runs on pushes to `staging`, and a `changes` job skips `lint-unit`, `rules` and `e2e` for pull requests that only touch `docs/` or `*.md`.
 - `PLAN.md` now records the Phase 7 workflow (branch, local test, `staging`, then `main`), the owner decisions and the step dependencies; T0 (suite on `main`) is ticked.
 - Coverage map refresh is a manual, tracked task in `PLAN.md` (not required per change).
 - `TESTING.md` is now the planning reference: a "Planning a change" checklist, a coverage map, a characterisation register, the Part B roadmap and known gotchas. Root `CLAUDE.md` tells planning sessions to read it.
