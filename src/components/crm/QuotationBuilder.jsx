@@ -159,6 +159,12 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
         }, newId);
         toast.success(`Quotation v${version} created successfully!`);
       }
+      try {
+        await updateDocument(COLLECTIONS.LEADS, lead._firestoreId || lead.id, { value: grandTotal });
+      } catch (syncErr) {
+        console.error('Failed to sync lead value with the quotation:', syncErr);
+        toast.warning('Quotation saved, but the lead value could not be updated.');
+      }
       setIsEditing(false);
     } catch (err) {
       toast.error('Save failed: ' + err.message);
