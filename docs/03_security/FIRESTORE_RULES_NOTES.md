@@ -49,6 +49,16 @@
 - Step 3.4 also added: `isAdmin()` accepts the bootstrap owner emails; a pending applicant may update (not approve) their own `pendingUsers` record; customers may read and update their own record's profile fields (`name`, `photoURL`, `phone`, `address`); new `referral_claims` and `partner_payouts` blocks. **Not applied:** public read of Active partners (partners D-5), because a partner document holds bank details and rules cannot hide fields.
 - The `users` create / update guard means a non-admin cannot change their own `role`, `isApproved` or `status` (matches the intent stated in the file's comments and `tests/integration/firestoreRules.test.js`).
 
+## Step 3.5 (restrictive rules; not deployed)
+
+- `checkPermission` and `isAdmin()` (except for the bootstrap emails) require `isActiveUser()`: status `Deactivated` or `Disabled` is always denied; otherwise `isApproved == true` or `status == 'Active'`. A document with neither field is denied.
+- `/quotations` follows the `quotations` permission, so the live matrix must have that module (step 3.3) before this deploys, or Sales and Manager lose quotations.
+- `/messages`: read needs the `messages` permission and being a participant (or Admin); create needs `fromId` to be the caller and a participant; only `readBy` and `updatedAt` may change on a message you did not send.
+- `/users`: read for Admin, self, or `agents`/`messages` view. Create, update and delete by a role with the matching `agents` permission are allowed only on non-Admin targets, never granting Admin and never on your own document.
+- `/pendingUsers` and `/partner_applications` may also be reviewed by roles with `agents` edit.
+- `/leads`: read with `leads` or `pipeline`; create and update check `pipeline` when the document is a deal (`isDeal`), else `leads`; delete follows `leads` delete. Invoices, receipts, projects and logistics deletes follow their own `delete` permission.
+- Not done: limiting the Partner role to its own `partners` document (the Partners screen still lists the whole collection), and field limits on what a partner may edit about themselves.
+
 ## Deployment (rules are not deployed by Vercel)
 
 Editing `firestore.rules` and pushing to `staging` or `main` only changes the file in git. Rules go live only with `firebase deploy --only firestore:rules --project print-to-frame-erp`. `firebase.json` maps the same file to three databases; confirm which one the app uses (`VITE_FIREBASE_DATABASE_ID`, default `(default)`). A rules edit that is merged but never deployed silently keeps the old ruleset; this caused a live admin lockout once (see [CLAUDE.md](../../CLAUDE.md)).

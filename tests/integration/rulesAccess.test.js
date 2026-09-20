@@ -120,38 +120,54 @@ describe('settings, audit log and public forms (correct today)', () => {
 describe('known gaps in today\'s rules (characterisation)', () => {
   // The Partner role holds view and edit on partners in the matrix (Phase 7 3.2 removed
   // create, delete and export), so a partner can still read every other partner: the rule
-  // checks the module permission, not whose record it is. Flips in Phase 7 3.5, when the
-  // rules limit the Partner role to its own record.
+  // checks the module permission, not whose record it is. Not changed in 3.5: limiting it to
+  // the partner's own record needs the Partners screen to query its own document first.
   it('lets a Partner read another partner\'s document because the matrix grants partners view', async () => {
     await seedDoc('partners', 'p2@example.com', { name: 'P2' });
     const db = await dbAs('Partner', 'p1@example.com');
     await assertSucceeds(getDoc(doc(db, 'partners', 'p2@example.com')));
   });
 
-  // docs/02_modules/user-management-rbac/FINDINGS.md finding 5: /quotations is open to
-  // any signed-in user, whatever their role. Flips in Phase 7 3.5 (checkPermission on a
-  // new quotations module).
-  it('lets a Customer read and write quotations', async () => {
-    const db = await dbAs('Customer');
-    await assertSucceeds(setDoc(doc(db, 'quotations', 'QT-1'), { total: 1 }));
-    await assertSucceeds(getDoc(doc(db, 'quotations', 'QT-1')));
+  // Flipped in Phase 7 3.5 (rbac finding 5): quotations follow the quotations permission.
+  it('gates quotations by the quotations permission', async () => {
+    await seedDoc('quotations', 'QT-1', { total: 1 });
+    await assertFails(getDoc(doc(await dbAs('Customer'), 'quotations', 'QT-1')));
+    await assertFails(setDoc(doc(await dbAs('Customer'), 'quotations', 'QT-2'), { total: 1 }));
+    await assertFails(setDoc(doc(await dbAs('Support'), 'quotations', 'QT-2'), { total: 1 }));
+    await assertSucceeds(getDoc(doc(await dbAs('Support'), 'quotations', 'QT-1')));
+    await assertSucceeds(setDoc(doc(await dbAs('Sales'), 'quotations', 'QT-2'), { total: 1 }));
+    await assertSucceeds(updateDoc(doc(await dbAs('Sales'), 'quotations', 'QT-2'), { total: 2 }));
+    await assertSucceeds(deleteDoc(doc(await dbAs('Admin'), 'quotations', 'QT-2')));
   });
 
-  // docs/02_modules/internal-messaging/FINDINGS.md D-MSG-01 / D-MSG-02: any signed-in
-  // user can read every message and create one claiming any sender. Flips in Phase 7 3.5.
-  it('lets any signed-in user read a conversation they are not in and forge a sender', async () => {
-    await seedDoc('messages', 'm1', { fromId: 'a@example.com', toId: 'b@example.com', participants: ['a@example.com', 'b@example.com'], text: 'private' });
-    const db = await dbAs('Customer', 'outsider@example.com');
-    await assertSucceeds(getDoc(doc(db, 'messages', 'm1')));
-    await assertSucceeds(setDoc(doc(db, 'messages', 'm2'), { fromId: 'a@example.com', participants: ['a@example.com'], text: 'forged' }));
+  // Flipped in Phase 7 3.5 (messaging D-MSG-01, D-MSG-02): only participants read a conversation
+  // and nobody can send as someone else.
+  it('limits messages to their participants and to sending as yourself', async () => {
+    await seedDoc('messages', 'm1', { fromId: 'a@example.com', toId: 'b@example.com', participants: ['a@example.com', 'b@example.com'], text: 'private', readBy: [] });
+    const outsider = await dbAs('Sales', 'outsider@example.com');
+    await assertFails(getDoc(doc(outsider, 'messages', 'm1')));
+    await assertFails(setDoc(doc(outsider, 'messages', 'm2'), { fromId: 'a@example.com', participants: ['a@example.com', 'outsider@example.com'], text: 'forged' }));
+    await assertFails(setDoc(doc(outsider, 'messages', 'm3'), { fromId: 'outsider@example.com', participants: ['a@example.com', 'b@example.com'], text: 'not in it' }));
+    await assertSucceeds(setDoc(doc(outsider, 'messages', 'm4'), { fromId: 'outsider@example.com', participants: ['outsider@example.com', 'a@example.com'], text: 'hi' }));
+
+    const participant = await dbAs('Sales', 'a@example.com');
+    await assertSucceeds(getDoc(doc(participant, 'messages', 'm1')));
+    const recipient = await dbAs('Sales', 'b@example.com');
+    await assertSucceeds(updateDoc(doc(recipient, 'messages', 'm1'), { readBy: ['b@example.com'] }));
+    await assertFails(updateDoc(doc(recipient, 'messages', 'm1'), { text: 'edited' }));
+    await assertSucceeds(getDoc(doc(await dbAs('Admin'), 'messages', 'm1')));
+    await assertFails(getDoc(doc(await dbAs('Partner', 'p@example.com'), 'messages', 'm1')));
   });
 
-  // user-management-rbac FINDINGS finding 12: any signed-in user can read every
-  // profile. Flips in Phase 7 3.5 (Admin, self, or agents/messages view).
-  it('lets a Customer read another user\'s profile', async () => {
+  // Flipped in Phase 7 3.5 (rbac finding 12): profiles are readable by Admin, the user, or a role
+  // that manages users or uses messaging.
+  it('limits user profile reads to Admin, self, and roles with agents or messages view', async () => {
     await seedUser(testEnv, 'boss@example.com', { role: 'Admin', isApproved: true, status: 'Active', name: 'Boss' });
-    const db = await dbAs('Customer', 'nosy@example.com');
-    await assertSucceeds(getDoc(doc(db, 'users', 'boss@example.com')));
+    await assertFails(getDoc(doc(await dbAs('Partner', 'nosy@example.com'), 'users', 'boss@example.com')));
+    await assertSucceeds(getDoc(doc(await dbAs('Partner', 'nosy@example.com'), 'users', 'nosy@example.com')));
+    await assertSucceeds(getDoc(doc(await dbAs('Sales', 'chat@example.com'), 'users', 'boss@example.com')));
+    await assertSucceeds(getDoc(doc(await dbAs('Admin', 'admin2@example.com'), 'users', 'boss@example.com')));
+    await assertFails(getDoc(doc(unauthedFirestore(testEnv), 'users', 'boss@example.com')));
   });
 
   // Flipped in Phase 7 3.4 (rules audit): counters only accept the known prefixes and can only
@@ -201,12 +217,24 @@ describe('known gaps in today\'s rules (characterisation)', () => {
     await assertFails(setDoc(doc(unauthedFirestore(testEnv), 'referral_claims', 'c2'), { clientName: 'Y' }));
   });
 
-  // user-management-rbac FINDINGS finding 1: the rules never read users.status, so a
-  // deactivated user whose role is otherwise allowed can still write. Flips in 3.5.
-  it('lets a Deactivated user with a permitted role still create a lead', async () => {
+  // Flipped in Phase 7 3.5 (rbac finding 1): a Deactivated or Disabled account is denied everywhere,
+  // even with isApproved still true, while a legacy document with no status keeps working.
+  it('denies Deactivated and Disabled users, and keeps a legacy approved user without status working', async () => {
     await seedUser(testEnv, 'gone@example.com', { role: 'Sales', isApproved: true, status: 'Deactivated' });
-    const db = authedFirestore(testEnv, 'gone@example.com');
-    await assertSucceeds(setDoc(doc(db, 'leads', 'L-gone'), { name: 'still works' }));
+    await seedUser(testEnv, 'off@example.com', { role: 'Sales', isApproved: true, status: 'Disabled' });
+    await seedUser(testEnv, 'legacy@example.com', { role: 'Sales', isApproved: true });
+    await seedUser(testEnv, 'pending@example.com', { role: 'Sales', isApproved: false, status: 'Pending' });
+    await assertFails(setDoc(doc(authedFirestore(testEnv, 'gone@example.com'), 'leads', 'L-a'), { name: 'x' }));
+    await assertFails(setDoc(doc(authedFirestore(testEnv, 'off@example.com'), 'leads', 'L-b'), { name: 'x' }));
+    await assertFails(setDoc(doc(authedFirestore(testEnv, 'pending@example.com'), 'leads', 'L-d'), { name: 'x' }));
+    await assertSucceeds(setDoc(doc(authedFirestore(testEnv, 'legacy@example.com'), 'leads', 'L-c'), { name: 'x' }));
+  });
+
+  it('denies a Deactivated Admin, but never the bootstrap owner', async () => {
+    await seedUser(testEnv, 'exadmin@example.com', { role: 'Admin', isApproved: true, status: 'Deactivated' });
+    await assertFails(setDoc(doc(authedFirestore(testEnv, 'exadmin@example.com'), 'settings', 'permissions'), { Admin: {} }));
+    await seedUser(testEnv, BOOTSTRAP_ADMIN_EMAIL, { role: 'Sales', isApproved: false, status: 'Deactivated' });
+    await assertSucceeds(setDoc(doc(authedFirestore(testEnv, BOOTSTRAP_ADMIN_EMAIL), 'settings', 'permissions'), { Admin: {} }));
   });
 
   // Flipped in Phase 7 3.4 (auth DP-06): the bootstrap owner email counts as Admin even with no
@@ -239,28 +267,51 @@ describe('known gaps in today\'s rules (characterisation)', () => {
     await assertFails(updateDoc(doc(db, 'customers', 'c2'), { name: 'Hacked' }));
   });
 
-  // employees FINDINGS D4 (owner decision: Managers may administer users): today a
-  // Manager cannot change another user's role or delete them. Flips in 3.5.
-  it('rejects a Manager changing or deleting another user', async () => {
+  // Flipped in Phase 7 3.5 (employees D4, owner decision): Managers administer users, but never
+  // grant Admin, touch an Admin, or change their own role.
+  it('lets a Manager administer non-Admin users within the guards', async () => {
     await seedUser(testEnv, 'staff@example.com', { role: 'Sales', isApproved: true, status: 'Active' });
-    const db = await dbAs('Manager');
-    await assertFails(updateDoc(doc(db, 'users', 'staff@example.com'), { role: 'Support' }));
-    await assertFails(deleteDoc(doc(db, 'users', 'staff@example.com')));
+    await seedUser(testEnv, 'boss@example.com', { role: 'Admin', isApproved: true, status: 'Active' });
+    const db = await dbAs('Manager', 'mgr@example.com');
+    await assertSucceeds(updateDoc(doc(db, 'users', 'staff@example.com'), { role: 'Support' }));
+    await assertFails(updateDoc(doc(db, 'users', 'staff@example.com'), { role: 'Admin' }));
+    await assertFails(updateDoc(doc(db, 'users', 'boss@example.com'), { name: 'x' }));
+    await assertFails(deleteDoc(doc(db, 'users', 'boss@example.com')));
+    await assertFails(updateDoc(doc(db, 'users', 'mgr@example.com'), { role: 'Admin' }));
+    await assertSucceeds(setDoc(doc(db, 'users', 'new@example.com'), { role: 'Sales', isApproved: true, status: 'Active' }));
+    await assertFails(setDoc(doc(db, 'users', 'new2@example.com'), { role: 'Admin', isApproved: true, status: 'Active' }));
+    await assertSucceeds(deleteDoc(doc(db, 'users', 'staff@example.com')));
   });
 
-  // user-management-rbac FINDINGS finding 6: delete is Admin-only on invoices even for a
-  // role whose matrix grants delete. Flips in 3.5 (checkPermission(module, 'delete') or Admin).
-  it('blocks a Manager with invoices:delete in the matrix from deleting an invoice', async () => {
+  it('keeps Sales out of user administration and lets a Manager review pending sign-ups', async () => {
+    await seedUser(testEnv, 'staff@example.com', { role: 'Support', isApproved: true, status: 'Active' });
+    await assertFails(updateDoc(doc(await dbAs('Sales'), 'users', 'staff@example.com'), { role: 'Sales' }));
+    await seedDoc('pendingUsers', 'app@example.com', { name: 'A' });
+    await assertSucceeds(getDoc(doc(await dbAs('Manager', 'mgr@example.com'), 'pendingUsers', 'app@example.com')));
+    await assertFails(getDoc(doc(await dbAs('Sales'), 'pendingUsers', 'app@example.com')));
+  });
+
+  // Flipped in Phase 7 3.5 (rbac finding 6): delete follows the module's delete permission, not Admin only.
+  it('lets a Manager delete an invoice through the matrix, and still blocks Sales', async () => {
     await seedDoc('invoices', 'INV-DEL', { amount: 1 });
-    await assertFails(deleteDoc(doc(await dbAs('Manager'), 'invoices', 'INV-DEL')));
+    await assertFails(deleteDoc(doc(await dbAs('Sales'), 'invoices', 'INV-DEL')));
+    await assertSucceeds(deleteDoc(doc(await dbAs('Manager'), 'invoices', 'INV-DEL')));
+    await seedDoc('receipts', 'REC-1', { amountReceived: 1 });
+    await assertFails(deleteDoc(doc(await dbAs('Manager'), 'receipts', 'REC-1')));
   });
 
-  // deals FINDINGS D-8: leads reads accept only the leads permission, so a role with
-  // pipeline view but no leads view cannot read leads. Flips in 3.5 (leads OR pipeline).
-  it('denies a lead read to a role that has pipeline view but not leads view', async () => {
-    await seedPermissions(testEnv, { Sales: { leads: { view: false }, pipeline: { view: true } } });
+  // Flipped in Phase 7 3.5 (deals D-8): either the leads or the pipeline permission reads leads, and
+  // writes follow the isDeal flag.
+  it('lets a pipeline-only role read leads and write deals but not plain leads', async () => {
+    await seedPermissions(testEnv, { Sales: { leads: { view: false, create: false, edit: false }, pipeline: { view: true, create: true, edit: true } } });
     await seedDoc('leads', 'L-pipe', { name: 'n' });
-    await assertFails(getDoc(doc(await dbAs('Sales'), 'leads', 'L-pipe')));
+    await seedDoc('leads', 'D-pipe', { name: 'n', isDeal: true });
+    const db = await dbAs('Sales');
+    await assertSucceeds(getDoc(doc(db, 'leads', 'L-pipe')));
+    await assertSucceeds(setDoc(doc(db, 'leads', 'D-new'), { name: 'deal', isDeal: true }));
+    await assertSucceeds(updateDoc(doc(db, 'leads', 'D-pipe'), { name: 'edited' }));
+    await assertFails(setDoc(doc(db, 'leads', 'L-new'), { name: 'lead' }));
+    await assertFails(updateDoc(doc(db, 'leads', 'L-pipe'), { name: 'edited' }));
   });
 
   // partners FINDINGS D-5 (public read of Active partners) is deliberately NOT applied in
@@ -275,11 +326,6 @@ describe('known gaps in today\'s rules (characterisation)', () => {
 });
 
 describe('target behaviour to enable with the Phase 7 rules changes', () => {
+  it.todo('follow-up: a Partner role limited to its own partners record (needs the Partners screen to query its own document, and field limits so a partner cannot edit its own commission rate)');
   it.todo('held: an Active partner readable by anyone (partners D-5) needs a public profile document, not the full partner record');
-  it.todo('3.5: quotations follow checkPermission(quotations); a Customer is denied');
-  it.todo('3.5: messages are readable only by participants and Admin; create requires fromId to be the caller');
-  it.todo('3.5: users are readable only by Admin, self, or roles with agents or messages view');
-  it.todo('3.5: a Deactivated or Disabled user is denied everywhere; legacy users without status keep working');
-  it.todo('3.5: a Manager can update or delete non-Admin users, but cannot grant Admin, edit an Admin or change their own role');
-  it.todo('3.5: leads are readable with the leads or pipeline permission; delete follows checkPermission or Admin');
 });

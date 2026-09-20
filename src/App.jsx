@@ -698,42 +698,56 @@ function App() {
     let unsubPending;
 
     if (currentUser?.isApproved) {
-      // All approved users need the full user list to use the Messaging feature.
-      // Firestore rules already allow all authenticated users to read /users/*.
-      unsubUsers = onSnapshot(collection(db, COLLECTIONS.USERS), (snapshot) => {
-        const u = [];
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          u.push(data);
-          if (currentUser?.identifier && data.identifier === currentUser.identifier) {
-            setCurrentUser(prev => {
-              if (!prev) return data;
-              if (
-                prev.photoURL !== data.photoURL ||
-                prev.role !== data.role ||
-                prev.name !== data.name ||
-                prev.selectedPreset !== data.selectedPreset
-              ) {
-                const merged = { ...prev, ...data };
-                // Never let a stale snapshot (racing the self-heal write above)
-                // downgrade a bootstrap super-admin's role back below Admin.
-                if (isSuperAdminEmail(data.identifier)) {
-                  merged.role = 'Admin';
-                  merged.isApproved = true;
-                  merged.status = 'Active';
-                }
-                return merged;
-              }
-              return prev;
-            });
+      // Keeps currentUser in step with its own users document (photo, role, name, preset).
+      const syncSelf = (data) => {
+        if (!currentUser?.identifier || data.identifier !== currentUser.identifier) return;
+        setCurrentUser(prev => {
+          if (!prev) return data;
+          if (
+            prev.photoURL !== data.photoURL ||
+            prev.role !== data.role ||
+            prev.name !== data.name ||
+            prev.selectedPreset !== data.selectedPreset
+          ) {
+            const merged = { ...prev, ...data };
+            // Never let a stale snapshot (racing the self-heal write above)
+            // downgrade a bootstrap super-admin's role back below Admin.
+            if (isSuperAdminEmail(data.identifier)) {
+              merged.role = 'Admin';
+              merged.isApproved = true;
+              merged.status = 'Active';
+            }
+            return merged;
           }
+          return prev;
         });
-        setUsers(u);
-      });
+      };
+
+      // The rules let Admins, roles that manage users and roles that use messaging read
+      // the whole collection; anyone else may read only their own document.
+      const canListUsers = currentUser.role === 'Admin' || canAccess(currentUser.role, 'agents') || canAccess(currentUser.role, 'messages');
+      if (canListUsers) {
+        unsubUsers = onSnapshot(collection(db, COLLECTIONS.USERS), (snapshot) => {
+          const u = [];
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            u.push(data);
+            syncSelf(data);
+          });
+          setUsers(u);
+        });
+      } else if (currentUser.identifier) {
+        unsubUsers = onSnapshot(doc(db, COLLECTIONS.USERS, String(currentUser.identifier).trim().toLowerCase()), (snapshot) => {
+          if (!snapshot.exists()) return;
+          const data = snapshot.data();
+          setUsers([data]);
+          syncSelf(data);
+        });
+      }
     }
 
-    if (currentUser?.role === 'Admin' || currentUser?.role === 'admin') {
-      // Pending users are Admin-only
+    if (currentUser?.role === 'Admin' || currentUser?.role === 'admin' || canAccess(currentUser?.role, 'agents', 'edit')) {
+      // Pending sign-ups are reviewed by Admins and by roles that can edit users.
       unsubPending = onSnapshot(collection(db, COLLECTIONS.PENDING_USERS), (snapshot) => {
         const pu = [];
         snapshot.forEach(doc => pu.push(doc.data()));
@@ -745,7 +759,9 @@ function App() {
       if (unsubUsers) unsubUsers();
       if (unsubPending) unsubPending();
     };
-  }, [currentUser]);
+  // canAccess is rebuilt on every render; `permissions` is the state it reads.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser, permissions]);
 
   // localStorage sync hooks removed in favor of Firestore subscriptions
 

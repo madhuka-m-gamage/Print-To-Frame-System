@@ -51,7 +51,7 @@ const viewEdit = { ...none, view: true, edit: true };
 // (last synced with DEFAULT_PERMISSIONS at Phase 7 step 3.2).
 export const PERMISSIONS_FIXTURE = {
   Admin: { leads: full, pipeline: full, customers: full, partners: full, invoices: full, receipts: full, projects: full, logistics: full, quotations: full, messages: full, agents: full },
-  Manager: { leads: full, pipeline: full, customers: full, partners: full, invoices: full, receipts: { ...full, delete: false }, projects: full, logistics: full, quotations: full, messages: full, agents: read },
+  Manager: { leads: full, pipeline: full, customers: full, partners: full, invoices: full, receipts: { ...full, delete: false }, projects: full, logistics: full, quotations: full, messages: full, agents: full },
   Sales: { leads: write, pipeline: write, customers: write, partners: write, invoices: write, receipts: write, projects: read, logistics: read, quotations: full, messages: full, agents: none },
   Operations: { leads: none, pipeline: none, customers: read, partners: none, invoices: viewCreate, receipts: none, projects: ops, logistics: ops, quotations: none, messages: full, agents: none },
   Support: { leads: read, pipeline: read, customers: read, partners: read, invoices: read, receipts: read, projects: read, logistics: read, quotations: read, messages: full, agents: none },

@@ -54,7 +54,7 @@ Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 be
 - [x] 3.2: client RBAC prerequisites and matrix defaults
 - [ ] 3.3: live permissions migration (prepared: Permissions Manager has an "Add missing modules with defaults" button; the live write needs your approval and an Admin to click Save)
 - [ ] 3.4 / 3.4d: additive rules written and tested (D-5 public partner read held, see notes); deploy needs approval
-- [ ] 3.5 / 3.5d: restrictive rules, RBAC E2E on the emulator, deploy (needs approval), then manual role check on the live site
+- [ ] 3.5 / 3.5d: restrictive rules written and tested (not deployed); needs 3.3 and 3.4d first, then the RBAC E2E, your approval to deploy, and a manual role check on the live site
 - [x] 3.6: admin API
 - [ ] 4.1-4.3: payouts, referral lineage, claims and notifications
 - [ ] 5.1-5.3: Google scopes, registration, user lifecycle
