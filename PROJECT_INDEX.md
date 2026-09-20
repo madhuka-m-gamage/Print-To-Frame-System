@@ -39,7 +39,7 @@ Map, then per-module Claude instructions.
 - [operations-inspection](docs/02_modules/operations-inspection.md) | [instructions](docs/02_modules/operations-inspection/CLAUDE.md) | [findings](docs/02_modules/operations-inspection/FINDINGS.md)
 - [operations-logistics](docs/02_modules/operations-logistics.md) | [instructions](docs/02_modules/operations-logistics/CLAUDE.md) | [findings](docs/02_modules/operations-logistics/FINDINGS.md)
 - [partners](docs/02_modules/partners.md) | [instructions](docs/02_modules/partners/CLAUDE.md)
-- [profile-settings](docs/02_modules/profile-settings.md) | [instructions](docs/02_modules/profile-settings/CLAUDE.md)
+- [profile-settings](docs/02_modules/profile-settings.md) | [instructions](docs/02_modules/profile-settings/CLAUDE.md) | [findings](docs/02_modules/profile-settings/FINDINGS.md)
 - [receipts](docs/02_modules/receipts.md) | [instructions](docs/02_modules/receipts/CLAUDE.md) | [findings](docs/02_modules/receipts/FINDINGS.md)
 - [user-management-rbac](docs/02_modules/user-management-rbac.md) | [instructions](docs/02_modules/user-management-rbac/CLAUDE.md) | [findings](docs/02_modules/user-management-rbac/FINDINGS.md)
 
