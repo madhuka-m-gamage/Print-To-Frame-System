@@ -4,7 +4,6 @@ export const pricingTiers = {
     manufRate: 118.5,
     logistics: 2000,
     qa: 2000,
-    costSalesRate: 53.5,
     profitMargin: 0.3997,
     internalManufRate: 40,
   },
@@ -13,7 +12,6 @@ export const pricingTiers = {
     manufRate: 118.5,
     logistics: 2000,
     qa: 2000,
-    costSalesRate: 53.5,
     profitMargin: 0.4,
     internalManufRate: 40,
   },
@@ -22,7 +20,6 @@ export const pricingTiers = {
     manufRate: 118.5,
     logistics: 3000,
     qa: 4000,
-    costSalesRate: 53.5,
     profitMargin: 0.3672,
     internalManufRate: 40,
   },
@@ -31,7 +28,6 @@ export const pricingTiers = {
     manufRate: 118.5,
     logistics: 3000,
     qa: 4000,
-    costSalesRate: 53.5,
     profitMargin: 0.3793,
     internalManufRate: 40,
   },
@@ -40,30 +36,38 @@ export const pricingTiers = {
     manufRate: 118.5,
     logistics: 3000,
     qa: 4000,
-    costSalesRate: 53.5,
     profitMargin: 0.3793,
     internalManufRate: 40,
   },
 };
 
-export function calculateCost(tier, sqFt) {
+/**
+ * Cost stack for a job.
+ * @param {string} tier key of pricingTiers
+ * @param {number} sqFt area in square feet
+ * @param {number} [discountPct=0] optional discount off the gross estimate, in percent
+ * @param {number} [commissionRate=0] sales commission in LKR per sq ft: 0 for a direct lead,
+ *   the partner's own rate for a referral
+ */
+export function calculateCost(tier, sqFt, discountPct = 0, commissionRate = 0) {
   const o = pricingTiers[tier];
   if (!o || sqFt <= 0) return null;
+  const rate = Number(commissionRate) || 0;
   const s = sqFt * o.manufRate;
   const r = o.logistics;
   const c = o.qa;
-  const f = sqFt * o.costSalesRate;
+  const f = sqFt * rate;
   const m = s + r + c + f;
   const x = m * o.profitMargin;
   const h = m + x;
-  const g = h * 0.15;
+  const g = h * ((Number(discountPct) || 0) / 100);
   const w = h - g;
   const N = w / sqFt;
   const C = sqFt * o.internalManufRate;
-  const T = sqFt * o.costSalesRate;
+  const T = f;
   const _ = C + T;
   const b = w - _;
-  const q = (b + r + c + f) / sqFt;
+  const q = b / sqFt;
   return {
     tierInfo: o,
     manufAmount: s,
@@ -73,6 +77,8 @@ export function calculateCost(tier, sqFt) {
     profitAndOH: x,
     totalCost: h,
     discount: g,
+    discountPct: Number(discountPct) || 0,
+    commissionRate: rate,
     finalAmount: w,
     finalAmountPerSq: N,
     internalManufAmount: C,

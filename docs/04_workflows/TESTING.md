@@ -121,7 +121,7 @@ Snapshot from `npm run coverage` (unit and API tests only, so the component and 
 | Code | Covered by | Kind | Gaps |
 |---|---|---|---|
 | `src/utils/entityUtils.js` | `tests/unit/entityUtils.test.js`, `factories.test.js` | real, including `getExistingFinalInvoice` | alias cases beyond the nine recognised fields; the guard is client-state based, so two sessions acting at once can still both miss an invoice |
-| `src/utils/cutListEngine.js` | `tests/unit/cutListEngine.test.js` | real (about 97%) | waste estimate is linear, not bin-packed |
+| `src/utils/cutListEngine.js` | `tests/unit/cutListEngine.test.js` | real, including first-fit-decreasing bar packing | none known |
 | `src/utils/dateUtils.js` | `tests/unit/dateUtils.test.js` | real (about 87%) | a few branches |
 | `src/utils/logisticsEngine.js` | `tests/unit/logisticsEngine.test.js` | real, including duplicate Finals and advance-only COD | UI labels (Logistics, LogisticsCardDetails, waybill) not covered by a test |
 | `src/constants/emailTemplates.js` | `tests/unit/emailTemplates.test.js` | real | |
@@ -142,9 +142,9 @@ Tests that deliberately lock in a known defect, with the finding that will chang
 
 | Test | Records this behaviour | Changes with |
 |---|---|---|
-| `pricingEngine.test.js` "always takes a hidden 15% discount" | `calculateCost` deducts 15% of total cost with no way to turn it off | cost-calculator-quotation finding 2 (Phase 7 6.6) |
-| `pricingEngine.test.js` "charges a fixed 53.5 per sq ft sales cost" | every tier charges 53.5 per sq ft whatever the partner rate | cost-calculator-quotation finding 3 (Phase 7 6.6) |
-| `pricingEngine.test.js` "computes Profit / SQ as (grossProfit + logistics + qa + salesCost) / sqFt" | `internalCostPerSq` includes costs the audit says it should not | cost-calculator-quotation finding 1 (Phase 7 6.6) |
+| ~~`pricingEngine.test.js` always takes a hidden 15% discount~~ | flipped in Phase 7 6.6: discount is a parameter defaulting to 0 | cost-calculator-quotation finding 2 |
+| ~~`pricingEngine.test.js` charges a fixed 53.5 per sq ft sales cost~~ | flipped in Phase 7 6.6: commission is a parameter, 0 for direct leads | cost-calculator-quotation finding 3 |
+| ~~`pricingEngine.test.js` computes Profit / SQ as (grossProfit + logistics + qa + salesCost) / sqFt~~ | flipped in Phase 7 6.6: gross profit per sq ft | cost-calculator-quotation finding 1 |
 | ~~`invoiceTemplate.test.js` scales each line item and ignores discountPct and taxPct~~ | flipped in Phase 7 2.4: line totals apply discount and tax before the milestone scaling | invoicing Phase 2 item 5 |
 | ~~`logisticsEngine.test.js` doubles the COD balance for two unpaid Finals~~ | flipped in Phase 7 2.3: only the latest unpaid Final counts | invoicing D-2, logistics D-4 |
 | ~~rulesAccess.test.js lets a Customer read and write quotations~~ | flipped in Phase 7 3.5: quotations follow the quotations permission | rbac finding 5 |

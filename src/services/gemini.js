@@ -104,7 +104,7 @@ export const generateQuotation = async (clientData, scope, deliveryAddress, pric
 - Sales Commission: LKR ${pricing.costSalesAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
 - Margin & Overhead: LKR ${pricing.profitAndOH.toLocaleString(undefined, { maximumFractionDigits: 2 })}
 - Gross Estimate Total: LKR ${pricing.totalCost.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-- Agent Discount (15%): - LKR ${pricing.discount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+- Discount (${pricing.discountPct ?? 0}%): - LKR ${pricing.discount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
 - Final Net Payable: LKR ${pricing.finalAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
   }
 

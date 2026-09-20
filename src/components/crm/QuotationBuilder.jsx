@@ -6,6 +6,7 @@ import { addDocument, updateDocument, COLLECTIONS, generateInvoiceId } from '../
 import GoogleDrivePickerModal from '../common/GoogleDrivePickerModal';
 import { ModalWrapper } from '../common/ui';
 import { matchesEntity } from '../../utils/entityUtils';
+import { isAcceptedQuote } from '../../utils/quotationStatus';
 
 // WhatsApp renders *text* as bold and _text_ as italic client-side — this
 // converts those same markers to HTML purely for the in-app chat-bubble
@@ -68,7 +69,7 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showDriveModal, setShowDriveModal] = useState(false);
-  const [attachedFiles, setAttachedFiles] = useState([]);
+  const [attachedFiles, setAttachedFiles] = useState(latestQuote?.attachedFiles || []);
   const [showWhatsAppPreview, setShowWhatsAppPreview] = useState(false);
   const [isConvertingAdvance, setIsConvertingAdvance] = useState(false);
   const [isConvertingFinal, setIsConvertingFinal] = useState(false);
@@ -137,6 +138,7 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
         advanceDue,
         balanceDue,
         notes,
+        attachedFiles,
         scope: lead.jobScope || '',
         createdBy: currentUser?.email || 'sales',
         updatedAt: new Date().toISOString(),
@@ -187,6 +189,7 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
         advanceDue,
         balanceDue,
         notes,
+        attachedFiles,
         scope: lead.jobScope || '',
         createdBy: currentUser?.email || 'sales',
         version: newVer,
@@ -197,6 +200,9 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
       };
       await addDocument(COLLECTIONS.QUOTATIONS, payload, newId);
       toast.success(`New version v${newVer} created as Draft`);
+      // Point the editor at the new version now, so the next Save updates it instead of
+      // overwriting the version it was cloned from.
+      setActiveQuote({ ...payload, _firestoreId: newId });
       setStatus('Draft');
       setIsEditing(true);
     } catch (err) {
@@ -214,7 +220,7 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
     // (see the JSX below) so this guard is a defensive backstop, not the
     // only protection — but it also covers the in-flight double-click case.
     if (advanceInvoice || isConvertingAdvance) return;
-    if (status !== 'Accepted') {
+    if (!isAcceptedQuote(status)) {
       toast.error('Mark quotation as Accepted before converting to invoice.');
       return;
     }
@@ -254,6 +260,15 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
         lineItems: lineItems.map(({ id, ...rest }) => rest),
       });
       toast.success('75% Advance invoice generated & linked!');
+      const quoteDocId = activeQuote?._firestoreId || activeQuote?.id;
+      if (quoteDocId && status === 'Accepted') {
+        try {
+          await updateDocument(COLLECTIONS.QUOTATIONS, quoteDocId, { status: 'Invoiced' });
+          setStatus('Invoiced');
+        } catch (err) {
+          console.error('Could not mark the quotation Invoiced:', err);
+        }
+      }
     } finally {
       setIsConvertingAdvance(false);
     }
@@ -261,7 +276,7 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
 
   const handleConvertToFinalInvoice = async () => {
     if (finalInvoice || isConvertingFinal) return;
-    if (status !== 'Accepted') {
+    if (!isAcceptedQuote(status)) {
       toast.error('Mark quotation as Accepted before generating final invoice.');
       return;
     }
@@ -337,6 +352,7 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
     setLineItems(q.lineItems?.map(i => ({ ...i, id: i.id || Date.now() + Math.random() })) || [mkItem()]);
     setStatus(q.status || 'Draft');
     setNotes(q.notes || '');
+    setAttachedFiles(q.attachedFiles || []);
     setIsEditing(false);
   };
 
@@ -403,7 +419,7 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
       {/* Status pills */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs uppercase font-extrabold text-on-surface tracking-wider">Quote Status:</span>
-        {['Draft', 'Sent', 'Accepted', 'Rejected'].map(s => (
+        {['Draft', 'Sent', 'Accepted', 'Rejected', ...(status === 'Invoiced' ? ['Invoiced'] : [])].map(s => (
           <button
             key={s}
             type="button"
@@ -606,7 +622,7 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
           </button>
         )}
 
-        {status === 'Accepted' && !isEditing && (
+        {isAcceptedQuote(status) && !isEditing && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {/* Once generated, this becomes a static confirmation, never a
                 repeatable action — viewing/printing the real invoice already

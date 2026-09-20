@@ -105,6 +105,33 @@ export function ftToMm(ft) {
 }
 
 /**
+ * First-fit-decreasing packing of cut pieces into stock bars. Every cut costs one saw kerf,
+ * and a piece longer than a bar is laid across as many whole bars as it needs.
+ * @param {number[]} pieceLengthsMm one entry per piece to cut
+ * @param {number} barLengthMm stock bar length
+ * @param {number} kerfMm saw kerf per cut
+ * @returns {{ bars: number, usedMm: number }} bars needed and the total length they must carry
+ */
+export function packStockBars(pieceLengthsMm, barLengthMm, kerfMm = 0) {
+  const bars = [];
+  let usedMm = 0;
+  const sorted = [...pieceLengthsMm].sort((a, b) => b - a);
+  for (const len of sorted) {
+    let need = len + kerfMm;
+    usedMm += need;
+    while (need > barLengthMm) {
+      bars.push(0);
+      need -= barLengthMm;
+    }
+    if (need <= 0) continue;
+    const slot = bars.findIndex(free => free >= need);
+    if (slot === -1) bars.push(barLengthMm - need);
+    else bars[slot] -= need;
+  }
+  return { bars: bars.length, usedMm };
+}
+
+/**
  * Calculates complete cutting schedule, internal stiffeners, squareness target,
  * and stock requisitioning for a steel frame.
  * 
@@ -281,7 +308,8 @@ export function calculateCutList({
   const totalLengthFeet = Math.round((grossLengthMm / 304.8) * 10) / 10;
 
   const barCapacityMm = stockLengthMm;
-  const stockBarsRequired = Math.max(1, Math.ceil((grossLengthMm * 1.05) / barCapacityMm));
+  const pieces = cutItems.flatMap(item => Array(item.qty).fill(item.lengthMm));
+  const stockBarsRequired = Math.max(1, packStockBars(pieces, barCapacityMm, sawKerfMm).bars);
   const estimatedScrapMm = Math.max(0, (stockBarsRequired * barCapacityMm) - grossLengthMm);
   const scrapPercentage = Math.round((estimatedScrapMm / (stockBarsRequired * barCapacityMm)) * 100);
 

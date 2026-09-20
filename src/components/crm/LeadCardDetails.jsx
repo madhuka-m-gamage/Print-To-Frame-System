@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { toast } from '../../utils/toast';
 import { calculateCost, determineTier } from '../../services/pricingEngine';
+import { getQuotePricingTerms, DEFAULT_REFERRAL_COMMISSION_RATE } from '../../utils/quotePricing';
 import { extractCallScope } from '../../services/gemini';
 import { validatePhone, validateEmail, formatPhone, sanitizeTechnicalScope, stripEmojis } from '../../utils/validation';
 import Card from '../common/Card';
@@ -413,12 +414,18 @@ export default function LeadCardDetails({
     }
   }, [calcLength, calcHeight]);
 
+  const pricingTerms = useMemo(
+    () => getQuotePricingTerms(lead),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [lead.partnerId, lead.source, lead.commissionRate]
+  );
+
   const activePricing = useMemo(() => {
     if (calcSqFt > 0) {
-      return calculateCost(calcTier, calcSqFt);
+      return calculateCost(calcTier, calcSqFt, pricingTerms.discountPct, pricingTerms.commissionRate);
     }
     return null;
-  }, [calcTier, calcSqFt]);
+  }, [calcTier, calcSqFt, pricingTerms]);
 
   const applyPricingToLead = () => {
     if (activePricing) {
@@ -430,10 +437,16 @@ export default function LeadCardDetails({
         pricingMetadata: {
           ...activePricing,
           finalAmount: fixedValue,
-          dimensions: { length: calcLength, height: calcHeight }
+          dimensions: { length: calcLength, height: calcHeight },
+          commissionRateDefaulted: pricingTerms.commissionDefaulted
         }
       }));
       setDimensionsLocked(true);
+      if (pricingTerms.commissionDefaulted) {
+        toast.warning(`No commission rate on file for this partner, so LKR ${DEFAULT_REFERRAL_COMMISSION_RATE.toFixed(2)} per sq ft was used.`, {
+          description: 'An Admin or Manager should check and update the partner\'s rate.'
+        });
+      }
     }
   };
 
