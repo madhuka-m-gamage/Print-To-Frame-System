@@ -149,24 +149,10 @@ function LeadColumn({
               );
             })()}
 
-            {isLastStage && (
-              lead.convertedToDeal ? (
-                <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-lg text-[9px] font-bold flex items-center gap-1" title="Lead has been converted to a deal">
-                  <Check size={11} /> Converted
-                </span>
-              ) : (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onMove(lead.id);
-                  }}
-                  className="px-2.5 py-1.5 rounded-lg bg-secondary text-on-secondary hover:bg-secondary/90 font-bold text-[10px] uppercase tracking-wider transition-all flex items-center space-x-1"
-                  title="Convert to Deal"
-                >
-                  <Check size={12} />
-                  <span>Convert</span>
-                </button>
-              )
+            {isLastStage && lead.convertedToDeal && (
+              <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-lg text-[9px] font-bold flex items-center gap-1" title="Lead has been converted to a deal">
+                <Check size={11} /> Converted
+              </span>
             )}
           </>
         );
@@ -407,13 +393,13 @@ export default function Leads({
     // Persist to Firestore
     try {
       await addDocument(COLLECTIONS.LEADS, newLead, newLead.id);
+      logActivity(currentUser?.identifier, currentUser?.name, 'LEAD_CREATED', 'Leads', `Lead ${newLead.id} created`);
     } catch (error) {
       console.error("Failed to add new lead to DB:", error);
       toast.error("Failed to sync new lead to database");
     }
   };
 
-  // OPTIMIZATION 7: Automatic Client Creation upon saving Lead Details (Prevent Duplicates)
   const handleSaveLeadDetails = async (updatedLead) => {
     const currentLead = leads.find(l => l.id === updatedLead.id);
     const cleanedLead = {
@@ -432,6 +418,7 @@ export default function Leads({
     try {
       const firestoreId = cleanedLead._firestoreId || cleanedLead.id;
       await updateDocument(COLLECTIONS.LEADS, firestoreId, cleanedLead);
+      logActivity(currentUser?.identifier, currentUser?.name, 'LEAD_UPDATED', 'Leads', `Lead ${cleanedLead.id} (${cleanedLead.name || 'unnamed'}) updated`);
     } catch (error) {
       console.error("Failed to update lead in DB:", error);
       toast.error("Failed to save changes to database");
@@ -450,7 +437,10 @@ export default function Leads({
 
     // Generate a unique ID for the Deal and master Job Number
     const dealId = `D-${String(Date.now()).slice(-6)}`;
-    const jobNo = convertedLead.jobNo || `PTF-${String(Date.now()).slice(-4)}`;
+    let jobNo = convertedLead.jobNo;
+    while (!jobNo || leads.some(l => l.jobNo === jobNo)) {
+      jobNo = `PTF-${String(Date.now()).slice(-4)}${Math.floor(10 + Math.random() * 90)}`;
+    }
     const now = new Date().toISOString();
 
     // Create the new deal record starting in Waiting stage of Deals pipeline
@@ -491,6 +481,7 @@ export default function Leads({
         stageEnteredAt: now
       });
       await addDocument(COLLECTIONS.LEADS, newDeal, dealId);
+      logActivity(currentUser?.identifier, currentUser?.name, 'LEAD_CONVERTED', 'Leads', `Lead ${originalLead.id} converted to deal ${dealId} (${jobNo})`);
     } catch (err) {
       console.error("Convert Deal Firestore error:", err);
       toast.error("Failed to sync deal conversion");

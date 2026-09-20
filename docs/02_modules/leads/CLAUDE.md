@@ -26,3 +26,5 @@ Leads are `leads` documents worked as a Kanban / table. Users record or upload a
 - Leads with `source == 'Referral'` can be created anonymously by rules (public referral form).
 - Keep client `canAccess('leads')` and the `leads` rules block in sync.
 - Stage moves are manual by design (an Advance invoice does not advance the stage). "Convert to Deal" is offered only at `Received`. Customers are created only on conversion, never on save. Saving a quotation sets `lead.value` to its grand total. Compressed call recordings over 3.2MB are downsampled, never rejected.
+- Partner referral rows come from Deals, never from a converted lead stub (`convertedToDeal`). New deals get a `jobNo` checked against existing leads. Lead create, update and convert are audit logged.
+- Lead and Deal are one lineage: a Deal links back through `originalLeadId` (and the lead forward through `convertedDealId`). Invoices key on `leadId` and may carry either id; receipts key on `invoiceId`. Match through `getLineageIds` / `invoicesForLineage` (`src/utils/leadLineage.js`), never a single-id compare.

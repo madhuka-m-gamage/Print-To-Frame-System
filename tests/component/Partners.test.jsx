@@ -55,3 +55,33 @@ describe('Partners monthly settlements', () => {
     }
   });
 });
+
+describe('Partners referral eligibility', () => {
+  it('does not list a converted lead stub, so its Completed stage cannot mark a commission as payable', () => {
+    const partner = makePartner({ partnerId: 'P-1', name: 'Lanka Art Studio' });
+    const stub = { id: 'L-1', name: 'Stub Client', partnerId: 'P-1', source: 'Referral', stage: 'Completed', convertedToDeal: true, isDeal: false };
+    const deal = { id: 'D-1', name: 'Deal Client', partnerId: 'P-1', source: 'Referral', stage: 'Waiting', convertedToDeal: false, isDeal: true, originalLeadId: 'L-1' };
+    renderWithProviders(
+      <Partners partners={[partner]} setPartners={vi.fn()} leads={[stub, deal]} setLeads={vi.fn()} invoices={[]} projects={[]} users={[]} setUsers={vi.fn()} currentUser={admin} />,
+      { role: 'Admin' }
+    );
+    expect(screen.getAllByText(/Deal Client/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Stub Client/)).toBeNull();
+  });
+
+  const renderDeal = (deal, invoices) => renderWithProviders(
+    <Partners partners={[makePartner({ partnerId: 'P-1', name: 'Lanka Art Studio', commissionRate: 30 })]} setPartners={vi.fn()} leads={[deal]} setLeads={vi.fn()} invoices={invoices} projects={[]} users={[]} setUsers={vi.fn()} currentUser={admin} />,
+    { role: 'Admin' }
+  );
+  const deal = { id: 'D-1', name: 'Deal Client', partnerId: 'P-1', source: 'Referral', stage: 'Completed', isDeal: true, originalLeadId: 'L-1', value: 1000, totalSqFt: 10 };
+
+  it('a Completed deal is not payable until its invoices, keyed by the original lead id, are paid', () => {
+    renderDeal(deal, [{ id: 'INV-ADV-1', leadId: 'L-1', amount: 750, status: 'Paid' }, { id: 'INV-FIN-1', leadId: 'D-1', amount: 250, status: 'Unpaid' }]);
+    expect(screen.queryByText(/Eligible for Payout/)).toBeNull();
+  });
+
+  it('a Completed deal becomes payable once both invoices, under either id, are paid', () => {
+    renderDeal(deal, [{ id: 'INV-ADV-1', leadId: 'L-1', amount: 750, status: 'Paid' }, { id: 'INV-FIN-1', leadId: 'D-1', amount: 250, status: 'Paid' }]);
+    expect(screen.getAllByText(/Eligible for Payout/).length).toBeGreaterThan(0);
+  });
+});
