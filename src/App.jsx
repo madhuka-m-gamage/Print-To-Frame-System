@@ -767,7 +767,8 @@ function App() {
     }
   };
 
-  const handleRegister = async (regData) => {
+  const handleRegister = async (rawRegData) => {
+    const regData = { ...rawRegData, identifier: String(rawRegData.identifier || '').trim().toLowerCase() };
     try {
       // Create user in Firebase Auth (throws if already exists)
       await emailRegister(regData.identifier, regData.password);
@@ -876,6 +877,8 @@ function App() {
     localStorage.removeItem("ptf_user");
     setCurrentUser(null);
     setWorkspaceToken(null);
+    setNotificationsList([]);
+    setUnreadNotificationsCount(0);
   };
 
   const handleUpdateUser = (updatedUser) => {
@@ -1238,6 +1241,7 @@ function App() {
               setNotifications={setNotificationsList}
               users={users}
               setActiveTab={setActiveTab}
+              currentUser={currentUser}
             />
           )}
 
@@ -1456,13 +1460,13 @@ function App() {
             </button>
 
             <button
-              onClick={() => { setActiveTab('messages'); setMobileMenuOpen(false); }}
+              onClick={() => { setActiveTab('profile'); setMobileMenuOpen(false); }}
               className={`flex-1 py-1 flex flex-col items-center justify-center gap-0.5 rounded-xl transition-all cursor-pointer ${
-                activeTab === 'messages' ? 'text-primary font-black' : 'text-on-surface-variant hover:text-on-surface'
+                activeTab === 'profile' ? 'text-primary font-black' : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
-              <MessageSquare size={18} />
-              <span className="text-[10px] font-bold">Messages</span>
+              <User size={18} />
+              <span className="text-[10px] font-bold">Profile</span>
             </button>
 
             <button
@@ -1500,14 +1504,14 @@ function App() {
 
             <button
               onClick={() => { 
-                if (canAccess(currentUser?.role, 'fabrication')) setActiveTab('fabrication');
+                if (canAccess(currentUser?.role, 'projects')) setActiveTab('projects');
                 else if (canAccess(currentUser?.role, 'logistics')) setActiveTab('logistics');
                 else if (canAccess(currentUser?.role, 'invoices')) setActiveTab('invoices');
                 else setActiveTab('customers');
                 setMobileMenuOpen(false); 
               }}
               className={`flex-1 py-1 flex flex-col items-center justify-center gap-0.5 rounded-xl transition-all cursor-pointer ${
-                ['fabrication', 'logistics', 'invoices', 'customers'].includes(activeTab) ? 'text-primary font-black' : 'text-on-surface-variant hover:text-on-surface'
+                ['projects', 'logistics', 'invoices', 'customers'].includes(activeTab) ? 'text-primary font-black' : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
               <Hammer size={18} />

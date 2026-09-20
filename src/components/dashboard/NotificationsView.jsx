@@ -6,8 +6,9 @@ import {
 import { useMessaging } from '../../context/MessagingContext';
 import { PageHeader, FilterBar, StatusBadge, UserAvatar, TwoToneIcon } from '../common/ui';
 import { formatDateTime } from '../../utils/dateUtils';
+import { getIncomingMessages } from '../../utils/messageFilters';
 
-export default function NotificationsView({ notifications = [], setNotifications, users = [], setActiveTab }) {
+export default function NotificationsView({ notifications = [], setNotifications, users = [], setActiveTab, currentUser }) {
   const [filterType, setFilterType] = useState('ALL'); // 'ALL' | 'SYSTEM' | 'MESSAGES'
   const [searchQuery, setSearchQuery] = useState('');
   const { messages, openMiniChat, resolveUserProfile, markAllAsRead } = useMessaging();
@@ -29,7 +30,7 @@ export default function NotificationsView({ notifications = [], setNotifications
 
   // Convert direct messages to notification feed items with resolved sender profile & photoURL
   const messageItems = useMemo(() => {
-    return (messages || []).slice(-30).reverse().map(msg => {
+    return getIncomingMessages(messages, currentUser?.identifier).slice(-30).reverse().map(msg => {
       const senderProfile = resolveUserProfile 
         ? resolveUserProfile({ identifier: msg.fromId, name: msg.senderName, photoURL: msg.photoURL || msg.senderAvatar })
         : (users.find(u => u.identifier?.toLowerCase() === msg.fromId?.toLowerCase() || u.email?.toLowerCase() === msg.fromId?.toLowerCase() || u.name?.toLowerCase() === msg.senderName?.toLowerCase()) || null);
@@ -44,7 +45,7 @@ export default function NotificationsView({ notifications = [], setNotifications
         rawMessage: msg
       };
     });
-  }, [messages, resolveUserProfile, users]);
+  }, [messages, resolveUserProfile, users, currentUser]);
 
   const combinedNotifications = useMemo(() => {
     let list = [];

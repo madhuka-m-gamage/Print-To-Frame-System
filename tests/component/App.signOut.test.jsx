@@ -63,12 +63,9 @@ beforeEach(() => {
 });
 
 describe('App sign-out', () => {
-  // Characterisation: docs/02_modules/notifications/FINDINGS.md NOTIF-01. The
-  // notification list and unread count live in App state and handleSignOut
-  // never resets them, so the next person to sign in on the same browser tab
-  // still sees the previous user's unread badge. Flips in Phase 7 1, which
-  // clears both on sign-out.
-  it('keeps the previous user\'s unread notification count after sign-out and the next sign-in', async () => {
+  // Flipped in Phase 7 1 (notifications NOTIF-01): handleSignOut now clears the
+  // notification list and unread count, so the next user starts clean.
+  it('clears the previous user\'s unread notification count on sign-out', async () => {
     render(<PermissionsProvider><App /></PermissionsProvider>);
     await waitFor(() => expect(authState.callback).toBeTruthy());
     await signIn();
@@ -82,6 +79,6 @@ describe('App sign-out', () => {
 
     await signIn();
     await waitFor(() => expect(bells().length).toBeGreaterThan(0));
-    expect(bells()[0]).toHaveTextContent('1');
+    expect(bells()[0]).not.toHaveTextContent('1');
   });
 });

@@ -39,6 +39,7 @@ import FabricationCardDetails from './FabricationCardDetails';
 import { PageHeader, FilterBar, StatusBadge, KanbanColumn, KanbanCard, ModalWrapper } from '../common/ui';
 import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateInvoiceId, generateAtomicId } from '../../services/firestoreSync';
 import { stripEmojis, sanitizeTechnicalScope } from '../../utils/validation';
+import { generateText } from '../../services/gemini';
 import { STEEL_PROFILES, calculateCutList, mmToFtIn } from '../../utils/cutListEngine';
 
 const STAGES = ["Pending", "Ongoing", "Ready For Inspection", "Revision", "Completed"];
@@ -810,17 +811,7 @@ export default function FabricationWorks({
     try {
       const prompt = `Draft a highly professional, polite WhatsApp update for "Print To Frame". Customer: ${job.customerName}, Job: ${job.jobNo} (${job.scope}), Status: ${job.status}. Deadline: ${job.deadline}. Make it friendly.`;
       
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setWhatsappUpdate(data.text);
-      } else {
-        setWhatsappUpdate("Failed to generate update. Check API connection.");
-      }
+      setWhatsappUpdate(await generateText(prompt));
     } catch {
       setWhatsappUpdate("Failed to generate update. Please try again.");
     } finally {
