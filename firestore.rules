@@ -203,7 +203,7 @@ service cloud.firestore {
     // "must increase" rule rejects legitimate calls. A signed-in user can therefore
     // still lower a counter; closing that needs the numbering moved server-side.
     function isKnownCounter(counterId) {
-      return counterId in ['INV-ADV', 'INV-FIN', 'L-DL', 'L-PK', 'PTF', 'QT'];
+      return counterId in ['INV-ADV', 'INV-FIN', 'L-DL', 'L-PK', 'PTF', 'QT', 'L', 'D'];
     }
     match /counters/{counterId} {
       allow read: if isAuthenticated();

@@ -8,7 +8,7 @@ import LeadCardDetails from './LeadCardDetails';
 import DeleteModal from '../common/DeleteModal';
 import { PageHeader, FilterBar, StatusBadge, KanbanColumn, KanbanCard, DetailModalLayout, DetailModalHeader, DetailModalFooter } from '../common/ui';
 import SortableTable from '../common/ui/SortableTable';
-import { addDocument, updateDocument, deleteDocument, COLLECTIONS } from '../../services/firestoreSync';
+import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateAtomicId } from '../../services/firestoreSync';
 import { sanitizeTechnicalScope, stripEmojis, phonesMatch } from '../../utils/validation';
 import { exportToCsv } from '../../utils/csvExport';
 import { logActivity } from '../../services/auditLog';
@@ -371,8 +371,16 @@ export default function Leads({
 
   const handleAddNewLead = async () => {
     const now = new Date().toISOString();
+    let leadId;
+    try {
+      leadId = await generateAtomicId('L');
+    } catch (error) {
+      console.error("Failed to allocate a lead id:", error);
+      toast.error("Could not create the lead. Check your connection and try again.");
+      return;
+    }
     const newLead = {
-      id: `L-${String(Date.now()).slice(-6)}`,
+      id: leadId,
       name: "",
       company: "",
       phone: "",
@@ -436,10 +444,15 @@ export default function Leads({
     }
 
     // Generate a unique ID for the Deal and master Job Number
-    const dealId = `D-${String(Date.now()).slice(-6)}`;
+    let dealId;
     let jobNo = convertedLead.jobNo;
-    while (!jobNo || leads.some(l => l.jobNo === jobNo)) {
-      jobNo = `PTF-${String(Date.now()).slice(-4)}${Math.floor(10 + Math.random() * 90)}`;
+    try {
+      dealId = await generateAtomicId('D');
+      if (!jobNo) jobNo = await generateAtomicId('PTF');
+    } catch (err) {
+      console.error("Failed to allocate deal ids:", err);
+      toast.error("Could not convert the lead. Check your connection and try again.");
+      return;
     }
     const now = new Date().toISOString();
 
