@@ -123,32 +123,53 @@ describe('logisticsEngine', () => {
     expect(res.matchedInvoices.length).toBe(0);
     expect(res.hasUnpaid).toBe(false);
   });
-  // Characterisation: docs/02_modules/invoicing/FINDINGS.md D-2 and
-  // docs/02_modules/operations-logistics/FINDINGS.md D-4 / invoicing D-1.
-  // Duplicate Final invoices for one job are all unpaid, so the driver's COD
-  // balance is doubled. Flips when only the latest unpaid Final counts.
-  it('doubles the COD balance when a job has two unpaid Final invoices', () => {
+  // Flipped in Phase 7 2.3 (invoicing D-2, logistics D-4): only the latest unpaid
+  // Final counts, so duplicate Finals no longer double the driver's COD balance.
+  it('counts only the latest unpaid Final invoice when a job has duplicates', () => {
     const invoices = [
       { id: 'INV-FIN-0001', linkedJobNo: 'PTF-2001', customerName: 'Apex Designs', amount: 25000, type: 'Final', status: 'Unpaid', createdAt: '2026-01-01T10:00:00Z' },
-      { id: 'INV-FIN-0002', linkedJobNo: 'PTF-2001', customerName: 'Apex Designs', amount: 25000, type: 'Final', status: 'Unpaid', createdAt: '2026-01-02T10:00:00Z' },
+      { id: 'INV-FIN-0002', linkedJobNo: 'PTF-2001', customerName: 'Apex Designs', amount: 26000, type: 'Final', status: 'Unpaid', createdAt: '2026-01-02T10:00:00Z' },
     ];
     const res = calculateCODFromInvoices(invoices, 'PTF-2001', 'Apex Designs');
-    expect(res.totalBalanceDue).toBe(50000);
+    expect(res.totalBalanceDue).toBe(26000);
     expect(res.finalInvoice?.id).toBe('INV-FIN-0002');
+    expect(res.finalInvoicePending).toBe(false);
   });
 
-  // Characterisation: operations-logistics FINDINGS D-4. A job with only a
-  // paid Advance invoice (Final not yet created) reports nothing to collect,
-  // which the logistics screens show as "all settled". Flips when the engine
-  // compares the paid amounts with the linked entity total.
-  it('reports nothing to collect for a job with only a paid Advance invoice', () => {
+  // Flipped in Phase 7 2.3 (logistics D-4): a paid Advance with no Final yet leaves
+  // the 25% balance to collect, flagged as pending Final invoice creation.
+  it('reports the 25% balance as pending for a job with only a paid Advance invoice', () => {
     const invoices = [
       { id: 'INV-ADV-0001', linkedJobNo: 'PTF-2002', customerName: 'Apex Designs', amount: 75000, type: 'Advance', status: 'Paid' },
     ];
     const res = calculateCODFromInvoices(invoices, 'PTF-2002', 'Apex Designs');
-    expect(res.hasUnpaid).toBe(false);
-    expect(res.totalBalanceDue).toBe(0);
+    expect(res.hasUnpaid).toBe(true);
+    expect(res.finalInvoicePending).toBe(true);
+    expect(res.totalBalanceDue).toBeCloseTo(25000);
     expect(res.finalInvoice).toBeNull();
+  });
+
+  it('uses the Advance invoice totalValue as the contract total when present', () => {
+    const invoices = [
+      { id: 'INV-ADV-0001', linkedJobNo: 'PTF-2005', amount: 75000, totalValue: 120000, type: 'Advance', status: 'Paid' },
+    ];
+    expect(calculateCODFromInvoices(invoices, 'PTF-2005', '').totalBalanceDue).toBe(45000);
+  });
+
+  it('is settled when the paid Advance already covers the whole contract value', () => {
+    const invoices = [
+      { id: 'INV-ADV-0001', linkedJobNo: 'PTF-2006', amount: 100000, totalValue: 100000, type: 'Advance', status: 'Paid' },
+    ];
+    const res = calculateCODFromInvoices(invoices, 'PTF-2006', '');
+    expect(res.hasUnpaid).toBe(false);
+    expect(res.finalInvoicePending).toBe(false);
+  });
+
+  it('does not report a pending Final when an unpaid Advance has no Final yet', () => {
+    const invoices = [{ id: 'INV-ADV-0001', linkedJobNo: 'PTF-2007', amount: 75000, type: 'Advance', status: 'Unpaid' }];
+    const res = calculateCODFromInvoices(invoices, 'PTF-2007', '');
+    expect(res.finalInvoicePending).toBe(false);
+    expect(res.totalBalanceDue).toBe(75000);
   });
 
   it('reports nothing to collect when Advance and Final are both paid', () => {

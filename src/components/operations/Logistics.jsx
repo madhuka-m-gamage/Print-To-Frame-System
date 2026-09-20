@@ -94,7 +94,7 @@ function LogisticsColumn({
     >
       {items.map((job) => {
         // Calculate COD for card badge
-        const { hasUnpaid, totalBalanceDue, primaryInvoice } = calculateCODFromInvoices(invoices, job.linkedJobNo, job.customer, {
+        const { hasUnpaid, totalBalanceDue, primaryInvoice, finalInvoicePending } = calculateCODFromInvoices(invoices, job.linkedJobNo, job.customer, {
           entity: job,
           invoiceId: job.invoiceId
         });
@@ -121,6 +121,7 @@ function LogisticsColumn({
                 <span className="text-[9px] font-bold text-amber-400 bg-amber-500/15 px-1.5 py-0.5 rounded border border-amber-500/30 flex items-center">
                   <DollarSign size={9} className="mr-0.5 text-amber-400" />
                   COD: LKR {totalBalanceDue.toLocaleString()}
+                  {finalInvoicePending && <span className="ml-1 opacity-80">(Final invoice pending)</span>}
                   {primaryInvoice?.id && (
                     <span className="ml-1 opacity-80 font-mono">({primaryInvoice.id})</span>
                   )}

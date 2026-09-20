@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Phase 7 step 2.3: `calculateCODFromInvoices` counts only the latest unpaid Final invoice and returns `finalInvoicePending` with the 25% shortfall for a paid Advance with no Final; Logistics card, details panel and waybill show "Pending 25% Settlement Invoice Creation" instead of "all settled". Two characterisation tests flipped.
 - Phase 7 step 2.2: Deals and Fabrication no longer offer a backward move out of Completed; bulk stage change rejects Completed; deal completion records `commissionAccrued` and never accrues partner commission twice. No test for the bulk-change rejection (table selection UI not exercised).
 - Phase 7 step 2.1: `getExistingFinalInvoice` in `entityUtils`; deal completion and job QA pass no longer create a second Final invoice (FabricationWorks now receives `invoices`), and the quotation "25% Final Settlement" button shows only for a Deal or after the Advance is paid. The guard is client-side, so a race between two sessions is still possible. Two B5 characterisation tests flipped.
 - Phase 7 step 1 (quick wins): sign-out clears notifications; mobile dock uses the `projects` module and Partners get a Profile button instead of Messages; the WhatsApp update and route-insight AI calls go through `generateText` (bearer token attached); registration email is trimmed and lowercased; the notification feed drops the user's own messages; removed the dead `onUnreadCountChange` prop and the false "encrypted" copy in Messages.
