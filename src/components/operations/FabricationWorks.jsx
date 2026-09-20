@@ -436,7 +436,14 @@ export default function FabricationWorks({
       toast.error("Please provide at least a title or brief scope for the fabrication job.");
       return;
     }
-    const jobNo = `PTF-${String(Date.now()).slice(-4)}`;
+    let jobNo;
+    try {
+      jobNo = await generateAtomicId('PTF');
+    } catch (err) {
+      console.error("Failed to allocate a job number:", err);
+      toast.error("Could not create the job. Check your connection and try again.");
+      return;
+    }
     const now = new Date().toISOString();
     
     // Resolve customer info

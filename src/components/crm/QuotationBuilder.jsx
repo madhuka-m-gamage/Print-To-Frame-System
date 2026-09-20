@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Plus, Trash2, Sparkles, FileText, Copy, ChevronRight, Check, X, Layers, HardDrive, MessageCircle, Send } from 'lucide-react';
 import { toast } from '../../utils/toast';
 import { generateStructuredQuotation } from '../../services/gemini';
-import { addDocument, updateDocument, COLLECTIONS, generateInvoiceId } from '../../services/firestoreSync';
+import { addDocument, updateDocument, COLLECTIONS, generateInvoiceId, generateAtomicId } from '../../services/firestoreSync';
 import GoogleDrivePickerModal from '../common/GoogleDrivePickerModal';
 import { ModalWrapper } from '../common/ui';
 import { matchesEntity } from '../../utils/entityUtils';
@@ -150,7 +150,7 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
         toast.success('Quotation updated successfully!');
       } else {
         const version = (latestQuote?.version || 0) + 1;
-        const newId = `QT-${String(Date.now()).slice(-6)}`;
+        const newId = await generateAtomicId('QT');
         await addDocument(COLLECTIONS.QUOTATIONS, {
           ...payload,
           version,
@@ -182,7 +182,7 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
     setIsSaving(true);
     try {
       const cleanItems = lineItems.map(({ id, ...rest }) => rest);
-      const newId = `QT-${String(Date.now()).slice(-6)}`;
+      const newId = await generateAtomicId('QT');
       const payload = {
         leadId: lead.id || lead._firestoreId,
         clientName: lead.name || '',

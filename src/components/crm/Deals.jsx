@@ -8,7 +8,7 @@ import DeleteModal from '../common/DeleteModal';
 import LeadCardDetails from './LeadCardDetails';
 import { PageHeader, FilterBar, KanbanColumn, KanbanCard, StatusBadge } from '../common/ui';
 import SortableTable from '../common/ui/SortableTable';
-import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateInvoiceId } from '../../services/firestoreSync';
+import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateInvoiceId, generateAtomicId } from '../../services/firestoreSync';
 import { exportToCsv } from '../../utils/csvExport';
 import { matchesEntity, getExistingFinalInvoice } from '../../utils/entityUtils';
 import { getFinalInvoiceAmounts, calculateDealCommission } from '../../utils/dealSettlement';
@@ -426,7 +426,14 @@ export default function Deals({
   };
 
   const handleCreateDeliveryJob = async (deal) => {
-    const jobId = `L-DL-${String(Date.now()).slice(-6)}`;
+    let jobId;
+    try {
+      jobId = await generateAtomicId('L-DL');
+    } catch (err) {
+      console.error("Failed to allocate a delivery job id:", err);
+      toast.error("Could not create the delivery job. Check your connection and try again.");
+      return;
+    }
     const newJob = {
       id: jobId,
       type: "Delivery",

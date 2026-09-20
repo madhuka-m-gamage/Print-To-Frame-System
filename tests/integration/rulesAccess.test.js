@@ -183,6 +183,14 @@ describe('known gaps in today\'s rules (characterisation)', () => {
     await assertFails(setDoc(doc(db, 'counters', 'INV-ADV'), { value: 1, extra: true }));
   });
 
+  it('accepts the lead and deal id counters (Phase 7 6.2) but not a look-alike prefix', async () => {
+    const db = await dbAs('Sales');
+    await assertSucceeds(setDoc(doc(db, 'counters', 'L'), { value: 1 }));
+    await assertSucceeds(setDoc(doc(db, 'counters', 'D'), { value: 1 }));
+    await assertSucceeds(setDoc(doc(db, 'counters', 'PTF'), { value: 1 }));
+    await assertFails(setDoc(doc(db, 'counters', 'LD'), { value: 1 }));
+  });
+
   // Known gap left by the 3.4 counters rule (see the comment on it in firestore.rules): with no lower
   // bound, a signed-in user can still lower a counter and cause duplicate numbers. Closes only when
   // numbering moves server-side.
