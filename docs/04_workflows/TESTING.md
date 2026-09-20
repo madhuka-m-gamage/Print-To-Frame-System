@@ -8,7 +8,7 @@ Five layers, each with one job. Pick the cheapest layer that can prove the behav
 | API handlers | `tests/api/` | node, mock req/res | `npm run test:api` | live |
 | Component | `tests/component/` | jsdom + React Testing Library | `npm run test:component` | live |
 | Integration / rules | `tests/integration/` | Firebase emulator | `npm run test:rules` | live |
-| End to end | `tests/e2e/` | Playwright + emulator | `npm run test:e2e` | planned (A6; emulator wiring done in A5) |
+| End to end | `tests/e2e/` | Playwright + emulator | `npm run test:e2e` | live |
 
 Coverage: `npm run coverage` (text, html, lcov in `coverage/`). There is no threshold; it is a report, not a gate.
 
@@ -23,7 +23,7 @@ Coverage: `npm run coverage` (text, html, lcov in `coverage/`). There is no thre
 - Unit: add `tests/unit/<module>.test.js`. Import `describe`, `it`, `expect` from `vitest` explicitly (`globals: false`). Build fixtures with `tests/helpers/factories.js` (`makeLead`, `makeDeal`, `makeInvoice`, `makeReceipt`, `makePartner`, `makeProject`, `makeLogisticsJob`, `makeUser`).
 - API: add `tests/api/<handler>.test.js`, build the request with `createMockReqRes` from `tests/helpers/mockHttp.js`, and mock `api/_lib/firebaseAdmin.js` (recipe in `tests/api/README.md`).
 - Component: add `tests/component/<Name>.test.jsx` and render with `renderWithProviders(ui, { role, permissions, wrappers })` from `tests/helpers/renderWithProviders.jsx`. Runs under `vitest.component.config.js` (jsdom, separate from `vitest.config.js`).
-- Other layers: see the phase notes as each harness lands.
+- E2E: add `tests/e2e/<journey>.spec.js` (Playwright, role/label selectors). Data comes from `tests/fixtures/seed.mjs`; extend the seed rather than creating records inline. See `tests/e2e/README.md`.
 
 ## Rules
 - Test files run sequentially (`fileParallelism: false`): integration files share one stateful emulator and parallel files clobbered each other's data.
@@ -83,7 +83,7 @@ it('lets Sales create an invoice but not delete one', async () => {
 `.github/workflows/test.yml` runs on pull requests to `staging` and `main`, and on pushes to `staging`.
 - `lint-unit`: `npm run lint`, `npm run coverage` (unit and API, coverage uploaded as an artifact), `npm run test:api`, `npm run test:component`, `npm run build`.
 - `rules`: Java 21 and `firebase-tools`, then `npm run test:rules` against the emulator with the fake `demo-print2frame-test` project.
-- The Playwright `e2e` job is not wired yet (needs A5 and A6).
+- `e2e`: Playwright against the emulators, for pull requests to `main` and manual dispatch only, so a flaky browser run never blocks staging work.
 
 No job uses secrets. Do not add `FIREBASE_SERVICE_ACCOUNT_JSON` or `GEMINI_API_KEY` to the workflow: tests must never reach real Firebase, Gemini or SMTP.
 

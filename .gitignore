@@ -114,6 +114,10 @@ yarn-error.log*
 # Code coverage reports generated after running tests
 coverage/
 
+# Playwright output
+test-results/
+playwright-report/
+
 
 ##############################################
 # OPERATING SYSTEM CLUTTER — files your OS creates automatically

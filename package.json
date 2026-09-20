@@ -15,6 +15,7 @@
     "seed:emulator": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 GCLOUD_PROJECT=demo-print2frame-test node tests/fixtures/seed.mjs",
     "test:api": "vitest run tests/api",
     "test:component": "vitest run -c vitest.component.config.js",
+    "test:e2e": "playwright test",
     "test:rules": "firebase emulators:exec --project demo-print2frame-test --only firestore,auth \"vitest run tests/integration\"",
     "test:all": "npm run test && npm run test:api && npm run test:component && npm run test:rules",
     "push:staging": "git add . && git commit -m \"chore: update staging build\" && git push origin staging",
@@ -36,6 +37,7 @@
   "devDependencies": {
     "@eslint/js": "^9.17.0",
     "@firebase/rules-unit-testing": "^3.0.4",
+    "@playwright/test": "^1.63.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.7",
