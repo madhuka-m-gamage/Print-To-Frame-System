@@ -121,7 +121,8 @@ export function formatDispatchMessage({
  *   matchedInvoices: Array,
  *   advanceInvoice: Object|null,
  *   finalInvoice: Object|null,
- *   primaryInvoice: Object|null
+ *   primaryInvoice: Object|null,
+ *   finalInvoicePending: boolean
  * }}
  */
 export function calculateCODFromInvoices(invoices = [], linkedJobNo = '', customerName = '', options = {}) {
@@ -132,7 +133,8 @@ export function calculateCODFromInvoices(invoices = [], linkedJobNo = '', custom
       matchedInvoices: [],
       advanceInvoice: null,
       finalInvoice: null,
-      primaryInvoice: null
+      primaryInvoice: null,
+      finalInvoicePending: false
     };
   }
 
@@ -185,18 +187,35 @@ export function calculateCODFromInvoices(invoices = [], linkedJobNo = '', custom
     const invTime = toDateObj(inv.createdAt)?.getTime() ?? -Infinity;
     return invTime > latestTime ? inv : latest;
   }, null);
+  const isFinalInv = (inv) => inv.type === 'Final' || String(inv.id || '').includes('INV-FIN');
+  const statusOf = (inv) => String(inv.status || 'Unpaid').toLowerCase();
   const advanceInvoice = latestByCreatedAt(matched.filter(inv => inv.type === 'Advance' || String(inv.id || '').includes('INV-ADV')));
-  const finalInvoice = latestByCreatedAt(matched.filter(inv => inv.type === 'Final' || String(inv.id || '').includes('INV-FIN')));
+  const finalInvoice = latestByCreatedAt(matched.filter(isFinalInv));
 
   const unpaidInvoices = matched.filter(inv => {
-    const status = String(inv.status || 'Unpaid').toLowerCase();
+    const status = statusOf(inv);
     return status !== 'paid' && status !== 'cancelled' && status !== 'void';
   });
 
-  const totalBalanceDue = unpaidInvoices.reduce((sum, inv) => {
-    const val = Number(inv.amount || inv.totalValue || 0);
-    return sum + val;
-  }, 0);
+  // Duplicate Final invoices for one job must never double the driver's cash
+  // collection, so only the latest unpaid Final counts.
+  const latestUnpaidFinal = latestByCreatedAt(unpaidInvoices.filter(isFinalInv));
+  let totalBalanceDue = unpaidInvoices
+    .filter(inv => !isFinalInv(inv) || inv === latestUnpaidFinal)
+    .reduce((sum, inv) => sum + Number(inv.amount || inv.totalValue || 0), 0);
+
+  // A paid Advance with no Final yet still leaves the 25% balance to collect.
+  const hasLiveFinal = matched.some(inv => isFinalInv(inv) && statusOf(inv) !== 'cancelled' && statusOf(inv) !== 'void');
+  let finalInvoicePending = false;
+  if (advanceInvoice && statusOf(advanceInvoice) === 'paid' && !hasLiveFinal) {
+    const contractTotal = Number(advanceInvoice.totalValue) || Number(advanceInvoice.amount || 0) / 0.75;
+    const paidTotal = matched.filter(inv => statusOf(inv) === 'paid').reduce((sum, inv) => sum + Number(inv.amount || 0), 0);
+    const shortfall = contractTotal - paidTotal;
+    if (shortfall > 0.005) {
+      finalInvoicePending = true;
+      totalBalanceDue += shortfall;
+    }
+  }
 
   // Primary invoice for logistics delivery:
   // Prefer unpaid final settlement invoice (since drivers collect remaining balance at delivery),
@@ -213,7 +232,8 @@ export function calculateCODFromInvoices(invoices = [], linkedJobNo = '', custom
     matchedInvoices: matched,
     advanceInvoice,
     finalInvoice,
-    primaryInvoice
+    primaryInvoice,
+    finalInvoicePending
   };
 }
 

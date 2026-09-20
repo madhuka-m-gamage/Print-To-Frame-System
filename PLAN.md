@@ -45,7 +45,7 @@ Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 be
 - [x] 1: quick security and session wins (client only)
 - [x] 2.1: duplicate Final-invoice guard
 - [x] 2.2: Completed-stage reversal locks and commission idempotency
-- [ ] 2.3: COD engine
+- [x] 2.3: COD engine
 - [ ] 2.4: Deals pricing and commission
 - [ ] 2.5: receipts
 - [ ] 2.6: invoice edit policy

@@ -75,7 +75,7 @@ export default function LogisticsCardDetails({
   // fabrication project as entities covers whichever one actually carries
   // the lead/deal id lineage (leadId/dealId/originalLeadId/convertedDealId) —
   // a job dispatched from a converted deal may only have it on one of them.
-  const { hasUnpaid, totalBalanceDue, matchedInvoices, advanceInvoice, finalInvoice, primaryInvoice } = useMemo(() => {
+  const { hasUnpaid, totalBalanceDue, matchedInvoices, advanceInvoice, finalInvoice, primaryInvoice, finalInvoicePending } = useMemo(() => {
     return calculateCODFromInvoices(invoices, job.linkedJobNo, job.customer, {
       entities: [job, linkedProject].filter(Boolean),
       invoiceId: job.invoiceId
@@ -251,7 +251,7 @@ export default function LogisticsCardDetails({
                 </td>
                 <td>
                   ${hasUnpaid 
-                    ? `<strong style="color:#b91c1c;">COLLECT LKR ${totalBalanceDue.toLocaleString()}</strong>` 
+                    ? `<strong style="color:#b91c1c;">COLLECT LKR ${totalBalanceDue.toLocaleString()}</strong>${finalInvoicePending ? '<br/><span style="font-size:10px; color:#64748b;">Pending 25% Settlement Invoice Creation</span>' : ''}` 
                     : '<strong style="color:#15803d;">PAID / NO COLLECTION</strong>'}
                 </td>
               </tr>
@@ -357,7 +357,9 @@ export default function LogisticsCardDetails({
                       {hasUnpaid ? "Cash / Payment Collection Required" : "Invoice Settlement Status"}
                     </span>
                     <span className="text-base sm:text-lg font-black font-mono block">
-                      {hasUnpaid 
+                      {finalInvoicePending
+                        ? `PENDING 25% SETTLEMENT INVOICE CREATION — COLLECT LKR ${totalBalanceDue.toLocaleString()}`
+                        : hasUnpaid 
                         ? `COLLECT LKR ${totalBalanceDue.toLocaleString()}` 
                         : (matchedInvoices.length > 0 ? "ALL INVOICES SETTLED — NO CASH TO COLLECT" : "NO INVOICE ALLOCATED IN DATABASE")}
                     </span>

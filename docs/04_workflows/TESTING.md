@@ -123,7 +123,7 @@ Snapshot from `npm run coverage` (unit and API tests only; overall about 6% of `
 | `src/utils/entityUtils.js` | `tests/unit/entityUtils.test.js`, `factories.test.js` | real, including `getExistingFinalInvoice` | alias cases beyond the nine recognised fields; the guard is client-state based, so two sessions acting at once can still both miss an invoice |
 | `src/utils/cutListEngine.js` | `tests/unit/cutListEngine.test.js` | real (about 97%) | waste estimate is linear, not bin-packed |
 | `src/utils/dateUtils.js` | `tests/unit/dateUtils.test.js` | real (about 87%) | a few branches |
-| `src/utils/logisticsEngine.js` | `tests/unit/logisticsEngine.test.js` | real, plus characterisation of duplicate Finals and advance-only COD | flips with Phase 7 2.3 |
+| `src/utils/logisticsEngine.js` | `tests/unit/logisticsEngine.test.js` | real, including duplicate Finals and advance-only COD | UI labels (Logistics, LogisticsCardDetails, waybill) not covered by a test |
 | `src/constants/emailTemplates.js` | `tests/unit/emailTemplates.test.js` | real | |
 | `src/context/PermissionsContext.jsx` | `tests/unit/permissions.test.js`, `tests/component/StatusBadge.test.jsx` | real | receipts and quotations rows |
 | `api/_lib/firebaseAdmin.js` | `tests/unit/firebaseAdmin.test.js` | real | initialisation paths |
@@ -146,7 +146,7 @@ Tests that deliberately lock in a known defect, with the finding that will chang
 | `pricingEngine.test.js` "charges a fixed 53.5 per sq ft sales cost" | every tier charges 53.5 per sq ft whatever the partner rate | cost-calculator-quotation finding 3 (Phase 7 6.6) |
 | `pricingEngine.test.js` "computes Profit / SQ as (grossProfit + logistics + qa + salesCost) / sqFt" | `internalCostPerSq` includes costs the audit says it should not | cost-calculator-quotation finding 1 (Phase 7 6.6) |
 | `invoiceTemplate.test.js` "scales each line item ... ignores discountPct and taxPct" | printed line totals ignore discount and tax | invoicing Phase 2 item 5 (Phase 7 2.4) |
-| `logisticsEngine.test.js` "doubles the COD balance when a job has two unpaid Final invoices" | duplicate Finals both count toward COD | invoicing D-2, logistics D-4 (Phase 7 2.3) |
+| ~~`logisticsEngine.test.js` doubles the COD balance for two unpaid Finals~~ | flipped in Phase 7 2.3: only the latest unpaid Final counts | invoicing D-2, logistics D-4 |
 | `rulesAccess.test.js` "lets a Customer read and write quotations" | `/quotations` open to any signed-in user | rbac finding 5 (Phase 7 3.5) |
 | `rulesAccess.test.js` "lets any signed-in user read a conversation they are not in and forge a sender" | `/messages` read and create open | messaging D-MSG-01, D-MSG-02 (3.5) |
 | `rulesAccess.test.js` "lets a Customer read another user's profile" | `/users` read open | rbac finding 12 (3.5) |
@@ -166,7 +166,7 @@ Tests that deliberately lock in a known defect, with the finding that will chang
 | ~~`App.signOut.test.jsx` keeps the previous user's unread count~~ | flipped in Phase 7 1: `handleSignOut` now clears notifications, and the test asserts the count is gone | notifications NOTIF-01 |
 | `adminUserAuth.test.js` "lets a Deactivated caller with isApproved true through the approval gate" | `admin-user.js` trusts `isApproved` and ignores `status: 'Deactivated'` | user-management-rbac finding 1 (Phase 7 3.6) |
 | `adminUserAuth.test.js` "rejects a Manager caller today because only Admin is allowed" | only Admin may call the endpoint | employees D4 (Phase 7 3.6) |
-| `logisticsEngine.test.js` "reports nothing to collect for a job with only a paid Advance invoice" | advance-only job shows "all settled" | logistics D-4 (Phase 7 2.3) |
+| ~~`logisticsEngine.test.js` reports nothing to collect for an advance-only job~~ | flipped in Phase 7 2.3: the 25% balance is reported as pending Final invoice creation | logistics D-4 |
 
 Planned entries (later Part B): open `quotations`, `messages`, `users` and `counters` rules (B4).
 
