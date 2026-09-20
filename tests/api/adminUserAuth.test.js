@@ -3,10 +3,13 @@ import { createMockReqRes } from '../helpers/mockHttp';
 
 const verifyIdToken = vi.fn();
 const getDoc = vi.fn();
+const createUser = vi.fn();
+const updateUser = vi.fn();
+const collectionDoc = vi.fn(() => ({ get: getDoc }));
 
 vi.mock('../../api/_lib/firebaseAdmin.js', () => ({
-  getAdminAuth: () => ({ verifyIdToken }),
-  getAdminFirestore: () => ({ collection: () => ({ doc: () => ({ get: getDoc }) }) }),
+  getAdminAuth: () => ({ verifyIdToken, createUser, updateUser, getUserByEmail: vi.fn(async () => ({ uid: 'u1' })) }),
+  getAdminFirestore: () => ({ collection: () => ({ doc: (...args) => collectionDoc(...args) }) }),
 }));
 
 const { default: handler } = await import('../../api/admin-user.js');
@@ -23,6 +26,8 @@ beforeEach(() => {
   vi.spyOn(console, 'warn').mockImplementation(() => {});
   vi.spyOn(console, 'error').mockImplementation(() => {});
   verifyIdToken.mockResolvedValue({ email: 'caller@example.com' });
+  createUser.mockResolvedValue({ uid: 'u-new' });
+  collectionDoc.mockImplementation(() => ({ get: getDoc }));
 });
 
 describe('api/admin-user.js caller checks', () => {
@@ -51,26 +56,61 @@ describe('api/admin-user.js caller checks', () => {
     expect(res.body.error).toMatch(/only admins/i);
   });
 
-  // Characterisation: docs/02_modules/user-management-rbac/FINDINGS.md finding 1
-  // (deactivated user with isApproved true still passes). The gate treats
-  // isApproved === true as enough and never reads status 'Deactivated'. The
-  // request gets past the auth checks and fails later on validation (400).
-  // Flips to 403 in Phase 7 prompt 3.6.
-  it('lets a Deactivated caller with isApproved true through the approval gate', async () => {
+  // Flipped in Phase 7 3.6 (user-management-rbac finding 1): a Deactivated caller is
+  // rejected even when isApproved is still true.
+  it('rejects a Deactivated caller even with isApproved true', async () => {
     getDoc.mockResolvedValue(snap({ role: 'Admin', isApproved: true, status: 'Deactivated' }));
-    const res = await call({ action: 'create' });
-    expect(res.statusCode).toBe(400);
-    expect(res.body.error).toMatch(/email/i);
-  });
-
-  // Characterisation: docs/02_modules/employees/FINDINGS.md D4 (Managers may
-  // administer users, owner decision). Today only Admin passes the role check.
-  // Flips in Phase 7 prompt 3.6.
-  it('rejects a Manager caller today because only Admin is allowed', async () => {
-    getDoc.mockResolvedValue(snap({ role: 'Manager', isApproved: true, status: 'Active' }));
     const res = await call({ action: 'create', email: 'new@example.com', password: 'secret1' });
     expect(res.statusCode).toBe(403);
-    expect(res.body.error).toMatch(/only admins/i);
+    expect(res.body.error).toMatch(/deactivated/i);
+  });
+
+  it('rejects a Disabled caller and treats status case-insensitively', async () => {
+    getDoc.mockResolvedValue(snap({ role: 'Admin', isApproved: true, status: 'disabled' }));
+    expect((await call()).statusCode).toBe(403);
+  });
+
+  it('looks the caller up by the trimmed, lowercased token email', async () => {
+    verifyIdToken.mockResolvedValue({ email: '  Caller@Example.com ' });
+    getDoc.mockResolvedValue(snap({ role: 'Admin', isApproved: true, status: 'Active' }));
+    const doc = vi.fn(() => ({ get: getDoc }));
+    collectionDoc.mockImplementation(doc);
+    await call({ action: 'create' });
+    expect(doc).toHaveBeenCalledWith('caller@example.com');
+  });
+
+  // Flipped in Phase 7 3.6 (employees D4): Managers may administer users, but not Admins.
+  it('lets a Manager manage a non-Admin user', async () => {
+    getDoc
+      .mockResolvedValueOnce(snap({ role: 'Manager', isApproved: true, status: 'Active' }))
+      .mockResolvedValueOnce(snap({ role: 'Sales', isApproved: true, status: 'Active' }));
+    const res = await call({ action: 'create', email: 'new@example.com', password: 'secret1' });
+    expect(res.statusCode).not.toBe(403);
+    expect(createUser).toHaveBeenCalled();
+  });
+
+  it('stops a Manager from acting on an Admin account', async () => {
+    getDoc
+      .mockResolvedValueOnce(snap({ role: 'Manager', isApproved: true, status: 'Active' }))
+      .mockResolvedValueOnce(snap({ role: 'Admin', isApproved: true, status: 'Active' }));
+    const res = await call({ action: 'resetPassword', email: 'boss@example.com', password: 'secret1' });
+    expect(res.statusCode).toBe(403);
+    expect(res.body.error).toMatch(/Admin accounts/);
+    expect(updateUser).not.toHaveBeenCalled();
+  });
+
+  it('stops a Manager from granting Admin', async () => {
+    getDoc
+      .mockResolvedValueOnce(snap({ role: 'Manager', isApproved: true, status: 'Active' }))
+      .mockResolvedValueOnce(snap(undefined));
+    const res = await call({ action: 'create', email: 'new@example.com', password: 'secret1', role: 'Admin' });
+    expect(res.statusCode).toBe(403);
+    expect(createUser).not.toHaveBeenCalled();
+  });
+
+  it('rejects Sales callers with 403', async () => {
+    getDoc.mockResolvedValue(snap({ role: 'Sales', isApproved: true, status: 'Active' }));
+    expect((await call({ action: 'create', email: 'a@b.co', password: 'secret1' })).statusCode).toBe(403);
   });
 
   it('lets an approved Admin through and validates the payload', async () => {
