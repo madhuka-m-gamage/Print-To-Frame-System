@@ -30,7 +30,7 @@ Map, then per-module Claude instructions.
 - [cost-calculator-quotation](docs/02_modules/cost-calculator-quotation.md) | [instructions](docs/02_modules/cost-calculator-quotation/CLAUDE.md)
 - [customers](docs/02_modules/customers.md) | [instructions](docs/02_modules/customers/CLAUDE.md)
 - [deals](docs/02_modules/deals.md) | [instructions](docs/02_modules/deals/CLAUDE.md)
-- [employees](docs/02_modules/employees.md) | [instructions](docs/02_modules/employees/CLAUDE.md)
+- [employees](docs/02_modules/employees.md) | [instructions](docs/02_modules/employees/CLAUDE.md) | [findings](docs/02_modules/employees/FINDINGS.md)
 - [internal-messaging](docs/02_modules/internal-messaging.md) | [instructions](docs/02_modules/internal-messaging/CLAUDE.md)
 - [invoicing](docs/02_modules/invoicing.md) | [instructions](docs/02_modules/invoicing/CLAUDE.md)
 - [leads](docs/02_modules/leads.md) | [instructions](docs/02_modules/leads/CLAUDE.md)
