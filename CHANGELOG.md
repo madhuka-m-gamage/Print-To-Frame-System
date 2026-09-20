@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- API test layer (A2): `tests/helpers/mockHttp.js`, `npm run test:api`, `tests/api/README.md`, and a gate smoke test for `api/admin-user.js`; `test:all` and `coverage` now include the API tests.
 - Testing foundations (A1): `docs/04_workflows/TESTING.md`, ESLint now lints `tests/`, `coverage` script with v8 reporters (no thresholds), `tests/helpers/factories.js` and a factories smoke test, removed the dead `src/utils/e2eTestSuite.js`, added the testing/remediation tracks to `PLAN.md`.
 - Adopted the erp-system folder structure: `docs/` (architecture, modules, security, workflows, decisions), `functions/`, `.claude/`, `PROJECT_INDEX.md`.
 - Added `.gitignore`.

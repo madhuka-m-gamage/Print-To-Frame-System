@@ -20,7 +20,7 @@ The suite is built first (Part A), then characterisation tests are written (Part
 ### Part A: testing suite setup
 Order: A1, then A2/A3/A4 (any order), then A7 (CI), then A5 -> A6 whenever browser tests are wanted.
 - [x] A1: foundations (TESTING.md, lint covers `tests/`, coverage script, factories, dead `e2eTestSuite.js` removed)
-- [ ] A2: API test layer (`tests/helpers/mockHttp.js`, `test:api`)
+- [x] A2: API test layer (`tests/helpers/mockHttp.js`, `test:api`)
 - [ ] A3: component test layer (`vitest.component.config.js`, RTL, `test:component`)
 - [ ] A4: rules test harness (`tests/helpers/emulator.js`, refactor the 3 integration files)
 - [ ] A7: GitHub Actions CI (`lint-unit`, `rules`, optional `e2e`)

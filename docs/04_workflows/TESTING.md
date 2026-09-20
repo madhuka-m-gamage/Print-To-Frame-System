@@ -5,7 +5,7 @@ Five layers, each with one job. Pick the cheapest layer that can prove the behav
 | Layer | Directory | Environment | Command | Status |
 |---|---|---|---|---|
 | Unit | `tests/unit/` | node | `npm test` | live |
-| API handlers | `tests/api/` | node, mock req/res | `npm run test:api` | planned (A2) |
+| API handlers | `tests/api/` | node, mock req/res | `npm run test:api` | live |
 | Component | `tests/component/` | jsdom + React Testing Library | `npm run test:component` | planned (A3) |
 | Integration / rules | `tests/integration/` | Firebase emulator | `npm run test:rules` | live |
 | End to end | `tests/e2e/` | Playwright + emulator | `npm run test:e2e` | planned (A5, A6) |
@@ -21,6 +21,7 @@ Coverage: `npm run coverage` (text, html, lcov in `coverage/`). There is no thre
 
 ## Adding a test
 - Unit: add `tests/unit/<module>.test.js`. Import `describe`, `it`, `expect` from `vitest` explicitly (`globals: false`). Build fixtures with `tests/helpers/factories.js` (`makeLead`, `makeDeal`, `makeInvoice`, `makeReceipt`, `makePartner`, `makeProject`, `makeLogisticsJob`, `makeUser`).
+- API: add `tests/api/<handler>.test.js`, build the request with `createMockReqRes` from `tests/helpers/mockHttp.js`, and mock `api/_lib/firebaseAdmin.js` (recipe in `tests/api/README.md`).
 - Other layers: see the phase notes as each harness lands.
 
 ## Rules
