@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Component test layer (A3): `vitest.component.config.js` (jsdom), `tests/helpers/setupComponent.js`, `renderWithProviders`, `npm run test:component`, RTL devDependencies, and a StatusBadge smoke test. Pinned `jsdom` to `^26`: v29 needs Node >= 20.19 and crashed under the local Node 20.18.
 - API test layer (A2): `tests/helpers/mockHttp.js`, `npm run test:api`, `tests/api/README.md`, and a gate smoke test for `api/admin-user.js`; `test:all` and `coverage` now include the API tests.
 - Testing foundations (A1): `docs/04_workflows/TESTING.md`, ESLint now lints `tests/`, `coverage` script with v8 reporters (no thresholds), `tests/helpers/factories.js` and a factories smoke test, removed the dead `src/utils/e2eTestSuite.js`, added the testing/remediation tracks to `PLAN.md`.
 - Adopted the erp-system folder structure: `docs/` (architecture, modules, security, workflows, decisions), `functions/`, `.claude/`, `PROJECT_INDEX.md`.
