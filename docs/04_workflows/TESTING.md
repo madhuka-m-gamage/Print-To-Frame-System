@@ -129,7 +129,7 @@ Snapshot from `npm run coverage` (unit and API tests only; overall about 6% of `
 | `api/_lib/firebaseAdmin.js` | `tests/unit/firebaseAdmin.test.js` | real | initialisation paths |
 | `api/admin-user.js` | `tests/api/adminUser.test.js` (405, missing token, CORS), `adminUserAuth.test.js` (invalid token, pending, non-Admin, payload checks), `tests/integration/adminUser.test.js` (Admin SDK calls) | real, plus characterisation of the deactivated caller and Manager rejection | flips with Phase 7 3.6; create, reset and delete are covered only by the emulator file |
 | `api/generate.js`, `api/send-email.js` | `tests/api/generate.test.js`, `sendEmail.test.js` | real | generate: auth gate, origin echo, oversize audio, model fallback (400 stops; 404, 503, 429 fall through); send-email: auth gate, payload checks, template render, missing SMTP env. The hardcoded origin list is asserted only through generate |
-| `firestore.rules` | `tests/integration/firestoreRules.test.js` (`users`, catch-all), `invoiceNumbering.test.js` (`counters`) | real | most of the 20 match blocks (B4) |
+| `firestore.rules` | `tests/integration/firestoreRules.test.js` (`users`, catch-all), `invoiceNumbering.test.js` (`counters`), `rulesAccess.test.js` (leads, invoices, partners, settings, audit log, public forms) | real, plus characterisation of 13 known gaps; 12 `it.todo` entries name the Phase 7 target | `deals`, `customers`, `receipts`, `projects`, `logistics`, `pricing`, `typing_indicators` blocks not exercised directly |
 | `src/services/pricingEngine.js` | `tests/unit/pricingEngine.test.js` | real (tiers, cost stack) plus characterisation (discount, commission, Profit/SQ) | rows above |
 | `src/utils/invoiceTemplate.js`, `receiptTemplate.js` | `tests/unit/invoiceTemplate.test.js`, `receiptTemplate.test.js` | real (milestone maths, words, labels) plus characterisation (discount/tax ignored) | print output only asserted by substring |
 | `src/utils/validation.js`, `stringMatch.js`, `csvExport.js` | none | | (B2) |
@@ -147,6 +147,19 @@ Tests that deliberately lock in a known defect, with the finding that will chang
 | `pricingEngine.test.js` "computes Profit / SQ as (grossProfit + logistics + qa + salesCost) / sqFt" | `internalCostPerSq` includes costs the audit says it should not | cost-calculator-quotation finding 1 (Phase 7 6.6) |
 | `invoiceTemplate.test.js` "scales each line item ... ignores discountPct and taxPct" | printed line totals ignore discount and tax | invoicing Phase 2 item 5 (Phase 7 2.4) |
 | `logisticsEngine.test.js` "doubles the COD balance when a job has two unpaid Final invoices" | duplicate Finals both count toward COD | invoicing D-2, logistics D-4 (Phase 7 2.3) |
+| `rulesAccess.test.js` "lets a Customer read and write quotations" | `/quotations` open to any signed-in user | rbac finding 5 (Phase 7 3.5) |
+| `rulesAccess.test.js` "lets any signed-in user read a conversation they are not in and forge a sender" | `/messages` read and create open | messaging D-MSG-01, D-MSG-02 (3.5) |
+| `rulesAccess.test.js` "lets a Customer read another user's profile" | `/users` read open | rbac finding 12 (3.5) |
+| `rulesAccess.test.js` "lets a Customer write any counter to any value" | `/counters` open | rules audit (3.4) |
+| `rulesAccess.test.js` "denies partner_payouts and referral_claims to everyone, Admin included" | no rules, catch-all denies | partners D-6 (3.4) |
+| `rulesAccess.test.js` "lets a Deactivated user with a permitted role still create a lead" | rules ignore `status` | rbac finding 1 (3.5) |
+| `rulesAccess.test.js` "does not treat the bootstrap email as Admin when it has no users document" | `isAdmin()` ignores the bootstrap email | auth DP-06 (3.4) |
+| `rulesAccess.test.js` "rejects a pending applicant updating their own pendingUsers document" | only an Admin may update it | auth DP-02 (3.4) |
+| `rulesAccess.test.js` "rejects a Manager changing or deleting another user" | user administration is Admin-only | employees D4 (3.5) |
+| `rulesAccess.test.js` "blocks a Manager with invoices:delete ... from deleting an invoice" | delete is Admin-only on invoices | rbac finding 6 (3.5) |
+| `rulesAccess.test.js` "denies a lead read to a role that has pipeline view but not leads view" | leads read needs the leads permission | deals D-8 (3.5) |
+| `rulesAccess.test.js` "denies an anonymous read of an Active partner" | partners are never public | partners D-5 (3.4) |
+| `rulesAccess.test.js` "lets a Partner read another partner's document ..." | the Partner matrix grants full partners access | Phase 7 3.2 matrix change (needs 3.3) |
 | `adminUserAuth.test.js` "lets a Deactivated caller with isApproved true through the approval gate" | `admin-user.js` trusts `isApproved` and ignores `status: 'Deactivated'` | user-management-rbac finding 1 (Phase 7 3.6) |
 | `adminUserAuth.test.js` "rejects a Manager caller today because only Admin is allowed" | only Admin may call the endpoint | employees D4 (Phase 7 3.6) |
 | `logisticsEngine.test.js` "reports nothing to collect for a job with only a paid Advance invoice" | advance-only job shows "all settled" | logistics D-4 (Phase 7 2.3) |

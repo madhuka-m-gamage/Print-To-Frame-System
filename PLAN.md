@@ -32,10 +32,10 @@ Order: A1, then A2/A3/A4 (any order), then A7 (CI), then A5 -> A6 whenever brows
 - [x] T0: suite on `main` (PRs #4, #5); verified on Node 22: lint clean, unit 57, api 3, component 3, rules 20, build OK
 
 ### Part B: test authoring
-- [ ] B1: money-path unit tests (before Phase 7 phases 2.1-2.4; characterisation first)
+- [x] B1: money-path unit tests (before Phase 7 phases 2.1-2.4; characterisation first)
 - [ ] B2: supporting-module unit tests (before 6.3 / 6.6)
-- [ ] B3: API handler cases (before 3.6)
-- [ ] B4: Firestore rules cases (before 3.4 / 3.5; replaces Phase 7 prompt 3.1)
+- [x] B3: API handler cases (before 3.6)
+- [x] B4: Firestore rules cases (before 3.4 / 3.5; replaces Phase 7 prompt 3.1)
 - [ ] B5: component cases (before 4.1)
 - [ ] B6: E2E journeys (needs A6)
 - [ ] Refresh the `TESTING.md` coverage map and characterisation register (manual, run on request after Part B phases land). Prompt: "Refresh docs/04_workflows/TESTING.md: run npm run coverage and update the coverage map (files, tests, kind, gaps), update the characterisation register from the tests that carry a finding comment, and tick the roadmap. Docs only; state only what you read; commit."

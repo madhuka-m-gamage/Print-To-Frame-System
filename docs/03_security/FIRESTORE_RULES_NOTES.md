@@ -54,7 +54,7 @@ Editing `firestore.rules` and pushing to `staging` or `main` only changes the fi
 
 ## Tests
 
-`npm run test:rules` runs `tests/integration/*` against a local Firestore + Auth emulator (needs Java; project id `demo-print2frame-test`). `firestoreRules.test.js` covers role-escalation prevention.
+`npm run test:rules` runs `tests/integration/*` against a local Firestore + Auth emulator (needs Java; project id `demo-print2frame-test`). `firestoreRules.test.js` covers role-escalation prevention. `rulesAccess.test.js` (B4) covers permission-gated writes, owner reads, the audit log and the public forms, and records each gap listed in the observations above as a characterisation test, with `it.todo` entries for the target rules. Note the Partner matrix grants full `partners` access, so a partner can read other partners today.
 
 ## Open questions
 
