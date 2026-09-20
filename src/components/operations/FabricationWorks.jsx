@@ -43,6 +43,7 @@ import { generateText } from '../../services/gemini';
 import { getExistingFinalInvoice } from '../../utils/entityUtils';
 import { logActivity } from '../../services/auditLog';
 import { NON_BILLABLE, resolveManualJobLink } from '../../utils/fabricationLink';
+import { checklistWithGuardedQa, withDefectRecorded } from '../../utils/qaGate';
 import { STEEL_PROFILES, calculateCutList, mmToFtIn } from '../../utils/cutListEngine';
 
 const STAGES = ["Pending", "Ongoing", "Ready For Inspection", "Revision", "Completed"];
@@ -362,6 +363,7 @@ export default function FabricationWorks({
   onSaveInvoice 
 }) {
   const isAdmin = String(currentUser?.role || "").toLowerCase() === "admin";
+  const inspectorName = currentUser?.name || currentUser?.displayName || "Lead Inspector";
   const [showAddForm, setShowAddForm] = useState(false);
   const [activeJob, setActiveJob] = useState(null);
 
@@ -619,6 +621,7 @@ export default function FabricationWorks({
       setProjects(projects.map(j => j.jobNo === jobNo ? updatedJobObj : j));
       try {
         await updateDocument(COLLECTIONS.PROJECTS, jobBeingMoved._firestoreId || jobBeingMoved.jobNo, updatedJobObj);
+        logActivity(currentUser?.identifier, currentUser?.name, 'QA_REWORK_COMPLETED', 'Fabrication', `Job ${jobNo} rework completed, ready for QA re-inspection`);
         toast.success(`Job ${jobNo} rework completed, ready for QA re-inspection.`);
       } catch (err) {
         console.error(err);
@@ -715,13 +718,14 @@ export default function FabricationWorks({
       ...targetJob,
       status: "Completed",
       stageEnteredAt: now,
+      defectDetails: null,
       checklist: {
         ...(targetJob.checklist || {}),
         qaPassed: true
       },
       qaCheck: {
         passed: true,
-        inspector: qaForm.inspector || currentUser?.name || "Lead Inspector",
+        inspector: inspectorName,
         inspectedAt: now,
         notes: qaForm.notes || "All 4 QA inspection points verified",
         checks: {
@@ -738,7 +742,7 @@ export default function FabricationWorks({
       const cust = customers?.find(c => c.nic === (targetJob.clientNIC || targetJob.customerNic));
       const custName = cust?.name || cust?.businessName || targetJob.customerName || "Direct Customer";
 
-      onSaveInvoice({
+      const invoiceSaved = await onSaveInvoice({
         id: finalInvId,
         linkedJobNo: targetJob.jobNo,
         jobNo: targetJob.jobNo,
@@ -756,8 +760,8 @@ export default function FabricationWorks({
         convertedDealId: targetJob.convertedDealId || '',
         partnerId: targetJob.partnerId || targetJob.agentId || '',
         customerName: custName,
-        company: cust?.businessName || "",
-        phone: targetJob.phone || cust?.phone || "",
+        company: targetJob.company || cust?.businessName || cust?.company || "",
+        phone: targetJob.customerPhone || targetJob.phone || cust?.phone || "",
         date: now.split("T")[0],
         amount: (Number(targetJob.value) || 0) * 0.25,
         totalValue: Number(targetJob.value) || 0,
@@ -766,6 +770,12 @@ export default function FabricationWorks({
         aiDraft: `Final Settlement (25% Balance) upon QA pass of ${targetJob.jobNo} — ${targetJob.scope || 'Custom steel framing'}.`,
         dueDate: new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0],
       });
+
+      // Never mark the job Completed if its Final invoice could not be saved.
+      if (invoiceSaved === false) {
+        toast.error(`The Final invoice could not be saved, so ${targetJob.jobNo} was NOT marked Completed. Please try again.`);
+        return;
+      }
 
       toast.success(`Job ${targetJob.jobNo} Completed!`, {
         description: '25% Final Settlement Invoice generated in Invoices.'
@@ -782,6 +792,7 @@ export default function FabricationWorks({
 
     try {
       await updateDocument(COLLECTIONS.PROJECTS, targetJob._firestoreId || targetJob.jobNo, updatedJobObj);
+      logActivity(currentUser?.identifier, inspectorName, 'QA_PASSED', 'Fabrication', `Job ${targetJob.jobNo} passed QA, inspector ${inspectorName}`);
     } catch (err) {
       console.error(err);
       toast.error("Failed to update project status in DB");
@@ -802,12 +813,13 @@ export default function FabricationWorks({
         ...(targetJob.checklist || {}),
         qaPassed: false
       },
-      defectDetails: {
+      ...withDefectRecorded(targetJob, {
+        id: `DEF-${targetJob.jobNo}-${(targetJob.defectHistory?.length || 0) + 1}`,
         category: defectForm.category,
         notes: defectForm.notes || "Revision required before completion.",
         reportedAt: now,
-        reporter: defectForm.reporter || currentUser?.name || "Workshop QA"
-      }
+        reporter: inspectorName
+      })
     };
 
     setProjects(projects.map(p => p.jobNo === targetJob.jobNo ? updatedJobObj : p));
@@ -815,6 +827,7 @@ export default function FabricationWorks({
 
     try {
       await updateDocument(COLLECTIONS.PROJECTS, targetJob._firestoreId || targetJob.jobNo, updatedJobObj);
+      logActivity(currentUser?.identifier, inspectorName, 'QA_DEFECT_FLAGGED', 'Fabrication', `Job ${targetJob.jobNo} sent to Revision: ${defectForm.category}. ${defectForm.notes || ''}`.trim());
       toast.error(`Job ${targetJob.jobNo} moved to Revision: ${defectForm.category}`);
     } catch (err) {
       console.error(err);
@@ -842,7 +855,9 @@ export default function FabricationWorks({
     }
   };
 
-  const handleSaveJobUpdates = async (updatedJob) => {
+  const handleSaveJobUpdates = async (incoming) => {
+    const existing = projects.find((p) => p.jobNo === incoming.jobNo);
+    const updatedJob = { ...incoming, checklist: checklistWithGuardedQa(incoming.checklist, existing) };
     setProjects(projects.map((p) => (p.jobNo === updatedJob.jobNo ? updatedJob : p)));
     setActiveJob(null);
     try {
@@ -1150,10 +1165,10 @@ export default function FabricationWorks({
                 </label>
                 <input
                   type="text"
-                  value={qaForm.inspector}
-                  onChange={(e) => setQaForm({ ...qaForm, inspector: e.target.value })}
-                  className="w-full p-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  placeholder="Inspector Name"
+                  value={inspectorName}
+                  readOnly
+                  title="The inspector is always the signed-in user"
+                  className="w-full p-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-xs text-on-surface opacity-70 cursor-not-allowed"
                 />
               </div>
               <div>
@@ -1180,7 +1195,7 @@ export default function FabricationWorks({
                 setDefectForm({
                   category: "Warped / Out of Square",
                   notes: qaForm.notes || "",
-                  reporter: qaForm.inspector || currentUser?.name || "QA Inspector"
+                  reporter: inspectorName
                 });
               }}
               className="px-4 py-2 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30 rounded-xl font-bold text-xs flex items-center transition-all"

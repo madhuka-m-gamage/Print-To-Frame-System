@@ -16,11 +16,13 @@ vi.mock('../../src/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
   showToast: vi.fn(),
 }));
+vi.mock('../../src/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
 vi.mock('../../src/components/operations/FabricationCardDetails', () => ({ default: () => null }));
 vi.mock('../../src/components/common/FrameBlueprintPreview', () => ({ default: () => null }));
 
 const { generateInvoiceId, generateAtomicId } = await import('../../src/services/firestoreSync');
 const { toast } = await import('../../src/utils/toast');
+const { logActivity } = await import('../../src/services/auditLog');
 const { default: FabricationWorks } = await import('../../src/components/operations/FabricationWorks');
 
 const admin = { role: 'Admin', name: 'Admin', identifier: 'admin@example.com' };
@@ -111,5 +113,44 @@ describe('FabricationWorks manual job billing link (Phase 7 6.4b, F-4)', () => {
     fireEvent.click(screen.getByRole('button', { name: /Generate Work Order/i }));
     await waitFor(() => expect(setProjects).toHaveBeenCalledTimes(1));
     expect(setProjects.mock.calls[0][0][0]).toMatchObject({ dealId: 'D-0001', leadId: 'L-0001', billable: true, value: 0, dimensionsLocked: true, frameWidth: 1219, frameHeight: 914 });
+  });
+});
+
+describe('FabricationWorks QA gate (Phase 7 6.4c)', () => {
+  const passQa = async () => {
+    fireEvent.click(screen.getByTitle('Run QA Inspection Gate'));
+    fireEvent.click(await screen.findByRole('button', { name: /Approve & Complete/i }));
+  };
+
+  it('does not mark the job Completed when the Final invoice could not be saved', async () => {
+    const onSaveInvoice = vi.fn(async () => false);
+    const { setProjects } = renderFabrication({ onSaveInvoice });
+    await passQa();
+    await waitFor(() => expect(onSaveInvoice).toHaveBeenCalledTimes(1));
+    expect(setProjects).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/NOT marked Completed/));
+  });
+
+  it('stamps the signed-in user as inspector, ignoring any typed name, and audit logs the pass', async () => {
+    const { setProjects } = renderFabrication();
+    fireEvent.click(screen.getByTitle('Run QA Inspection Gate'));
+    expect(await screen.findByDisplayValue('Admin')).toHaveProperty('readOnly', true);
+    fireEvent.click(screen.getByRole('button', { name: /Approve & Complete/i }));
+    await waitFor(() => expect(setProjects).toHaveBeenCalled());
+    expect(setProjects.mock.calls[0][0][0].qaCheck.inspector).toBe('Admin');
+    expect(setProjects.mock.calls[0][0][0].defectDetails).toBeNull();
+    await waitFor(() => expect(logActivity).toHaveBeenCalledWith('admin@example.com', 'Admin', 'QA_PASSED', 'Fabrication', expect.stringContaining('PTF-2001')));
+  });
+
+  it('carries the customer phone and company onto the Final invoice', async () => {
+    const project = makeProject({ jobNo: 'PTF-2001', status: 'Ready For Inspection', value: 100000, customerPhone: '+94711111111', company: 'Job Co' });
+    const onSaveInvoice = vi.fn();
+    renderWithProviders(
+      <FabricationWorks projects={[project]} setProjects={vi.fn()} customers={[]} partners={[]} currentUser={admin} onSaveInvoice={onSaveInvoice} />,
+      { role: 'Admin' }
+    );
+    await passQa();
+    await waitFor(() => expect(onSaveInvoice).toHaveBeenCalled());
+    expect(onSaveInvoice.mock.calls[0][0]).toMatchObject({ phone: '+94711111111', company: 'Job Co' });
   });
 });
