@@ -134,7 +134,7 @@ Snapshot from `npm run coverage` (unit and API tests only; overall about 6% of `
 | `src/utils/invoiceTemplate.js`, `receiptTemplate.js` | `tests/unit/invoiceTemplate.test.js`, `receiptTemplate.test.js` | real (milestone maths, words, labels) plus characterisation (discount/tax ignored) | print output only asserted by substring |
 | `src/utils/validation.js`, `stringMatch.js`, `csvExport.js` | none | | (B2) |
 | `src/services/firestoreSync.js` | `tests/unit/firestoreSync.test.js` | real | pure exports only (`deriveReceiptId`, `generateSequentialId`); firebase mocked; the Firestore calls and `generateAtomicId` are untested here |
-| `src/components/**`, `App.jsx` | `StatusBadge` smoke test only | | large components; extract logic first (B5) |
+| `src/components/**`, `App.jsx` | `StatusBadge` smoke test; `Deals.test.jsx`, `FabricationWorks.test.jsx`, `Partners.test.jsx`, `App.signOut.test.jsx` (B5 wiring) | real (Final invoice creation on completion and QA pass) plus characterisation (duplicate Final, phantom payout, sign-out leak) | wiring of four flows only; the large components are otherwise untested and logic inside them is not extracted |
 | Browser journeys | `tests/e2e/smoke.spec.js` (sign-in) | real | quotation to invoice, deal completion, RBAC (B6) |
 
 ## Characterisation register
@@ -160,11 +160,15 @@ Tests that deliberately lock in a known defect, with the finding that will chang
 | `rulesAccess.test.js` "denies a lead read to a role that has pipeline view but not leads view" | leads read needs the leads permission | deals D-8 (3.5) |
 | `rulesAccess.test.js` "denies an anonymous read of an Active partner" | partners are never public | partners D-5 (3.4) |
 | `rulesAccess.test.js` "lets a Partner read another partner's document ..." | the Partner matrix grants full partners access | Phase 7 3.2 matrix change (needs 3.3) |
+| `Deals.test.jsx` "creates another Final invoice even when the deal already has one" | deal completion never checks existing Final invoices | invoicing D-1, deals D-1 (Phase 7 2.1) |
+| `FabricationWorks.test.jsx` "creates a Final invoice even when one already exists for the job" | QA pass is never given the invoices list | invoicing D-1, fabrication F-1 (Phase 7 2.1) |
+| `Partners.test.jsx` "shows a success toast on Disburse Payout but writes nothing" | Disburse Payout is a toast only | partners D-1 (Phase 7 4.1) |
+| `App.signOut.test.jsx` "keeps the previous user's unread notification count after sign-out" | `handleSignOut` does not clear notifications | notifications NOTIF-01 (Phase 7 1) |
 | `adminUserAuth.test.js` "lets a Deactivated caller with isApproved true through the approval gate" | `admin-user.js` trusts `isApproved` and ignores `status: 'Deactivated'` | user-management-rbac finding 1 (Phase 7 3.6) |
 | `adminUserAuth.test.js` "rejects a Manager caller today because only Admin is allowed" | only Admin may call the endpoint | employees D4 (Phase 7 3.6) |
 | `logisticsEngine.test.js` "reports nothing to collect for a job with only a paid Advance invoice" | advance-only job shows "all settled" | logistics D-4 (Phase 7 2.3) |
 
-Planned entries (later Part B): duplicate `INV-FIN` invoices (invoicing D-1, B5); "Disburse Payout" writing nothing (partners D-1, B5); open `quotations`, `messages`, `users` and `counters` rules (B4).
+Planned entries (later Part B): open `quotations`, `messages`, `users` and `counters` rules (B4).
 
 ## Roadmap
 Part A (setup) is done: all five layers and CI exist. Part B fills them in; each item is independent. B1 and B4 have deadlines because Phase 7 changes the behaviour they record.

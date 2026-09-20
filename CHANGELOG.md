@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- B5 component wiring tests: `Deals`, `FabricationWorks`, `Partners` and an `App` sign-out flow rendered with `firestoreSync`, toast and audit log mocked; four characterisation tests (duplicate Final invoice from deal completion and QA pass, phantom payout, sign-out notification leak). No `src/` changes.
 - B4 rules tests: `tests/integration/rulesAccess.test.js` (permission-gated collections, settings, audit log, public forms), 13 characterisation tests for known rule gaps and 12 `it.todo` targets for Phase 7 3.4 and 3.5. No `firestore.rules` change.
 - B3 API handler tests: `admin-user` caller checks (two characterisation tests), `generate` gate and model fallback, `send-email` gate and payload; Firebase, Gemini and SMTP mocked. No `api/` changes.
 - B1 money-path unit tests: `pricingEngine`, `invoiceTemplate`, `receiptTemplate`, `firestoreSync` pure helpers and extra COD cases in `logisticsEngine`; six characterisation tests recorded in the `TESTING.md` register. No `src/` or `api/` changes.
