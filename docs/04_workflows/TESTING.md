@@ -132,7 +132,7 @@ Snapshot from `npm run coverage` (unit and API tests only, so the component and 
 | `firestore.rules` | `tests/integration/firestoreRules.test.js` (`users`, catch-all), `invoiceNumbering.test.js` (`counters`), `rulesAccess.test.js` (leads, invoices, partners, users, messages, quotations, counters, payouts and claims, settings, audit log, public forms) | real, including the Phase 7 3.4 and 3.5 rules; a few characterisation rows remain (see the register); 2 `it.todo` entries name follow-ups | `deals`, `customers`, `receipts`, `projects`, `logistics`, `pricing`, `typing_indicators` blocks not exercised directly |
 | `src/services/pricingEngine.js` | `tests/unit/pricingEngine.test.js` | real (tiers, cost stack) plus characterisation (discount, commission, Profit/SQ) | rows above |
 | `src/utils/invoiceTemplate.js`, `receiptTemplate.js`, `dealSettlement.js`, `invoiceSettlement.js` | `tests/unit/invoiceTemplate.test.js`, `receiptTemplate.test.js`, `dealSettlement.test.js`, `invoiceSettlement.test.js` | real (milestone maths incl. discount and tax, words, labels, deal final amounts and commission) | print output only asserted by substring |
-| `src/utils/validation.js`, `stringMatch.js`, `csvExport.js` | none | | (B2) |
+| `src/utils/validation.js`, `stringMatch.js`, `csvExport.js` | `tests/unit/validation.test.js`, `stringMatch.test.js`, `csvExport.test.js` | real, plus one characterisation row | `csvExport` is tested with `Blob`, `URL` and `document` stubbed; the strict `===` phone comparisons in `Leads.jsx` and `Customers.jsx` are not unit-testable until extracted (Phase 7 6.3) |
 | `src/services/firestoreSync.js` | `tests/unit/firestoreSync.test.js` | real | pure exports only (`deriveReceiptId`, `generateSequentialId`); firebase mocked; the Firestore calls and `generateAtomicId` are untested here |
 | `src/components/**`, `App.jsx` | `StatusBadge` smoke test; `Receipts.test.jsx` (CSV export), `Invoices.receipt.test.jsx` (read-only amount, notes), `Invoices.policy.test.jsx` (edit policy, delete guard, cancel), `App.listeners.test.jsx` (listeners follow the role permissions), `PermissionsManager.test.jsx` (missing-modules button); `Deals.test.jsx`, `FabricationWorks.test.jsx`, `Partners.test.jsx`, `App.signOut.test.jsx` (B5 wiring) | real (Final invoice creation on completion and QA pass) plus characterisation (duplicate Final, phantom payout, sign-out leak) | wiring of four flows only; the large components are otherwise untested and logic inside them is not extracted |
 | Browser journeys | `tests/e2e/smoke.spec.js` (sign-in) | real | quotation to invoice, deal completion, RBAC (B6) |
@@ -165,6 +165,7 @@ Tests that deliberately lock in a known defect, with the finding that will chang
 | ~~`FabricationWorks.test.jsx` creates a Final invoice when one already exists~~ | flipped in Phase 7 2.1: App passes invoices and QA pass skips the create | invoicing D-1, fabrication F-1 |
 | `Partners.test.jsx` "shows a success toast on Disburse Payout but writes nothing" | Disburse Payout is a toast only | partners D-1 (Phase 7 4.1) |
 | ~~`App.signOut.test.jsx` keeps the previous user's unread count~~ | flipped in Phase 7 1: `handleSignOut` now clears notifications, and the test asserts the count is gone | notifications NOTIF-01 |
+| `validation.test.js` "formats +94 and 07 spellings the same for display, but the raw stored strings still differ" | stored phones are compared with exact string equality, so different spellings of one number do not match | customers Decision 3 (Phase 7 6.3, `normalizePhone`) |
 | ~~`adminUserAuth.test.js` lets a Deactivated caller with isApproved true through~~ | flipped in Phase 7 3.6: a Deactivated or Disabled caller gets 403 | user-management-rbac finding 1 |
 | ~~`adminUserAuth.test.js` rejects a Manager caller today~~ | flipped in Phase 7 3.6: Managers may call it, but not on Admin accounts or to grant Admin | employees D4 |
 | ~~`logisticsEngine.test.js` reports nothing to collect for an advance-only job~~ | flipped in Phase 7 2.3: the 25% balance is reported as pending Final invoice creation | logistics D-4 |
@@ -173,8 +174,8 @@ Planned entries (later Part B): open `quotations`, `messages`, `users` and `coun
 
 ## Roadmap
 Part A (setup) is done: all five layers and CI exist. Part B status:
-- **Done:** B1 money-path unit tests, B3 API handler cases, B4 rules cases, B5 component wiring cases.
-- **Open:** B2 supporting unit tests (before Phase 7 6.3 and 6.6) and B6 E2E journeys (money journey after Phase 7 step 2, RBAC journey after 3.5d).
+- **Done:** B1 money-path unit tests, B2 supporting unit tests, B3 API handler cases, B4 rules cases, B5 component wiring cases.
+- **Open:** B6 E2E journeys (money journey after Phase 7 step 2, RBAC journey after 3.5d); parked, see `docs/05_decisions/0002-deferred-until-live-rollout.md`.
 Progress is tracked in `PLAN.md`.
 
 ## Gotchas

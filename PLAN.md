@@ -33,7 +33,7 @@ Order: A1, then A2/A3/A4 (any order), then A7 (CI), then A5 -> A6 whenever brows
 
 ### Part B: test authoring
 - [x] B1: money-path unit tests (before Phase 7 phases 2.1-2.4; characterisation first)
-- [ ] B2: supporting-module unit tests (before 6.3 / 6.6)
+- [x] B2: supporting-module unit tests (before 6.3 / 6.6)
 - [x] B3: API handler cases (before 3.6)
 - [x] B4: Firestore rules cases (before 3.4 / 3.5; replaces Phase 7 prompt 3.1)
 - [x] B5: component cases (before 4.1)
