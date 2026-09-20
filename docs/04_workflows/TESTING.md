@@ -127,7 +127,7 @@ Snapshot from `npm run coverage` (unit and API tests only, so the component and 
 | `src/constants/emailTemplates.js` | `tests/unit/emailTemplates.test.js` | real | |
 | `src/context/PermissionsContext.jsx` | `tests/unit/permissions.test.js`, `tests/component/StatusBadge.test.jsx` | real | receipts and quotations rows |
 | `api/_lib/firebaseAdmin.js` | `tests/unit/firebaseAdmin.test.js` | real | initialisation paths |
-| `api/admin-user.js` | `tests/api/adminUser.test.js` (405, missing token, CORS), `adminUserAuth.test.js` (invalid token, pending, non-Admin, payload checks), `tests/integration/adminUser.test.js` (Admin SDK calls) | real, plus characterisation of the deactivated caller and Manager rejection | flips with Phase 7 3.6; create, reset and delete are covered only by the emulator file |
+| `api/admin-user.js` | `tests/api/adminUser.test.js` (405, missing token, CORS), `adminUserAuth.test.js` (invalid token, pending, deactivated, Manager rules, payload checks), `tests/integration/adminUser.test.js` (Admin SDK calls) | real | create, reset and delete are covered only by the emulator file |
 | `api/generate.js`, `api/send-email.js` | `tests/api/generate.test.js`, `sendEmail.test.js` | real | generate: auth gate, origin echo, oversize audio, model fallback (400 stops; 404, 503, 429 fall through); send-email: auth gate, payload checks, template render, missing SMTP env. The hardcoded origin list is asserted only through generate |
 | `firestore.rules` | `tests/integration/firestoreRules.test.js` (`users`, catch-all), `invoiceNumbering.test.js` (`counters`), `rulesAccess.test.js` (leads, invoices, partners, settings, audit log, public forms) | real, plus characterisation of 13 known gaps; 12 `it.todo` entries name the Phase 7 target | `deals`, `customers`, `receipts`, `projects`, `logistics`, `pricing`, `typing_indicators` blocks not exercised directly |
 | `src/services/pricingEngine.js` | `tests/unit/pricingEngine.test.js` | real (tiers, cost stack) plus characterisation (discount, commission, Profit/SQ) | rows above |
@@ -164,8 +164,8 @@ Tests that deliberately lock in a known defect, with the finding that will chang
 | ~~`FabricationWorks.test.jsx` creates a Final invoice when one already exists~~ | flipped in Phase 7 2.1: App passes invoices and QA pass skips the create | invoicing D-1, fabrication F-1 |
 | `Partners.test.jsx` "shows a success toast on Disburse Payout but writes nothing" | Disburse Payout is a toast only | partners D-1 (Phase 7 4.1) |
 | ~~`App.signOut.test.jsx` keeps the previous user's unread count~~ | flipped in Phase 7 1: `handleSignOut` now clears notifications, and the test asserts the count is gone | notifications NOTIF-01 |
-| `adminUserAuth.test.js` "lets a Deactivated caller with isApproved true through the approval gate" | `admin-user.js` trusts `isApproved` and ignores `status: 'Deactivated'` | user-management-rbac finding 1 (Phase 7 3.6) |
-| `adminUserAuth.test.js` "rejects a Manager caller today because only Admin is allowed" | only Admin may call the endpoint | employees D4 (Phase 7 3.6) |
+| ~~`adminUserAuth.test.js` lets a Deactivated caller with isApproved true through~~ | flipped in Phase 7 3.6: a Deactivated or Disabled caller gets 403 | user-management-rbac finding 1 |
+| ~~`adminUserAuth.test.js` rejects a Manager caller today~~ | flipped in Phase 7 3.6: Managers may call it, but not on Admin accounts or to grant Admin | employees D4 |
 | ~~`logisticsEngine.test.js` reports nothing to collect for an advance-only job~~ | flipped in Phase 7 2.3: the 25% balance is reported as pending Final invoice creation | logistics D-4 |
 
 Planned entries (later Part B): open `quotations`, `messages`, `users` and `counters` rules (B4).

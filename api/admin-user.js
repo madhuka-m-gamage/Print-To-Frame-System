@@ -29,7 +29,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Require a signed-in, approved, ADMIN ERP user. This endpoint can create a
+    // Require a signed-in, approved ERP user who is an Admin or a Manager. This endpoint can create a
     // Firebase Auth account with a caller-supplied password, or force-set the
     // password on an existing one — strictly more dangerous than api/generate.js
     // or api/send-email.js, so it needs a role check on top of their shared gate.
@@ -50,18 +50,23 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Invalid or expired session. Please sign in again.' });
     }
 
-    const callerSnap = await getAdminFirestore().collection('users').doc(decodedToken.email).get();
+    const callerEmail = String(decodedToken.email || '').trim().toLowerCase();
+    const usersCol = getAdminFirestore().collection('users');
+    const callerSnap = await usersCol.doc(callerEmail).get();
     const callerData = callerSnap.data();
-    const isApproved = callerSnap.exists
+    // A Deactivated or Disabled account is rejected even if it still carries isApproved: true.
+    const isBlocked = callerSnap.exists && ['deactivated', 'disabled'].includes(String(callerData.status || '').toLowerCase());
+    const isApproved = callerSnap.exists && !isBlocked
       && (callerData.isApproved === true || callerData.status === 'Active' || callerData.status === undefined);
     if (!isApproved) {
       return res.status(403).json({ error: 'Your account is pending approval or has been deactivated.' });
     }
-    if (callerData.role !== 'Admin') {
-      return res.status(403).json({ error: 'Only Admins can manage user credentials.' });
+    const callerRole = callerData.role;
+    if (callerRole !== 'Admin' && callerRole !== 'Manager') {
+      return res.status(403).json({ error: 'Only Admins and Managers can manage user credentials.' });
     }
 
-    const { action, email, password, displayName } = req.body || {};
+    const { action, email, password, displayName, role: requestedRole } = req.body || {};
 
     if (!email || !EMAIL_RE.test(email)) {
       return res.status(400).json({ error: 'Missing or invalid "email"' });
@@ -71,6 +76,16 @@ export default async function handler(req, res) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+
+    // Managers administer users but never Admins: they cannot grant Admin or touch an
+    // Admin's account through this endpoint.
+    if (callerRole === 'Manager') {
+      const targetSnap = await usersCol.doc(normalizedEmail).get();
+      const targetIsAdmin = targetSnap.exists && String(targetSnap.data().role || '').toLowerCase() === 'admin';
+      if (targetIsAdmin || String(requestedRole || '').toLowerCase() === 'admin') {
+        return res.status(403).json({ error: 'Managers cannot create, modify or delete Admin accounts.' });
+      }
+    }
 
     if (action === 'create') {
       let userRecord;

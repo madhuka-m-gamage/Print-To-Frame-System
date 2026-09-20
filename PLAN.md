@@ -55,7 +55,7 @@ Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 be
 - [ ] 3.3: live permissions migration (needs approval to write)
 - [ ] 3.4 / 3.4d: additive rules, then deploy (needs approval)
 - [ ] 3.5 / 3.5d: restrictive rules, RBAC E2E on the emulator, deploy (needs approval), then manual role check on the live site
-- [ ] 3.6: admin API
+- [x] 3.6: admin API
 - [ ] 4.1-4.3: payouts, referral lineage, claims and notifications
 - [ ] 5.1-5.3: Google scopes, registration, user lifecycle
 - [ ] 6.1-6.6: leads, atomic ids, customers, deals/fabrication/inspection, logistics, pricing

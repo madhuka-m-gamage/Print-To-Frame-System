@@ -27,3 +27,5 @@ Registration queue, admin approval, role and status management, password reset, 
 - The two bootstrap admin email lists (App.jsx and rules) must be edited together.
 
 - `DEFAULT_PERMISSIONS` does not change the live matrix; `settings/permissions` needs the 3.3 migration. `PERMISSIONS_FIXTURE` in `tests/helpers/emulator.js` is a hand-kept copy (synced at Phase 7 3.2). `App.jsx` opens each Firestore listener only when the role can read that module. Only Admin holds the `admin` (System Overview) module; `agents` stays delegable to Manager.
+
+- `api/admin-user.js` accepts Admin and Manager callers, rejects Deactivated/Disabled callers, and refuses a Manager acting on an Admin account or granting Admin. Only the Firebase Auth account is handled here; role changes are Firestore writes governed by the rules.
