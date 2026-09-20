@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validatePhone, formatPhone, validateEmail, stripEmojis, sanitizeTechnicalScope } from '../../src/utils/validation';
+import { validatePhone, formatPhone, normalizePhone, phonesMatch, validateEmail, stripEmojis, sanitizeTechnicalScope } from '../../src/utils/validation';
 
 describe('validatePhone', () => {
   it('accepts +947 followed by eight digits, with or without spaces', () => {
@@ -31,12 +31,31 @@ describe('formatPhone', () => {
     expect(formatPhone('+9471')).toBe('+9471 ');
   });
 
-  // Characterisation: docs/02_modules/customers/FINDINGS.md Decision 3. Two spellings of the same
-  // number format differently, which is why exact string comparison of stored phones misses
-  // matches. Flips with the normalizePhone helper in Phase 7 6.3.
-  it('formats +94 and 07 spellings the same for display, but the raw stored strings still differ', () => {
+  it('formats +94 and 07 spellings the same for display', () => {
     expect(formatPhone('+94712345678')).toBe(formatPhone('0712345678'));
-    expect('+94 71 234 5678' === '+94712345678').toBe(false);
+  });
+});
+
+describe('normalizePhone and phonesMatch', () => {
+  it('reduces every common Sri Lankan spelling to the same digits', () => {
+    const canonical = '94712345678';
+    for (const v of ['+94 71 234 5678', '+9471 2345 678', '0712345678', '071-234-5678', '94712345678', '712345678', '(+94) 71 234 5678']) {
+      expect(normalizePhone(v)).toBe(canonical);
+    }
+  });
+
+  it('returns an empty string for missing input', () => {
+    expect(normalizePhone('')).toBe('');
+    expect(normalizePhone(undefined)).toBe('');
+    expect(normalizePhone(null)).toBe('');
+  });
+
+  it('matches spaced and unspaced spellings, and never matches on empty values', () => {
+    expect(phonesMatch('+94 71 234 5678', '+94712345678')).toBe(true);
+    expect(phonesMatch('0712345678', '+94712345678')).toBe(true);
+    expect(phonesMatch('0712345678', '0712345679')).toBe(false);
+    expect(phonesMatch('', '')).toBe(false);
+    expect(phonesMatch(undefined, '')).toBe(false);
   });
 });
 

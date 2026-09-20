@@ -25,6 +25,21 @@ export const formatPhone = (phone) => {
   return `${normalized.substring(0, 5)} ${normalized.substring(5, 9)} ${normalized.substring(9, 12)}`;
 };
 
+// Canonical digits-only form with the Sri Lankan country code, so "+94 71 234 5678",
+// "0712345678" and "94712345678" compare equal. Empty input yields '' (never a match).
+export const normalizePhone = (phone) => {
+  const digits = String(phone ?? '').replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('0')) return '94' + digits.slice(1);
+  if (digits.length === 9) return '94' + digits;
+  return digits;
+};
+
+export const phonesMatch = (a, b) => {
+  const na = normalizePhone(a);
+  return na !== '' && na === normalizePhone(b);
+};
+
 export const validateEmail = (email) => {
   if (!email) return true; // Optional by default in our forms
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

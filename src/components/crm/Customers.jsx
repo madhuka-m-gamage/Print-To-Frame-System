@@ -18,6 +18,7 @@ import { usePermissions } from '../../context/PermissionsContext';
 import { sendTemplatedEmail } from '../../services/mailer';
 import { deleteUserAccount } from '../../services/adminUsers';
 import { logActivity } from '../../services/auditLog';
+import { normalizePhone, phonesMatch } from '../../utils/validation';
 
 export default function Customers({ customers = [], setCustomers, users = [], setUsers, dataStore, currentUser, prefillClient, onClientPrefillConsumed }) {
   const { canAccess } = usePermissions();
@@ -33,7 +34,7 @@ export default function Customers({ customers = [], setCustomers, users = [], se
   const handleImportContacts = async (importedList) => {
     const newCustomers = [...customers];
     for (const c of importedList) {
-      if (!newCustomers.some(existing => existing.email === c.email || existing.phone === c.phone)) {
+      if (!newCustomers.some(existing => (c.email && existing.email && existing.email.toLowerCase() === c.email.toLowerCase()) || phonesMatch(existing.phone, c.phone))) {
         const newCust = {
           nic: `NIC-${String(Date.now()).slice(-6)}-${Math.floor(Math.random()*1000)}`,
           name: c.name,
@@ -265,7 +266,7 @@ export default function Customers({ customers = [], setCustomers, users = [], se
     
     const custNic = customer.nic ? String(customer.nic).trim().toLowerCase() : null;
     const custEmail = customer.email ? String(customer.email).trim().toLowerCase() : null;
-    const custPhone = customer.phone ? String(customer.phone).replace(/\D/g, '') : null;
+    const custPhone = normalizePhone(customer.phone) || null;
     const custName = customer.name ? String(customer.name).trim().toLowerCase() : null;
     const custId = customer.id || customer._firestoreId;
 
@@ -274,7 +275,7 @@ export default function Customers({ customers = [], setCustomers, users = [], se
       if (custId && (l.customerId === custId || l.clientNIC === customer.nic)) return true;
       if (custNic && l.clientNIC && String(l.clientNIC).trim().toLowerCase() === custNic) return true;
       if (custEmail && l.email && String(l.email).trim().toLowerCase() === custEmail) return true;
-      if (custPhone && l.phone && String(l.phone).replace(/\D/g, '') === custPhone) return true;
+      if (custPhone && normalizePhone(l.phone) === custPhone) return true;
       return !!(custName && l.name && String(l.name).trim().toLowerCase() === custName);
     });
 
