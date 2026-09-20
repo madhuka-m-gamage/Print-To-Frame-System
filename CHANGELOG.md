@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Coverage map refresh is a manual, tracked task in `PLAN.md` (not required per change).
 - `TESTING.md` is now the planning reference: a "Planning a change" checklist, a coverage map, a characterisation register, the Part B roadmap and known gotchas. Root `CLAUDE.md` tells planning sessions to read it.
 - Added `.nvmrc` (Node 22) and switched the CI workflow to `node-version-file: .nvmrc`; no `engines` field, so the Vercel runtime is unchanged. `jsdom` is back on `^29` now that Node 22 is the baseline.
 - E2E runner (A6): `@playwright/test`, `playwright.config.js` (starts the emulators and `dev:emulated`), `tests/e2e/global-setup.js` (fails the run unless emulators are local and the project id starts with `demo-`, then seeds), `npm run test:e2e`, and a sign-in smoke journey.
