@@ -13,6 +13,7 @@ import { exportToCsv } from '../../utils/csvExport';
 import { matchesEntity, getExistingFinalInvoice } from '../../utils/entityUtils';
 import { getFinalInvoiceAmounts, calculateDealCommission } from '../../utils/dealSettlement';
 import { projectStatusForDealStage } from '../../utils/dealProjectSync';
+import { buildLogisticsTask } from '../../utils/logisticsTask';
 import { logActivity } from '../../services/auditLog';
 
 const DEALS_STAGES = ["Waiting", "Fabricating", "Ready To Load", "Hand Over", "Completed"];
@@ -449,22 +450,19 @@ export default function Deals({
       toast.error("Could not create the delivery job. Check your connection and try again.");
       return;
     }
-    const newJob = {
+    const newJob = buildLogisticsTask({
       id: jobId,
       type: "Delivery",
       subType: "Framed Works / Finished Goods",
       location: deal.deliveryLocation || "Customer location TBD",
       customer: deal.name || "Direct Customer",
+      customerPhone: deal.phone,
       company: deal.company || "",
-      phone: deal.phone || "",
-      status: "Pending",
-      startTime: null,
-      endTime: null,
-      duration: null,
       manifest: `Delivery for Deal ${deal.id} - ${deal.company || deal.name || ''}`,
+      linkedJobNo: deal.jobNo || deal.linkedJobNo || '',
       dealId: deal.id,
-      leadId: deal.originalLeadId || deal.id
-    };
+      leadId: deal.originalLeadId || deal.id,
+    });
     if (setLogisticsJobs) {
       setLogisticsJobs(prev => [newJob, ...prev]);
     }

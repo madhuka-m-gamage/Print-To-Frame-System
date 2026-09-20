@@ -33,6 +33,7 @@ import { PageHeader, FilterBar, StatusBadge, KanbanColumn, KanbanCard, ModalWrap
 import TwoToneIcon from '../common/ui/TwoToneIcon';
 import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateAtomicId } from '../../services/firestoreSync';
 import { stripEmojis } from '../../utils/validation';
+import { deliveryStatusForTask } from '../../utils/logisticsTask';
 import { generateText } from '../../services/gemini';
 import { 
   getGoogleMapsUrl, 
@@ -304,6 +305,7 @@ export default function Logistics({
   currentUser,
   customers = [],
   projects = [],
+  setProjects,
   invoices = [],
   partners = []
 }) {
@@ -345,6 +347,20 @@ export default function Logistics({
     e.preventDefault();
   };
 
+  // Fabrication sees on its card whether the delivery is on the road or handed over (D-5).
+  const syncProjectDelivery = async (job, newStatus) => {
+    const deliveryStatus = deliveryStatusForTask(job, newStatus);
+    if (deliveryStatus === undefined || !job.linkedJobNo) return;
+    const project = projects.find(p => p.jobNo === job.linkedJobNo);
+    if (!project) return;
+    setProjects?.(prev => prev.map(p => p === project ? { ...p, deliveryStatus } : p));
+    try {
+      await updateDocument(COLLECTIONS.PROJECTS, project._firestoreId || project.jobNo, { deliveryStatus });
+    } catch (err) {
+      console.error("Could not sync the delivery status to the project:", err);
+    }
+  };
+
   const handleDrop = async (e, targetJobId, targetStage) => {
     e.preventDefault();
     const jobId = e.dataTransfer.getData("text/plain") || draggedJobId;
@@ -354,6 +370,7 @@ export default function Logistics({
     if (draggedJobIndex === -1) return;
 
     const draggedJob = jobs[draggedJobIndex];
+    const previousJobs = jobs;
     let updatedJob = { ...draggedJob };
 
     if (draggedJob.status !== targetStage) {
@@ -391,9 +408,11 @@ export default function Logistics({
 
     try {
       await updateDocument(COLLECTIONS.LOGISTICS, updatedJob._firestoreId || updatedJob.id, updatedJob);
+      if (draggedJob.status !== targetStage) await syncProjectDelivery(updatedJob, targetStage);
     } catch(err) {
       console.error(err);
-      toast.error("Failed to sync job stage change to database");
+      setJobs(previousJobs);
+      toast.error("Failed to sync stage change to server");
     }
 
     setDraggedJobId(null);
@@ -505,6 +524,7 @@ export default function Logistics({
 
   const handleMoveJob = async (id) => {
     let updatedJobObj = null;
+    const previousJob = jobs.find(j => j.id === id);
 
     setJobs(prev => prev.map((job) => {
       if (job.id !== id) return job;
@@ -534,14 +554,18 @@ export default function Logistics({
     if (updatedJobObj) {
       try {
         await updateDocument(COLLECTIONS.LOGISTICS, updatedJobObj._firestoreId || updatedJobObj.id, updatedJobObj);
+        await syncProjectDelivery(updatedJobObj, updatedJobObj.status);
       } catch (err) {
         console.error(err);
+        if (previousJob) setJobs(prev => prev.map(j => j.id === id ? previousJob : j));
+        toast.error("Failed to sync stage change to server");
       }
     }
   };
 
   const handleMoveJobBack = async (id) => {
     let updatedJobObj = null;
+    const previousJob = jobs.find(j => j.id === id);
 
     setJobs(prev => prev.map((job) => {
       if (job.id !== id) return job;
@@ -562,8 +586,11 @@ export default function Logistics({
     if (updatedJobObj) {
       try {
         await updateDocument(COLLECTIONS.LOGISTICS, updatedJobObj._firestoreId || updatedJobObj.id, updatedJobObj);
+        await syncProjectDelivery(updatedJobObj, updatedJobObj.status);
       } catch (err) {
         console.error(err);
+        if (previousJob) setJobs(prev => prev.map(j => j.id === id ? previousJob : j));
+        toast.error("Failed to sync stage change to server");
       }
     }
   };
@@ -579,6 +606,7 @@ export default function Logistics({
           toast.success("Task deleted successfully");
         } catch (err) {
           console.error(err);
+          setJobs(prev => (prev.some(j => j.id === targetJob.id) ? prev : [targetJob, ...prev]));
           toast.error("Failed to delete task from DB");
         }
       }

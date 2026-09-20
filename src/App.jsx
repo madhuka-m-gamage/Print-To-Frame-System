@@ -1406,6 +1406,7 @@ function App() {
               currentUser={currentUser}
               customers={customers}
               projects={projects}
+              setProjects={setProjects}
               invoices={invoices}
               partners={partners}
             />
