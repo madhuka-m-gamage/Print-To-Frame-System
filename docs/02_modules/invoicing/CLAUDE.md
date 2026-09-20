@@ -1,6 +1,6 @@
 # Invoicing: module notes for Claude
 
-Full map: [../invoicing.md](../invoicing.md). Cross-module chains: [CROSS_MODULE_TRIGGERS.md](../../01_architecture/CROSS_MODULE_TRIGGERS.md). There are no Cloud Functions; all automation is client code (`src/App.jsx`, components) or `api/*.js`.
+Full map: [../invoicing.md](../invoicing.md). Cross-module chains: [CROSS_MODULE_TRIGGERS.md](../../01_architecture/CROSS_MODULE_TRIGGERS.md). Review findings: [FINDINGS.md](FINDINGS.md). There are no Cloud Functions; all automation is client code (`src/App.jsx`, components) or `api/*.js`.
 
 ## What it does
 
@@ -23,6 +23,7 @@ Invoices are `invoices` documents numbered `INV-ADV-####` / `INV-FIN-####` from 
 
 ## Before you edit
 
+- **Duplicate Final invoice hazard:** `Deals.jsx` (completion), `FabricationWorks.jsx` (QA pass), and `QuotationBuilder.jsx` ("25% Final Settlement") can all create duplicate `INV-FIN` invoices for the same job, which doubles the driver's COD collection balance in `logisticsEngine.js` ([FINDINGS.md](FINDINGS.md)).
 - The 75 / 25 percentages are hardcoded in `QuotationBuilder.jsx`, `Deals.jsx` and `FabricationWorks.jsx`; the edit form lets `amount` change freely.
 - Always reserve the id with `generateInvoiceId` first; both automatic creators abort the stage change if that fails.
 - One Advance and one Final per lead is a UI convention, not enforced in rules or data.
