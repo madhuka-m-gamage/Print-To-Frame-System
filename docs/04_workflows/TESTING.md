@@ -120,7 +120,7 @@ Snapshot from `npm run coverage` (unit and API tests only; overall about 6% of `
 
 | Code | Covered by | Kind | Gaps |
 |---|---|---|---|
-| `src/utils/entityUtils.js` | `tests/unit/entityUtils.test.js`, `factories.test.js` | real | alias cases beyond the nine recognised fields |
+| `src/utils/entityUtils.js` | `tests/unit/entityUtils.test.js`, `factories.test.js` | real, including `getExistingFinalInvoice` | alias cases beyond the nine recognised fields; the guard is client-state based, so two sessions acting at once can still both miss an invoice |
 | `src/utils/cutListEngine.js` | `tests/unit/cutListEngine.test.js` | real (about 97%) | waste estimate is linear, not bin-packed |
 | `src/utils/dateUtils.js` | `tests/unit/dateUtils.test.js` | real (about 87%) | a few branches |
 | `src/utils/logisticsEngine.js` | `tests/unit/logisticsEngine.test.js` | real, plus characterisation of duplicate Finals and advance-only COD | flips with Phase 7 2.3 |
@@ -160,8 +160,8 @@ Tests that deliberately lock in a known defect, with the finding that will chang
 | `rulesAccess.test.js` "denies a lead read to a role that has pipeline view but not leads view" | leads read needs the leads permission | deals D-8 (3.5) |
 | `rulesAccess.test.js` "denies an anonymous read of an Active partner" | partners are never public | partners D-5 (3.4) |
 | `rulesAccess.test.js` "lets a Partner read another partner's document ..." | the Partner matrix grants full partners access | Phase 7 3.2 matrix change (needs 3.3) |
-| `Deals.test.jsx` "creates another Final invoice even when the deal already has one" | deal completion never checks existing Final invoices | invoicing D-1, deals D-1 (Phase 7 2.1) |
-| `FabricationWorks.test.jsx` "creates a Final invoice even when one already exists for the job" | QA pass is never given the invoices list | invoicing D-1, fabrication F-1 (Phase 7 2.1) |
+| ~~`Deals.test.jsx` creates another Final invoice when the deal already has one~~ | flipped in Phase 7 2.1: completion skips the create when `getExistingFinalInvoice` finds one | invoicing D-1, deals D-1 |
+| ~~`FabricationWorks.test.jsx` creates a Final invoice when one already exists~~ | flipped in Phase 7 2.1: App passes invoices and QA pass skips the create | invoicing D-1, fabrication F-1 |
 | `Partners.test.jsx` "shows a success toast on Disburse Payout but writes nothing" | Disburse Payout is a toast only | partners D-1 (Phase 7 4.1) |
 | ~~`App.signOut.test.jsx` keeps the previous user's unread count~~ | flipped in Phase 7 1: `handleSignOut` now clears notifications, and the test asserts the count is gone | notifications NOTIF-01 |
 | `adminUserAuth.test.js` "lets a Deactivated caller with isApproved true through the approval gate" | `admin-user.js` trusts `isApproved` and ignores `status: 'Deactivated'` | user-management-rbac finding 1 (Phase 7 3.6) |

@@ -627,7 +627,7 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
               <div className="w-full py-2.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5">
                 <Check size={13} /> Final Settlement Generated — {finalInvoice.id || finalInvoice._firestoreId}
               </div>
-            ) : (
+            ) : (lead.isDeal || advanceInvoice?.status === 'Paid') && (
               <button
                 type="button"
                 onClick={handleConvertToFinalInvoice}

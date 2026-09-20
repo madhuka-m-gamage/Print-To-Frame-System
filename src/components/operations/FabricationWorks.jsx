@@ -40,6 +40,7 @@ import { PageHeader, FilterBar, StatusBadge, KanbanColumn, KanbanCard, ModalWrap
 import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateInvoiceId, generateAtomicId } from '../../services/firestoreSync';
 import { stripEmojis, sanitizeTechnicalScope } from '../../utils/validation';
 import { generateText } from '../../services/gemini';
+import { getExistingFinalInvoice } from '../../utils/entityUtils';
 import { STEEL_PROFILES, calculateCutList, mmToFtIn } from '../../utils/cutListEngine';
 
 const STAGES = ["Pending", "Ongoing", "Ready For Inspection", "Revision", "Completed"];
@@ -354,6 +355,7 @@ export default function FabricationWorks({
   customers, 
   partners, 
   currentUser,
+  invoices = [],
   onSaveInvoice 
 }) {
   const isAdmin = currentUser?.role === "Admin";
@@ -679,7 +681,8 @@ export default function FabricationWorks({
     const now = new Date().toISOString();
 
     let finalInvId = null;
-    const needsInvoice = onSaveInvoice && (Number(targetJob.value) || 0) > 0;
+    const existingFinal = getExistingFinalInvoice(invoices, targetJob);
+    const needsInvoice = onSaveInvoice && (Number(targetJob.value) || 0) > 0 && !existingFinal && !targetJob.finalInvoiceGenerated;
     if (needsInvoice) {
       try {
         finalInvId = await generateInvoiceId('Final');
@@ -751,7 +754,10 @@ export default function FabricationWorks({
         description: '25% Final Settlement Invoice generated in Invoices.'
       });
     } else {
-      toast.success(`Job ${targetJob.jobNo} passed QA and marked Completed!`);
+      toast.success(
+        `Job ${targetJob.jobNo} passed QA and marked Completed!`,
+        existingFinal ? { description: `Final invoice ${existingFinal.id || existingFinal._firestoreId} already exists, so no duplicate was created.` } : undefined
+      );
     }
 
     setProjects(projects.map(p => p.jobNo === targetJob.jobNo ? updatedJobObj : p));

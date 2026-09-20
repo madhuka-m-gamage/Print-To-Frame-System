@@ -19,7 +19,8 @@ vi.mock('../../src/utils/toast', () => ({
 vi.mock('../../src/components/crm/LeadCardDetails', () => ({ default: () => null }));
 
 const { default: Deals } = await import('../../src/components/crm/Deals');
-const { generateInvoiceId } = await import('../../src/services/firestoreSync');
+const sync = await import('../../src/services/firestoreSync');
+const { generateInvoiceId } = sync;
 
 const admin = { role: 'Admin', name: 'Admin', identifier: 'admin@example.com' };
 
@@ -47,15 +48,22 @@ describe('Deals completion wiring', () => {
     expect(invoice).toMatchObject({ id: 'INV-FIN-0001', type: 'Final', status: 'Unpaid', dealId: 'D-1', amount: 25000, totalValue: 100000 });
   });
 
-  // Characterisation: docs/02_modules/invoicing/FINDINGS.md D-1 (no duplicate
-  // guard). Completion never looks at the invoices prop, so a deal that
-  // already has a Final invoice gets a second one. Flips in Phase 7 2.1
-  // (getExistingFinalInvoice), which should skip the create.
-  it('creates another Final invoice even when the deal already has one', async () => {
+  // Flipped in Phase 7 2.1 (invoicing D-1): a deal that already has a Final invoice
+  // completes without creating a second one.
+  it('does not create another Final invoice when the deal already has one, and still completes', async () => {
     const existing = makeInvoice({ id: 'INV-FIN-0009', type: 'Final', dealId: 'D-1', leadId: 'D-1', status: 'Unpaid' });
-    const { onSaveInvoice } = renderDeals({ invoices: [existing] });
+    const { onSaveInvoice, setLeads } = renderDeals({ invoices: [existing] });
+    fireEvent.click(screen.getByRole('button', { name: /for Kasun Silva/i }));
+    await waitFor(() => expect(setLeads).toHaveBeenCalled());
+    expect(generateInvoiceId).not.toHaveBeenCalled();
+    expect(onSaveInvoice).not.toHaveBeenCalled();
+    expect(sync.updateDocument).toHaveBeenCalledWith('leads', expect.anything(), expect.objectContaining({ stage: 'Completed' }));
+  });
+
+  it('still creates the Final invoice when the only existing one is cancelled', async () => {
+    const cancelled = makeInvoice({ id: 'INV-FIN-0009', type: 'Final', dealId: 'D-1', status: 'Cancelled' });
+    const { onSaveInvoice } = renderDeals({ invoices: [cancelled] });
     fireEvent.click(screen.getByRole('button', { name: /for Kasun Silva/i }));
     await waitFor(() => expect(onSaveInvoice).toHaveBeenCalledTimes(1));
-    expect(onSaveInvoice.mock.calls[0][0].type).toBe('Final');
   });
 });
