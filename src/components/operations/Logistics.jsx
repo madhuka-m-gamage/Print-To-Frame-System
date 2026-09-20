@@ -34,6 +34,7 @@ import TwoToneIcon from '../common/ui/TwoToneIcon';
 import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateAtomicId } from '../../services/firestoreSync';
 import { stripEmojis } from '../../utils/validation';
 import { deliveryStatusForTask } from '../../utils/logisticsTask';
+import { usePermissions } from '../../context/PermissionsContext';
 import { generateText } from '../../services/gemini';
 import { 
   getGoogleMapsUrl, 
@@ -307,9 +308,12 @@ export default function Logistics({
   projects = [],
   setProjects,
   invoices = [],
-  partners = []
+  partners = [],
+  onCollectCod
 }) {
   const isAdmin = currentUser?.role === "Admin";
+  const { canAccess } = usePermissions();
+  const canCollectCod = !!onCollectCod && canAccess(currentUser?.role, 'invoices', 'edit') && canAccess(currentUser?.role, 'receipts', 'create');
   const [activeSubTab, setActiveSubTab] = useState("delivery"); // Default to Delivery
   const [showAddForm, setShowAddForm] = useState(false);
   const [activeJob, setActiveJob] = useState(null);
@@ -1037,6 +1041,9 @@ export default function Logistics({
           invoices={invoices}
           customers={customers}
           projects={projects}
+          canCollectCod={canCollectCod}
+          onCollectCod={onCollectCod}
+          collectorName={currentUser?.name || ''}
         />
       )}
     </div>

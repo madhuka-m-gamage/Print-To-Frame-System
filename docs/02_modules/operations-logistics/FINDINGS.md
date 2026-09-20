@@ -411,6 +411,6 @@ Verification results:
 - [x] **D-3** — Unify dispatch schema in `Deals.jsx`, `Leads.jsx`, and `FabricationWorks.jsx`: use `generateAtomicId('L-DL'/'L-PK')`, standard key `customerPhone`, and link `linkedJobNo`.
 - [x] **D-4** — Enhance `calculateCODFromInvoices` to detect unbilled 25% balance; replace false "All Settled" banners and waybill text with "Pending Final Invoice".
 - [x] **D-5** — Propagate delivery status (`in_transit`, `delivered`) from Logistics to linked `projects` document so fabrication operators have handover visibility.
-- [ ] **D-6** — Wire `onMarkInvoicePaid` and `onGenerateReceipt` from `App.jsx` into `Logistics` and add in-field COD collection action in `LogisticsCardDetails`.
+- [x] **D-6** — Wire `onMarkInvoicePaid` and `onGenerateReceipt` from `App.jsx` into `Logistics` and add in-field COD collection action in `LogisticsCardDetails`.
 - [ ] **D-7** — Persist driver and vehicle directories in Firestore settings with fallback to static constants.
 - [x] **D-8** — Implement previous-state rollback and user error toasts on failed Firestore writes in `Logistics.jsx`.

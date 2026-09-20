@@ -36,6 +36,7 @@ import {
 import TwoToneIcon from '../common/ui/TwoToneIcon';
 import { toast } from '../../utils/toast';
 import { stripEmojis } from '../../utils/validation';
+import { getCollectableInvoice } from '../../utils/logisticsEngine';
 import { buildInvoiceHtml, openInvoicePrintWindow } from '../../utils/invoiceTemplate';
 import {
   getGoogleMapsUrl,
@@ -52,7 +53,10 @@ export default function LogisticsCardDetails({
   onSave,
   invoices = [],
   customers = [],
-  projects = []
+  projects = [],
+  canCollectCod = false,
+  onCollectCod,
+  collectorName = ''
 }) {
   // Find linked customer record
   const matchedCustomer = useMemo(() => {
@@ -90,6 +94,21 @@ export default function LogisticsCardDetails({
     job.leadId, job.dealId, job.originalLeadId, job.convertedDealId,
     linkedProject?.leadId, linkedProject?.dealId, linkedProject?.originalLeadId, linkedProject?.convertedDealId,
   ]);
+
+  const collectable = getCollectableInvoice({ primaryInvoice, finalInvoicePending });
+  const [confirmingCash, setConfirmingCash] = useState(false);
+  const [isCollecting, setIsCollecting] = useState(false);
+
+  const handleRecordCash = async () => {
+    if (!collectable || !onCollectCod || isCollecting) return;
+    setIsCollecting(true);
+    try {
+      await onCollectCod(collectable, { collectedBy: formData.driver || collectorName });
+    } finally {
+      setIsCollecting(false);
+      setConfirmingCash(false);
+    }
+  };
 
   const [formData, setFormData] = useState({
     subType: job.subType || '',
@@ -450,6 +469,33 @@ export default function LogisticsCardDetails({
                 </div>
               )}
             </div>
+            {canCollectCod && collectable && onCollectCod && (
+              <div className="mt-3 p-3 rounded-xl border border-outline-variant bg-surface-container-low flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                {confirmingCash ? (
+                  <>
+                    <span className="text-xs font-bold text-on-surface">
+                      Confirm you collected LKR {Number(collectable.amount || collectable.totalValue || 0).toLocaleString()} in cash for {collectable.id || collectable._firestoreId}?
+                    </span>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => setConfirmingCash(false)} disabled={isCollecting} className="px-3 py-2 rounded-lg border border-outline-variant text-xs font-bold text-on-surface-variant">Cancel</button>
+                      <button type="button" onClick={handleRecordCash} disabled={isCollecting} className="px-3 py-2 rounded-lg bg-primary text-on-primary text-xs font-bold disabled:opacity-60">
+                        {isCollecting ? 'Recording…' : 'Yes, cash collected'}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-xs text-on-surface-variant">Collected cash on delivery? This marks the invoice paid and issues a receipt.</span>
+                    <button type="button" onClick={() => setConfirmingCash(true)} className="px-4 py-2 rounded-lg bg-secondary text-on-secondary text-xs font-bold shrink-0">
+                      Record cash collection
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+            {canCollectCod && finalInvoicePending && (
+              <p className="mt-2 text-[11px] text-status-warning-on">Create the 25% Final invoice first, then the cash can be recorded against it.</p>
+            )}
           </DetailFieldGroup>
 
           {/* Destination & Contact */}

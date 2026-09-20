@@ -93,6 +93,8 @@ Owner decision 2026-09-21: side findings are parked here, not folded into the st
 - [ ] Inspection #5: tell the deal's sales owner when a linked job goes to Revision (defect category and notes). The app has only local toasts, no stored per-user notifications, so this needs that first (same gap as the defaulted-commission alert).
 - [ ] Inspection #8: an explicit "Email client: QA passed" button that previews and sends the `fabrication_ready_inspection` template through `/api/send-email` (the template exists and is never used).
 - [ ] `Deals.jsx` completion calls `onSaveInvoice` without waiting for it, unlike the Fabrication QA pass, so a failed Final invoice save still completes the deal. Make it await and abort like Fabrication.
+- [ ] Logistics D-7: the fleet vehicles and driver directory are hardcoded in `logisticsEngine.js`. Move them to Firestore (`settings/fleet` or a collection) editable by Admins, keeping the constants as a fallback. Needs a rules change, so it is live-affecting and belongs with the parked rules deploys.
+- [ ] Cash on delivery for drivers: the Logistics role has read-only invoices and no receipts in `DEFAULT_PERMISSIONS`, so a driver cannot record cash collection; only Admin and Manager can. Decide whether drivers may (widening the matrix and the live rules) or a dispatcher records it for them.
 - [ ] Environment variables on the Vercel preview: it needs its own `FIREBASE_SERVICE_ACCOUNT_JSON` and `GEMINI_API_KEY` in Preview scope; replace live keys with a staging project's keys once Part 1 exists.
 
 ## Antigravity Work Summary & Handoff
