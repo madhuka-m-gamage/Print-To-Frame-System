@@ -116,7 +116,7 @@ export default function LeadCardDetails({
   // UI state
   const [convertError, setConvertError] = useState('');
   const [receiptFormFor, setReceiptFormFor] = useState(null); // 'advance' | 'final' | null
-  const [receiptFormData, setReceiptFormData] = useState({ amountReceived: 0, paymentMethod: 'Cash', date: new Date().toISOString().split('T')[0] });
+  const [receiptFormData, setReceiptFormData] = useState({ amountReceived: 0, paymentMethod: 'Cash', date: new Date().toISOString().split('T')[0], notes: '' });
   const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
 
   const openReceiptForm = (kind, invoice) => {
@@ -125,6 +125,7 @@ export default function LeadCardDetails({
       amountReceived: Number(invoice?.amount) || 0,
       paymentMethod: 'Cash',
       date: new Date().toISOString().split('T')[0],
+      notes: '',
     });
   };
 
@@ -1570,8 +1571,9 @@ export default function LeadCardDetails({
                           <input
                             type="number"
                             value={receiptFormData.amountReceived}
-                            onChange={(e) => setReceiptFormData(prev => ({ ...prev, amountReceived: e.target.value }))}
-                            className="w-full px-2 py-1 bg-surface-container rounded-lg text-[10px] border border-outline-variant"
+                            readOnly
+                            title="A receipt records the full invoice amount"
+                            className="w-full px-2 py-1 bg-surface-container-high rounded-lg text-[10px] border border-outline-variant opacity-80 cursor-not-allowed"
                             placeholder="Amount"
                           />
                           <select
@@ -1589,6 +1591,13 @@ export default function LeadCardDetails({
                             value={receiptFormData.date}
                             onChange={(e) => setReceiptFormData(prev => ({ ...prev, date: e.target.value }))}
                             className="w-full px-2 py-1 bg-surface-container rounded-lg text-[10px] border border-outline-variant"
+                          />
+                          <input
+                            type="text"
+                            value={receiptFormData.notes}
+                            onChange={(e) => setReceiptFormData(prev => ({ ...prev, notes: e.target.value }))}
+                            className="w-full px-2 py-1 bg-surface-container rounded-lg text-[10px] border border-outline-variant"
+                            placeholder="Notes / Reference (optional)"
                           />
                           <div className="flex gap-1">
                             <button type="button" disabled={isGeneratingReceipt} onClick={() => submitReceiptForm(advanceInvoice)} className="flex-1 py-1.5 bg-emerald-500 text-white rounded-lg text-[9px] font-bold cursor-pointer disabled:opacity-60">Confirm</button>
@@ -1621,8 +1630,9 @@ export default function LeadCardDetails({
                           <input
                             type="number"
                             value={receiptFormData.amountReceived}
-                            onChange={(e) => setReceiptFormData(prev => ({ ...prev, amountReceived: e.target.value }))}
-                            className="w-full px-2 py-1 bg-surface-container rounded-lg text-[10px] border border-outline-variant"
+                            readOnly
+                            title="A receipt records the full invoice amount"
+                            className="w-full px-2 py-1 bg-surface-container-high rounded-lg text-[10px] border border-outline-variant opacity-80 cursor-not-allowed"
                             placeholder="Amount"
                           />
                           <select
@@ -1640,6 +1650,13 @@ export default function LeadCardDetails({
                             value={receiptFormData.date}
                             onChange={(e) => setReceiptFormData(prev => ({ ...prev, date: e.target.value }))}
                             className="w-full px-2 py-1 bg-surface-container rounded-lg text-[10px] border border-outline-variant"
+                          />
+                          <input
+                            type="text"
+                            value={receiptFormData.notes}
+                            onChange={(e) => setReceiptFormData(prev => ({ ...prev, notes: e.target.value }))}
+                            className="w-full px-2 py-1 bg-surface-container rounded-lg text-[10px] border border-outline-variant"
+                            placeholder="Notes / Reference (optional)"
                           />
                           <div className="flex gap-1">
                             <button type="button" disabled={isGeneratingReceipt} onClick={() => submitReceiptForm(finalInvoice)} className="flex-1 py-1.5 bg-emerald-500 text-white rounded-lg text-[9px] font-bold cursor-pointer disabled:opacity-60">Confirm</button>

@@ -737,6 +737,7 @@ export default function FabricationWorks({
         dealId: targetJob.dealId || '',
         originalLeadId: targetJob.originalLeadId || '',
         convertedDealId: targetJob.convertedDealId || '',
+        partnerId: targetJob.partnerId || targetJob.agentId || '',
         customerName: custName,
         company: cust?.businessName || "",
         phone: targetJob.phone || cust?.phone || "",

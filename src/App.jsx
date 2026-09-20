@@ -395,6 +395,10 @@ function App() {
       return;
     }
     const invoiceId = invoice.id || invoice._firestoreId;
+    if (invoice.status !== 'Paid') {
+      toast.error('Cannot generate a receipt for an unpaid invoice.');
+      return;
+    }
     if (receipts.some(r => r.invoiceId === invoiceId)) {
       toast.error(`A receipt already exists for ${invoiceId}.`);
       return;

@@ -354,6 +354,7 @@ export default function Deals({
             id: finalInvId,
             leadId: deal.id,
             dealId: deal.id,
+            partnerId: deal.partnerId || deal.agentId || '',
             originalLeadId: deal.originalLeadId || '',
             linkedJobNo: deal.jobNo || deal.linkedJobNo || '',
             jobNo: deal.jobNo || deal.linkedJobNo || '',

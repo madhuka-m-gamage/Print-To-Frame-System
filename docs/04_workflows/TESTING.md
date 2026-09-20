@@ -134,7 +134,7 @@ Snapshot from `npm run coverage` (unit and API tests only; overall about 6% of `
 | `src/utils/invoiceTemplate.js`, `receiptTemplate.js`, `dealSettlement.js` | `tests/unit/invoiceTemplate.test.js`, `receiptTemplate.test.js`, `dealSettlement.test.js` | real (milestone maths incl. discount and tax, words, labels, deal final amounts and commission) | print output only asserted by substring |
 | `src/utils/validation.js`, `stringMatch.js`, `csvExport.js` | none | | (B2) |
 | `src/services/firestoreSync.js` | `tests/unit/firestoreSync.test.js` | real | pure exports only (`deriveReceiptId`, `generateSequentialId`); firebase mocked; the Firestore calls and `generateAtomicId` are untested here |
-| `src/components/**`, `App.jsx` | `StatusBadge` smoke test; `Deals.test.jsx`, `FabricationWorks.test.jsx`, `Partners.test.jsx`, `App.signOut.test.jsx` (B5 wiring) | real (Final invoice creation on completion and QA pass) plus characterisation (duplicate Final, phantom payout, sign-out leak) | wiring of four flows only; the large components are otherwise untested and logic inside them is not extracted |
+| `src/components/**`, `App.jsx` | `StatusBadge` smoke test; `Receipts.test.jsx` (CSV export), `Invoices.receipt.test.jsx` (read-only amount, notes); `Deals.test.jsx`, `FabricationWorks.test.jsx`, `Partners.test.jsx`, `App.signOut.test.jsx` (B5 wiring) | real (Final invoice creation on completion and QA pass) plus characterisation (duplicate Final, phantom payout, sign-out leak) | wiring of four flows only; the large components are otherwise untested and logic inside them is not extracted |
 | Browser journeys | `tests/e2e/smoke.spec.js` (sign-in) | real | quotation to invoice, deal completion, RBAC (B6) |
 
 ## Characterisation register
