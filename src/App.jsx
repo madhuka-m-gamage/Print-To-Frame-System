@@ -32,7 +32,7 @@ import { initAuth, logout, emailLogin, emailRegister, db } from "./services/fire
 import { doc, getDoc, setDoc, collection, getDocs, deleteDoc, onSnapshot } from "firebase/firestore";
 import { subscribeToCollection, addDocument, updateDocument, batchWrite, COLLECTIONS, generateInvoiceId, deriveReceiptId, createDocumentIfAbsent } from "./services/firestoreSync";
 import { toast } from "./utils/toast";
-import { toDateObj } from "./utils/dateUtils";
+import { isFullyPaid } from "./utils/invoiceSettlement";
 import { UserAvatar } from "./components/common/ui";
 
 // Components
@@ -491,16 +491,7 @@ function App() {
       // stale invoice here can wrongly flip isFullyPaid (e.g. an old,
       // already-Paid Advance masking a genuinely-unpaid current one), so
       // always take the most recently created match.
-      const latestByCreatedAt = (candidates) => candidates.reduce((latest, inv) => {
-        if (!latest) return inv;
-        const latestTime = toDateObj(latest.createdAt)?.getTime() ?? -Infinity;
-        const invTime = toDateObj(inv.createdAt)?.getTime() ?? -Infinity;
-        return invTime > latestTime ? inv : latest;
-      }, null);
-      const advanceInvoice = latestByCreatedAt(siblingInvoices.filter(inv => inv.type !== 'Final'));
-      const finalInvoice = latestByCreatedAt(siblingInvoices.filter(inv => inv.type === 'Final'));
-      const paidNow = (inv) => !inv ? false : ((inv._firestoreId || inv.id) === invDocId ? true : inv.status === 'Paid');
-      const isFullyPaid = Boolean(advanceInvoice) && Boolean(finalInvoice) && paidNow(advanceInvoice) && paidNow(finalInvoice);
+      const isFullyPaidNow = isFullyPaid(siblingInvoices, invDocId);
       const isAdvance = targetInvoice.type !== 'Final';
 
       // 3. Update the lead
@@ -512,17 +503,27 @@ function App() {
 
         const updatedLeadPayload = {
           stage: newStage,
-          ...(isFullyPaid ? { invoicePaid: true } : {}),
-          ...(isFullyPaid && isPartnerReferral && !alreadyEligible ? { referralStatus: 'Eligible for Payout' } : {}),
+          ...(isFullyPaidNow ? { invoicePaid: true } : {}),
+          ...(isFullyPaidNow && isPartnerReferral && !alreadyEligible ? { referralStatus: 'Eligible for Payout' } : {}),
         };
 
         setLeads(prev => prev.map(lead => (lead.id === leadId || lead._firestoreId === leadId) ? { ...lead, ...updatedLeadPayload } : lead));
         await updateDocument(COLLECTIONS.LEADS, leadDocId, updatedLeadPayload);
 
+        // A lead and the deal it converted into are separate documents; when
+        // the deal is fully settled both must show it.
+        if (isFullyPaidNow) {
+          const linkedLeads = leads.filter(l => l !== targetLead && relatedIds.has(l.id));
+          for (const linked of linkedLeads) {
+            setLeads(prev => prev.map(l => (l.id === linked.id ? { ...l, invoicePaid: true } : l)));
+            await updateDocument(COLLECTIONS.LEADS, linked._firestoreId || linked.id, { invoicePaid: true });
+          }
+        }
+
         // 4. Commission-eligibility notification — fires exactly once, only
         // once the deal is genuinely fully settled, guarded by alreadyEligible
         // so re-marking (or a race between two writes) can't double-fire it.
-        if (isFullyPaid && isPartnerReferral && !alreadyEligible) {
+        if (isFullyPaidNow && isPartnerReferral && !alreadyEligible) {
           const sqFt = Number(targetLead.totalSqFt || targetLead.sqFt || (targetLead.pricingMetadata?.costSalesAmount ? (targetLead.pricingMetadata.costSalesAmount / 53.5) : 0));
           // Commission is always calculated from the partner's CURRENT live
           // rate, never the lead's referral-time snapshot or the quote-time
@@ -551,7 +552,7 @@ function App() {
       }
 
       toast.success(
-        isFullyPaid
+        isFullyPaidNow
           ? `${targetInvoice.type || 'Invoice'} payment recorded — deal fully settled!`
           : `${targetInvoice.type || 'Invoice'} payment recorded and synchronized.`
       );
