@@ -29,3 +29,5 @@ Deals is the post-sale Kanban (Waiting, Fabricating, Ready To Load, Hand Over, C
 - Final invoice guard: deal completion and job QA pass call `getExistingFinalInvoice` (`src/utils/entityUtils.js`) and skip creating a second Final. It runs on client state, so two sessions acting at the same moment can still both create one.
 
 - Completed is terminal: no backward move from it, and bulk change cannot set Completed. Deal completion sets `commissionAccrued: true` and skips commission accrual when it is already set.
+
+- Completion amounts come from `getFinalInvoiceAmounts` (Accepted quotation, highest version, else deal value) and commission from `calculateDealCommission`, both in `src/utils/dealSettlement.js`. The invoice print template keeps its x0.25/x0.75 line scaling by owner decision.

@@ -239,7 +239,7 @@ export function buildInvoiceHtml({ invoice, customerPhone = '', deliveryLocation
                   ${item.unit ? `<span style="font-size:11px; color:#64748b; margin-left:6px;">(${item.unit})</span>` : ''}
                 </td>
                 <td style="text-align: center;" class="mono-text">${item.qty || 1}</td>
-                <td style="text-align: right; font-weight: 600;" class="mono-text">${(Number(item.qty || 1) * Number(item.unitPrice || 0) * (isFinal ? 0.25 : 0.75)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td style="text-align: right; font-weight: 600;" class="mono-text">${(Number(item.qty || 1) * Number(item.unitPrice || 0) * (1 - Number(item.discountPct || 0) / 100) * (1 + Number(item.taxPct || 0) / 100) * (isFinal ? 0.25 : 0.75)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               </tr>
             `).join('') : `
               <tr>
