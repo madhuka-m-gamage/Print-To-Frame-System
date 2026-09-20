@@ -59,3 +59,4 @@ Map, then per-module Claude instructions.
 ## Decisions
 
 - [0001-why-quotation-engine-is-custom.md](docs/05_decisions/0001-why-quotation-engine-is-custom.md)
+- [0002-deferred-until-live-rollout.md](docs/05_decisions/0002-deferred-until-live-rollout.md)

@@ -62,6 +62,16 @@ Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 be
 - [ ] 7: UX and feature backlog
 - [ ] 8.1 / 8.2: docs sync, folder move
 
+## Deferred until the live site is ready to change
+
+Owner decision 2026-09-20 ([docs/05_decisions/0002-deferred-until-live-rollout.md](docs/05_decisions/0002-deferred-until-live-rollout.md)): only repo work that cannot affect the live site proceeds. Parked, with details in that note:
+- [ ] Promote `staging` to `main` (PR #25)
+- [ ] 3.3 live matrix migration (add `receipts` and `quotations`), 3.4d additive rules deploy, 3.5d restrictive rules deploy
+- [ ] Partner limited to its own `partners` record
+- [ ] B6 E2E journeys (money and RBAC)
+- [ ] Partners D-5 public profile document, server-side counters
+- [ ] Part 1 separate environments
+
 ## Antigravity Work Summary & Handoff
 
 The 16-module architectural, security, and correctness review phase was conducted in Google Antigravity and is complete.
