@@ -1,11 +1,12 @@
-import { readFileSync } from 'fs';
 import { beforeAll, afterAll, beforeEach, describe, it, expect } from 'vitest';
-import {
-  initializeTestEnvironment,
-  assertFails,
-  assertSucceeds,
-} from '@firebase/rules-unit-testing';
+import { assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import {
+  setupRulesEnv,
+  clearAll,
+  authedFirestore as authedFirestoreFor,
+  seedUser as seedUserFor,
+} from '../helpers/emulator';
 
 /**
  * Exercises firestore.rules against the real Firebase Emulator (run via
@@ -20,20 +21,12 @@ import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
  * via the Firestore SDK directly (bypassing the UI) — is rejected."
  */
 
-const PROJECT_ID = 'demo-print2frame-test';
 const BOOTSTRAP_ADMIN_EMAIL = 'madhukagamage6@gmail.com';
 
 let testEnv;
 
 beforeAll(async () => {
-  testEnv = await initializeTestEnvironment({
-    projectId: PROJECT_ID,
-    firestore: {
-      rules: readFileSync('firestore.rules', 'utf8'),
-      host: 'localhost',
-      port: 8080,
-    },
-  });
+  testEnv = await setupRulesEnv();
 });
 
 afterAll(async () => {
@@ -41,17 +34,15 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-  await testEnv.clearFirestore();
+  await clearAll(testEnv);
 });
 
 function authedFirestore(email) {
-  return testEnv.authenticatedContext(email, { email }).firestore();
+  return authedFirestoreFor(testEnv, email);
 }
 
-async function seedUser(email, data) {
-  await testEnv.withSecurityRulesDisabled(async (ctx) => {
-    await setDoc(doc(ctx.firestore(), 'users', email), data);
-  });
+function seedUser(email, data) {
+  return seedUserFor(testEnv, email, data);
 }
 
 describe('firestore.rules: users/{userId} role-escalation guard', () => {

@@ -1,11 +1,12 @@
 import { beforeAll, afterAll, beforeEach, describe, it, expect } from 'vitest';
-import { readFileSync } from 'fs';
-import {
-  initializeTestEnvironment,
-  assertFails,
-  assertSucceeds,
-} from '@firebase/rules-unit-testing';
+import { assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import { doc, runTransaction } from 'firebase/firestore';
+import {
+  setupRulesEnv,
+  clearAll,
+  authedFirestore as authedFirestoreFor,
+  unauthedFirestore as unauthedFirestoreFor,
+} from '../helpers/emulator';
 
 /**
  * Exercises the atomic invoice-numbering scheme (Phase 10) against the real
@@ -28,19 +29,10 @@ import { doc, runTransaction } from 'firebase/firestore';
  * app instance, which isn't the emulator-backed instance this test needs.
  */
 
-const PROJECT_ID = 'demo-print2frame-test';
-
 let testEnv;
 
 beforeAll(async () => {
-  testEnv = await initializeTestEnvironment({
-    projectId: PROJECT_ID,
-    firestore: {
-      rules: readFileSync('firestore.rules', 'utf8'),
-      host: 'localhost',
-      port: 8080,
-    },
-  });
+  testEnv = await setupRulesEnv();
 });
 
 afterAll(async () => {
@@ -48,15 +40,15 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-  await testEnv.clearFirestore();
+  await clearAll(testEnv);
 });
 
 function authedFirestore(email) {
-  return testEnv.authenticatedContext(email, { email }).firestore();
+  return authedFirestoreFor(testEnv, email);
 }
 
 function unauthedFirestore() {
-  return testEnv.unauthenticatedContext().firestore();
+  return unauthedFirestoreFor(testEnv);
 }
 
 // Verbatim mirror of generateInvoiceId()'s transaction body.
