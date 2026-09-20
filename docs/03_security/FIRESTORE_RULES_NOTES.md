@@ -45,7 +45,8 @@
 - **`messages` reads are not restricted to participants.** The client filters by `participants`, but the rules let any authenticated user read all messages, and the `messages` permission (Partner: none) is not checked here.
 - **`checkPermission` ignores `status` / `isApproved`:** any user with a `users` doc and a role keeps rule-level access even if marked deactivated, unless their Firebase Auth account is also disabled. Client and `api/*` gates do check approval / status.
 - **Anonymous creates are allowed** on `pendingUsers`, `partner_applications`, and `leads` with `source == 'Referral'` (needed for the public forms); `settings/permissions` is world-readable.
-- `counters` is writable by any authenticated user (invoice / receipt numbering is transactional in the client, not enforced here).
+- `counters` (updated in step 3.4): only the prefixes `INV-ADV`, `INV-FIN`, `L-DL`, `L-PK`, `PTF`, `QT`, holding a single positive integer that can step ahead by at most one. Lowering a counter is still allowed, because a strict "must increase" check rejects legitimate transactions under contention; closing that needs server-side numbering.
+- Step 3.4 also added: `isAdmin()` accepts the bootstrap owner emails; a pending applicant may update (not approve) their own `pendingUsers` record; customers may read and update their own record's profile fields (`name`, `photoURL`, `phone`, `address`); new `referral_claims` and `partner_payouts` blocks. **Not applied:** public read of Active partners (partners D-5), because a partner document holds bank details and rules cannot hide fields.
 - The `users` create / update guard means a non-admin cannot change their own `role`, `isApproved` or `status` (matches the intent stated in the file's comments and `tests/integration/firestoreRules.test.js`).
 
 ## Deployment (rules are not deployed by Vercel)
