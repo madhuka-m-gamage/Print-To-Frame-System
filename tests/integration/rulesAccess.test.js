@@ -118,11 +118,11 @@ describe('settings, audit log and public forms (correct today)', () => {
 });
 
 describe('known gaps in today\'s rules (characterisation)', () => {
-  // The Partner role holds a full partners permission in the matrix (fixture mirrors
-  // DEFAULT_PERMISSIONS), so a partner can read and write every other partner. Flips in
-  // Phase 7 3.2, which narrows the Partner matrix to self view and edit only (a matrix
-  // change: it also needs the live settings/permissions document updated in 3.3).
-  it('lets a Partner read another partner\'s document because the matrix grants partners access', async () => {
+  // The Partner role holds view and edit on partners in the matrix (Phase 7 3.2 removed
+  // create, delete and export), so a partner can still read every other partner: the rule
+  // checks the module permission, not whose record it is. Flips in Phase 7 3.5, when the
+  // rules limit the Partner role to its own record.
+  it('lets a Partner read another partner\'s document because the matrix grants partners view', async () => {
     await seedDoc('partners', 'p2@example.com', { name: 'P2' });
     const db = await dbAs('Partner', 'p1@example.com');
     await assertSucceeds(getDoc(doc(db, 'partners', 'p2@example.com')));
