@@ -154,20 +154,51 @@ describe('known gaps in today\'s rules (characterisation)', () => {
     await assertSucceeds(getDoc(doc(db, 'users', 'boss@example.com')));
   });
 
-  // Phase 10 note in firestoreSync.js and the rules audit: counters is open to any
-  // signed-in user for any prefix and any value. Flips in Phase 7 3.4.
-  it('lets a Customer write any counter to any value', async () => {
+  // Flipped in Phase 7 3.4 (rules audit): counters only accept the known prefixes and can only
+  // step ahead by one, so a caller can neither invent a counter nor jump a sequence forward.
+  // Lowering a counter is still allowed (see the comment on the rule), so that stays a known gap.
+  it('limits counters to the known prefixes and to steps ahead of at most one', async () => {
     const db = await dbAs('Customer');
-    await assertSucceeds(setDoc(doc(db, 'counters', 'INV-FIN'), { count: 999999 }));
-    await assertSucceeds(setDoc(doc(db, 'counters', 'made-up-prefix'), { count: 1 }));
+    await assertSucceeds(setDoc(doc(db, 'counters', 'INV-FIN'), { value: 1 }));
+    await assertSucceeds(setDoc(doc(db, 'counters', 'INV-FIN'), { value: 2 }, { merge: true }));
+    await assertFails(setDoc(doc(db, 'counters', 'INV-FIN'), { value: 999999 }, { merge: true }));
+    await assertFails(setDoc(doc(db, 'counters', 'made-up-prefix'), { value: 1 }));
+    await assertFails(setDoc(doc(db, 'counters', 'INV-ADV'), { value: 5 }));
+    await assertFails(setDoc(doc(db, 'counters', 'INV-ADV'), { value: 1, extra: true }));
   });
 
-  // partners FINDINGS D-6: no rules for these collections, so the catch-all denies even
-  // an Admin. Flips in Phase 7 3.4 (new match blocks).
-  it('denies partner_payouts and referral_claims to everyone, Admin included', async () => {
+  // Known gap left by the 3.4 counters rule (see the comment on it in firestore.rules): with no lower
+  // bound, a signed-in user can still lower a counter and cause duplicate numbers. Closes only when
+  // numbering moves server-side.
+  it('still lets a signed-in user lower a counter', async () => {
+    const db = await dbAs('Customer');
+    await assertSucceeds(setDoc(doc(db, 'counters', 'QT'), { value: 1 }));
+    await assertSucceeds(setDoc(doc(db, 'counters', 'QT'), { value: 2 }, { merge: true }));
+    await assertSucceeds(setDoc(doc(db, 'counters', 'QT'), { value: 1 }, { merge: true }));
+  });
+
+  // Flipped in Phase 7 3.4 (partners D-6): payouts are Admin-written and claims are filed by
+  // any signed-in user and resolved by an Admin.
+  it('lets an Admin write partner_payouts and only a claiming partner or staff read them', async () => {
     const admin = await dbAs('Admin');
-    await assertFails(setDoc(doc(admin, 'partner_payouts', 'p1'), { amount: 1 }));
-    await assertFails(setDoc(doc(admin, 'referral_claims', 'c1'), { name: 'x' }));
+    await assertSucceeds(setDoc(doc(admin, 'partner_payouts', 'p1'), { amount: 1, partnerId: 'P-1', partnerEmail: 'own@example.com' }));
+    await assertFails(setDoc(doc(await dbAs('Sales'), 'partner_payouts', 'p2'), { amount: 1 }));
+    await assertFails(setDoc(doc(await dbAs('Partner', 'own@example.com'), 'partner_payouts', 'p3'), { amount: 1 }));
+    await assertSucceeds(getDoc(doc(await dbAs('Partner', 'own@example.com'), 'partner_payouts', 'p1')));
+    await assertFails(getDoc(doc(await dbAs('Partner', 'other@example.com'), 'partner_payouts', 'p1')));
+    await assertSucceeds(getDoc(doc(await dbAs('Sales'), 'partner_payouts', 'p1')));
+    await assertFails(getDoc(doc(unauthedFirestore(testEnv), 'partner_payouts', 'p1')));
+  });
+
+  it('lets any signed-in user file a referral claim, staff and the claimant read it, and only an Admin resolve it', async () => {
+    const partner = await dbAs('Partner', 'own@example.com');
+    await assertSucceeds(setDoc(doc(partner, 'referral_claims', 'c1'), { partnerEmail: 'own@example.com', clientName: 'X' }));
+    await assertSucceeds(getDoc(doc(partner, 'referral_claims', 'c1')));
+    await assertFails(getDoc(doc(await dbAs('Partner', 'other@example.com'), 'referral_claims', 'c1')));
+    await assertSucceeds(getDoc(doc(await dbAs('Sales'), 'referral_claims', 'c1')));
+    await assertFails(updateDoc(doc(await dbAs('Sales'), 'referral_claims', 'c1'), { status: 'Verified' }));
+    await assertSucceeds(updateDoc(doc(await dbAs('Admin'), 'referral_claims', 'c1'), { status: 'Verified' }));
+    await assertFails(setDoc(doc(unauthedFirestore(testEnv), 'referral_claims', 'c2'), { clientName: 'Y' }));
   });
 
   // user-management-rbac FINDINGS finding 1: the rules never read users.status, so a
@@ -178,20 +209,34 @@ describe('known gaps in today\'s rules (characterisation)', () => {
     await assertSucceeds(setDoc(doc(db, 'leads', 'L-gone'), { name: 'still works' }));
   });
 
-  // auth FINDINGS DP-06: isAdmin() ignores the bootstrap super-admin email, so that
-  // account is an Admin only once its users document says role Admin. Flips in 3.4.
-  it('does not treat the bootstrap email as Admin when it has no users document', async () => {
+  // Flipped in Phase 7 3.4 (auth DP-06): the bootstrap owner email counts as Admin even with no
+  // users document.
+  it('treats the bootstrap email as Admin when it has no users document', async () => {
     const db = authedFirestore(testEnv, BOOTSTRAP_ADMIN_EMAIL);
-    await assertFails(setDoc(doc(db, 'settings', 'permissions'), { Admin: {} }));
+    await assertSucceeds(setDoc(doc(db, 'settings', 'permissions'), { Admin: {} }));
   });
 
-  // auth FINDINGS DP-02: a pending applicant cannot update their own pendingUsers doc
-  // (only an Admin can), so the client cannot fix a registration race. Flips in 3.4.
-  it('rejects a pending applicant updating their own pendingUsers document', async () => {
+  // Flipped in Phase 7 3.4 (auth DP-02): an applicant can finish their own pendingUsers record,
+  // but not approve it or touch anyone else's.
+  it('lets a pending applicant update their own pendingUsers document, but not approve it', async () => {
     await seedDoc('pendingUsers', 'app@example.com', { name: 'A' });
+    await seedDoc('pendingUsers', 'other@example.com', { name: 'O' });
     const db = authedFirestore(testEnv, 'app@example.com');
-    await assertSucceeds(getDoc(doc(db, 'pendingUsers', 'app@example.com')));
-    await assertFails(updateDoc(doc(db, 'pendingUsers', 'app@example.com'), { name: 'B' }));
+    await assertSucceeds(updateDoc(doc(db, 'pendingUsers', 'app@example.com'), { name: 'B' }));
+    await assertFails(updateDoc(doc(db, 'pendingUsers', 'app@example.com'), { isApproved: true }));
+    await assertFails(updateDoc(doc(db, 'pendingUsers', 'other@example.com'), { name: 'B' }));
+  });
+
+  it('lets a customer read and update only their own record, and only the profile fields', async () => {
+    await seedDoc('customers', 'c1', { name: 'Nimal', email: 'nimal@example.com', phone: '1', orders: 3 });
+    await seedDoc('customers', 'c2', { name: 'Other', email: 'other@example.com', phone: '2', orders: 1 });
+    await seedPermissions(testEnv);
+    const db = await dbAs('Customer', 'nimal@example.com');
+    await assertSucceeds(getDoc(doc(db, 'customers', 'c1')));
+    await assertFails(getDoc(doc(db, 'customers', 'c2')));
+    await assertSucceeds(updateDoc(doc(db, 'customers', 'c1'), { name: 'Nimal P', phone: '9', address: 'Kandy', photoURL: 'u' }));
+    await assertFails(updateDoc(doc(db, 'customers', 'c1'), { orders: 0 }));
+    await assertFails(updateDoc(doc(db, 'customers', 'c2'), { name: 'Hacked' }));
   });
 
   // employees FINDINGS D4 (owner decision: Managers may administer users): today a
@@ -218,8 +263,11 @@ describe('known gaps in today\'s rules (characterisation)', () => {
     await assertFails(getDoc(doc(await dbAs('Sales'), 'leads', 'L-pipe')));
   });
 
-  // partners FINDINGS D-5: an unauthenticated visitor cannot read a partner, even an
-  // Active one, so the public referral page cannot load partner details. Flips in 3.4.
+  // partners FINDINGS D-5 (public read of Active partners) is deliberately NOT applied in
+  // Phase 7 3.4: a partner document holds bank name, account number and branch, and a
+  // Firestore rule cannot hide fields, so the accepted rule would publish them to anyone.
+  // Held for a decision (for example a separate public partner-profile document). Until
+  // then an anonymous visitor cannot read a partner.
   it('denies an anonymous read of an Active partner', async () => {
     await seedDoc('partners', 'pub@example.com', { name: 'Pub', status: 'Active' });
     await assertFails(getDoc(doc(unauthedFirestore(testEnv), 'partners', 'pub@example.com')));
@@ -227,12 +275,7 @@ describe('known gaps in today\'s rules (characterisation)', () => {
 });
 
 describe('target behaviour to enable with the Phase 7 rules changes', () => {
-  it.todo('3.4: partner_payouts and referral_claims are writable only by roles with partners access, readable by Admin');
-  it.todo('3.4: counters accept only known prefixes and only increase');
-  it.todo('3.4: the bootstrap email counts as Admin without a users document (auth DP-06)');
-  it.todo('3.4: a pending applicant can update their own pendingUsers document (auth DP-02)');
-  it.todo('3.4: an Active partner is readable by anyone (partners D-5)');
-  it.todo('3.4: a customer can read and update their own customers record without touching financial fields (customers Decision 9)');
+  it.todo('held: an Active partner readable by anyone (partners D-5) needs a public profile document, not the full partner record');
   it.todo('3.5: quotations follow checkPermission(quotations); a Customer is denied');
   it.todo('3.5: messages are readable only by participants and Admin; create requires fromId to be the caller');
   it.todo('3.5: users are readable only by Admin, self, or roles with agents or messages view');

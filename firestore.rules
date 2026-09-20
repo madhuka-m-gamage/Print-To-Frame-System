@@ -16,9 +16,11 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/users/$(request.auth.token.email)).data.role == role;
     }
     
-    // Check if the user is an Admin
+    // Check if the user is an Admin. The bootstrap owner emails count as Admin even
+    // before their users document exists or if it is ever corrupted (auth DP-06).
     function isAdmin() {
-      return hasRole('admin') || hasRole('Admin');
+      return hasRole('admin') || hasRole('Admin')
+        || (isAuthenticated() && isBootstrapSuperAdmin(request.auth.token.email));
     }
 
     // The two hardcoded owner emails the client app itself treats as a bootstrap/
@@ -107,6 +109,10 @@ service cloud.firestore {
     match /pendingUsers/{userId} {
       allow create: if true;
       allow read: if isAuthenticated() && request.auth.token.email == userId;
+      // An applicant may finish their own registration record (auth DP-02), but never
+      // mark it approved; approval is an Admin action.
+      allow update: if isAuthenticated() && request.auth.token.email == userId
+        && request.resource.data.get('isApproved', false) == false;
       allow read, update, delete: if isAdmin();
     }
 
@@ -142,8 +148,26 @@ service cloud.firestore {
     // ── Sequential-ID counters (e.g. invoice numbering) ──────
     // Holds only a single incrementing integer per prefix — no business
     // data — written via a Firestore transaction from generateInvoiceId().
+    // Only the known prefixes, holding a single positive integer { value } that can
+    // step ahead by at most one, so a caller cannot invent a counter or jump a
+    // sequence forward. There is deliberately no lower bound against the stored value:
+    // client transactions are checked at commit against the latest document, so under
+    // contention a queued writer holds a value that is already behind it and a strict
+    // "must increase" rule rejects legitimate calls. A signed-in user can therefore
+    // still lower a counter; closing that needs the numbering moved server-side.
+    function isKnownCounter(counterId) {
+      return counterId in ['INV-ADV', 'INV-FIN', 'L-DL', 'L-PK', 'PTF', 'QT'];
+    }
     match /counters/{counterId} {
-      allow read, write: if isAuthenticated();
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isKnownCounter(counterId)
+        && request.resource.data.keys().hasOnly(['value'])
+        && request.resource.data.value == 1;
+      allow update: if isAuthenticated() && isKnownCounter(counterId)
+        && request.resource.data.keys().hasOnly(['value'])
+        && request.resource.data.value is int
+        && request.resource.data.value >= 1
+        && request.resource.data.value <= resource.data.value + 1;
     }
 
     // ── Invoices ─────────────────────────────────────────
@@ -164,7 +188,13 @@ service cloud.firestore {
 
     // ── Customers ────────────────────────────────────────
     match /customers/{customerId} {
-      allow read: if checkPermission('customers', 'view') || checkPermission('customers', 'read');
+      allow read: if checkPermission('customers', 'view') || checkPermission('customers', 'read')
+        || (isAuthenticated() && (resource.data.email == request.auth.token.email || resource.data.nic == request.auth.token.email));
+      // A client may keep their own profile up to date (customers Decision 9), and only
+      // the fields UserProfile.jsx syncs, never order or financial fields.
+      allow update: if isAuthenticated()
+        && (resource.data.email == request.auth.token.email || resource.data.nic == request.auth.token.email)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'photoURL', 'phone', 'address']);
       allow create, update: if checkPermission('customers', 'create') || checkPermission('customers', 'edit') || checkPermission('customers', 'write');
       allow delete: if checkPermission('customers', 'delete') || isAdmin();
     }
@@ -174,6 +204,28 @@ service cloud.firestore {
       allow read: if checkPermission('partners', 'view') || checkPermission('partners', 'read') || (isAuthenticated() && partnerId == request.auth.token.email);
       allow create, update: if checkPermission('partners', 'create') || checkPermission('partners', 'edit') || checkPermission('partners', 'write');
       allow delete: if checkPermission('partners', 'delete') || isAdmin();
+    }
+
+    // ── Referral Claims (partners report referrals the system missed) ──────
+    // Any signed-in user may file a claim; only staff reviewers and the claiming partner
+    // read them, and only an Admin resolves or removes them (partners D-6).
+    match /referral_claims/{claimId} {
+      allow create: if isAuthenticated();
+      allow read: if isAdmin()
+        || (checkPermission('partners', 'view') && !hasRole('Partner'))
+        || (isAuthenticated() && resource.data.get('partnerEmail', '') == request.auth.token.email);
+      allow update, delete: if isAdmin();
+    }
+
+    // ── Partner Payouts (commission disbursement records) ──────────────────
+    // Written only by an Admin. Partners see their own payouts; the Partner role's
+    // partners permission does not open other partners' payouts (partners D-6).
+    match /partner_payouts/{payoutId} {
+      allow read: if isAdmin()
+        || (checkPermission('partners', 'view') && !hasRole('Partner'))
+        || (isAuthenticated() && (resource.data.get('partnerEmail', '') == request.auth.token.email
+             || resource.data.get('partnerId', '') == request.auth.token.email));
+      allow create, update, delete: if isAdmin();
     }
 
     // ── Fabrication / Projects ───────────────────────────

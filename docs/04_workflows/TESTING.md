@@ -150,15 +150,16 @@ Tests that deliberately lock in a known defect, with the finding that will chang
 | `rulesAccess.test.js` "lets a Customer read and write quotations" | `/quotations` open to any signed-in user | rbac finding 5 (Phase 7 3.5) |
 | `rulesAccess.test.js` "lets any signed-in user read a conversation they are not in and forge a sender" | `/messages` read and create open | messaging D-MSG-01, D-MSG-02 (3.5) |
 | `rulesAccess.test.js` "lets a Customer read another user's profile" | `/users` read open | rbac finding 12 (3.5) |
-| `rulesAccess.test.js` "lets a Customer write any counter to any value" | `/counters` open | rules audit (3.4) |
-| `rulesAccess.test.js` "denies partner_payouts and referral_claims to everyone, Admin included" | no rules, catch-all denies | partners D-6 (3.4) |
+| ~~`rulesAccess.test.js` lets a Customer write any counter to any value~~ | flipped in Phase 7 3.4: known prefixes only and at most one step ahead |
+| `rulesAccess.test.js` "still lets a signed-in user lower a counter" | the counters rule has no lower bound (it would reject legitimate writes under transaction contention) | numbering moved server-side (not planned yet) |
+| ~~`rulesAccess.test.js` denies partner_payouts and referral_claims to everyone~~ | flipped in Phase 7 3.4: new match blocks | partners D-6 |
 | `rulesAccess.test.js` "lets a Deactivated user with a permitted role still create a lead" | rules ignore `status` | rbac finding 1 (3.5) |
-| `rulesAccess.test.js` "does not treat the bootstrap email as Admin when it has no users document" | `isAdmin()` ignores the bootstrap email | auth DP-06 (3.4) |
-| `rulesAccess.test.js` "rejects a pending applicant updating their own pendingUsers document" | only an Admin may update it | auth DP-02 (3.4) |
+| ~~`rulesAccess.test.js` does not treat the bootstrap email as Admin~~ | flipped in Phase 7 3.4: `isAdmin()` accepts the bootstrap emails | auth DP-06 |
+| ~~`rulesAccess.test.js` rejects a pending applicant updating their own pendingUsers document~~ | flipped in Phase 7 3.4: self-update allowed, approval not | auth DP-02 |
 | `rulesAccess.test.js` "rejects a Manager changing or deleting another user" | user administration is Admin-only | employees D4 (3.5) |
 | `rulesAccess.test.js` "blocks a Manager with invoices:delete ... from deleting an invoice" | delete is Admin-only on invoices | rbac finding 6 (3.5) |
 | `rulesAccess.test.js` "denies a lead read to a role that has pipeline view but not leads view" | leads read needs the leads permission | deals D-8 (3.5) |
-| `rulesAccess.test.js` "denies an anonymous read of an Active partner" | partners are never public | partners D-5 (3.4) |
+| `rulesAccess.test.js` "denies an anonymous read of an Active partner" | partners are never public; D-5 is held because a partner document holds bank details | a decision on a public partner-profile document |
 | `rulesAccess.test.js` "lets a Partner read another partner's document ..." | the rule checks the partners permission, not record ownership (the matrix now grants Partner view and edit only) | Phase 7 3.5 |
 | ~~`Deals.test.jsx` creates another Final invoice when the deal already has one~~ | flipped in Phase 7 2.1: completion skips the create when `getExistingFinalInvoice` finds one | invoicing D-1, deals D-1 |
 | ~~`FabricationWorks.test.jsx` creates a Final invoice when one already exists~~ | flipped in Phase 7 2.1: App passes invoices and QA pass skips the create | invoicing D-1, fabrication F-1 |
