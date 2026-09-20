@@ -32,7 +32,7 @@ Map, then per-module Claude instructions.
 - [deals](docs/02_modules/deals.md) | [instructions](docs/02_modules/deals/CLAUDE.md)
 - [employees](docs/02_modules/employees.md) | [instructions](docs/02_modules/employees/CLAUDE.md)
 - [internal-messaging](docs/02_modules/internal-messaging.md) | [instructions](docs/02_modules/internal-messaging/CLAUDE.md)
-- [invoicing](docs/02_modules/invoicing.md) | [instructions](docs/02_modules/invoicing/CLAUDE.md)
+- [invoicing](docs/02_modules/invoicing.md) | [instructions](docs/02_modules/invoicing/CLAUDE.md) | [findings](docs/02_modules/invoicing/FINDINGS.md)
 - [leads](docs/02_modules/leads.md) | [instructions](docs/02_modules/leads/CLAUDE.md)
 - [notifications](docs/02_modules/notifications.md) | [instructions](docs/02_modules/notifications/CLAUDE.md)
 - [operations-fabrication](docs/02_modules/operations-fabrication.md) | [instructions](docs/02_modules/operations-fabrication/CLAUDE.md)
