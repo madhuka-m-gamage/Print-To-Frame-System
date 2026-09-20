@@ -4,7 +4,7 @@ import { SYSTEM_ROLES } from '../../src/constants/roles.js';
 
 const MODULES = [
   'dashboard', 'notifications', 'messages', 'leads', 'pipeline', 'customers',
-  'partners', 'invoices', 'projects', 'logistics', 'agents', 'calculator', 'admin',
+  'partners', 'invoices', 'receipts', 'quotations', 'projects', 'logistics', 'agents', 'calculator', 'admin',
 ];
 const ACTIONS = ['view', 'create', 'edit', 'delete', 'export'];
 
@@ -47,18 +47,51 @@ describe('DEFAULT_PERMISSIONS shape', () => {
     }
   });
 
-  it('Partner has broad access to the partners module but not to other partners-adjacent data', () => {
-    // Documented asymmetry (see Phase 7 of the business task-list plan): a logged-in
-    // Partner gets full() on the *entire* partners module in this config, not scoped
-    // to their own record — row-level restriction, if any, lives in firestore.rules,
-    // not here. This test pins today's documented shape so a future change to it is
-    // a deliberate edit, not an accidental one.
+  // Flipped in Phase 7 3.2: the Partner role is narrowed to view and edit on partners
+  // (no create, delete or export), and has no access to messages. Restricting a partner
+  // to their own record is the rules' job (Phase 7 3.5), not the matrix's.
+  it('Partner can only view and edit partners, and has no messages access', () => {
     expect(DEFAULT_PERMISSIONS.Partner.partners).toEqual({
-      view: true, create: true, edit: true, delete: true, export: true,
+      view: true, create: false, edit: true, delete: false, export: false,
     });
     expect(DEFAULT_PERMISSIONS.Partner.messages).toEqual({
       view: false, create: false, edit: false, delete: false, export: false,
     });
+  });
+
+  it('quotations: Admin, Manager and Sales have full access; only Support and Accounts can read; the rest none', () => {
+    const P = DEFAULT_PERMISSIONS;
+    for (const role of ['Admin', 'Manager', 'Sales']) {
+      for (const action of ACTIONS) expect(P[role].quotations[action], `${role}.quotations.${action}`).toBe(true);
+    }
+    for (const role of ['Support', 'Accounts']) {
+      expect(P[role].quotations).toEqual({ view: true, create: false, edit: false, delete: false, export: false });
+    }
+    for (const role of ['Operations', 'Logistics', 'Partner', 'Customer', 'Business Client']) {
+      expect(P[role].quotations.view, `${role}.quotations.view`).toBe(false);
+    }
+  });
+
+  it('Customer and Business Client have no receipts or messages access', () => {
+    for (const role of ['Customer', 'Business Client']) {
+      for (const mod of ['receipts', 'messages']) {
+        for (const action of ACTIONS) expect(DEFAULT_PERMISSIONS[role][mod][action], `${role}.${mod}.${action}`).toBe(false);
+      }
+    }
+  });
+
+  it('Manager cannot delete receipts; Logistics can read invoices; Operations can create them', () => {
+    expect(DEFAULT_PERMISSIONS.Manager.receipts.delete).toBe(false);
+    expect(DEFAULT_PERMISSIONS.Manager.receipts.edit).toBe(true);
+    expect(DEFAULT_PERMISSIONS.Logistics.invoices).toMatchObject({ view: true, create: false });
+    expect(DEFAULT_PERMISSIONS.Operations.invoices).toMatchObject({ view: true, create: true, edit: false, delete: false });
+  });
+
+  it('only Admin holds the admin (System Overview) module', () => {
+    for (const [role, modules] of Object.entries(DEFAULT_PERMISSIONS)) {
+      if (role === 'Admin') continue;
+      for (const action of ACTIONS) expect(modules.admin[action], `${role}.admin.${action}`).toBe(false);
+    }
   });
 
   it('no role other than Admin/Manager can delete invoices', () => {

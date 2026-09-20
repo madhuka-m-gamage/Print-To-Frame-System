@@ -51,7 +51,7 @@ Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 be
 - [x] 2.6: invoice edit policy
 - [x] 3.1: superseded by B4
 - Dependencies: B1 before 2.1-2.4; B3 before 3.6; B4 before 3.4/3.5; B5 before 4.1; B2 before 6.3/6.6; 3.2 and 3.3 before 3.5; 3.4d before 4.x, 5.2, 6.2; 3.5d and 3.6 before 5.3
-- [ ] 3.2: client RBAC prerequisites and matrix defaults
+- [x] 3.2: client RBAC prerequisites and matrix defaults
 - [ ] 3.3: live permissions migration (needs approval to write)
 - [ ] 3.4 / 3.4d: additive rules, then deploy (needs approval)
 - [ ] 3.5 / 3.5d: restrictive rules, RBAC E2E on the emulator, deploy (needs approval), then manual role check on the live site

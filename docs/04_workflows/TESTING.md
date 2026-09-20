@@ -159,7 +159,7 @@ Tests that deliberately lock in a known defect, with the finding that will chang
 | `rulesAccess.test.js` "blocks a Manager with invoices:delete ... from deleting an invoice" | delete is Admin-only on invoices | rbac finding 6 (3.5) |
 | `rulesAccess.test.js` "denies a lead read to a role that has pipeline view but not leads view" | leads read needs the leads permission | deals D-8 (3.5) |
 | `rulesAccess.test.js` "denies an anonymous read of an Active partner" | partners are never public | partners D-5 (3.4) |
-| `rulesAccess.test.js` "lets a Partner read another partner's document ..." | the Partner matrix grants full partners access | Phase 7 3.2 matrix change (needs 3.3) |
+| `rulesAccess.test.js` "lets a Partner read another partner's document ..." | the rule checks the partners permission, not record ownership (the matrix now grants Partner view and edit only) | Phase 7 3.5 |
 | ~~`Deals.test.jsx` creates another Final invoice when the deal already has one~~ | flipped in Phase 7 2.1: completion skips the create when `getExistingFinalInvoice` finds one | invoicing D-1, deals D-1 |
 | ~~`FabricationWorks.test.jsx` creates a Final invoice when one already exists~~ | flipped in Phase 7 2.1: App passes invoices and QA pass skips the create | invoicing D-1, fabrication F-1 |
 | `Partners.test.jsx` "shows a success toast on Disburse Payout but writes nothing" | Disburse Payout is a toast only | partners D-1 (Phase 7 4.1) |

@@ -35,6 +35,7 @@ const MODULE_CATEGORIES = [
     modules: [
       { id: 'leads', label: 'Leads', desc: 'Client inquiries & quotation intake' },
       { id: 'pipeline', label: 'Deals', desc: 'Committed projects & stage tracking' },
+      { id: 'quotations', label: 'Quotations', desc: 'Versioned quotes attached to leads & deals' },
       { id: 'customers', label: 'Customers', desc: 'Centralized client registry & profiles' },
     ]
   },
@@ -181,6 +182,10 @@ export default function PermissionsManager({ currentUser }) {
     try {
       const finalPerms = { ...localPerms };
       if (permissions.Admin) finalPerms.Admin = permissions.Admin; // Super Admin is always locked to full
+      // The System Overview module belongs to Admin alone; nothing else is delegable to it.
+      for (const role of ROLES) {
+        finalPerms[role] = { ...(finalPerms[role] || {}), admin: { view: false, create: false, edit: false, delete: false, export: false } };
+      }
       await updatePermissions(finalPerms, currentUser);
       toast.success('Permissions updated & synced across all roles!');
     } catch (err) {
@@ -385,6 +390,14 @@ export default function PermissionsManager({ currentUser }) {
                       const perms = getModulePerms(role, mod.id);
                       const preset = getMatchingPreset(perms);
                       const isCellActive = activeCell?.role === role && activeCell?.moduleId === mod.id;
+
+                      if (mod.id === 'admin') {
+                        return (
+                          <td key={role} className="p-2 text-center align-middle">
+                            <span className="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-wider" title="System Overview is restricted to Admin">Admin only</span>
+                          </td>
+                        );
+                      }
 
                       return (
                         <td key={role} className="p-2 text-center align-middle relative">

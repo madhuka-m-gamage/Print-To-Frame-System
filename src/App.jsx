@@ -193,7 +193,7 @@ const MessagesNavLink = ({ activeTab, setActiveTab, collapsed, onNavigate }) => 
 };
 
 function App() {
-  const { canAccess } = usePermissions();
+  const { canAccess, permissions } = usePermissions();
   const [isFirebaseReady, setIsFirebaseReady] = useState(false);
   const [workspaceToken, setWorkspaceToken] = useState(null);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -312,15 +312,22 @@ function App() {
   useEffect(() => {
     if (!currentUser?.isApproved) return;
 
-    const unsubCustomers = subscribeToCollection(COLLECTIONS.CUSTOMERS, setCustomers);
-    const unsubPartners = subscribeToCollection(COLLECTIONS.PARTNERS, setPartners);
-    const unsubProjects = subscribeToCollection(COLLECTIONS.PROJECTS, setProjects);
-    const unsubLogistics = subscribeToCollection(COLLECTIONS.LOGISTICS, setLogisticsJobs);
-    const unsubLeads = subscribeToCollection(COLLECTIONS.LEADS, setLeads);
-    const unsubInvoices = subscribeToCollection(COLLECTIONS.INVOICES, setInvoices);
-    const unsubReceipts = subscribeToCollection(COLLECTIONS.RECEIPTS, setReceipts);
-    const unsubQuotations = subscribeToCollection(COLLECTIONS.QUOTATIONS, setQuotations);
-    const unsubPartnerApplications = subscribeToCollection(COLLECTIONS.PARTNER_APPLICATIONS, setPartnerApplications);
+    // Only open listeners the role may read: a collection the rules deny would fail
+    // with permission-denied. Quotations follow the leads/pipeline work until every
+    // live matrix has a `quotations` module.
+    const canRead = (module) => canAccess(currentUser.role, module);
+    const noop = () => {};
+    const listen = (allowed, name, setter) => (allowed ? subscribeToCollection(name, setter) : noop);
+
+    const unsubCustomers = listen(canRead('customers'), COLLECTIONS.CUSTOMERS, setCustomers);
+    const unsubPartners = listen(canRead('partners'), COLLECTIONS.PARTNERS, setPartners);
+    const unsubProjects = listen(canRead('projects'), COLLECTIONS.PROJECTS, setProjects);
+    const unsubLogistics = listen(canRead('logistics'), COLLECTIONS.LOGISTICS, setLogisticsJobs);
+    const unsubLeads = listen(canRead('leads') || canRead('pipeline'), COLLECTIONS.LEADS, setLeads);
+    const unsubInvoices = listen(canRead('invoices'), COLLECTIONS.INVOICES, setInvoices);
+    const unsubReceipts = listen(canRead('receipts'), COLLECTIONS.RECEIPTS, setReceipts);
+    const unsubQuotations = listen(canRead('quotations') || canRead('leads') || canRead('pipeline'), COLLECTIONS.QUOTATIONS, setQuotations);
+    const unsubPartnerApplications = listen(currentUser.role === 'Admin', COLLECTIONS.PARTNER_APPLICATIONS, setPartnerApplications);
 
     return () => {
       unsubCustomers();
@@ -333,7 +340,9 @@ function App() {
       unsubQuotations();
       unsubPartnerApplications();
     };
-  }, [currentUser]);
+  // canAccess is rebuilt on every render; `permissions` is the state it reads.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser, permissions]);
 
   // Invoices Firestore Sync Handlers
   const handleSaveInvoice = async (invoiceData) => {
