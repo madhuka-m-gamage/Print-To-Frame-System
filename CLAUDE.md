@@ -44,7 +44,7 @@ For a systematic, folder-by-folder code-review audit of the whole repo (enumerat
 
 `src/App.jsx` is the composition root: it owns all top-level state (`leads`, `customers`, `partners`, `projects`, `logisticsJobs`, `invoices`, `quotations`, `users`), subscribes to Firestore in real time via `subscribeToCollection` (`src/services/firestoreSync.js`), and passes state + setters down as props to each lazy-loaded route component in `src/components/{crm,operations,dashboard,admin,tools}`. There is no router library — `activeTab` (a string) selects which component renders in `<main>`, gated by `canAccess(role, tab)`.
 
-- `src/services/firebase.js` — Firebase app/auth/firestore/storage init, Google OAuth (with Drive/Contacts scopes), email login/register, `handleFirestoreError`.
+- `src/services/firebase.js` — Firebase app/auth/firestore/storage init, Google OAuth (identity scopes at sign-in; Drive/Contacts scopes requested on demand via `getScopedAccessToken`), email login/register, `handleFirestoreError`.
 - `src/services/firestoreSync.js` — the CRUD/subscription layer every feature uses: `subscribeToCollection`, `addDocument`, `updateDocument`, `setDocument`, `deleteDocument`, `batchWrite`, and `COLLECTIONS` (the canonical Firestore collection-name map — always reference `COLLECTIONS.X` rather than hardcoding a collection string).
 - `src/services/dataDefaults.js` — seed/fallback data shapes when Firestore collections are empty.
 - `src/services/pricingEngine.js` — the quotation/cost-calculator pricing logic (frame sizing, sq ft, commission math).

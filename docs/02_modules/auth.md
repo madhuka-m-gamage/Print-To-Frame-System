@@ -5,7 +5,7 @@
 ## Files and folders
 
 - `src/components/auth/Login.jsx`: login / register UI; `googleSignIn`; shows an `unauthorized-domain` hint for admins.
-- `src/services/firebase.js`: Firebase init and config, Google provider, `initAuth`, `googleSignIn`, `getAccessToken`, `logout`, `handleFirestoreError`, `emailLogin`, `emailRegister`. Exports `db`, `auth`, `storage`.
+- `src/services/firebase.js`: Firebase init and config, Google provider, `initAuth`, `googleSignIn`, `getAccessToken`, `getScopedAccessToken`, `logout`, `handleFirestoreError`, `emailLogin`, `emailRegister`. Exports `db`, `auth`, `storage`.
 - `src/App.jsx`: `BOOTSTRAP_ADMIN_EMAILS` / `isSuperAdminEmail`, the auth listener and approval gate (~574-682), `handleLogin`, `handleRegister`, `approvePending`, `users` and `pendingUsers` listeners.
 - `src/main.jsx`: optional Sentry init (only if `VITE_SENTRY_DSN` is a valid http(s) value).
 - `api/_lib/firebaseAdmin.js` (Admin SDK from `FIREBASE_SERVICE_ACCOUNT_JSON`, raw JSON or base64; `getAdminAuth`, `getAdminFirestore`) and `api/admin-user.js`, `api/generate.js`, `api/send-email.js` (verify ID tokens).
@@ -38,6 +38,6 @@ Client-driven Firebase Auth via Google popup or email / password. After sign-in 
 
 ## Open questions
 
-- **Scope mismatch:** `CLAUDE.md` says Google OAuth requests Drive and Contacts scopes, but `firebase.js` requests only identity scopes. `driveService.js` and `contactsService.js` call `getAccessToken()` and use that token against the Drive and People APIs, so those calls would be rejected unless the scopes are granted elsewhere. Not tested against the live app.
+- **Scope mismatch (resolved in Phase 7 5.1):** sign-in requests identity scopes only. `driveService.js` (`drive.readonly`) and `contactsService.js` (`contacts.readonly`) now get their token from `getScopedAccessToken(scope)`, an on-demand consent popup cached per scope for 55 minutes. Not tested against the live app.
 - `functions/` was described to the mapping agent as an existing folder; it is only an empty placeholder.
 - Authorized domains in Firebase Console (Authentication > Settings) are not visible from the repo.

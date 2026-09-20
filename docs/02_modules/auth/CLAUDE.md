@@ -21,6 +21,6 @@ Firebase Auth via Google popup or email / password; an approval gate against `us
 
 ## Before you edit
 
-- Google scopes requested: identity only. Drive and Contacts code calls the APIs with that token; `CLAUDE.md` claims otherwise. Accepted architecture: keep identity scopes for core sign-in; implement on-demand incremental authorization for Drive/Contacts (see [FINDINGS.md](FINDINGS.md)).
+- Google scopes at sign-in: identity only. `driveService` and `contactsService` call `getScopedAccessToken(scope)`, which opens a consent popup for that one scope (so start them from a click), caches it per scope for 55 minutes and clears it on sign-out. See [FINDINGS.md](FINDINGS.md) DP-01.
 - `authDomain` falls back to `auth.print2frame.xyz` (from `firebase-applet-config.json`), not `print-to-frame-erp.firebaseapp.com`; authorized domains live only in the Firebase Console.
 - Never print or commit `.env` values or the service-account JSON.

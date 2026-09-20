@@ -1,13 +1,12 @@
 /**
  * Google Contacts People API Integration Service
  */
-import { getAccessToken } from './firebase';
+import { getScopedAccessToken } from './firebase';
+
+const CONTACTS_SCOPE = 'https://www.googleapis.com/auth/contacts.readonly';
 
 export async function fetchGoogleContacts() {
-  const token = await getAccessToken();
-  if (!token) {
-    throw new Error('Not authenticated with Google Workspace. Please sign in with Google.');
-  }
+  const token = await getScopedAccessToken(CONTACTS_SCOPE);
 
   try {
     const response = await fetch(
