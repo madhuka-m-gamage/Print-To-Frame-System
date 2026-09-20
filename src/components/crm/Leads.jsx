@@ -555,6 +555,7 @@ export default function Leads({
         totalSqFt: convertedLead.totalSqFt || 0,
         leadId: convertedLead.id,
         dealId: dealId,
+        customerId: String(convertedLead.email || '').trim().toLowerCase() || convertedLead.nic || '',
         customerName: convertedLead.name || "",
         customerPhone: convertedLead.phone || "",
         company: convertedLead.company || "",

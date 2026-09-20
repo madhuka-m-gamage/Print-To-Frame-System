@@ -41,6 +41,7 @@ import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateInvoi
 import { stripEmojis, sanitizeTechnicalScope } from '../../utils/validation';
 import { generateText } from '../../services/gemini';
 import { getExistingFinalInvoice } from '../../utils/entityUtils';
+import { logActivity } from '../../services/auditLog';
 import { STEEL_PROFILES, calculateCutList, mmToFtIn } from '../../utils/cutListEngine';
 
 const STAGES = ["Pending", "Ongoing", "Ready For Inspection", "Revision", "Completed"];
@@ -358,7 +359,7 @@ export default function FabricationWorks({
   invoices = [],
   onSaveInvoice 
 }) {
-  const isAdmin = currentUser?.role === "Admin";
+  const isAdmin = String(currentUser?.role || "").toLowerCase() === "admin";
   const [showAddForm, setShowAddForm] = useState(false);
   const [activeJob, setActiveJob] = useState(null);
 
@@ -464,6 +465,7 @@ export default function FabricationWorks({
       title: form.title || `${STEEL_PROFILES[form.profileKey]?.label || 'Box Iron'} Frame (${mmToFtIn(form.frameWidth)} × ${mmToFtIn(form.frameHeight)})`,
       clientNIC: custNic || "Direct Customer",
       customerNic: custNic,
+      customerId: String(custObj?.email || '').trim().toLowerCase() || custNic,
       customerName: custName,
       scope: sanitizeTechnicalScope(form.scope) || `${STEEL_PROFILES[form.profileKey]?.label || '1.5" Box Iron'} Frame (${form.frameWidth}×${form.frameHeight}mm) with ${form.finishType}, ${form.mountingType}`,
       status: "Pending",
@@ -852,6 +854,7 @@ export default function FabricationWorks({
       if (targetJob) {
         try {
           await deleteDocument(COLLECTIONS.PROJECTS, targetJob._firestoreId || targetJob.jobNo);
+          logActivity(currentUser?.identifier, currentUser?.name, 'PROJECT_DELETED', 'Fabrication', `Fabrication job ${targetJob.jobNo} (${targetJob.customerName || 'no customer'}) deleted`);
           toast.success("Fabrication job deleted successfully");
         } catch (err) {
           console.error(err);
