@@ -26,7 +26,7 @@ One-stop map of every document in this repo. Update this file whenever a doc is 
 
 Map, then per-module Claude instructions.
 
-- [auth](docs/02_modules/auth.md) | [instructions](docs/02_modules/auth/CLAUDE.md)
+- [auth](docs/02_modules/auth.md) | [instructions](docs/02_modules/auth/CLAUDE.md) | [findings](docs/02_modules/auth/FINDINGS.md)
 - [cost-calculator-quotation](docs/02_modules/cost-calculator-quotation.md) | [instructions](docs/02_modules/cost-calculator-quotation/CLAUDE.md)
 - [customers](docs/02_modules/customers.md) | [instructions](docs/02_modules/customers/CLAUDE.md)
 - [deals](docs/02_modules/deals.md) | [instructions](docs/02_modules/deals/CLAUDE.md)
