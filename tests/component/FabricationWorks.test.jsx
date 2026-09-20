@@ -19,6 +19,7 @@ vi.mock('../../src/utils/toast', () => ({
 vi.mock('../../src/components/operations/FabricationCardDetails', () => ({ default: () => null }));
 vi.mock('../../src/components/common/FrameBlueprintPreview', () => ({ default: () => null }));
 
+const { generateInvoiceId } = await import('../../src/services/firestoreSync');
 const { default: FabricationWorks } = await import('../../src/components/operations/FabricationWorks');
 
 const admin = { role: 'Admin', name: 'Admin', identifier: 'admin@example.com' };
@@ -45,16 +46,15 @@ describe('FabricationWorks QA pass wiring', () => {
     expect(onSaveInvoice.mock.calls[0][0]).toMatchObject({ id: 'INV-FIN-0001', type: 'Final', status: 'Unpaid', jobNo: 'PTF-2001', amount: 25000, totalValue: 100000 });
   });
 
-  // Characterisation: docs/02_modules/invoicing/FINDINGS.md D-1 and
-  // operations-fabrication FINDINGS F-1. The component is never given the
-  // invoices list (App.jsx does not pass it), so QA pass cannot see an
-  // existing Final invoice for the job and creates another. Flips in Phase 7
-  // 2.1, which passes invoices in and skips the create.
-  it('creates a Final invoice even when one already exists for the job, because it is never given the invoices', async () => {
+  // Flipped in Phase 7 2.1 (invoicing D-1, fabrication F-1): App passes invoices in,
+  // so a job that already has a Final invoice passes QA without creating another.
+  it('does not create another Final invoice when one already exists for the job', async () => {
     const existing = makeInvoice({ id: 'INV-FIN-0009', type: 'Final', jobNo: 'PTF-2001', linkedJobNo: 'PTF-2001' });
-    const { onSaveInvoice } = renderFabrication({ invoices: [existing] });
+    const { onSaveInvoice, setProjects } = renderFabrication({ invoices: [existing] });
     fireEvent.click(screen.getByTitle('Run QA Inspection Gate'));
     fireEvent.click(await screen.findByRole('button', { name: /Approve & Complete/i }));
-    await waitFor(() => expect(onSaveInvoice).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(setProjects).toHaveBeenCalled());
+    expect(generateInvoiceId).not.toHaveBeenCalled();
+    expect(onSaveInvoice).not.toHaveBeenCalled();
   });
 });

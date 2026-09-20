@@ -1360,6 +1360,7 @@ function App() {
               customers={customers}
               partners={partners}
               currentUser={currentUser}
+              invoices={invoices}
               onSaveInvoice={handleSaveInvoice}
             />
           )}

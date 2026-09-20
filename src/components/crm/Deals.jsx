@@ -10,7 +10,7 @@ import { PageHeader, FilterBar, KanbanColumn, KanbanCard, StatusBadge } from '..
 import SortableTable from '../common/ui/SortableTable';
 import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateInvoiceId } from '../../services/firestoreSync';
 import { exportToCsv } from '../../utils/csvExport';
-import { matchesEntity } from '../../utils/entityUtils';
+import { matchesEntity, getExistingFinalInvoice } from '../../utils/entityUtils';
 
 const DEALS_STAGES = ["Waiting", "Fabricating", "Ready To Load", "Hand Over", "Completed"];
 
@@ -294,7 +294,11 @@ export default function Deals({
     // can't be generated, the whole move is aborted rather than completing
     // the deal anyway with a false "invoice generated" success message.
     let finalInvId = null;
-    if (willComplete && onSaveInvoice) {
+    const existingFinal = willComplete ? getExistingFinalInvoice(invoices, dealBeingMoved) : null;
+    const invoiceNote = existingFinal
+      ? `Final invoice ${existingFinal.id || existingFinal._firestoreId} already exists, so no duplicate was created.`
+      : '25% Final Invoice generated.';
+    if (willComplete && onSaveInvoice && !existingFinal) {
       try {
         finalInvId = await generateInvoiceId('Final');
       } catch (err) {
@@ -318,7 +322,7 @@ export default function Deals({
       if (liveCurrentIndex + 1 >= DEALS_STAGES.length) return deal;
       const liveNextStage = DEALS_STAGES[liveCurrentIndex + 1];
 
-      if (liveNextStage === "Completed" && !finalInvId && onSaveInvoice) {
+      if (liveNextStage === "Completed" && !finalInvId && !existingFinal && onSaveInvoice) {
         // State changed underneath us: this move now completes the deal,
         // but no invoice id was reserved for that case. Never complete a
         // deal silently without its invoice — abort this update entirely.
@@ -380,12 +384,12 @@ export default function Deals({
             }).catch(err => console.error("Partner update error:", err));
 
             toast.success(`Deal Completed!`, {
-              description: `LKR ${commissionAmount.toLocaleString()} commission assigned to Agent ${agent.name}. 25% Final Invoice generated.`
+              description: `LKR ${commissionAmount.toLocaleString()} commission assigned to Agent ${agent.name}. ${invoiceNote}`
             });
           }
         } else {
           toast.success(`Deal Completed!`, {
-            description: `25% Final Settlement Invoice generated successfully.`
+            description: invoiceNote
           });
         }
       }
