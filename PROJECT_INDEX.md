@@ -31,7 +31,7 @@ Map, then per-module Claude instructions.
 - [customers](docs/02_modules/customers.md) | [instructions](docs/02_modules/customers/CLAUDE.md) | [findings](docs/02_modules/customers/FINDINGS.md)
 - [deals](docs/02_modules/deals.md) | [instructions](docs/02_modules/deals/CLAUDE.md) | [findings](docs/02_modules/deals/FINDINGS.md)
 - [employees](docs/02_modules/employees.md) | [instructions](docs/02_modules/employees/CLAUDE.md)
-- [internal-messaging](docs/02_modules/internal-messaging.md) | [instructions](docs/02_modules/internal-messaging/CLAUDE.md)
+- [internal-messaging](docs/02_modules/internal-messaging.md) | [instructions](docs/02_modules/internal-messaging/CLAUDE.md) | [findings](docs/02_modules/internal-messaging/FINDINGS.md)
 - [invoicing](docs/02_modules/invoicing.md) | [instructions](docs/02_modules/invoicing/CLAUDE.md)
 - [leads](docs/02_modules/leads.md) | [instructions](docs/02_modules/leads/CLAUDE.md) | [findings](docs/02_modules/leads/FINDINGS.md)
 - [notifications](docs/02_modules/notifications.md) | [instructions](docs/02_modules/notifications/CLAUDE.md) | [findings](docs/02_modules/notifications/FINDINGS.md)
