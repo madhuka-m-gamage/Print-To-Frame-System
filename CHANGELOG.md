@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added `.nvmrc` (Node 22) and switched the CI workflow to `node-version-file: .nvmrc`; no `engines` field, so the Vercel runtime is unchanged.
 - E2E runner (A6): `@playwright/test`, `playwright.config.js` (starts the emulators and `dev:emulated`), `tests/e2e/global-setup.js` (fails the run unless emulators are local and the project id starts with `demo-`, then seeds), `npm run test:e2e`, and a sign-in smoke journey.
 - Emulator wiring (A5): guarded `connectFirestoreEmulator`/`connectAuthEmulator`/`connectStorageEmulator` block in `src/services/firebase.js` (flag plus dev server or `demo-` project), committed `.env.test`, `npm run dev:emulated`, idempotent `tests/fixtures/seed.mjs` with `npm run seed:emulator`.
 - CI (A7): `.github/workflows/test.yml` with `lint-unit` and `rules` jobs for pull requests to `staging`/`main`; README "Running the tests" section.

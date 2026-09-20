@@ -101,3 +101,6 @@ npm run dev:emulated                                                            
 - `seed:emulator` refuses to run unless `FIRESTORE_EMULATOR_HOST` is a local host and `GCLOUD_PROJECT` starts with `demo-`. It is idempotent.
 - `firebase emulators:start` does not load `firestore.rules` from `firebase.json` (firestore is declared as an array of databases), so it would run allow-all. The seed script therefore uploads `firestore.rules` to the running emulator.
 - The Storage client is pointed at `127.0.0.1:9199` (Firebase's default Storage emulator port; it is not configured in `firebase.json`). No Storage emulator is started, so uploads fail in emulated runs instead of reaching production.
+
+## Node version
+`.nvmrc` pins Node 22, and CI reads it (`node-version-file`). Some test dependencies need a recent Node (jsdom 29 needs 20.19 or later). `jsdom` is held at `^26` so the component tests also run on older 20.x machines; once every developer machine is on Node 22, it can move back to `^29`. `package.json` deliberately has no `engines` field, because Vercel picks its build runtime from it and this change is about tests only.
