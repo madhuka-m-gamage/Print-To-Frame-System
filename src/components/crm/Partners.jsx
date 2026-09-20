@@ -234,7 +234,10 @@ export default function Partners({
     const pid = String(partner.partnerId || partner.id || '').toLowerCase();
     const pname = String(partner.name || '').toLowerCase();
 
+    // A converted lead is a locked stub (stage Completed); its Deal carries the referral from here,
+    // so commission eligibility follows the Deal and is never counted twice.
     return leads.filter(lead => {
+      if (lead.convertedToDeal) return false;
       const lPid = String(lead.partnerId || lead.agentId || '').toLowerCase();
       const lPname = String(lead.partnerName || lead.agentName || '').toLowerCase();
       return lPid === pid || lPname === pname || (lead.source === 'Referral' && (lPid === pid || lPname === pname));
