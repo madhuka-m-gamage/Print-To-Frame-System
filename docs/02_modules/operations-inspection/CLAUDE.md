@@ -22,3 +22,5 @@ Inspection is the QA gate of Fabrication, not a separate module: four checks (sq
 
 - See [operations-fabrication.md](../operations-fabrication.md); change both docs together.
 - There is no lead-side site-inspection workflow.
+
+- `checklist.qaPassed` is set only by the QA Inspection Gate; every other save goes through `checklistWithGuardedQa`. The inspector is always the signed-in user. Defects are appended to `defectHistory`; `defectDetails` is the active one. QA pass, defect flag and rework completion are audit logged. A failed Final invoice save aborts Completed.

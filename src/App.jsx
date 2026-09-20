@@ -387,9 +387,11 @@ function App() {
       );
 
       toast.success(`Invoice ${docId} synchronized with Firestore database!`);
+      return true;
     } catch (err) {
       console.error("Failed to save invoice to Firestore:", err);
       toast.error("Failed to save invoice to database: " + err.message);
+      return false;
     }
   };
 

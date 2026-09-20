@@ -89,6 +89,7 @@ export default function FabricationCardDetails({
   }, [form.checklist]);
 
   const handleToggleMilestone = (key) => {
+    if (key === 'qaPassed') return;
     setForm(prev => {
       const updatedChecklist = {
         ...prev.checklist,
@@ -778,12 +779,12 @@ export default function FabricationCardDetails({
                 { key: 'frameWelded', label: '2. Outer Frame Welded & Squared', sub: 'Diagonals verified within ±2mm' },
                 { key: 'primerApplied', label: '3. Welds Ground & Primer Coated', sub: 'Anti-rust primer applied uniformly' },
                 { key: 'canvasWrapped', label: '4. Canvas Received & Gallery Wrapped', sub: 'Proper tension & neat corner folds' },
-                { key: 'qaPassed', label: '5. Quality Control Sign-Off', sub: 'Ready for client pickup / logistics' },
+                { key: 'qaPassed', label: '5. Quality Control Sign-Off', sub: 'Set only by the QA Inspection Gate' },
               ].map(step => (
                 <div 
                   key={step.key}
                   onClick={() => handleToggleMilestone(step.key)}
-                  className={`p-2.5 rounded-xl border flex items-start gap-3 cursor-pointer transition-all ${
+                  className={`p-2.5 rounded-xl border flex items-start gap-3 transition-all ${step.key === 'qaPassed' ? 'cursor-not-allowed' : 'cursor-pointer'} ${
                     form.checklist[step.key]
                       ? 'bg-status-success-bg border-status-success-border text-on-surface'
                       : 'bg-surface-container-low border-outline text-on-surface-variant hover:bg-surface-container'
@@ -810,16 +811,9 @@ export default function FabricationCardDetails({
           </DetailFieldGroup>
 
           {/* Execution & Financial Summary */}
-          <DetailFieldGroup label="Execution & Financial Summary" icon={DollarSign}>
+          <DetailFieldGroup label="Execution Summary" icon={DollarSign}>
             <div className="p-4 bg-surface-container-low rounded-2xl border border-outline space-y-3">
-              <div>
-                <span className="text-[9px] uppercase font-bold text-on-surface-variant block tracking-wider mb-0.5">Contract Value</span>
-                <p className="text-xl font-mono font-black text-primary">
-                  LKR {Number(job.value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5 pt-2.5 border-t border-outline">
+              <div className="grid grid-cols-2 gap-2.5">
                 <div className="p-2.5 bg-surface-container rounded-xl border border-outline">
                   <span className="text-[9px] uppercase font-bold text-on-surface-variant block tracking-wider">Total Area</span>
                   <p className="text-xs font-mono font-bold text-on-surface flex items-center mt-0.5">

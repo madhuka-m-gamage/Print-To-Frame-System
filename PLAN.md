@@ -58,7 +58,7 @@ Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 be
 - [x] 3.6: admin API
 - [ ] 4.1-4.3: payouts, referral lineage, claims and notifications
 - [ ] 5.1-5.3: Google scopes, registration, user lifecycle
-- [ ] 6.1-6.6: leads, atomic ids, customers, deals/fabrication/inspection, logistics (6.1, 6.2, 6.3, 6.6 done; 6.2 is PR #33; 6.4 in progress)
+- [ ] 6.1-6.6: leads, atomic ids, customers, deals/fabrication/inspection, logistics (6.1, 6.2, 6.3, 6.4, 6.6 done in PRs; 6.5 logistics not started)
 - [ ] 7: UX and feature backlog
 - [ ] 8.1 / 8.2: docs sync, folder move
 
@@ -90,6 +90,9 @@ Owner decision 2026-09-21: side findings are parked here, not folded into the st
 - [ ] Blueprint uploads now go to Firebase Storage (`blueprints/<jobNo>/`) with an inline fallback under 500KB. Live Storage rules for that path are unverified: test an upload on the live site. Old jobs keep their inline Base64 blueprints; migrate them to Storage.
 - [ ] Legacy manual fabrication jobs that already carry a `value` still get a 25% Final invoice at QA pass; new manual jobs carry no value and are billed through their deal (or are non-billable). Decide whether to clear or migrate the old ones.
 - [ ] Frame size is set once on the lead (Length and Height in feet, locked after pricing is applied, Admin can still change it there) and read-only downstream. Leads created before this have no saved size, so their jobs stay editable in Fabrication until someone applies pricing on the lead.
+- [ ] Inspection #5: tell the deal's sales owner when a linked job goes to Revision (defect category and notes). The app has only local toasts, no stored per-user notifications, so this needs that first (same gap as the defaulted-commission alert).
+- [ ] Inspection #8: an explicit "Email client: QA passed" button that previews and sends the `fabrication_ready_inspection` template through `/api/send-email` (the template exists and is never used).
+- [ ] `Deals.jsx` completion calls `onSaveInvoice` without waiting for it, unlike the Fabrication QA pass, so a failed Final invoice save still completes the deal. Make it await and abort like Fabrication.
 - [ ] Environment variables on the Vercel preview: it needs its own `FIREBASE_SERVICE_ACCOUNT_JSON` and `GEMINI_API_KEY` in Preview scope; replace live keys with a staging project's keys once Part 1 exists.
 
 ## Antigravity Work Summary & Handoff
