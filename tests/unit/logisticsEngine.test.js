@@ -123,5 +123,50 @@ describe('logisticsEngine', () => {
     expect(res.matchedInvoices.length).toBe(0);
     expect(res.hasUnpaid).toBe(false);
   });
+  // Characterisation: docs/02_modules/invoicing/FINDINGS.md D-2 and
+  // docs/02_modules/operations-logistics/FINDINGS.md D-4 / invoicing D-1.
+  // Duplicate Final invoices for one job are all unpaid, so the driver's COD
+  // balance is doubled. Flips when only the latest unpaid Final counts.
+  it('doubles the COD balance when a job has two unpaid Final invoices', () => {
+    const invoices = [
+      { id: 'INV-FIN-0001', linkedJobNo: 'PTF-2001', customerName: 'Apex Designs', amount: 25000, type: 'Final', status: 'Unpaid', createdAt: '2026-01-01T10:00:00Z' },
+      { id: 'INV-FIN-0002', linkedJobNo: 'PTF-2001', customerName: 'Apex Designs', amount: 25000, type: 'Final', status: 'Unpaid', createdAt: '2026-01-02T10:00:00Z' },
+    ];
+    const res = calculateCODFromInvoices(invoices, 'PTF-2001', 'Apex Designs');
+    expect(res.totalBalanceDue).toBe(50000);
+    expect(res.finalInvoice?.id).toBe('INV-FIN-0002');
+  });
+
+  // Characterisation: operations-logistics FINDINGS D-4. A job with only a
+  // paid Advance invoice (Final not yet created) reports nothing to collect,
+  // which the logistics screens show as "all settled". Flips when the engine
+  // compares the paid amounts with the linked entity total.
+  it('reports nothing to collect for a job with only a paid Advance invoice', () => {
+    const invoices = [
+      { id: 'INV-ADV-0001', linkedJobNo: 'PTF-2002', customerName: 'Apex Designs', amount: 75000, type: 'Advance', status: 'Paid' },
+    ];
+    const res = calculateCODFromInvoices(invoices, 'PTF-2002', 'Apex Designs');
+    expect(res.hasUnpaid).toBe(false);
+    expect(res.totalBalanceDue).toBe(0);
+    expect(res.finalInvoice).toBeNull();
+  });
+
+  it('reports nothing to collect when Advance and Final are both paid', () => {
+    const invoices = [
+      { id: 'INV-ADV-0001', linkedJobNo: 'PTF-2003', amount: 75000, type: 'Advance', status: 'Paid' },
+      { id: 'INV-FIN-0001', linkedJobNo: 'PTF-2003', amount: 25000, type: 'Final', status: 'Paid' },
+    ];
+    const res = calculateCODFromInvoices(invoices, 'PTF-2003', '');
+    expect(res.hasUnpaid).toBe(false);
+    expect(res.totalBalanceDue).toBe(0);
+  });
+
+  it('ignores cancelled and void invoices when totalling the balance', () => {
+    const invoices = [
+      { id: 'INV-FIN-0001', linkedJobNo: 'PTF-2004', amount: 25000, type: 'Final', status: 'Cancelled' },
+      { id: 'INV-FIN-0002', linkedJobNo: 'PTF-2004', amount: 25000, type: 'Final', status: 'Unpaid', createdAt: '2026-01-02T10:00:00Z' },
+    ];
+    expect(calculateCODFromInvoices(invoices, 'PTF-2004', '').totalBalanceDue).toBe(25000);
+  });
 });
 

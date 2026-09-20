@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- B1 money-path unit tests: `pricingEngine`, `invoiceTemplate`, `receiptTemplate`, `firestoreSync` pure helpers and extra COD cases in `logisticsEngine`; six characterisation tests recorded in the `TESTING.md` register. No `src/` or `api/` changes.
 - Coverage map refresh is a manual, tracked task in `PLAN.md` (not required per change).
 - `TESTING.md` is now the planning reference: a "Planning a change" checklist, a coverage map, a characterisation register, the Part B roadmap and known gotchas. Root `CLAUDE.md` tells planning sessions to read it.
 - Added `.nvmrc` (Node 22) and switched the CI workflow to `node-version-file: .nvmrc`; no `engines` field, so the Vercel runtime is unchanged. `jsdom` is back on `^29` now that Node 22 is the baseline.
