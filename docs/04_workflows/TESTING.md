@@ -56,3 +56,25 @@ vi.mock('../../src/services/auditLog', () => ({ logActivity: vi.fn(async () => {
 ```
 
 Assert on these mocks (for example `expect(addDocument).toHaveBeenCalledWith(...)`) rather than on Firestore state. Adjust the export list to what the component under test actually imports.
+
+## Adding a rules test
+`tests/helpers/emulator.js` holds the shared emulator setup. `checkPermission()` in `firestore.rules` reads `settings/permissions` and the caller's `users/{email}` document with `get()`, so a role-based rule denies everything until both exist. Seed them with `seedPermissions` and `asRole`:
+
+```js
+import { assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
+import { doc, setDoc } from 'firebase/firestore';
+import { setupRulesEnv, clearAll, seedPermissions, asRole } from '../helpers/emulator';
+
+let testEnv;
+beforeAll(async () => { testEnv = await setupRulesEnv(); });
+afterAll(() => testEnv.cleanup());
+beforeEach(() => clearAll(testEnv));
+
+it('lets Sales create an invoice but not delete one', async () => {
+  await seedPermissions(testEnv);                       // add overrides: { Sales: { invoices: { delete: true } } }
+  const db = (await asRole(testEnv, 'Sales', 'sales@example.com')).firestore();
+  await assertSucceeds(setDoc(doc(db, 'invoices', 'INV-ADV-0001'), { id: 'INV-ADV-0001' }));
+});
+```
+
+`PERMISSIONS_FIXTURE` is an independent copy of the matrix for the modules the rules check; it does not import `DEFAULT_PERMISSIONS` because that module initialises real Firebase. Update it when the matrix changes. Run with `npm run test:rules` (needs Java).
