@@ -406,11 +406,11 @@ Verification results:
 
 > All items in §5 are **accepted**. The following checklist tracks execution status. Mark `[x]` when a change is committed to `review-operations-logistics` branch.
 
-- [ ] **D-1** — Refactor `callAIInsights` in `Logistics.jsx` to use authenticated `gemini.js` proxy with current Firebase ID token.
-- [ ] **D-2** — Grant `invoices: read()` to `Logistics` role in `PermissionsContext.jsx` and adjust `firestore.rules` to allow COD invoice reading.
-- [ ] **D-3** — Unify dispatch schema in `Deals.jsx`, `Leads.jsx`, and `FabricationWorks.jsx`: use `generateAtomicId('L-DL'/'L-PK')`, standard key `customerPhone`, and link `linkedJobNo`.
-- [ ] **D-4** — Enhance `calculateCODFromInvoices` to detect unbilled 25% balance; replace false "All Settled" banners and waybill text with "Pending Final Invoice".
-- [ ] **D-5** — Propagate delivery status (`in_transit`, `delivered`) from Logistics to linked `projects` document so fabrication operators have handover visibility.
+- [x] **D-1** — Refactor `callAIInsights` in `Logistics.jsx` to use authenticated `gemini.js` proxy with current Firebase ID token.
+- [x] **D-2** — Grant `invoices: read()` to `Logistics` role in `PermissionsContext.jsx` and adjust `firestore.rules` to allow COD invoice reading.
+- [x] **D-3** — Unify dispatch schema in `Deals.jsx`, `Leads.jsx`, and `FabricationWorks.jsx`: use `generateAtomicId('L-DL'/'L-PK')`, standard key `customerPhone`, and link `linkedJobNo`.
+- [x] **D-4** — Enhance `calculateCODFromInvoices` to detect unbilled 25% balance; replace false "All Settled" banners and waybill text with "Pending Final Invoice".
+- [x] **D-5** — Propagate delivery status (`in_transit`, `delivered`) from Logistics to linked `projects` document so fabrication operators have handover visibility.
 - [ ] **D-6** — Wire `onMarkInvoicePaid` and `onGenerateReceipt` from `App.jsx` into `Logistics` and add in-field COD collection action in `LogisticsCardDetails`.
 - [ ] **D-7** — Persist driver and vehicle directories in Firestore settings with fallback to static constants.
-- [ ] **D-8** — Implement previous-state rollback and user error toasts on failed Firestore writes in `Logistics.jsx`.
+- [x] **D-8** — Implement previous-state rollback and user error toasts on failed Firestore writes in `Logistics.jsx`.

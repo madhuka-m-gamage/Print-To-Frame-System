@@ -44,6 +44,7 @@ import { getExistingFinalInvoice } from '../../utils/entityUtils';
 import { logActivity } from '../../services/auditLog';
 import { NON_BILLABLE, resolveManualJobLink } from '../../utils/fabricationLink';
 import { checklistWithGuardedQa, withDefectRecorded } from '../../utils/qaGate';
+import { buildLogisticsTask } from '../../utils/logisticsTask';
 import { STEEL_PROFILES, calculateCutList, mmToFtIn } from '../../utils/cutListEngine';
 
 const STAGES = ["Pending", "Ongoing", "Ready For Inspection", "Revision", "Completed"];
@@ -244,7 +245,7 @@ function FabricationColumn({
             {job.dispatchedToLogistics && (
               <div className="flex items-center text-[10px] text-emerald-400 font-semibold">
                 <Truck size={11} className="mr-1.5 text-emerald-400 flex-shrink-0" />
-                <span>Dispatched to Logistics</span>
+                <span>{job.deliveryStatus === 'delivered' ? 'Delivered to client' : job.deliveryStatus === 'in_transit' ? 'Out for delivery' : 'Dispatched to Logistics'}</span>
               </div>
             )}
           </div>
@@ -552,24 +553,19 @@ export default function FabricationWorks({
     const cust = customers?.find(c => c.nic === (job.clientNIC || job.customerNic));
     const custName = cust?.name || cust?.businessName || job.customerName || "Direct Customer";
     
-    const logisticsTask = {
+    const logisticsTask = buildLogisticsTask({
       id: deliveryId,
       type: "Delivery",
       subType: "Finished Steel Frame",
       location: job.address || "Colombo Hub Delivery",
       customer: custName,
-      status: "Pending",
-      startTime: null,
-      endTime: null,
-      duration: null,
+      customerPhone: job.customerPhone || job.phone || cust?.phone,
+      company: job.company || cust?.businessName || "",
       manifest: `Delivery of finished fabrication job ${job.jobNo}: ${getFabricationTitle(job)}`,
-      driver: "",
-      vehicle: "",
-      notified: false,
-      lastNotifiedAt: null,
       linkedJobNo: job.jobNo,
-      createdAt: new Date().toISOString()
-    };
+      dealId: job.dealId || '',
+      leadId: job.leadId || '',
+    });
 
     try {
       await addDocument(COLLECTIONS.LOGISTICS, logisticsTask, deliveryId);
