@@ -14,6 +14,10 @@
 # The leading "!" means "don't ignore this one, even though it matches .env.* above"
 !.env.example
 
+# EXCEPTION: the emulator-only test env. It holds the fake demo- project id and placeholder
+# values, never a real key, so it is safe (and needed) in git for the E2E runner.
+!.env.test
+
 # Ignores Firebase/GCP service account key files (grant full admin access if leaked)
 serviceAccountKey.json
 

@@ -8,7 +8,7 @@ Five layers, each with one job. Pick the cheapest layer that can prove the behav
 | API handlers | `tests/api/` | node, mock req/res | `npm run test:api` | live |
 | Component | `tests/component/` | jsdom + React Testing Library | `npm run test:component` | live |
 | Integration / rules | `tests/integration/` | Firebase emulator | `npm run test:rules` | live |
-| End to end | `tests/e2e/` | Playwright + emulator | `npm run test:e2e` | planned (A5, A6) |
+| End to end | `tests/e2e/` | Playwright + emulator | `npm run test:e2e` | planned (A6; emulator wiring done in A5) |
 
 Coverage: `npm run coverage` (text, html, lcov in `coverage/`). There is no threshold; it is a report, not a gate.
 
@@ -86,3 +86,18 @@ it('lets Sales create an invoice but not delete one', async () => {
 - The Playwright `e2e` job is not wired yet (needs A5 and A6).
 
 No job uses secrets. Do not add `FIREBASE_SERVICE_ACCOUNT_JSON` or `GEMINI_API_KEY` to the workflow: tests must never reach real Firebase, Gemini or SMTP.
+
+## Running the app against the emulators
+`src/services/firebase.js` connects to the local emulators only when `VITE_USE_FIREBASE_EMULATOR=true` **and** (the Vite dev server is running or the project id starts with `demo-`). A missing or false variable leaves the app on real Firebase, unchanged. When active it logs a `[firebase] USING EMULATORS` warning to the console.
+
+```bash
+firebase emulators:start --project demo-print2frame-test --only firestore,auth   # terminal 1
+npm run seed:emulator                                                            # terminal 2, once the emulators are up
+npm run dev:emulated                                                             # terminal 2: vite --mode test, loads .env.test
+```
+
+- `.env.test` is committed and holds only the fake `demo-print2frame-test` project id and placeholders. Never put a real key in it.
+- Seeded accounts (password `Passw0rd!test`): `admin@example.com` (Admin), `partner@example.com` (Partner), `deactivated@example.com` (Sales, status Deactivated). Also seeded: `settings/permissions`, one partner, one customer, a converted lead `L-100001` with an Accepted quotation `QT-100001`, deal `D-100001` and project `PTF-1001`.
+- `seed:emulator` refuses to run unless `FIRESTORE_EMULATOR_HOST` is a local host and `GCLOUD_PROJECT` starts with `demo-`. It is idempotent.
+- `firebase emulators:start` does not load `firestore.rules` from `firebase.json` (firestore is declared as an array of databases), so it would run allow-all. The seed script therefore uploads `firestore.rules` to the running emulator.
+- The Storage client is pointed at `127.0.0.1:9199` (Firebase's default Storage emulator port; it is not configured in `firebase.json`). No Storage emulator is started, so uploads fail in emulated runs instead of reaching production.

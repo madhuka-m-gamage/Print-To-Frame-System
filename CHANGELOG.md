@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Emulator wiring (A5): guarded `connectFirestoreEmulator`/`connectAuthEmulator`/`connectStorageEmulator` block in `src/services/firebase.js` (flag plus dev server or `demo-` project), committed `.env.test`, `npm run dev:emulated`, idempotent `tests/fixtures/seed.mjs` with `npm run seed:emulator`.
 - CI (A7): `.github/workflows/test.yml` with `lint-unit` and `rules` jobs for pull requests to `staging`/`main`; README "Running the tests" section.
 - Rules test harness (A4): `tests/helpers/emulator.js` (`setupRulesEnv`, `seedPermissions`, `asRole`, `clearAll`); `firestoreRules` and `invoiceNumbering` integration tests now use it with unchanged assertions.
 - Component test layer (A3): `vitest.component.config.js` (jsdom), `tests/helpers/setupComponent.js`, `renderWithProviders`, `npm run test:component`, RTL devDependencies, and a StatusBadge smoke test. Pinned `jsdom` to `^26`: v29 needs Node >= 20.19 and crashed under the local Node 20.18.

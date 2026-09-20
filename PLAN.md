@@ -24,7 +24,7 @@ Order: A1, then A2/A3/A4 (any order), then A7 (CI), then A5 -> A6 whenever brows
 - [x] A3: component test layer (`vitest.component.config.js`, RTL, `test:component`)
 - [x] A4: rules test harness (`tests/helpers/emulator.js`, refactor the 3 integration files)
 - [x] A7: GitHub Actions CI (`lint-unit`, `rules`, optional `e2e`)
-- [ ] A5: emulator wiring in `src/services/firebase.js` + seed data (only `src` change in Part A)
+- [x] A5: emulator wiring in `src/services/firebase.js` + seed data (only `src` change in Part A)
 - [ ] A6: Playwright runner and sign-in smoke journey (needs A5)
 
 ### Part B: test authoring
