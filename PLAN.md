@@ -58,7 +58,7 @@ Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 be
 - [x] 3.6: admin API
 - [ ] 4.1-4.3: payouts, referral lineage, claims and notifications
 - [ ] 5.1-5.3: Google scopes, registration, user lifecycle
-- [ ] 6.1-6.6: leads, atomic ids, customers, deals/fabrication/inspection, logistics (6.6 pricing done: PR pending)
+- [ ] 6.1-6.6: leads, atomic ids, customers, deals/fabrication/inspection, logistics (6.1, 6.2, 6.3, 6.6 done; 6.2 is PR #33; 6.4 in progress)
 - [ ] 7: UX and feature backlog
 - [ ] 8.1 / 8.2: docs sync, folder move
 
@@ -71,6 +71,23 @@ Owner decision 2026-09-20 ([docs/05_decisions/0002-deferred-until-live-rollout.m
 - [ ] B6 E2E journeys (money and RBAC)
 - [ ] Partners D-5 public profile document, server-side counters
 - [ ] Part 1 separate environments
+
+## Follow-up backlog (tackle one by one after the Phase 7 workflow)
+
+Owner decision 2026-09-21: side findings are parked here, not folded into the step in progress, and handed back as one list when the workflow finishes. Add a line for anything worth fixing that is outside the current step.
+
+- [ ] Invoice model: stamp both `leadId` and `dealId` on every invoice (today the Advance is keyed by the lead id and the Final by the Deal id; lookups work through `invoicesForLineage`, but the data is uneven).
+- [ ] Single-id lookups still left: `Leads.jsx` finds a logistics job with `j.leadId === lead.id`; `Invoices.jsx` prints `Lead: <leadId>`. Move both to `getLineageIds`.
+- [ ] Duplicate-invoice guards (Advance, Final) run on client state, so two people acting at once can still create two. Needs a server-side or rules-level guard.
+- [ ] Counters can still be lowered by any signed-in user (needs numbering moved server-side).
+- [ ] Public forms still use clock ids: referral `LD-` (`ReferralForm.jsx`) and partner registration `APP-` (`PartnerRegistration.jsx`). Signed-out users cannot write counters, so this needs server-side numbering. `Customers.jsx` NIC ids for imported contacts are also clock-based.
+- [ ] Partners commission fallback: `Partners.jsx` still falls back to LKR 53.50 per sq ft (default new-partner rate and the payout calculation), while the owner's rule for a referral lead with no rate is LKR 30.00. Decide one default and align both.
+- [ ] Defaulted-commission edge-case list or automatic ticket (key: `pricingMetadata.commissionRateDefaulted`), and stored notifications so an Admin or Manager is told even when they are not the one applying the pricing.
+- [ ] Google Drive uses the restricted `drive.readonly` scope. Consider Google Picker with `drive.file` (no verification needed) and decide on OAuth app verification for `contacts.readonly`; staff currently click through the "unverified app" warning.
+- [ ] Component tests for `LeadCardDetails` (Convert button stage gate, invoice reprint, audio downsampling); none exist yet.
+- [ ] Partners D-5 public profile document (bank details exposure), Partner own-record restriction, B6 E2E journeys: see the deferred list above.
+- [ ] Fabrication board statuses: only Pending, Ongoing, Ready For Inspection, Revision and Completed have columns (`STAGES` in `FabricationWorks.jsx`), so a project with any other status vanishes from the board. Deleting a deal already sets `Cancelled` (6.4a). Build: a muted read-only Cancelled column showing `cancelledReason`; an On Hold status with a Hold button (asks for a reason, stores `holdFromStatus`) and a Resume button that returns the job to its previous stage; Archived as a "Show archived" filter, allowed only for Completed and Cancelled jobs; and an "Other" bucket so an unrecognised status never hides a job. Decision still open: block a Final invoice and a delivery job for a Cancelled project (recommended yes). The deal-to-project sync already ignores these statuses.
+- [ ] Environment variables on the Vercel preview: it needs its own `FIREBASE_SERVICE_ACCOUNT_JSON` and `GEMINI_API_KEY` in Preview scope; replace live keys with a staging project's keys once Part 1 exists.
 
 ## Antigravity Work Summary & Handoff
 
