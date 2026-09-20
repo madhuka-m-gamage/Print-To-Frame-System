@@ -104,6 +104,7 @@ erp-system/
 Standing rules when working in this repo:
 
 - Investigation output goes into the matching `docs/` file (functions and triggers into `GCP_INVENTORY.md`, trigger chains into `CROSS_MODULE_TRIGGERS.md`, a module's findings into `docs/02_modules/<module>.md`). Do not create `docs/module-map/`.
+- Before planning or implementing any change, read `docs/04_workflows/TESTING.md` (its "Planning a change" checklist, coverage map and characterisation register), and update the map and register in the same change.
 - Before editing a module, read its `docs/02_modules/<module>/CLAUDE.md` (index below; not auto-loaded because it sits under `docs/`). If you change the module's behaviour, update that module's doc and `CLAUDE.md` in the same change.
 - Update `PROJECT_INDEX.md` when a doc is added or moved, and `CHANGELOG.md` with each change. Design "why" notes go in `docs/05_decisions/` as numbered files.
 - State only what was read in code; mark anything unverified as such. There are no Cloud Functions, so automation is client code in `src/` or `api/*.js`.

@@ -12,6 +12,16 @@ Five layers, each with one job. Pick the cheapest layer that can prove the behav
 
 Coverage: `npm run coverage` (text, html, lcov in `coverage/`). There is no threshold; it is a report, not a gate.
 
+## Planning a change (read this before writing an implementation plan)
+Every plan should answer these, and name the tests it will add or change:
+1. **Which layer proves it?** Use the cheapest layer that can (see "What belongs where"). Logic buried in a large component gets extracted to a pure helper and unit-tested; the component test only covers the wiring.
+2. **Does it change behaviour a characterisation test locks in?** Check the register below. If so, the plan names that test and the finding, and updates the test in the same change so the flip is deliberate.
+3. **Does it touch `firestore.rules` or the permissions matrix?** Then it needs a rules test (`tests/integration/`), and a matrix change also needs the live `settings/permissions` document updated, because editing `DEFAULT_PERMISSIONS` changes nothing live. Rules are deployed by hand with `firebase deploy --only firestore:rules`, never by pushing.
+4. **Does it need new seed data?** Extend `tests/fixtures/seed.mjs`; do not create records inline in a test.
+5. **Does it touch a money path** (invoices, COD, commission, pricing) **or access control?** Write or update the characterisation test first, then change the code.
+6. **Which commands must pass before commit?** `npm run lint`, `npm run test:all` and `npm run build`; plus `npm run test:e2e` when the change is visible in the browser.
+7. **Docs:** update the coverage map and register below, the module's `docs/02_modules/<module>/CLAUDE.md`, and `CHANGELOG.md`.
+
 ## What belongs where
 - **Unit**: pure functions in `src/utils`, `src/services` (pricing, templates, matching, validation). If a decision is buried in a component handler, extract it to a pure helper and test that.
 - **API**: `api/*.js` handlers with mocked Firebase Admin, Gemini and SMTP. Never touch real services.
@@ -104,3 +114,49 @@ npm run dev:emulated                                                            
 
 ## Node version
 `.nvmrc` pins Node 22 and CI reads it (`node-version-file`). Some test dependencies need a recent Node: `jsdom` 29 needs 20.19 or later, and crashes on older 20.x. `package.json` deliberately has no `engines` field, because Vercel picks its build runtime from it and this change is about tests only.
+
+## Coverage map
+Snapshot from `npm run coverage` (unit and API tests only; overall about 4% of `src` and `api`, almost all in `utils`). "Real" means the tests assert intended behaviour; "characterisation" means they record current behaviour, defects included. Refresh this table when tests land.
+
+| Code | Covered by | Kind | Gaps |
+|---|---|---|---|
+| `src/utils/entityUtils.js` | `tests/unit/entityUtils.test.js`, `factories.test.js` | real | alias cases beyond the nine recognised fields |
+| `src/utils/cutListEngine.js` | `tests/unit/cutListEngine.test.js` | real (about 97%) | waste estimate is linear, not bin-packed |
+| `src/utils/dateUtils.js` | `tests/unit/dateUtils.test.js` | real (about 87%) | a few branches |
+| `src/utils/logisticsEngine.js` | `tests/unit/logisticsEngine.test.js` | real | duplicate Final invoices and advance-only COD not characterised |
+| `src/constants/emailTemplates.js` | `tests/unit/emailTemplates.test.js` | real | |
+| `src/context/PermissionsContext.jsx` | `tests/unit/permissions.test.js`, `tests/component/StatusBadge.test.jsx` | real | receipts and quotations rows |
+| `api/_lib/firebaseAdmin.js` | `tests/unit/firebaseAdmin.test.js` | real | initialisation paths |
+| `api/admin-user.js` | `tests/api/adminUser.test.js` (405, missing token, CORS), `tests/integration/adminUser.test.js` (Admin SDK calls) | real | invalid token, non-admin, deactivated caller |
+| `api/generate.js`, `api/send-email.js` | none | | auth gate, origin check, model fallback (B3) |
+| `firestore.rules` | `tests/integration/firestoreRules.test.js` (`users`, catch-all), `invoiceNumbering.test.js` (`counters`) | real | most of the 20 match blocks (B4) |
+| `src/services/pricingEngine.js` | none | | tiers, discount, commission (B1) |
+| `src/utils/invoiceTemplate.js`, `receiptTemplate.js` | none | | totals, milestone scaling (B1) |
+| `src/utils/validation.js`, `stringMatch.js`, `csvExport.js` | none | | (B2) |
+| `src/services/firestoreSync.js` | none | | pure exports only, needs `firebase` mocked (B1) |
+| `src/components/**`, `App.jsx` | `StatusBadge` smoke test only | | large components; extract logic first (B5) |
+| Browser journeys | `tests/e2e/smoke.spec.js` (sign-in) | real | quotation to invoice, deal completion, RBAC (B6) |
+
+## Characterisation register
+Tests that deliberately lock in a known defect, with the finding that will change them. **Empty for now**; it fills in as Part B lands. Add a row whenever you write one.
+
+| Test | Records this behaviour | Changes with |
+|---|---|---|
+| _none yet_ | | |
+
+Planned entries (Part B): hidden 15% discount and fixed commission in `pricingEngine` (cost-calculator-quotation findings 2 and 3); `Profit / SQ` formula (finding 1); duplicate `INV-FIN` invoices (invoicing D-1); COD totals for duplicate Finals and advance-only jobs (invoicing D-2, logistics D-4); "Disburse Payout" writing nothing (partners D-1); deactivated caller passing `api/admin-user.js` (user-management-rbac finding 1).
+
+## Roadmap
+Part A (setup) is done: all five layers and CI exist. Part B fills them in; each item is independent. B1 and B4 have deadlines because Phase 7 changes the behaviour they record.
+- **B1** money-path unit tests (before Phase 7 items 2.1 to 2.4) and **B4** rules cases (before 3.4 and 3.5)
+- **B3** API handler cases (before 3.6), **B5** component cases (before 4.1), **B2** supporting unit tests (before 6.3 and 6.6), **B6** E2E journeys
+Progress is tracked in `PLAN.md`.
+
+## Gotchas
+- **Node:** `.nvmrc` pins 22. jsdom 29 crashes on Node older than 20.19.
+- **`firebase emulators:start` ignores `firestore.rules`:** `firebase.json` declares firestore as an array, so the emulator runs allow-all. `tests/fixtures/seed.mjs` uploads the rules; `firebase emulators:exec` (used by `test:rules`) gets them from `setupRulesEnv`.
+- **Orphaned emulator:** if a run is killed, a Java emulator can keep port 8080 and the next run hangs waiting for Auth on 9099. Kill the `cloud-firestore-emulator` process. Playwright's `gracefulShutdown` normally prevents this.
+- **`matchesEntity` ignores `jobNo` and `linkedJobNo`:** projects and logistics jobs linked only by job number do not match a deal through it. The COD engine compares job numbers separately.
+- **`DEFAULT_PERMISSIONS` is not the live matrix:** rules and the app read the `settings/permissions` document. `PERMISSIONS_FIXTURE` in `tests/helpers/emulator.js` is an independent copy for rules tests; keep it in sync by hand.
+- **Seeded logins** (password `Passw0rd!test`): `admin@example.com`, `partner@example.com`, `deactivated@example.com`. Emulator only; never reuse these anywhere real.
+- **Parallel files:** integration files share one stateful emulator, so files run sequentially.
