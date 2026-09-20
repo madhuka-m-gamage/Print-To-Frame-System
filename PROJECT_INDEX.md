@@ -52,6 +52,7 @@ Map, then per-module Claude instructions.
 
 - [GIT_WORKFLOW.md](docs/04_workflows/GIT_WORKFLOW.md)
 - [DEPLOY_PROCESS.md](docs/04_workflows/DEPLOY_PROCESS.md)
+- [POST_MERGE_VERIFICATION_REPORT.md](docs/POST_MERGE_VERIFICATION_REPORT.md): 16-module post-merge verification report
 
 ## Decisions
 
