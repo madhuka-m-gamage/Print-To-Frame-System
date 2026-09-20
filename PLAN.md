@@ -11,7 +11,50 @@ Progress tracker, overwritten in place. Outputs go into the structure listed in 
 - [x] Phase 5: per-module `CLAUDE.md` -> `docs/02_modules/<module>/CLAUDE.md`, module index in root `CLAUDE.md`
 - [x] Security and workflow docs -> `docs/03_security/`, `docs/04_workflows/`
 - [x] Phase 6: per-module / per-layer review sessions (16 modules reviewed via parallel worktrees, merged, and verified) -> `docs/02_modules/*/FINDINGS.md`, [docs/POST_MERGE_VERIFICATION_REPORT.md](docs/POST_MERGE_VERIFICATION_REPORT.md)
-- [ ] Phase 7: Priority bug fixes, idempotency guards, and security rules remediation -> [docs/HANDOFF_REPORT.md](docs/HANDOFF_REPORT.md)
+- [ ] Phase 7: Priority bug fixes, idempotency guards, and security rules remediation -> [docs/HANDOFF_REPORT.md](docs/HANDOFF_REPORT.md) (tracked below; testing suite is built first, see Part A/B)
+
+## Testing and remediation tracks
+
+The suite is built first (Part A), then characterisation tests are written (Part B, deadlines noted), then Phase 7 fixes land against that safety net. Guide: [docs/04_workflows/TESTING.md](docs/04_workflows/TESTING.md). One branch per item from `claude/dev`, one PR each; never push to `main`, never deploy rules without approval.
+
+### Part A: testing suite setup
+Order: A1, then A2/A3/A4 (any order), then A7 (CI), then A5 -> A6 whenever browser tests are wanted.
+- [x] A1: foundations (TESTING.md, lint covers `tests/`, coverage script, factories, dead `e2eTestSuite.js` removed)
+- [ ] A2: API test layer (`tests/helpers/mockHttp.js`, `test:api`)
+- [ ] A3: component test layer (`vitest.component.config.js`, RTL, `test:component`)
+- [ ] A4: rules test harness (`tests/helpers/emulator.js`, refactor the 3 integration files)
+- [ ] A7: GitHub Actions CI (`lint-unit`, `rules`, optional `e2e`)
+- [ ] A5: emulator wiring in `src/services/firebase.js` + seed data (only `src` change in Part A)
+- [ ] A6: Playwright runner and sign-in smoke journey (needs A5)
+
+### Part B: test authoring
+- [ ] B1: money-path unit tests (before Phase 7 phases 2.1-2.4)
+- [ ] B2: supporting-module unit tests (before 6.3 / 6.6)
+- [ ] B3: API handler cases (before 3.6)
+- [ ] B4: Firestore rules cases (before 3.4 / 3.5; replaces Phase 7 prompt 3.1)
+- [ ] B5: component cases (before 4.1)
+- [ ] B6: E2E journeys (needs A6)
+
+### Phase 7: audit remediation
+Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 before 3.5); listeners must be gated (3.2) before restrictive rules; new collections need rules deployed first (3.4d before 4.x).
+- [ ] 1: quick security and session wins (client only)
+- [ ] 2.1: duplicate Final-invoice guard
+- [ ] 2.2: Completed-stage reversal locks and commission idempotency
+- [ ] 2.3: COD engine
+- [ ] 2.4: Deals pricing and commission
+- [ ] 2.5: receipts
+- [ ] 2.6: invoice edit policy
+- [ ] 3.1: superseded by B4
+- [ ] 3.2: client RBAC prerequisites and matrix defaults
+- [ ] 3.3: live permissions migration (needs approval to write)
+- [ ] 3.4 / 3.4d: additive rules, then deploy (needs approval)
+- [ ] 3.5 / 3.5d: restrictive rules, staging smoke test, then deploy (needs approval)
+- [ ] 3.6: admin API
+- [ ] 4.1-4.3: payouts, referral lineage, claims and notifications
+- [ ] 5.1-5.3: Google scopes, registration, user lifecycle
+- [ ] 6.1-6.6: leads, atomic ids, customers, deals/fabrication/inspection, logistics, pricing
+- [ ] 7: UX and feature backlog
+- [ ] 8.1 / 8.2: docs sync, folder move
 
 ## Antigravity Work Summary & Handoff
 

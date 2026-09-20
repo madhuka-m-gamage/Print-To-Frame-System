@@ -30,7 +30,7 @@ No Cloud Functions. Flows:
 
 ## Depends on / called by
 
-Depends on `firebase/*`, `firebase-admin`, `@sentry/react`, `firestoreSync`, `logActivity`, `roles.js`, `firestore.rules`. Depended on by everything that imports `services/firebase` (`App.jsx`, `Messages.jsx`, `MessagingContext.jsx`, `PermissionsContext.jsx`, `UserProfile.jsx`, `PartnerRegistration.jsx`, `AgentDatabase.jsx`, `ReferralForm.jsx`, `Partners.jsx`, `contactsService.js`, `driveService.js`, `e2eTestSuite.js`).
+Depends on `firebase/*`, `firebase-admin`, `@sentry/react`, `firestoreSync`, `logActivity`, `roles.js`, `firestore.rules`. Depended on by everything that imports `services/firebase` (`App.jsx`, `Messages.jsx`, `MessagingContext.jsx`, `PermissionsContext.jsx`, `UserProfile.jsx`, `PartnerRegistration.jsx`, `AgentDatabase.jsx`, `ReferralForm.jsx`, `Partners.jsx`, `contactsService.js`, `driveService.js`).
 
 ## Summary
 
