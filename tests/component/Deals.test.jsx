@@ -97,3 +97,28 @@ describe('Deals Completed-stage locks and commission', () => {
     expect(sync.updateDocument).not.toHaveBeenCalledWith('partners', expect.anything(), expect.anything());
   });
 });
+
+describe('Deals completion amounts', () => {
+  it('bills 25% of the Accepted quotation total and saves it as the deal value', async () => {
+    const quote = { id: 'QT-2', leadId: 'L-1', dealId: 'D-1', version: 2, status: 'Accepted', grandTotal: 200000, lineItems: [{ description: 'Frame', qty: 1, unit: 'job', unitPrice: 200000 }] };
+    const { onSaveInvoice } = renderDeals({ dealOverrides: { value: 100000 }, quotations: [{ ...quote, id: 'QT-2', dealId: 'D-1' }] });
+    fireEvent.click(screen.getByRole('button', { name: /for Kasun Silva/i }));
+    await waitFor(() => expect(onSaveInvoice).toHaveBeenCalledTimes(1));
+    expect(onSaveInvoice.mock.calls[0][0]).toMatchObject({ amount: 50000, totalValue: 200000, advancePaid: 150000, quotationId: 'QT-2' });
+    await waitFor(() => expect(sync.updateDocument).toHaveBeenCalledWith('leads', expect.anything(), expect.objectContaining({ value: 200000 })));
+  });
+
+  it('prices the fallback line at the full deal value so the template scales it to 25%', async () => {
+    const { onSaveInvoice } = renderDeals({ dealOverrides: { value: 100000 } });
+    fireEvent.click(screen.getByRole('button', { name: /for Kasun Silva/i }));
+    await waitFor(() => expect(onSaveInvoice).toHaveBeenCalledTimes(1));
+    expect(onSaveInvoice.mock.calls[0][0].lineItems[0].unitPrice).toBe(100000);
+  });
+
+  it('estimates commission from value when the deal has no square footage, without adding area', async () => {
+    const partner = makePartner({ partnerId: 'P-1', name: 'Lanka Art Studio', commissionRate: 53.5, pending: 0, totalSqFt: 4 });
+    renderDeals({ dealOverrides: { agentId: 'P-1', totalSqFt: 0, value: 85000 }, partners: [partner], setPartners: vi.fn() });
+    fireEvent.click(screen.getByRole('button', { name: /for Kasun Silva/i }));
+    await waitFor(() => expect(sync.updateDocument).toHaveBeenCalledWith('partners', expect.anything(), { pending: 5350, totalSqFt: 4 }));
+  });
+});

@@ -36,16 +36,20 @@ describe('invoiceTemplate', () => {
   });
 
   describe('line items', () => {
-    // Characterisation: docs/02_modules/invoicing/FINDINGS.md Phase 2 item 5
-    // (tax and discount ignored in print). Each line prints
-    // qty * unitPrice * 0.75 (Advance) or * 0.25 (Final); discountPct and
-    // taxPct are never read. Flips when the template applies them.
-    it('scales each line item by 0.75 (Advance) or 0.25 (Final) and ignores discountPct and taxPct', () => {
+    // Flipped in Phase 7 2.4 (invoicing Phase 2 item 5): line totals apply the
+    // line's discountPct and taxPct before the 0.75 / 0.25 milestone scaling.
+    it('applies discountPct and taxPct before the milestone scaling', () => {
       const lineItems = [{ description: 'Steel frame', qty: 2, unitPrice: 50000, discountPct: 10, taxPct: 15 }];
       const adv = buildInvoiceHtml({ invoice: { id: 'INV-ADV-0004', type: 'Advance', amount: 75000, lineItems } });
       const fin = buildInvoiceHtml({ invoice: { id: 'INV-FIN-0004', type: 'Final', amount: 25000, lineItems } });
-      expect(adv).toContain(money(2 * 50000 * 0.75));
-      expect(fin).toContain(money(2 * 50000 * 0.25));
+      expect(adv).toContain(money(2 * 50000 * 0.9 * 1.15 * 0.75));
+      expect(fin).toContain(money(2 * 50000 * 0.9 * 1.15 * 0.25));
+    });
+
+    it('scales a line with no discount or tax by 0.75 (Advance) or 0.25 (Final)', () => {
+      const lineItems = [{ description: 'Steel frame', qty: 2, unitPrice: 50000 }];
+      expect(buildInvoiceHtml({ invoice: { id: 'A', type: 'Advance', amount: 75000, lineItems } })).toContain(money(75000));
+      expect(buildInvoiceHtml({ invoice: { id: 'F', type: 'Final', amount: 25000, lineItems } })).toContain(money(25000));
     });
 
     it('falls back to a single generic line for the invoice amount when there are no line items', () => {

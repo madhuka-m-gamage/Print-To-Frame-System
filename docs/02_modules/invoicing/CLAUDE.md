@@ -31,3 +31,5 @@ Invoices are `invoices` documents numbered `INV-ADV-####` / `INV-FIN-####` from 
 - Final invoice guard: deal completion and job QA pass call `getExistingFinalInvoice` (`src/utils/entityUtils.js`) and skip creating a second Final. It runs on client state, so two sessions acting at the same moment can still both create one.
 
 - COD: `calculateCODFromInvoices` counts only the latest unpaid Final invoice. A paid Advance with no Final returns `finalInvoicePending: true` and the shortfall against the Advance's `totalValue` (or amount / 0.75), and the UI shows it as pending Final invoice creation instead of settled.
+
+- `invoiceTemplate` line totals = qty x unitPrice x (1 - discountPct) x (1 + taxPct) x 0.75 (Advance) or 0.25 (Final). Deal completion passes full-value line items so the scaling lands on 25%.
