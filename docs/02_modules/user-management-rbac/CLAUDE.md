@@ -25,3 +25,9 @@ Registration queue, admin approval, role and status management, password reset, 
 - The permission matrix is enforced in three places that must stay in sync: `PermissionsContext.jsx`, `firestore.rules` (`checkPermission`), `roles.js`. See [RBAC_MODEL.md](../../03_security/RBAC_MODEL.md).
 - Never make `role`, `isApproved` or `status` client-settable outside the approve / self-heal paths (see the top of the `users` block in the rules).
 - The two bootstrap admin email lists (App.jsx and rules) must be edited together.
+
+- `DEFAULT_PERMISSIONS` does not change the live matrix; `settings/permissions` needs the 3.3 migration. `PERMISSIONS_FIXTURE` in `tests/helpers/emulator.js` is a hand-kept copy (synced at Phase 7 3.2). `App.jsx` opens each Firestore listener only when the role can read that module. Only Admin holds the `admin` (System Overview) module; `agents` stays delegable to Manager.
+
+- `api/admin-user.js` accepts Admin and Manager callers, rejects Deactivated/Disabled callers, and refuses a Manager acting on an Admin account or granting Admin. Only the Firebase Auth account is handled here; role changes are Firestore writes governed by the rules.
+
+- Step 3.5 rules (written, not deployed): active-account check in `checkPermission`; Managers with `agents` may administer non-Admin users; see `docs/03_security/FIRESTORE_RULES_NOTES.md`. Deploy order: matrix migration (3.3), additive rules (3.4d), then these.

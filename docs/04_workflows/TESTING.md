@@ -116,40 +116,65 @@ npm run dev:emulated                                                            
 `.nvmrc` pins Node 22 and CI reads it (`node-version-file`). Some test dependencies need a recent Node: `jsdom` 29 needs 20.19 or later, and crashes on older 20.x. `package.json` deliberately has no `engines` field, because Vercel picks its build runtime from it and this change is about tests only.
 
 ## Coverage map
-Snapshot from `npm run coverage` (unit and API tests only; overall about 4% of `src` and `api`, almost all in `utils`). "Real" means the tests assert intended behaviour; "characterisation" means they record current behaviour, defects included. Refresh this table when tests land.
+Snapshot from `npm run coverage` (unit and API tests only, so the component and rules layers are not counted; overall about 9% of `src` and `api` statements, almost all in `utils`; refreshed after Phase 7 step 2). "Real" means the tests assert intended behaviour; "characterisation" means they record current behaviour, defects included. Refresh this table when tests land.
 
 | Code | Covered by | Kind | Gaps |
 |---|---|---|---|
-| `src/utils/entityUtils.js` | `tests/unit/entityUtils.test.js`, `factories.test.js` | real | alias cases beyond the nine recognised fields |
+| `src/utils/entityUtils.js` | `tests/unit/entityUtils.test.js`, `factories.test.js` | real, including `getExistingFinalInvoice` | alias cases beyond the nine recognised fields; the guard is client-state based, so two sessions acting at once can still both miss an invoice |
 | `src/utils/cutListEngine.js` | `tests/unit/cutListEngine.test.js` | real (about 97%) | waste estimate is linear, not bin-packed |
 | `src/utils/dateUtils.js` | `tests/unit/dateUtils.test.js` | real (about 87%) | a few branches |
-| `src/utils/logisticsEngine.js` | `tests/unit/logisticsEngine.test.js` | real | duplicate Final invoices and advance-only COD not characterised |
+| `src/utils/logisticsEngine.js` | `tests/unit/logisticsEngine.test.js` | real, including duplicate Finals and advance-only COD | UI labels (Logistics, LogisticsCardDetails, waybill) not covered by a test |
 | `src/constants/emailTemplates.js` | `tests/unit/emailTemplates.test.js` | real | |
 | `src/context/PermissionsContext.jsx` | `tests/unit/permissions.test.js`, `tests/component/StatusBadge.test.jsx` | real | receipts and quotations rows |
 | `api/_lib/firebaseAdmin.js` | `tests/unit/firebaseAdmin.test.js` | real | initialisation paths |
-| `api/admin-user.js` | `tests/api/adminUser.test.js` (405, missing token, CORS), `tests/integration/adminUser.test.js` (Admin SDK calls) | real | invalid token, non-admin, deactivated caller |
-| `api/generate.js`, `api/send-email.js` | none | | auth gate, origin check, model fallback (B3) |
-| `firestore.rules` | `tests/integration/firestoreRules.test.js` (`users`, catch-all), `invoiceNumbering.test.js` (`counters`) | real | most of the 20 match blocks (B4) |
-| `src/services/pricingEngine.js` | none | | tiers, discount, commission (B1) |
-| `src/utils/invoiceTemplate.js`, `receiptTemplate.js` | none | | totals, milestone scaling (B1) |
+| `api/admin-user.js` | `tests/api/adminUser.test.js` (405, missing token, CORS), `adminUserAuth.test.js` (invalid token, pending, deactivated, Manager rules, payload checks), `tests/integration/adminUser.test.js` (Admin SDK calls) | real | create, reset and delete are covered only by the emulator file |
+| `api/generate.js`, `api/send-email.js` | `tests/api/generate.test.js`, `sendEmail.test.js` | real | generate: auth gate, origin echo, oversize audio, model fallback (400 stops; 404, 503, 429 fall through); send-email: auth gate, payload checks, template render, missing SMTP env. The hardcoded origin list is asserted only through generate |
+| `firestore.rules` | `tests/integration/firestoreRules.test.js` (`users`, catch-all), `invoiceNumbering.test.js` (`counters`), `rulesAccess.test.js` (leads, invoices, partners, users, messages, quotations, counters, payouts and claims, settings, audit log, public forms) | real, including the Phase 7 3.4 and 3.5 rules; a few characterisation rows remain (see the register); 2 `it.todo` entries name follow-ups | `deals`, `customers`, `receipts`, `projects`, `logistics`, `pricing`, `typing_indicators` blocks not exercised directly |
+| `src/services/pricingEngine.js` | `tests/unit/pricingEngine.test.js` | real (tiers, cost stack) plus characterisation (discount, commission, Profit/SQ) | rows above |
+| `src/utils/invoiceTemplate.js`, `receiptTemplate.js`, `dealSettlement.js`, `invoiceSettlement.js` | `tests/unit/invoiceTemplate.test.js`, `receiptTemplate.test.js`, `dealSettlement.test.js`, `invoiceSettlement.test.js` | real (milestone maths incl. discount and tax, words, labels, deal final amounts and commission) | print output only asserted by substring |
 | `src/utils/validation.js`, `stringMatch.js`, `csvExport.js` | none | | (B2) |
-| `src/services/firestoreSync.js` | none | | pure exports only, needs `firebase` mocked (B1) |
-| `src/components/**`, `App.jsx` | `StatusBadge` smoke test only | | large components; extract logic first (B5) |
+| `src/services/firestoreSync.js` | `tests/unit/firestoreSync.test.js` | real | pure exports only (`deriveReceiptId`, `generateSequentialId`); firebase mocked; the Firestore calls and `generateAtomicId` are untested here |
+| `src/components/**`, `App.jsx` | `StatusBadge` smoke test; `Receipts.test.jsx` (CSV export), `Invoices.receipt.test.jsx` (read-only amount, notes), `Invoices.policy.test.jsx` (edit policy, delete guard, cancel), `App.listeners.test.jsx` (listeners follow the role permissions), `PermissionsManager.test.jsx` (missing-modules button); `Deals.test.jsx`, `FabricationWorks.test.jsx`, `Partners.test.jsx`, `App.signOut.test.jsx` (B5 wiring) | real (Final invoice creation on completion and QA pass) plus characterisation (duplicate Final, phantom payout, sign-out leak) | wiring of four flows only; the large components are otherwise untested and logic inside them is not extracted |
 | Browser journeys | `tests/e2e/smoke.spec.js` (sign-in) | real | quotation to invoice, deal completion, RBAC (B6) |
 
 ## Characterisation register
-Tests that deliberately lock in a known defect, with the finding that will change them. **Empty for now**; it fills in as Part B lands. Add a row whenever you write one.
+Tests that deliberately lock in a known defect, with the finding that will change them. Add a row whenever you write one.
 
 | Test | Records this behaviour | Changes with |
 |---|---|---|
-| _none yet_ | | |
+| `pricingEngine.test.js` "always takes a hidden 15% discount" | `calculateCost` deducts 15% of total cost with no way to turn it off | cost-calculator-quotation finding 2 (Phase 7 6.6) |
+| `pricingEngine.test.js` "charges a fixed 53.5 per sq ft sales cost" | every tier charges 53.5 per sq ft whatever the partner rate | cost-calculator-quotation finding 3 (Phase 7 6.6) |
+| `pricingEngine.test.js` "computes Profit / SQ as (grossProfit + logistics + qa + salesCost) / sqFt" | `internalCostPerSq` includes costs the audit says it should not | cost-calculator-quotation finding 1 (Phase 7 6.6) |
+| ~~`invoiceTemplate.test.js` scales each line item and ignores discountPct and taxPct~~ | flipped in Phase 7 2.4: line totals apply discount and tax before the milestone scaling | invoicing Phase 2 item 5 |
+| ~~`logisticsEngine.test.js` doubles the COD balance for two unpaid Finals~~ | flipped in Phase 7 2.3: only the latest unpaid Final counts | invoicing D-2, logistics D-4 |
+| ~~rulesAccess.test.js lets a Customer read and write quotations~~ | flipped in Phase 7 3.5: quotations follow the quotations permission | rbac finding 5 |
+| ~~rulesAccess.test.js lets any signed-in user read a conversation they are not in and forge a sender~~ | flipped in Phase 7 3.5: participants only, and sending as yourself | messaging D-MSG-01, D-MSG-02 |
+| ~~rulesAccess.test.js lets a Customer read another user's profile~~ | flipped in Phase 7 3.5: Admin, self, or agents/messages view | rbac finding 12 |
+| ~~`rulesAccess.test.js` lets a Customer write any counter to any value~~ | flipped in Phase 7 3.4: known prefixes only and at most one step ahead |
+| `rulesAccess.test.js` "still lets a signed-in user lower a counter" | the counters rule has no lower bound (it would reject legitimate writes under transaction contention) | numbering moved server-side (not planned yet) |
+| ~~`rulesAccess.test.js` denies partner_payouts and referral_claims to everyone~~ | flipped in Phase 7 3.4: new match blocks | partners D-6 |
+| ~~rulesAccess.test.js lets a Deactivated user with a permitted role still create a lead~~ | flipped in Phase 7 3.5: Deactivated and Disabled are denied everywhere | rbac finding 1 |
+| ~~`rulesAccess.test.js` does not treat the bootstrap email as Admin~~ | flipped in Phase 7 3.4: `isAdmin()` accepts the bootstrap emails | auth DP-06 |
+| ~~`rulesAccess.test.js` rejects a pending applicant updating their own pendingUsers document~~ | flipped in Phase 7 3.4: self-update allowed, approval not | auth DP-02 |
+| ~~rulesAccess.test.js rejects a Manager changing or deleting another user~~ | flipped in Phase 7 3.5: Managers administer non-Admin users within guards | employees D4 |
+| ~~rulesAccess.test.js blocks a Manager with invoices:delete ... from deleting an invoice~~ | flipped in Phase 7 3.5: delete follows the module's delete permission | rbac finding 6 |
+| ~~rulesAccess.test.js denies a lead read to a role that has pipeline view but not leads view~~ | flipped in Phase 7 3.5: leads OR pipeline reads; writes follow isDeal | deals D-8 |
+| `rulesAccess.test.js` "denies an anonymous read of an Active partner" | partners are never public; D-5 is held because a partner document holds bank details | a decision on a public partner-profile document |
+| `rulesAccess.test.js` "lets a Partner read another partner's document ..." | the rule checks the partners permission, not record ownership (the matrix now grants Partner view and edit only) | follow-up: Partners screen queries its own document, then the rule is limited to it |
+| ~~`Deals.test.jsx` creates another Final invoice when the deal already has one~~ | flipped in Phase 7 2.1: completion skips the create when `getExistingFinalInvoice` finds one | invoicing D-1, deals D-1 |
+| ~~`FabricationWorks.test.jsx` creates a Final invoice when one already exists~~ | flipped in Phase 7 2.1: App passes invoices and QA pass skips the create | invoicing D-1, fabrication F-1 |
+| `Partners.test.jsx` "shows a success toast on Disburse Payout but writes nothing" | Disburse Payout is a toast only | partners D-1 (Phase 7 4.1) |
+| ~~`App.signOut.test.jsx` keeps the previous user's unread count~~ | flipped in Phase 7 1: `handleSignOut` now clears notifications, and the test asserts the count is gone | notifications NOTIF-01 |
+| ~~`adminUserAuth.test.js` lets a Deactivated caller with isApproved true through~~ | flipped in Phase 7 3.6: a Deactivated or Disabled caller gets 403 | user-management-rbac finding 1 |
+| ~~`adminUserAuth.test.js` rejects a Manager caller today~~ | flipped in Phase 7 3.6: Managers may call it, but not on Admin accounts or to grant Admin | employees D4 |
+| ~~`logisticsEngine.test.js` reports nothing to collect for an advance-only job~~ | flipped in Phase 7 2.3: the 25% balance is reported as pending Final invoice creation | logistics D-4 |
 
-Planned entries (Part B): hidden 15% discount and fixed commission in `pricingEngine` (cost-calculator-quotation findings 2 and 3); `Profit / SQ` formula (finding 1); duplicate `INV-FIN` invoices (invoicing D-1); COD totals for duplicate Finals and advance-only jobs (invoicing D-2, logistics D-4); "Disburse Payout" writing nothing (partners D-1); deactivated caller passing `api/admin-user.js` (user-management-rbac finding 1).
+Planned entries (later Part B): open `quotations`, `messages`, `users` and `counters` rules (B4).
 
 ## Roadmap
-Part A (setup) is done: all five layers and CI exist. Part B fills them in; each item is independent. B1 and B4 have deadlines because Phase 7 changes the behaviour they record.
-- **B1** money-path unit tests (before Phase 7 items 2.1 to 2.4) and **B4** rules cases (before 3.4 and 3.5)
-- **B3** API handler cases (before 3.6), **B5** component cases (before 4.1), **B2** supporting unit tests (before 6.3 and 6.6), **B6** E2E journeys
+Part A (setup) is done: all five layers and CI exist. Part B status:
+- **Done:** B1 money-path unit tests, B3 API handler cases, B4 rules cases, B5 component wiring cases.
+- **Open:** B2 supporting unit tests (before Phase 7 6.3 and 6.6) and B6 E2E journeys (money journey after Phase 7 step 2, RBAC journey after 3.5d).
 Progress is tracked in `PLAN.md`.
 
 ## Gotchas

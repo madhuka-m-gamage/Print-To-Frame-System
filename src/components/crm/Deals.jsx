@@ -10,7 +10,8 @@ import { PageHeader, FilterBar, KanbanColumn, KanbanCard, StatusBadge } from '..
 import SortableTable from '../common/ui/SortableTable';
 import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateInvoiceId } from '../../services/firestoreSync';
 import { exportToCsv } from '../../utils/csvExport';
-import { matchesEntity } from '../../utils/entityUtils';
+import { matchesEntity, getExistingFinalInvoice } from '../../utils/entityUtils';
+import { getFinalInvoiceAmounts, calculateDealCommission } from '../../utils/dealSettlement';
 
 const DEALS_STAGES = ["Waiting", "Fabricating", "Ready To Load", "Hand Over", "Completed"];
 
@@ -156,7 +157,7 @@ function DealColumn({
             badges={badges}
             metrics={metrics}
             onClick={() => onCardClick(deal)}
-            onMoveBack={() => onMoveBack(deal.id)}
+            onMoveBack={isLastStage ? null : () => onMoveBack(deal.id)}
             onMoveForward={movingDealIds.has(deal.id) ? null : () => onMove(deal.id)}
             onDelete={() => onDelete(deal.id)}
             isAdmin={isAdmin}
@@ -197,6 +198,10 @@ export default function Deals({
 
   const handleBulkStageChange = async (targetStage) => {
     if (!selectedDealIds.length) return;
+    if (targetStage === "Completed") {
+      toast.error('Deals can only be completed one at a time, so the final invoice and commission are generated.');
+      return;
+    }
     const now = new Date().toISOString();
     setLeads(prev => prev.map(d => selectedDealIds.includes(d.id) ? { ...d, stage: targetStage, stageEnteredAt: now } : d));
     try {
@@ -294,7 +299,11 @@ export default function Deals({
     // can't be generated, the whole move is aborted rather than completing
     // the deal anyway with a false "invoice generated" success message.
     let finalInvId = null;
-    if (willComplete && onSaveInvoice) {
+    const existingFinal = willComplete ? getExistingFinalInvoice(invoices, dealBeingMoved) : null;
+    const invoiceNote = existingFinal
+      ? `Final invoice ${existingFinal.id || existingFinal._firestoreId} already exists, so no duplicate was created.`
+      : '25% Final Invoice generated.';
+    if (willComplete && onSaveInvoice && !existingFinal) {
       try {
         finalInvId = await generateInvoiceId('Final');
       } catch (err) {
@@ -306,6 +315,7 @@ export default function Deals({
     const now = new Date().toISOString();
     let updatedDealObj = null;
     let persistedStage = null;
+    let completedValue = null;
     let completionAborted = false;
 
     setLeads(prev => prev.map(deal => {
@@ -318,7 +328,7 @@ export default function Deals({
       if (liveCurrentIndex + 1 >= DEALS_STAGES.length) return deal;
       const liveNextStage = DEALS_STAGES[liveCurrentIndex + 1];
 
-      if (liveNextStage === "Completed" && !finalInvId && onSaveInvoice) {
+      if (liveNextStage === "Completed" && !finalInvId && !existingFinal && onSaveInvoice) {
         // State changed underneath us: this move now completes the deal,
         // but no invoice id was reserved for that case. Never complete a
         // deal silently without its invoice — abort this update entirely.
@@ -327,16 +337,24 @@ export default function Deals({
       }
 
       persistedStage = liveNextStage;
-      updatedDealObj = { ...deal, stage: liveNextStage, stageEnteredAt: now };
+      const amounts = liveNextStage === "Completed" ? getFinalInvoiceAmounts(deal, quotations) : null;
+      if (amounts?.quotedTotal > 0) completedValue = amounts.totalValue;
+      updatedDealObj = {
+        ...deal,
+        stage: liveNextStage,
+        stageEnteredAt: now,
+        ...(liveNextStage === "Completed" ? { commissionAccrued: true } : {}),
+        ...(completedValue !== null ? { value: completedValue } : {}),
+      };
 
       if (liveNextStage === "Completed") {
         if (onSaveInvoice && finalInvId) {
-          const linkedQuote = (quotations || []).find(q => matchesEntity(q, deal));
-          const finalAmount = (deal.value || 0) * 0.25;
+          const { quote: linkedQuote, totalValue, finalAmount, advancePaid } = amounts;
           onSaveInvoice({
             id: finalInvId,
             leadId: deal.id,
             dealId: deal.id,
+            partnerId: deal.partnerId || deal.agentId || '',
             originalLeadId: deal.originalLeadId || '',
             linkedJobNo: deal.jobNo || deal.linkedJobNo || '',
             jobNo: deal.jobNo || deal.linkedJobNo || '',
@@ -346,26 +364,22 @@ export default function Deals({
             phone: deal.phone || '',
             date: new Date().toISOString().split('T')[0],
             amount: finalAmount,
-            totalValue: deal.value || 0,
-            advancePaid: (deal.value || 0) * 0.75,
+            totalValue,
+            advancePaid,
             balanceDue: finalAmount,
             type: 'Final',
             status: 'Unpaid',
             aiDraft: deal.jobScope || `Final Settlement (25%) for project.`,
             dueDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
             lineItems: linkedQuote?.lineItems || [
-              { description: deal.jobScope || "Custom steel framing final balance settlement", qty: 1, unit: "job", unitPrice: finalAmount, taxPct: 0, discountPct: 0 }
+              { description: deal.jobScope || "Custom steel framing final balance settlement", qty: 1, unit: "job", unitPrice: totalValue, taxPct: 0, discountPct: 0 }
             ]
           });
         }
 
-        if (deal.agentId && partners.length && setPartners) {
-          const sqFt = Number(deal.totalSqFt) || 0;
+        if (deal.agentId && partners.length && setPartners && !deal.commissionAccrued) {
           const agent = partners.find(p => p.partnerId === deal.agentId);
-          // Always the partner's CURRENT live rate, not a hardcoded default —
-          // a rate change takes effect immediately for any deal completed after it.
-          const commRate = Number(agent?.commissionRate) > 0 ? Number(agent.commissionRate) : 53.5;
-          const commissionAmount = sqFt * commRate;
+          const { commissionAmount, sqFtToAdd: sqFt } = calculateDealCommission({ ...deal, value: amounts.totalValue }, agent);
 
           if (agent) {
             setPartners(prevPartners => prevPartners.map(p =>
@@ -380,12 +394,12 @@ export default function Deals({
             }).catch(err => console.error("Partner update error:", err));
 
             toast.success(`Deal Completed!`, {
-              description: `LKR ${commissionAmount.toLocaleString()} commission assigned to Agent ${agent.name}. 25% Final Invoice generated.`
+              description: `LKR ${commissionAmount.toLocaleString()} commission assigned to Agent ${agent.name}. ${invoiceNote}`
             });
           }
         } else {
           toast.success(`Deal Completed!`, {
-            description: `25% Final Settlement Invoice generated successfully.`
+            description: invoiceNote
           });
         }
       }
@@ -401,7 +415,9 @@ export default function Deals({
       try {
         await updateDocument(COLLECTIONS.LEADS, updatedDealObj._firestoreId || updatedDealObj.id, {
           stage: persistedStage,
-          stageEnteredAt: now
+          stageEnteredAt: now,
+          ...(persistedStage === "Completed" ? { commissionAccrued: true } : {}),
+          ...(completedValue !== null ? { value: completedValue } : {})
         });
       } catch (err) {
         console.error("Deal move forward error:", err);

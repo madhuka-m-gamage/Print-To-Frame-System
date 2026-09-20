@@ -33,6 +33,7 @@ import { PageHeader, FilterBar, StatusBadge, KanbanColumn, KanbanCard, ModalWrap
 import TwoToneIcon from '../common/ui/TwoToneIcon';
 import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateAtomicId } from '../../services/firestoreSync';
 import { stripEmojis } from '../../utils/validation';
+import { generateText } from '../../services/gemini';
 import { 
   getGoogleMapsUrl, 
   getWhatsAppUrl, 
@@ -93,7 +94,7 @@ function LogisticsColumn({
     >
       {items.map((job) => {
         // Calculate COD for card badge
-        const { hasUnpaid, totalBalanceDue, primaryInvoice } = calculateCODFromInvoices(invoices, job.linkedJobNo, job.customer, {
+        const { hasUnpaid, totalBalanceDue, primaryInvoice, finalInvoicePending } = calculateCODFromInvoices(invoices, job.linkedJobNo, job.customer, {
           entity: job,
           invoiceId: job.invoiceId
         });
@@ -120,6 +121,7 @@ function LogisticsColumn({
                 <span className="text-[9px] font-bold text-amber-400 bg-amber-500/15 px-1.5 py-0.5 rounded border border-amber-500/30 flex items-center">
                   <DollarSign size={9} className="mr-0.5 text-amber-400" />
                   COD: LKR {totalBalanceDue.toLocaleString()}
+                  {finalInvoicePending && <span className="ml-1 opacity-80">(Final invoice pending)</span>}
                   {primaryInvoice?.id && (
                     <span className="ml-1 opacity-80 font-mono">({primaryInvoice.id})</span>
                   )}
@@ -399,15 +401,7 @@ export default function Logistics({
 
   const callAIInsights = async (prompt) => {
     try {
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        return data.text;
-      }
+      return await generateText(prompt);
     } catch (err) {
       console.error(err);
     }

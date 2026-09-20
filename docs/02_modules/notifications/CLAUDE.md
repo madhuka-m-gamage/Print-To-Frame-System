@@ -20,5 +20,5 @@ A session-only in-app feed built on a browser `EventTarget`; most toasts and one
 
 ## Before you edit
 
-- Entries vanish on reload and are visible only to the user whose browser fired them.
+- Entries vanish on reload and are visible only to the user whose browser fired them. Sign-out clears the list and unread count (`handleSignOut`), and the messages part of the feed drops the user's own messages (`getIncomingMessages`).
 - `read` on entries is never used; only the unread counter matters.

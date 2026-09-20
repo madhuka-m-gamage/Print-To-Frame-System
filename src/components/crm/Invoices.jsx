@@ -19,10 +19,11 @@ export default function Invoices({ invoices = [], setInvoices, onMarkPaid, curre
   const [mobileView, setMobileView] = useState('list');
   const [deleteId, setDeleteId] = useState(null);
   const [showReceiptForm, setShowReceiptForm] = useState(false);
-  const [receiptFormData, setReceiptFormData] = useState({ amountReceived: 0, paymentMethod: 'Cash', date: new Date().toISOString().split('T')[0] });
+  const [receiptFormData, setReceiptFormData] = useState({ amountReceived: 0, paymentMethod: 'Cash', date: new Date().toISOString().split('T')[0], notes: '' });
   const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
 
   const [isEditing, setIsEditing] = useState(false);
+  const canEditAmount = ['Admin', 'Manager'].includes(currentUser?.role);
   const [editForm, setEditForm] = useState(null);
 
   // Summary Metrics & Overdue Tracking (Item 7)
@@ -102,11 +103,11 @@ export default function Invoices({ invoices = [], setInvoices, onMarkPaid, curre
       return;
     }
     try {
+      // id and type are immutable, and only Admin/Manager may change the amount.
       const updatedFields = {
-        amount: Number(editForm.amount) || 0,
         customerName: editForm.customerName || '',
         company: editForm.company || '',
-        type: editForm.type || 'Advance'
+        ...(canEditAmount ? { amount: Number(editForm.amount) || 0 } : {}),
       };
       await updateDocument(COLLECTIONS.INVOICES, docId, updatedFields);
       if (setInvoices) {
@@ -118,7 +119,7 @@ export default function Invoices({ invoices = [], setInvoices, onMarkPaid, curre
         currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'Unknown',
         'INVOICE_EDITED',
         'Invoices',
-        `Invoice ${docId} updated — Amount: LKR ${editForm.amount}, Type: ${editForm.type}`
+        `Invoice ${docId} updated — Amount: LKR ${canEditAmount ? editForm.amount : selectedInvoice?.amount}, Type: ${selectedInvoice?.type}`
       );
       setIsEditing(false);
       setSelectedInvoice(prev => ({ ...prev, ...updatedFields }));
@@ -129,6 +130,12 @@ export default function Invoices({ invoices = [], setInvoices, onMarkPaid, curre
 
   const handleDelete = async () => {
     if (!deleteId) return;
+    const target = invoices.find(inv => inv.id === deleteId || inv._firestoreId === deleteId);
+    if (target && receipts.some(r => r.invoiceId === target.id || r.invoiceId === target._firestoreId)) {
+      toast.warning('This invoice has a receipt and cannot be deleted. Cancel it instead.');
+      setDeleteId(null);
+      return;
+    }
     try {
       await deleteDocument(COLLECTIONS.INVOICES, deleteId);
       if (setInvoices) {
@@ -148,6 +155,29 @@ export default function Invoices({ invoices = [], setInvoices, onMarkPaid, curre
       setDeleteId(null);
     } catch (error) {
       toast.error('Error deleting invoice: ' + error.message);
+    }
+  };
+
+  const handleCancelInvoice = async (invId) => {
+    const invToCancel = invoices.find(inv => inv.id === invId || inv._firestoreId === invId);
+    const docId = invToCancel?._firestoreId || invToCancel?.id || invId;
+    if (!invToCancel || invToCancel.status === 'Paid' || invToCancel.status === 'Cancelled') return;
+    try {
+      await updateDocument(COLLECTIONS.INVOICES, docId, { status: 'Cancelled' });
+      if (setInvoices) {
+        setInvoices(prev => prev.map(inv => (inv.id === docId || inv._firestoreId === docId) ? { ...inv, status: 'Cancelled' } : inv));
+      }
+      setSelectedInvoice(prev => (prev ? { ...prev, status: 'Cancelled' } : prev));
+      toast.success('Invoice cancelled');
+      await logActivity(
+        currentUser?.email || 'unknown',
+        currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'Unknown',
+        'INVOICE_CANCELLED',
+        'Invoices',
+        `Invoice ${docId} cancelled`
+      );
+    } catch (error) {
+      toast.error('Error cancelling invoice: ' + error.message);
     }
   };
 
@@ -385,6 +415,15 @@ export default function Invoices({ invoices = [], setInvoices, onMarkPaid, curre
                   >
                     <Edit2 size={16} />
                   </button>
+                  {selectedInvoice.status !== 'Paid' && selectedInvoice.status !== 'Cancelled' && (
+                    <button
+                      onClick={() => handleCancelInvoice(selectedInvoice._firestoreId || selectedInvoice.id)}
+                      className="p-2.5 bg-surface-container-high text-on-surface-variant hover:bg-amber-500/10 hover:text-amber-400 rounded-xl transition-all border border-outline-variant/60"
+                      title="Cancel Invoice"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
                   <button
                     onClick={() => setDeleteId(selectedInvoice._firestoreId || selectedInvoice.id)}
                     className="p-2.5 bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white rounded-xl transition-all border border-rose-500/20"
@@ -483,7 +522,7 @@ export default function Invoices({ invoices = [], setInvoices, onMarkPaid, curre
                     return (
                       <button
                         onClick={() => {
-                          setReceiptFormData({ amountReceived: Number(selectedInvoice.amount) || 0, paymentMethod: 'Cash', date: new Date().toISOString().split('T')[0] });
+                          setReceiptFormData({ amountReceived: Number(selectedInvoice.amount) || 0, paymentMethod: 'Cash', date: new Date().toISOString().split('T')[0], notes: '' });
                           setShowReceiptForm(true);
                         }}
                         className="flex-1 sm:flex-initial bg-primary/10 text-primary hover:bg-primary/20 border border-primary/30 px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 transition-all active:scale-95"
@@ -497,14 +536,15 @@ export default function Invoices({ invoices = [], setInvoices, onMarkPaid, curre
               </div>
 
               {selectedInvoice.status === 'Paid' && showReceiptForm && !receipts.find(r => r.invoiceId === (selectedInvoice.id || selectedInvoice._firestoreId)) && (
-                <div className="mt-3 p-3 bg-surface-container-high/60 border border-outline rounded-xl grid grid-cols-1 sm:grid-cols-4 gap-2 items-end">
+                <div className="mt-3 p-3 bg-surface-container-high/60 border border-outline rounded-xl grid grid-cols-1 sm:grid-cols-5 gap-2 items-end">
                   <div className="flex flex-col gap-1">
                     <label className="text-[9px] uppercase font-bold text-on-surface-variant">Amount</label>
                     <input
                       type="number"
                       value={receiptFormData.amountReceived}
-                      onChange={(e) => setReceiptFormData(prev => ({ ...prev, amountReceived: e.target.value }))}
-                      className="px-2 py-1.5 bg-surface-container rounded-lg text-xs border border-outline-variant"
+                      readOnly
+                      title="A receipt records the full invoice amount"
+                      className="px-2 py-1.5 bg-surface-container-high rounded-lg text-xs border border-outline-variant opacity-80 cursor-not-allowed"
                     />
                   </div>
                   <div className="flex flex-col gap-1">
@@ -526,6 +566,16 @@ export default function Invoices({ invoices = [], setInvoices, onMarkPaid, curre
                       type="date"
                       value={receiptFormData.date}
                       onChange={(e) => setReceiptFormData(prev => ({ ...prev, date: e.target.value }))}
+                      className="px-2 py-1.5 bg-surface-container rounded-lg text-xs border border-outline-variant"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[9px] uppercase font-bold text-on-surface-variant">Notes / Reference</label>
+                    <input
+                      type="text"
+                      value={receiptFormData.notes}
+                      onChange={(e) => setReceiptFormData(prev => ({ ...prev, notes: e.target.value }))}
+                      placeholder="Optional"
                       className="px-2 py-1.5 bg-surface-container rounded-lg text-xs border border-outline-variant"
                     />
                   </div>
@@ -628,7 +678,9 @@ export default function Invoices({ invoices = [], setInvoices, onMarkPaid, curre
                 step="0.01" 
                 value={editForm.amount || 0} 
                 onChange={e => setEditForm({...editForm, amount: e.target.value})} 
-                className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm font-mono outline-none focus:ring-2 focus:ring-primary/50 text-on-surface" 
+                readOnly={!canEditAmount}
+                title={canEditAmount ? undefined : 'Only Admin or Manager can change the amount'}
+                className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm font-mono outline-none focus:ring-2 focus:ring-primary/50 text-on-surface read-only:opacity-70 read-only:cursor-not-allowed" 
                 required 
               />
             </div>
@@ -639,8 +691,9 @@ export default function Invoices({ invoices = [], setInvoices, onMarkPaid, curre
               </label>
               <select 
                 value={editForm.type || 'Advance'} 
-                onChange={e => setEditForm({...editForm, type: e.target.value})} 
-                className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/50 text-on-surface"
+                disabled
+                title="Invoice type cannot be changed once created"
+                className="disabled:opacity-70 disabled:cursor-not-allowed w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/50 text-on-surface"
               >
                 <option value="Advance">Advance (75%)</option>
                 <option value="Final">Final Settlement (25%)</option>

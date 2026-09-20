@@ -24,3 +24,5 @@ Receipts are proof-of-payment records generated from a Paid invoice; the id is d
 
 - `amountReceived` defaults to the invoice amount and can differ; nothing reconciles balances.
 - Id mapping: `INV-ADV-0007` -> `REC-ADV-0007`; other ids become `REC-<invoiceId>`.
+
+- A receipt can only be generated for a Paid invoice (`handleGenerateReceipt` in `src/App.jsx`), for the full invoice amount (the field is read-only), with optional notes. Invoices raised from deals, quotations and fabrication carry `partnerId` so receipts inherit it.

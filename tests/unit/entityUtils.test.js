@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getEntityIdSet, matchesEntity } from '../../src/utils/entityUtils';
+import { getEntityIdSet, matchesEntity, getExistingFinalInvoice } from '../../src/utils/entityUtils';
 
 describe('entityUtils', () => {
   describe('getEntityIdSet', () => {
@@ -59,6 +59,49 @@ describe('entityUtils', () => {
       expect(matchesEntity(null, { id: '123' })).toBe(false);
       expect(matchesEntity({ id: '123' }, null)).toBe(false);
       expect(matchesEntity({}, {})).toBe(false);
+    });
+  });
+
+  describe('getExistingFinalInvoice', () => {
+    const deal = { id: 'D-1', originalLeadId: 'L-1', jobNo: 'PTF-1' };
+
+    it('returns null for no invoices or no entity', () => {
+      expect(getExistingFinalInvoice([], deal)).toBeNull();
+      expect(getExistingFinalInvoice(undefined, deal)).toBeNull();
+      expect(getExistingFinalInvoice([{ id: 'INV-FIN-1', type: 'Final', dealId: 'D-1' }], null)).toBeNull();
+    });
+
+    it('finds a Final invoice through each id alias', () => {
+      for (const alias of [{ dealId: 'D-1' }, { leadId: 'D-1' }, { originalLeadId: 'L-1' }, { leadId: 'L-1' }]) {
+        const inv = { id: 'INV-FIN-0001', type: 'Final', ...alias };
+        expect(getExistingFinalInvoice([inv], deal)).toBe(inv);
+      }
+    });
+
+    it('finds a Final invoice by jobNo or linkedJobNo, which matchesEntity ignores', () => {
+      const byJob = { id: 'INV-FIN-0002', type: 'Final', jobNo: 'PTF-1' };
+      const byLinked = { id: 'INV-FIN-0003', type: 'Final', linkedJobNo: 'PTF-1' };
+      expect(getExistingFinalInvoice([byJob], deal)).toBe(byJob);
+      expect(getExistingFinalInvoice([byLinked], deal)).toBe(byLinked);
+    });
+
+    it('recognises a Final by its INV-FIN id when type is missing, and ignores Advance invoices', () => {
+      const legacy = { id: 'INV-FIN-0004', dealId: 'D-1' };
+      const advance = { id: 'INV-ADV-0001', type: 'Advance', dealId: 'D-1' };
+      expect(getExistingFinalInvoice([advance], deal)).toBeNull();
+      expect(getExistingFinalInvoice([advance, legacy], deal)).toBe(legacy);
+    });
+
+    it('ignores cancelled and void Final invoices and other jobs', () => {
+      const cancelled = { id: 'INV-FIN-0005', type: 'Final', dealId: 'D-1', status: 'Cancelled' };
+      const voided = { id: 'INV-FIN-0006', type: 'Final', dealId: 'D-1', status: 'void' };
+      const other = { id: 'INV-FIN-0007', type: 'Final', dealId: 'D-2', jobNo: 'PTF-2' };
+      expect(getExistingFinalInvoice([cancelled, voided, other], deal)).toBeNull();
+    });
+
+    it('accepts several entities, so a lead and its deal can be checked together', () => {
+      const inv = { id: 'INV-FIN-0008', type: 'Final', dealId: 'D-9' };
+      expect(getExistingFinalInvoice([inv], [{ id: 'L-9' }, { id: 'D-9' }])).toBe(inv);
     });
   });
 });

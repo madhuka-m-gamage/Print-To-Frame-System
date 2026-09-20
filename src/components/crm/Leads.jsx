@@ -12,6 +12,7 @@ import { addDocument, updateDocument, deleteDocument, COLLECTIONS } from '../../
 import { sanitizeTechnicalScope, stripEmojis } from '../../utils/validation';
 import { exportToCsv } from '../../utils/csvExport';
 import { logActivity } from '../../services/auditLog';
+import { matchesEntity } from '../../utils/entityUtils';
 
 const STAGES = ["Intake", "Processing", "75% Invoice Submitted", "Received", "Completed"];
 
@@ -86,10 +87,6 @@ function LeadColumn({
               </span>
               {lead.invoicePaid ? (
                 <StatusBadge status="Paid" size="xs" />
-              ) : lead.invoiceGenerated ? (
-                <span className="text-[9px] text-secondary font-bold flex items-center bg-secondary/10 px-1.5 py-0.5 rounded border border-secondary/20">
-                  Inv: {lead.invoiceDate || 'Pending'}
-                </span>
               ) : null}
             </div>
           </>
@@ -198,7 +195,8 @@ function LeadColumn({
 }
 
 // Convert Modal
-function ConvertDealModal({ lead, onClose, onConfirm }) {
+function ConvertDealModal({ lead, invoices = [], onClose, onConfirm }) {
+  const hasAdvanceInvoice = invoices.some(inv => matchesEntity(inv, lead) && inv.type !== 'Final');
   const [invoiceText, setInvoiceText] = useState(lead?.invoiceDraft || '');
 
   const generateManualInvoiceDraft = () => {
@@ -223,7 +221,7 @@ function ConvertDealModal({ lead, onClose, onConfirm }) {
         }
         subtitle={
           <span>
-            {lead.invoiceGenerated ? "Review the generated 75% Advance Invoice to finalize the commitment." : "Generate 75% Advance Invoice to finalize the commitment."}
+            {hasAdvanceInvoice ? "Review the generated 75% Advance Invoice to finalize the commitment.": "Generate 75% Advance Invoice to finalize the commitment."}
           </span>
         }
         onClose={onClose}
@@ -249,7 +247,7 @@ function ConvertDealModal({ lead, onClose, onConfirm }) {
             </div>
           </div>
 
-          {!lead.invoiceGenerated && (
+          {!hasAdvanceInvoice && (
             <div className="mt-4">
               <button
                 type="button"
@@ -885,6 +883,7 @@ export default function Leads({
       {leadToConvert && (
         <ConvertDealModal
           lead={leadToConvert}
+          invoices={invoices}
           onClose={() => setLeadToConvert(null)}
           onConfirm={handleConvertConfirm}
         />

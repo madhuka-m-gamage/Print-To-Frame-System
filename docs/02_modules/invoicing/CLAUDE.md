@@ -27,3 +27,11 @@ Invoices are `invoices` documents numbered `INV-ADV-####` / `INV-FIN-####` from 
 - The 75 / 25 percentages are hardcoded in `QuotationBuilder.jsx`, `Deals.jsx` and `FabricationWorks.jsx`; the edit form lets `amount` change freely.
 - Always reserve the id with `generateInvoiceId` first; both automatic creators abort the stage change if that fails.
 - One Advance and one Final per lead is a UI convention, not enforced in rules or data.
+
+- Final invoice guard: deal completion and job QA pass call `getExistingFinalInvoice` (`src/utils/entityUtils.js`) and skip creating a second Final. It runs on client state, so two sessions acting at the same moment can still both create one.
+
+- COD: `calculateCODFromInvoices` counts only the latest unpaid Final invoice. A paid Advance with no Final returns `finalInvoicePending: true` and the shortfall against the Advance's `totalValue` (or amount / 0.75), and the UI shows it as pending Final invoice creation instead of settled.
+
+- `invoiceTemplate` line totals = qty x unitPrice x (1 - discountPct) x (1 + taxPct) x 0.75 (Advance) or 0.25 (Final). Deal completion passes full-value line items so the scaling lands on 25%.
+
+- Edit policy: `id` and `type` never change; only Admin/Manager may change `amount`. An invoice with a receipt cannot be deleted; use Cancel. Full settlement (`isFullyPaid` in `src/utils/invoiceSettlement.js`) is Advance and Final both paid, or one paid invoice that bills the whole total, and `invoicePaid` is written to the lead and the deal it converted into.

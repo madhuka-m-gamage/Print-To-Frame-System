@@ -32,7 +32,7 @@ import { initAuth, logout, emailLogin, emailRegister, db } from "./services/fire
 import { doc, getDoc, setDoc, collection, getDocs, deleteDoc, onSnapshot } from "firebase/firestore";
 import { subscribeToCollection, addDocument, updateDocument, batchWrite, COLLECTIONS, generateInvoiceId, deriveReceiptId, createDocumentIfAbsent } from "./services/firestoreSync";
 import { toast } from "./utils/toast";
-import { toDateObj } from "./utils/dateUtils";
+import { isFullyPaid } from "./utils/invoiceSettlement";
 import { UserAvatar } from "./components/common/ui";
 
 // Components
@@ -193,7 +193,7 @@ const MessagesNavLink = ({ activeTab, setActiveTab, collapsed, onNavigate }) => 
 };
 
 function App() {
-  const { canAccess } = usePermissions();
+  const { canAccess, permissions } = usePermissions();
   const [isFirebaseReady, setIsFirebaseReady] = useState(false);
   const [workspaceToken, setWorkspaceToken] = useState(null);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -312,15 +312,22 @@ function App() {
   useEffect(() => {
     if (!currentUser?.isApproved) return;
 
-    const unsubCustomers = subscribeToCollection(COLLECTIONS.CUSTOMERS, setCustomers);
-    const unsubPartners = subscribeToCollection(COLLECTIONS.PARTNERS, setPartners);
-    const unsubProjects = subscribeToCollection(COLLECTIONS.PROJECTS, setProjects);
-    const unsubLogistics = subscribeToCollection(COLLECTIONS.LOGISTICS, setLogisticsJobs);
-    const unsubLeads = subscribeToCollection(COLLECTIONS.LEADS, setLeads);
-    const unsubInvoices = subscribeToCollection(COLLECTIONS.INVOICES, setInvoices);
-    const unsubReceipts = subscribeToCollection(COLLECTIONS.RECEIPTS, setReceipts);
-    const unsubQuotations = subscribeToCollection(COLLECTIONS.QUOTATIONS, setQuotations);
-    const unsubPartnerApplications = subscribeToCollection(COLLECTIONS.PARTNER_APPLICATIONS, setPartnerApplications);
+    // Only open listeners the role may read: a collection the rules deny would fail
+    // with permission-denied. Quotations follow the leads/pipeline work until every
+    // live matrix has a `quotations` module.
+    const canRead = (module) => canAccess(currentUser.role, module);
+    const noop = () => {};
+    const listen = (allowed, name, setter) => (allowed ? subscribeToCollection(name, setter) : noop);
+
+    const unsubCustomers = listen(canRead('customers'), COLLECTIONS.CUSTOMERS, setCustomers);
+    const unsubPartners = listen(canRead('partners'), COLLECTIONS.PARTNERS, setPartners);
+    const unsubProjects = listen(canRead('projects'), COLLECTIONS.PROJECTS, setProjects);
+    const unsubLogistics = listen(canRead('logistics'), COLLECTIONS.LOGISTICS, setLogisticsJobs);
+    const unsubLeads = listen(canRead('leads') || canRead('pipeline'), COLLECTIONS.LEADS, setLeads);
+    const unsubInvoices = listen(canRead('invoices'), COLLECTIONS.INVOICES, setInvoices);
+    const unsubReceipts = listen(canRead('receipts'), COLLECTIONS.RECEIPTS, setReceipts);
+    const unsubQuotations = listen(canRead('quotations') || canRead('leads') || canRead('pipeline'), COLLECTIONS.QUOTATIONS, setQuotations);
+    const unsubPartnerApplications = listen(currentUser.role === 'Admin', COLLECTIONS.PARTNER_APPLICATIONS, setPartnerApplications);
 
     return () => {
       unsubCustomers();
@@ -333,7 +340,9 @@ function App() {
       unsubQuotations();
       unsubPartnerApplications();
     };
-  }, [currentUser]);
+  // canAccess is rebuilt on every render; `permissions` is the state it reads.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser, permissions]);
 
   // Invoices Firestore Sync Handlers
   const handleSaveInvoice = async (invoiceData) => {
@@ -395,6 +404,10 @@ function App() {
       return;
     }
     const invoiceId = invoice.id || invoice._firestoreId;
+    if (invoice.status !== 'Paid') {
+      toast.error('Cannot generate a receipt for an unpaid invoice.');
+      return;
+    }
     if (receipts.some(r => r.invoiceId === invoiceId)) {
       toast.error(`A receipt already exists for ${invoiceId}.`);
       return;
@@ -487,16 +500,7 @@ function App() {
       // stale invoice here can wrongly flip isFullyPaid (e.g. an old,
       // already-Paid Advance masking a genuinely-unpaid current one), so
       // always take the most recently created match.
-      const latestByCreatedAt = (candidates) => candidates.reduce((latest, inv) => {
-        if (!latest) return inv;
-        const latestTime = toDateObj(latest.createdAt)?.getTime() ?? -Infinity;
-        const invTime = toDateObj(inv.createdAt)?.getTime() ?? -Infinity;
-        return invTime > latestTime ? inv : latest;
-      }, null);
-      const advanceInvoice = latestByCreatedAt(siblingInvoices.filter(inv => inv.type !== 'Final'));
-      const finalInvoice = latestByCreatedAt(siblingInvoices.filter(inv => inv.type === 'Final'));
-      const paidNow = (inv) => !inv ? false : ((inv._firestoreId || inv.id) === invDocId ? true : inv.status === 'Paid');
-      const isFullyPaid = Boolean(advanceInvoice) && Boolean(finalInvoice) && paidNow(advanceInvoice) && paidNow(finalInvoice);
+      const isFullyPaidNow = isFullyPaid(siblingInvoices, invDocId);
       const isAdvance = targetInvoice.type !== 'Final';
 
       // 3. Update the lead
@@ -508,17 +512,27 @@ function App() {
 
         const updatedLeadPayload = {
           stage: newStage,
-          ...(isFullyPaid ? { invoicePaid: true } : {}),
-          ...(isFullyPaid && isPartnerReferral && !alreadyEligible ? { referralStatus: 'Eligible for Payout' } : {}),
+          ...(isFullyPaidNow ? { invoicePaid: true } : {}),
+          ...(isFullyPaidNow && isPartnerReferral && !alreadyEligible ? { referralStatus: 'Eligible for Payout' } : {}),
         };
 
         setLeads(prev => prev.map(lead => (lead.id === leadId || lead._firestoreId === leadId) ? { ...lead, ...updatedLeadPayload } : lead));
         await updateDocument(COLLECTIONS.LEADS, leadDocId, updatedLeadPayload);
 
+        // A lead and the deal it converted into are separate documents; when
+        // the deal is fully settled both must show it.
+        if (isFullyPaidNow) {
+          const linkedLeads = leads.filter(l => l !== targetLead && relatedIds.has(l.id));
+          for (const linked of linkedLeads) {
+            setLeads(prev => prev.map(l => (l.id === linked.id ? { ...l, invoicePaid: true } : l)));
+            await updateDocument(COLLECTIONS.LEADS, linked._firestoreId || linked.id, { invoicePaid: true });
+          }
+        }
+
         // 4. Commission-eligibility notification — fires exactly once, only
         // once the deal is genuinely fully settled, guarded by alreadyEligible
         // so re-marking (or a race between two writes) can't double-fire it.
-        if (isFullyPaid && isPartnerReferral && !alreadyEligible) {
+        if (isFullyPaidNow && isPartnerReferral && !alreadyEligible) {
           const sqFt = Number(targetLead.totalSqFt || targetLead.sqFt || (targetLead.pricingMetadata?.costSalesAmount ? (targetLead.pricingMetadata.costSalesAmount / 53.5) : 0));
           // Commission is always calculated from the partner's CURRENT live
           // rate, never the lead's referral-time snapshot or the quote-time
@@ -547,7 +561,7 @@ function App() {
       }
 
       toast.success(
-        isFullyPaid
+        isFullyPaidNow
           ? `${targetInvoice.type || 'Invoice'} payment recorded — deal fully settled!`
           : `${targetInvoice.type || 'Invoice'} payment recorded and synchronized.`
       );
@@ -684,42 +698,56 @@ function App() {
     let unsubPending;
 
     if (currentUser?.isApproved) {
-      // All approved users need the full user list to use the Messaging feature.
-      // Firestore rules already allow all authenticated users to read /users/*.
-      unsubUsers = onSnapshot(collection(db, COLLECTIONS.USERS), (snapshot) => {
-        const u = [];
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          u.push(data);
-          if (currentUser?.identifier && data.identifier === currentUser.identifier) {
-            setCurrentUser(prev => {
-              if (!prev) return data;
-              if (
-                prev.photoURL !== data.photoURL ||
-                prev.role !== data.role ||
-                prev.name !== data.name ||
-                prev.selectedPreset !== data.selectedPreset
-              ) {
-                const merged = { ...prev, ...data };
-                // Never let a stale snapshot (racing the self-heal write above)
-                // downgrade a bootstrap super-admin's role back below Admin.
-                if (isSuperAdminEmail(data.identifier)) {
-                  merged.role = 'Admin';
-                  merged.isApproved = true;
-                  merged.status = 'Active';
-                }
-                return merged;
-              }
-              return prev;
-            });
+      // Keeps currentUser in step with its own users document (photo, role, name, preset).
+      const syncSelf = (data) => {
+        if (!currentUser?.identifier || data.identifier !== currentUser.identifier) return;
+        setCurrentUser(prev => {
+          if (!prev) return data;
+          if (
+            prev.photoURL !== data.photoURL ||
+            prev.role !== data.role ||
+            prev.name !== data.name ||
+            prev.selectedPreset !== data.selectedPreset
+          ) {
+            const merged = { ...prev, ...data };
+            // Never let a stale snapshot (racing the self-heal write above)
+            // downgrade a bootstrap super-admin's role back below Admin.
+            if (isSuperAdminEmail(data.identifier)) {
+              merged.role = 'Admin';
+              merged.isApproved = true;
+              merged.status = 'Active';
+            }
+            return merged;
           }
+          return prev;
         });
-        setUsers(u);
-      });
+      };
+
+      // The rules let Admins, roles that manage users and roles that use messaging read
+      // the whole collection; anyone else may read only their own document.
+      const canListUsers = currentUser.role === 'Admin' || canAccess(currentUser.role, 'agents') || canAccess(currentUser.role, 'messages');
+      if (canListUsers) {
+        unsubUsers = onSnapshot(collection(db, COLLECTIONS.USERS), (snapshot) => {
+          const u = [];
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            u.push(data);
+            syncSelf(data);
+          });
+          setUsers(u);
+        });
+      } else if (currentUser.identifier) {
+        unsubUsers = onSnapshot(doc(db, COLLECTIONS.USERS, String(currentUser.identifier).trim().toLowerCase()), (snapshot) => {
+          if (!snapshot.exists()) return;
+          const data = snapshot.data();
+          setUsers([data]);
+          syncSelf(data);
+        });
+      }
     }
 
-    if (currentUser?.role === 'Admin' || currentUser?.role === 'admin') {
-      // Pending users are Admin-only
+    if (currentUser?.role === 'Admin' || currentUser?.role === 'admin' || canAccess(currentUser?.role, 'agents', 'edit')) {
+      // Pending sign-ups are reviewed by Admins and by roles that can edit users.
       unsubPending = onSnapshot(collection(db, COLLECTIONS.PENDING_USERS), (snapshot) => {
         const pu = [];
         snapshot.forEach(doc => pu.push(doc.data()));
@@ -731,7 +759,9 @@ function App() {
       if (unsubUsers) unsubUsers();
       if (unsubPending) unsubPending();
     };
-  }, [currentUser]);
+  // canAccess is rebuilt on every render; `permissions` is the state it reads.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser, permissions]);
 
   // localStorage sync hooks removed in favor of Firestore subscriptions
 
@@ -767,7 +797,8 @@ function App() {
     }
   };
 
-  const handleRegister = async (regData) => {
+  const handleRegister = async (rawRegData) => {
+    const regData = { ...rawRegData, identifier: String(rawRegData.identifier || '').trim().toLowerCase() };
     try {
       // Create user in Firebase Auth (throws if already exists)
       await emailRegister(regData.identifier, regData.password);
@@ -876,6 +907,8 @@ function App() {
     localStorage.removeItem("ptf_user");
     setCurrentUser(null);
     setWorkspaceToken(null);
+    setNotificationsList([]);
+    setUnreadNotificationsCount(0);
   };
 
   const handleUpdateUser = (updatedUser) => {
@@ -1238,6 +1271,7 @@ function App() {
               setNotifications={setNotificationsList}
               users={users}
               setActiveTab={setActiveTab}
+              currentUser={currentUser}
             />
           )}
 
@@ -1356,6 +1390,7 @@ function App() {
               customers={customers}
               partners={partners}
               currentUser={currentUser}
+              invoices={invoices}
               onSaveInvoice={handleSaveInvoice}
             />
           )}
@@ -1456,13 +1491,13 @@ function App() {
             </button>
 
             <button
-              onClick={() => { setActiveTab('messages'); setMobileMenuOpen(false); }}
+              onClick={() => { setActiveTab('profile'); setMobileMenuOpen(false); }}
               className={`flex-1 py-1 flex flex-col items-center justify-center gap-0.5 rounded-xl transition-all cursor-pointer ${
-                activeTab === 'messages' ? 'text-primary font-black' : 'text-on-surface-variant hover:text-on-surface'
+                activeTab === 'profile' ? 'text-primary font-black' : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
-              <MessageSquare size={18} />
-              <span className="text-[10px] font-bold">Messages</span>
+              <User size={18} />
+              <span className="text-[10px] font-bold">Profile</span>
             </button>
 
             <button
@@ -1500,14 +1535,14 @@ function App() {
 
             <button
               onClick={() => { 
-                if (canAccess(currentUser?.role, 'fabrication')) setActiveTab('fabrication');
+                if (canAccess(currentUser?.role, 'projects')) setActiveTab('projects');
                 else if (canAccess(currentUser?.role, 'logistics')) setActiveTab('logistics');
                 else if (canAccess(currentUser?.role, 'invoices')) setActiveTab('invoices');
                 else setActiveTab('customers');
                 setMobileMenuOpen(false); 
               }}
               className={`flex-1 py-1 flex flex-col items-center justify-center gap-0.5 rounded-xl transition-all cursor-pointer ${
-                ['fabrication', 'logistics', 'invoices', 'customers'].includes(activeTab) ? 'text-primary font-black' : 'text-on-surface-variant hover:text-on-surface'
+                ['projects', 'logistics', 'invoices', 'customers'].includes(activeTab) ? 'text-primary font-black' : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
               <Hammer size={18} />

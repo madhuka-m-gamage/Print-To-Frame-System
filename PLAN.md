@@ -32,30 +32,30 @@ Order: A1, then A2/A3/A4 (any order), then A7 (CI), then A5 -> A6 whenever brows
 - [x] T0: suite on `main` (PRs #4, #5); verified on Node 22: lint clean, unit 57, api 3, component 3, rules 20, build OK
 
 ### Part B: test authoring
-- [ ] B1: money-path unit tests (before Phase 7 phases 2.1-2.4; characterisation first)
+- [x] B1: money-path unit tests (before Phase 7 phases 2.1-2.4; characterisation first)
 - [ ] B2: supporting-module unit tests (before 6.3 / 6.6)
-- [ ] B3: API handler cases (before 3.6)
-- [ ] B4: Firestore rules cases (before 3.4 / 3.5; replaces Phase 7 prompt 3.1)
-- [ ] B5: component cases (before 4.1)
+- [x] B3: API handler cases (before 3.6)
+- [x] B4: Firestore rules cases (before 3.4 / 3.5; replaces Phase 7 prompt 3.1)
+- [x] B5: component cases (before 4.1)
 - [ ] B6: E2E journeys (needs A6)
 - [ ] Refresh the `TESTING.md` coverage map and characterisation register (manual, run on request after Part B phases land). Prompt: "Refresh docs/04_workflows/TESTING.md: run npm run coverage and update the coverage map (files, tests, kind, gaps), update the characterisation register from the tests that carry a finding comment, and tick the roadmap. Docs only; state only what you read; commit."
 
 ### Phase 7: audit remediation
 Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 before 3.5); listeners must be gated (3.2) before restrictive rules; new collections need rules deployed first (3.4d before 4.x).
-- [ ] 1: quick security and session wins (client only)
-- [ ] 2.1: duplicate Final-invoice guard
-- [ ] 2.2: Completed-stage reversal locks and commission idempotency
-- [ ] 2.3: COD engine
-- [ ] 2.4: Deals pricing and commission
-- [ ] 2.5: receipts
-- [ ] 2.6: invoice edit policy
+- [x] 1: quick security and session wins (client only)
+- [x] 2.1: duplicate Final-invoice guard
+- [x] 2.2: Completed-stage reversal locks and commission idempotency
+- [x] 2.3: COD engine
+- [x] 2.4: Deals pricing and commission
+- [x] 2.5: receipts
+- [x] 2.6: invoice edit policy
 - [x] 3.1: superseded by B4
 - Dependencies: B1 before 2.1-2.4; B3 before 3.6; B4 before 3.4/3.5; B5 before 4.1; B2 before 6.3/6.6; 3.2 and 3.3 before 3.5; 3.4d before 4.x, 5.2, 6.2; 3.5d and 3.6 before 5.3
-- [ ] 3.2: client RBAC prerequisites and matrix defaults
-- [ ] 3.3: live permissions migration (needs approval to write)
-- [ ] 3.4 / 3.4d: additive rules, then deploy (needs approval)
-- [ ] 3.5 / 3.5d: restrictive rules, RBAC E2E on the emulator, deploy (needs approval), then manual role check on the live site
-- [ ] 3.6: admin API
+- [x] 3.2: client RBAC prerequisites and matrix defaults
+- [ ] 3.3: live permissions migration (prepared: Permissions Manager has an "Add missing modules with defaults" button; the live write needs your approval and an Admin to click Save)
+- [ ] 3.4 / 3.4d: additive rules written and tested (D-5 public partner read held, see notes); deploy needs approval
+- [ ] 3.5 / 3.5d: restrictive rules written and tested (not deployed); needs 3.3 and 3.4d first, then the RBAC E2E, your approval to deploy, and a manual role check on the live site
+- [x] 3.6: admin API
 - [ ] 4.1-4.3: payouts, referral lineage, claims and notifications
 - [ ] 5.1-5.3: Google scopes, registration, user lifecycle
 - [ ] 6.1-6.6: leads, atomic ids, customers, deals/fabrication/inspection, logistics, pricing

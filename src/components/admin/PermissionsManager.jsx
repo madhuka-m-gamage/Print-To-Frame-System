@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { usePermissions } from '../../context/PermissionsContext';
+import { usePermissions, DEFAULT_PERMISSIONS } from '../../context/PermissionsContext';
 import Card from '../common/Card';
 import { 
   ShieldAlert, Save, Eye, Plus, Edit2, Trash2, Download, 
@@ -35,6 +35,7 @@ const MODULE_CATEGORIES = [
     modules: [
       { id: 'leads', label: 'Leads', desc: 'Client inquiries & quotation intake' },
       { id: 'pipeline', label: 'Deals', desc: 'Committed projects & stage tracking' },
+      { id: 'quotations', label: 'Quotations', desc: 'Versioned quotes attached to leads & deals' },
       { id: 'customers', label: 'Customers', desc: 'Centralized client registry & profiles' },
     ]
   },
@@ -141,6 +142,28 @@ export default function PermissionsManager({ currentUser }) {
     return JSON.stringify(localPerms) !== JSON.stringify(permissions);
   }, [localPerms, permissions]);
 
+  // Modules the saved matrix has never heard of (for example quotations and receipts
+  // on a matrix saved before they existed). Rules deny anything not listed, so they
+  // need adding; existing cells are never overwritten.
+  const missingModuleIds = useMemo(() => MODULE_CATEGORIES
+    .flatMap(cat => cat.modules.map(m => m.id))
+    .filter(id => ROLES.some(role => localPerms?.[role]?.[id] === undefined && DEFAULT_PERMISSIONS[role]?.[id])),
+  [localPerms]);
+
+  const addMissingModules = () => {
+    setLocalPerms(prev => {
+      const next = { ...prev };
+      for (const role of ROLES) {
+        next[role] = { ...(next[role] || {}) };
+        for (const id of missingModuleIds) {
+          if (next[role][id] === undefined && DEFAULT_PERMISSIONS[role]?.[id]) next[role][id] = { ...DEFAULT_PERMISSIONS[role][id] };
+        }
+      }
+      return next;
+    });
+    toast.info('Default access added for the missing modules. Review, then click Save.');
+  };
+
   const getModulePerms = (role, moduleId) => {
     return localPerms[role]?.[moduleId] || { view: false, create: false, edit: false, delete: false, export: false };
   };
@@ -181,6 +204,10 @@ export default function PermissionsManager({ currentUser }) {
     try {
       const finalPerms = { ...localPerms };
       if (permissions.Admin) finalPerms.Admin = permissions.Admin; // Super Admin is always locked to full
+      // The System Overview module belongs to Admin alone; nothing else is delegable to it.
+      for (const role of ROLES) {
+        finalPerms[role] = { ...(finalPerms[role] || {}), admin: { view: false, create: false, edit: false, delete: false, export: false } };
+      }
       await updatePermissions(finalPerms, currentUser);
       toast.success('Permissions updated & synced across all roles!');
     } catch (err) {
@@ -207,6 +234,21 @@ export default function PermissionsManager({ currentUser }) {
 
   return (
     <Card className="p-5 sm:p-6 space-y-6 relative overflow-visible">
+      {missingModuleIds.length > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-status-warning/10 border border-status-warning/30 text-xs">
+          <span className="text-on-surface">
+            The saved matrix has no entry for {missingModuleIds.length} module(s): <strong>{missingModuleIds.join(', ')}</strong>. Roles get no access to them until they are added.
+          </span>
+          <button
+            type="button"
+            onClick={addMissingModules}
+            className="px-3.5 py-2 bg-status-warning/20 hover:bg-status-warning/30 text-on-surface rounded-xl font-bold border border-status-warning/40 cursor-pointer flex-shrink-0"
+          >
+            Add {missingModuleIds.length} missing module{missingModuleIds.length === 1 ? '' : 's'} with defaults
+          </button>
+        </div>
+      )}
+
       {/* Header & Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-outline-variant/60">
         <div>
@@ -385,6 +427,14 @@ export default function PermissionsManager({ currentUser }) {
                       const perms = getModulePerms(role, mod.id);
                       const preset = getMatchingPreset(perms);
                       const isCellActive = activeCell?.role === role && activeCell?.moduleId === mod.id;
+
+                      if (mod.id === 'admin') {
+                        return (
+                          <td key={role} className="p-2 text-center align-middle">
+                            <span className="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-wider" title="System Overview is restricted to Admin">Admin only</span>
+                          </td>
+                        );
+                      }
 
                       return (
                         <td key={role} className="p-2 text-center align-middle relative">

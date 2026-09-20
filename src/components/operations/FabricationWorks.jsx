@@ -39,6 +39,8 @@ import FabricationCardDetails from './FabricationCardDetails';
 import { PageHeader, FilterBar, StatusBadge, KanbanColumn, KanbanCard, ModalWrapper } from '../common/ui';
 import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateInvoiceId, generateAtomicId } from '../../services/firestoreSync';
 import { stripEmojis, sanitizeTechnicalScope } from '../../utils/validation';
+import { generateText } from '../../services/gemini';
+import { getExistingFinalInvoice } from '../../utils/entityUtils';
 import { STEEL_PROFILES, calculateCutList, mmToFtIn } from '../../utils/cutListEngine';
 
 const STAGES = ["Pending", "Ongoing", "Ready For Inspection", "Revision", "Completed"];
@@ -332,7 +334,7 @@ function FabricationColumn({
             details={details}
             customActions={customActions}
             onClick={() => onCardClick(job)}
-            onMoveBack={() => onMoveBack(job.jobNo)}
+            onMoveBack={isLastStage ? null : () => onMoveBack(job.jobNo)}
             onMoveForward={() => onMove(job.jobNo)}
             onDelete={() => onDelete(job.jobNo)}
             isAdmin={isAdmin}
@@ -353,6 +355,7 @@ export default function FabricationWorks({
   customers, 
   partners, 
   currentUser,
+  invoices = [],
   onSaveInvoice 
 }) {
   const isAdmin = currentUser?.role === "Admin";
@@ -638,7 +641,6 @@ export default function FabricationWorks({
     if (currentStatus === "Ongoing") prevStatusStr = "Pending";
     else if (currentStatus === "Ready For Inspection") prevStatusStr = "Ongoing";
     else if (currentStatus === "Revision") prevStatusStr = "Ongoing";
-    else if (currentStatus === "Completed") prevStatusStr = "Ready For Inspection";
 
     if (!prevStatusStr) return;
 
@@ -678,7 +680,8 @@ export default function FabricationWorks({
     const now = new Date().toISOString();
 
     let finalInvId = null;
-    const needsInvoice = onSaveInvoice && (Number(targetJob.value) || 0) > 0;
+    const existingFinal = getExistingFinalInvoice(invoices, targetJob);
+    const needsInvoice = onSaveInvoice && (Number(targetJob.value) || 0) > 0 && !existingFinal && !targetJob.finalInvoiceGenerated;
     if (needsInvoice) {
       try {
         finalInvId = await generateInvoiceId('Final');
@@ -734,6 +737,7 @@ export default function FabricationWorks({
         dealId: targetJob.dealId || '',
         originalLeadId: targetJob.originalLeadId || '',
         convertedDealId: targetJob.convertedDealId || '',
+        partnerId: targetJob.partnerId || targetJob.agentId || '',
         customerName: custName,
         company: cust?.businessName || "",
         phone: targetJob.phone || cust?.phone || "",
@@ -750,7 +754,10 @@ export default function FabricationWorks({
         description: '25% Final Settlement Invoice generated in Invoices.'
       });
     } else {
-      toast.success(`Job ${targetJob.jobNo} passed QA and marked Completed!`);
+      toast.success(
+        `Job ${targetJob.jobNo} passed QA and marked Completed!`,
+        existingFinal ? { description: `Final invoice ${existingFinal.id || existingFinal._firestoreId} already exists, so no duplicate was created.` } : undefined
+      );
     }
 
     setProjects(projects.map(p => p.jobNo === targetJob.jobNo ? updatedJobObj : p));
@@ -810,17 +817,7 @@ export default function FabricationWorks({
     try {
       const prompt = `Draft a highly professional, polite WhatsApp update for "Print To Frame". Customer: ${job.customerName}, Job: ${job.jobNo} (${job.scope}), Status: ${job.status}. Deadline: ${job.deadline}. Make it friendly.`;
       
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setWhatsappUpdate(data.text);
-      } else {
-        setWhatsappUpdate("Failed to generate update. Check API connection.");
-      }
+      setWhatsappUpdate(await generateText(prompt));
     } catch {
       setWhatsappUpdate("Failed to generate update. Please try again.");
     } finally {

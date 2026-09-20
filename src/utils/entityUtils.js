@@ -71,3 +71,29 @@ export function matchesEntity(record, target) {
 
   return false;
 }
+
+const isFinalInvoice = (inv) => inv.type === 'Final' || String(inv.id || '').includes('INV-FIN');
+const isCancelled = (inv) => ['cancelled', 'void'].includes(String(inv.status || '').toLowerCase());
+
+/**
+ * Finds a live Final invoice already issued for an entity (or list of entities).
+ * Matches on the shared id aliases and on jobNo / linkedJobNo, and ignores
+ * cancelled or void invoices so a voided Final does not block a replacement.
+ * Client-side only: two sessions acting at once can still both miss each other.
+ * @param {Object[]} invoices
+ * @param {Object|Object[]} entity - A lead, deal or project, or several of them
+ * @returns {Object|null}
+ */
+export function getExistingFinalInvoice(invoices, entity) {
+  const entities = (Array.isArray(entity) ? entity : [entity]).filter(Boolean);
+  const jobNos = new Set(
+    entities.flatMap(e => [e.jobNo, e.linkedJobNo]).filter(Boolean).map(String)
+  );
+  return (invoices || []).find(inv =>
+    isFinalInvoice(inv) && !isCancelled(inv) && (
+      entities.some(e => matchesEntity(inv, e))
+      || jobNos.has(String(inv.jobNo || ''))
+      || jobNos.has(String(inv.linkedJobNo || ''))
+    )
+  ) || null;
+}
