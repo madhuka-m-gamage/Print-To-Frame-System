@@ -26,6 +26,7 @@ import { usePermissions } from '../../context/PermissionsContext';
 import { sendTemplatedEmail } from '../../services/mailer';
 import { deleteUserAccount, resetUserPassword } from '../../services/adminUsers';
 import { logActivity } from '../../services/auditLog';
+import { invoicesForLineage } from '../../utils/leadLineage';
 
 export default function Partners({ 
   partners = [], 
@@ -242,7 +243,10 @@ export default function Partners({
       const lPname = String(lead.partnerName || lead.agentName || '').toLowerCase();
       return lPid === pid || lPname === pname || (lead.source === 'Referral' && (lPid === pid || lPname === pname));
     }).map(lead => {
-      const leadInvoices = invoices.filter(inv => inv.leadId === lead.id || inv.customerId === lead.email || inv.customerName === lead.name);
+      const lineageInvoices = invoicesForLineage(lead, invoices);
+      const leadInvoices = lineageInvoices.length
+        ? lineageInvoices
+        : invoices.filter(inv => inv.customerId === lead.email || inv.customerName === lead.name);
       const totalInvoiced = leadInvoices.reduce((s, i) => s + Number(i.amount || 0), 0);
       const totalPaid = leadInvoices.filter(i => i.status === 'Paid').reduce((s, i) => s + Number(i.amount || 0), 0);
       
@@ -278,7 +282,7 @@ export default function Partners({
         commState = 'Cancelled';
       } else if (lead.payoutStatus === 'Paid' || lead.payoutStatus === 'Settled') {
         commState = 'Paid & Settled';
-      } else if (paymentStatus === '100% Fully Settled' || lead.referralStatus === 'Eligible for Payout' || lead.stage === 'Delivered' || lead.stage === 'Completed') {
+      } else if (paymentStatus === '100% Fully Settled' || lead.referralStatus === 'Eligible for Payout') {
         commState = 'Eligible for Payout';
       } else if (paymentStatus === '75% Advance Paid' || ['Design / Review', 'Advance Paid', 'Production', 'Fabrication', 'Logistics'].includes(lead.stage)) {
         commState = 'Accrued (In Production)';
