@@ -116,35 +116,40 @@ npm run dev:emulated                                                            
 `.nvmrc` pins Node 22 and CI reads it (`node-version-file`). Some test dependencies need a recent Node: `jsdom` 29 needs 20.19 or later, and crashes on older 20.x. `package.json` deliberately has no `engines` field, because Vercel picks its build runtime from it and this change is about tests only.
 
 ## Coverage map
-Snapshot from `npm run coverage` (unit and API tests only; overall about 4% of `src` and `api`, almost all in `utils`). "Real" means the tests assert intended behaviour; "characterisation" means they record current behaviour, defects included. Refresh this table when tests land.
+Snapshot from `npm run coverage` (unit and API tests only; overall about 6% of `src` and `api`, almost all in `utils`). "Real" means the tests assert intended behaviour; "characterisation" means they record current behaviour, defects included. Refresh this table when tests land.
 
 | Code | Covered by | Kind | Gaps |
 |---|---|---|---|
 | `src/utils/entityUtils.js` | `tests/unit/entityUtils.test.js`, `factories.test.js` | real | alias cases beyond the nine recognised fields |
 | `src/utils/cutListEngine.js` | `tests/unit/cutListEngine.test.js` | real (about 97%) | waste estimate is linear, not bin-packed |
 | `src/utils/dateUtils.js` | `tests/unit/dateUtils.test.js` | real (about 87%) | a few branches |
-| `src/utils/logisticsEngine.js` | `tests/unit/logisticsEngine.test.js` | real | duplicate Final invoices and advance-only COD not characterised |
+| `src/utils/logisticsEngine.js` | `tests/unit/logisticsEngine.test.js` | real, plus characterisation of duplicate Finals and advance-only COD | flips with Phase 7 2.3 |
 | `src/constants/emailTemplates.js` | `tests/unit/emailTemplates.test.js` | real | |
 | `src/context/PermissionsContext.jsx` | `tests/unit/permissions.test.js`, `tests/component/StatusBadge.test.jsx` | real | receipts and quotations rows |
 | `api/_lib/firebaseAdmin.js` | `tests/unit/firebaseAdmin.test.js` | real | initialisation paths |
 | `api/admin-user.js` | `tests/api/adminUser.test.js` (405, missing token, CORS), `tests/integration/adminUser.test.js` (Admin SDK calls) | real | invalid token, non-admin, deactivated caller |
 | `api/generate.js`, `api/send-email.js` | none | | auth gate, origin check, model fallback (B3) |
 | `firestore.rules` | `tests/integration/firestoreRules.test.js` (`users`, catch-all), `invoiceNumbering.test.js` (`counters`) | real | most of the 20 match blocks (B4) |
-| `src/services/pricingEngine.js` | none | | tiers, discount, commission (B1) |
-| `src/utils/invoiceTemplate.js`, `receiptTemplate.js` | none | | totals, milestone scaling (B1) |
+| `src/services/pricingEngine.js` | `tests/unit/pricingEngine.test.js` | real (tiers, cost stack) plus characterisation (discount, commission, Profit/SQ) | rows above |
+| `src/utils/invoiceTemplate.js`, `receiptTemplate.js` | `tests/unit/invoiceTemplate.test.js`, `receiptTemplate.test.js` | real (milestone maths, words, labels) plus characterisation (discount/tax ignored) | print output only asserted by substring |
 | `src/utils/validation.js`, `stringMatch.js`, `csvExport.js` | none | | (B2) |
-| `src/services/firestoreSync.js` | none | | pure exports only, needs `firebase` mocked (B1) |
+| `src/services/firestoreSync.js` | `tests/unit/firestoreSync.test.js` | real | pure exports only (`deriveReceiptId`, `generateSequentialId`); firebase mocked; the Firestore calls and `generateAtomicId` are untested here |
 | `src/components/**`, `App.jsx` | `StatusBadge` smoke test only | | large components; extract logic first (B5) |
 | Browser journeys | `tests/e2e/smoke.spec.js` (sign-in) | real | quotation to invoice, deal completion, RBAC (B6) |
 
 ## Characterisation register
-Tests that deliberately lock in a known defect, with the finding that will change them. **Empty for now**; it fills in as Part B lands. Add a row whenever you write one.
+Tests that deliberately lock in a known defect, with the finding that will change them. Add a row whenever you write one.
 
 | Test | Records this behaviour | Changes with |
 |---|---|---|
-| _none yet_ | | |
+| `pricingEngine.test.js` "always takes a hidden 15% discount" | `calculateCost` deducts 15% of total cost with no way to turn it off | cost-calculator-quotation finding 2 (Phase 7 6.6) |
+| `pricingEngine.test.js` "charges a fixed 53.5 per sq ft sales cost" | every tier charges 53.5 per sq ft whatever the partner rate | cost-calculator-quotation finding 3 (Phase 7 6.6) |
+| `pricingEngine.test.js` "computes Profit / SQ as (grossProfit + logistics + qa + salesCost) / sqFt" | `internalCostPerSq` includes costs the audit says it should not | cost-calculator-quotation finding 1 (Phase 7 6.6) |
+| `invoiceTemplate.test.js` "scales each line item ... ignores discountPct and taxPct" | printed line totals ignore discount and tax | invoicing Phase 2 item 5 (Phase 7 2.4) |
+| `logisticsEngine.test.js` "doubles the COD balance when a job has two unpaid Final invoices" | duplicate Finals both count toward COD | invoicing D-2, logistics D-4 (Phase 7 2.3) |
+| `logisticsEngine.test.js` "reports nothing to collect for a job with only a paid Advance invoice" | advance-only job shows "all settled" | logistics D-4 (Phase 7 2.3) |
 
-Planned entries (Part B): hidden 15% discount and fixed commission in `pricingEngine` (cost-calculator-quotation findings 2 and 3); `Profit / SQ` formula (finding 1); duplicate `INV-FIN` invoices (invoicing D-1); COD totals for duplicate Finals and advance-only jobs (invoicing D-2, logistics D-4); "Disburse Payout" writing nothing (partners D-1); deactivated caller passing `api/admin-user.js` (user-management-rbac finding 1).
+Planned entries (later Part B): duplicate `INV-FIN` invoices (invoicing D-1, B5); "Disburse Payout" writing nothing (partners D-1, B5); deactivated caller passing `api/admin-user.js` (user-management-rbac finding 1, B3); open `quotations`, `messages`, `users` and `counters` rules (B4).
 
 ## Roadmap
 Part A (setup) is done: all five layers and CI exist. Part B fills them in; each item is independent. B1 and B4 have deadlines because Phase 7 changes the behaviour they record.

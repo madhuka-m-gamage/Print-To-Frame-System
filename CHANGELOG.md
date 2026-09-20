@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- B1 money-path unit tests: `pricingEngine`, `invoiceTemplate`, `receiptTemplate`, `firestoreSync` pure helpers and extra COD cases in `logisticsEngine`; six characterisation tests recorded in the `TESTING.md` register. No `src/` or `api/` changes.
 - `PLAN.md` now records the Phase 7 workflow (branch, local test, `staging`, then `main`), the owner decisions and the step dependencies; T0 (suite on `main`) is ticked.
 - Coverage map refresh is a manual, tracked task in `PLAN.md` (not required per change).
 - `TESTING.md` is now the planning reference: a "Planning a change" checklist, a coverage map, a characterisation register, the Part B roadmap and known gotchas. Root `CLAUDE.md` tells planning sessions to read it.
