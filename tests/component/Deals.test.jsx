@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../helpers/renderWithProviders';
-import { makeDeal, makeInvoice } from '../helpers/factories';
+import { makeDeal, makeInvoice, makePartner } from '../helpers/factories';
 
 vi.mock('../../src/services/firestoreSync', () => ({
   COLLECTIONS: { LEADS: 'leads', INVOICES: 'invoices', PARTNERS: 'partners', LOGISTICS: 'logistics', CUSTOMERS: 'customers' },
@@ -24,16 +24,16 @@ const { generateInvoiceId } = sync;
 
 const admin = { role: 'Admin', name: 'Admin', identifier: 'admin@example.com' };
 
-function renderDeals(props = {}) {
-  const deal = makeDeal({ id: 'D-1', name: 'Kasun Silva', stage: 'Hand Over', value: 100000, isDeal: true });
+function renderDeals({ dealOverrides = {}, ...props } = {}) {
+  const deal = makeDeal({ id: 'D-1', name: 'Kasun Silva', stage: 'Hand Over', value: 100000, isDeal: true, ...dealOverrides });
   const leads = [deal];
   const setLeads = vi.fn((updater) => (typeof updater === 'function' ? updater(leads) : updater));
   const onSaveInvoice = vi.fn();
-  renderWithProviders(
+  const view = renderWithProviders(
     <Deals leads={leads} setLeads={setLeads} currentUser={admin} onSaveInvoice={onSaveInvoice} {...props} />,
     { role: 'Admin' }
   );
-  return { deal, setLeads, onSaveInvoice };
+  return { deal, setLeads, onSaveInvoice, unmount: view.unmount };
 }
 
 beforeEach(() => vi.clearAllMocks());
@@ -65,5 +65,35 @@ describe('Deals completion wiring', () => {
     const { onSaveInvoice } = renderDeals({ invoices: [cancelled] });
     fireEvent.click(screen.getByRole('button', { name: /for Kasun Silva/i }));
     await waitFor(() => expect(onSaveInvoice).toHaveBeenCalledTimes(1));
+  });
+});
+
+describe('Deals Completed-stage locks and commission', () => {
+  it('offers a backward move from Hand Over but not from Completed', () => {
+    const { unmount } = renderDeals();
+    expect(screen.queryByRole('button', { name: /backward/i })).toBeInTheDocument();
+    unmount();
+    renderDeals({ dealOverrides: { stage: 'Completed' } });
+    expect(screen.queryByRole('button', { name: /backward/i })).not.toBeInTheDocument();
+  });
+
+  const agentDeal = { agentId: 'P-1', totalSqFt: 10 };
+  const partner = () => makePartner({ partnerId: 'P-1', name: 'Lanka Art Studio', commissionRate: 53.5, pending: 0, totalSqFt: 0 });
+
+  it('accrues commission once and records commissionAccrued on completion', async () => {
+    const { setLeads } = renderDeals({ dealOverrides: agentDeal, partners: [partner()], setPartners: vi.fn() });
+    fireEvent.click(screen.getByRole('button', { name: /for Kasun Silva/i }));
+    await waitFor(() => expect(sync.updateDocument).toHaveBeenCalledWith('leads', expect.anything(), expect.objectContaining({ stage: 'Completed', commissionAccrued: true })));
+    expect(sync.updateDocument).toHaveBeenCalledWith('partners', expect.anything(), { pending: 535, totalSqFt: 10 });
+    expect(setLeads).toHaveBeenCalled();
+  });
+
+  it('does not accrue commission again when the deal is already marked commissionAccrued', async () => {
+    const setPartners = vi.fn();
+    renderDeals({ dealOverrides: { ...agentDeal, commissionAccrued: true }, partners: [partner()], setPartners });
+    fireEvent.click(screen.getByRole('button', { name: /for Kasun Silva/i }));
+    await waitFor(() => expect(sync.updateDocument).toHaveBeenCalledWith('leads', expect.anything(), expect.objectContaining({ stage: 'Completed' })));
+    expect(setPartners).not.toHaveBeenCalled();
+    expect(sync.updateDocument).not.toHaveBeenCalledWith('partners', expect.anything(), expect.anything());
   });
 });

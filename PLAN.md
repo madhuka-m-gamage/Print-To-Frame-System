@@ -44,7 +44,7 @@ Order: A1, then A2/A3/A4 (any order), then A7 (CI), then A5 -> A6 whenever brows
 Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 before 3.5); listeners must be gated (3.2) before restrictive rules; new collections need rules deployed first (3.4d before 4.x).
 - [x] 1: quick security and session wins (client only)
 - [x] 2.1: duplicate Final-invoice guard
-- [ ] 2.2: Completed-stage reversal locks and commission idempotency
+- [x] 2.2: Completed-stage reversal locks and commission idempotency
 - [ ] 2.3: COD engine
 - [ ] 2.4: Deals pricing and commission
 - [ ] 2.5: receipts
