@@ -127,8 +127,8 @@ Snapshot from `npm run coverage` (unit and API tests only; overall about 6% of `
 | `src/constants/emailTemplates.js` | `tests/unit/emailTemplates.test.js` | real | |
 | `src/context/PermissionsContext.jsx` | `tests/unit/permissions.test.js`, `tests/component/StatusBadge.test.jsx` | real | receipts and quotations rows |
 | `api/_lib/firebaseAdmin.js` | `tests/unit/firebaseAdmin.test.js` | real | initialisation paths |
-| `api/admin-user.js` | `tests/api/adminUser.test.js` (405, missing token, CORS), `tests/integration/adminUser.test.js` (Admin SDK calls) | real | invalid token, non-admin, deactivated caller |
-| `api/generate.js`, `api/send-email.js` | none | | auth gate, origin check, model fallback (B3) |
+| `api/admin-user.js` | `tests/api/adminUser.test.js` (405, missing token, CORS), `adminUserAuth.test.js` (invalid token, pending, non-Admin, payload checks), `tests/integration/adminUser.test.js` (Admin SDK calls) | real, plus characterisation of the deactivated caller and Manager rejection | flips with Phase 7 3.6; create, reset and delete are covered only by the emulator file |
+| `api/generate.js`, `api/send-email.js` | `tests/api/generate.test.js`, `sendEmail.test.js` | real | generate: auth gate, origin echo, oversize audio, model fallback (400 stops; 404, 503, 429 fall through); send-email: auth gate, payload checks, template render, missing SMTP env. The hardcoded origin list is asserted only through generate |
 | `firestore.rules` | `tests/integration/firestoreRules.test.js` (`users`, catch-all), `invoiceNumbering.test.js` (`counters`) | real | most of the 20 match blocks (B4) |
 | `src/services/pricingEngine.js` | `tests/unit/pricingEngine.test.js` | real (tiers, cost stack) plus characterisation (discount, commission, Profit/SQ) | rows above |
 | `src/utils/invoiceTemplate.js`, `receiptTemplate.js` | `tests/unit/invoiceTemplate.test.js`, `receiptTemplate.test.js` | real (milestone maths, words, labels) plus characterisation (discount/tax ignored) | print output only asserted by substring |
@@ -147,9 +147,11 @@ Tests that deliberately lock in a known defect, with the finding that will chang
 | `pricingEngine.test.js` "computes Profit / SQ as (grossProfit + logistics + qa + salesCost) / sqFt" | `internalCostPerSq` includes costs the audit says it should not | cost-calculator-quotation finding 1 (Phase 7 6.6) |
 | `invoiceTemplate.test.js` "scales each line item ... ignores discountPct and taxPct" | printed line totals ignore discount and tax | invoicing Phase 2 item 5 (Phase 7 2.4) |
 | `logisticsEngine.test.js` "doubles the COD balance when a job has two unpaid Final invoices" | duplicate Finals both count toward COD | invoicing D-2, logistics D-4 (Phase 7 2.3) |
+| `adminUserAuth.test.js` "lets a Deactivated caller with isApproved true through the approval gate" | `admin-user.js` trusts `isApproved` and ignores `status: 'Deactivated'` | user-management-rbac finding 1 (Phase 7 3.6) |
+| `adminUserAuth.test.js` "rejects a Manager caller today because only Admin is allowed" | only Admin may call the endpoint | employees D4 (Phase 7 3.6) |
 | `logisticsEngine.test.js` "reports nothing to collect for a job with only a paid Advance invoice" | advance-only job shows "all settled" | logistics D-4 (Phase 7 2.3) |
 
-Planned entries (later Part B): duplicate `INV-FIN` invoices (invoicing D-1, B5); "Disburse Payout" writing nothing (partners D-1, B5); deactivated caller passing `api/admin-user.js` (user-management-rbac finding 1, B3); open `quotations`, `messages`, `users` and `counters` rules (B4).
+Planned entries (later Part B): duplicate `INV-FIN` invoices (invoicing D-1, B5); "Disburse Payout" writing nothing (partners D-1, B5); open `quotations`, `messages`, `users` and `counters` rules (B4).
 
 ## Roadmap
 Part A (setup) is done: all five layers and CI exist. Part B fills them in; each item is independent. B1 and B4 have deadlines because Phase 7 changes the behaviour they record.
