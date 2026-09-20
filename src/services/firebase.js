@@ -103,11 +103,45 @@ export const getAccessToken = async () => {
   return null;
 };
 
+// Drive and Contacts scopes are requested on demand, not at sign-in, so customers and partners
+// are never asked for them. Google access tokens last an hour and Firebase does not refresh
+// them, so each is cached with an expiry a little short of that.
+const SCOPED_TOKEN_PREFIX = 'ptf_google_token:';
+const SCOPED_TOKEN_TTL_MS = 55 * 60 * 1000;
+
+const readScopedToken = (scope) => {
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(SCOPED_TOKEN_PREFIX + scope) || 'null');
+    return stored && stored.expiresAt > Date.now() ? stored.token : null;
+  } catch {
+    return null;
+  }
+};
+
+export const getScopedAccessToken = async (scope) => {
+  const cached = readScopedToken(scope);
+  if (cached) return cached;
+
+  const scopedProvider = new GoogleAuthProvider();
+  scopedProvider.addScope(scope);
+  if (auth.currentUser?.email) scopedProvider.setCustomParameters({ login_hint: auth.currentUser.email });
+  const result = await signInWithPopup(auth, scopedProvider);
+  const token = GoogleAuthProvider.credentialFromResult(result)?.accessToken || null;
+  if (!token) throw new Error('Google did not grant access. Please try again.');
+  try {
+    sessionStorage.setItem(SCOPED_TOKEN_PREFIX + scope, JSON.stringify({ token, expiresAt: Date.now() + SCOPED_TOKEN_TTL_MS }));
+  } catch { /* storage unavailable: the token still works for this call */ }
+  return token;
+};
+
 export const logout = async () => {
   await auth.signOut();
   cachedAccessToken = null;
   if (typeof window !== 'undefined') {
     sessionStorage.removeItem('ptf_google_access_token');
+    Object.keys(sessionStorage)
+      .filter((k) => k.startsWith(SCOPED_TOKEN_PREFIX))
+      .forEach((k) => sessionStorage.removeItem(k));
   }
 };
 
