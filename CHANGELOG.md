@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- B3 API handler tests: `admin-user` caller checks (two characterisation tests), `generate` gate and model fallback, `send-email` gate and payload; Firebase, Gemini and SMTP mocked. No `api/` changes.
 - B1 money-path unit tests: `pricingEngine`, `invoiceTemplate`, `receiptTemplate`, `firestoreSync` pure helpers and extra COD cases in `logisticsEngine`; six characterisation tests recorded in the `TESTING.md` register. No `src/` or `api/` changes.
 - `PLAN.md` now records the Phase 7 workflow (branch, local test, `staging`, then `main`), the owner decisions and the step dependencies; T0 (suite on `main`) is ticked.
 - Coverage map refresh is a manual, tracked task in `PLAN.md` (not required per change).
