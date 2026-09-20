@@ -59,6 +59,18 @@ export const DEFAULT_SAW_KERF_MM = 3; // 3mm abrasive chop-saw kerf allowance pe
  * @param {number} mm 
  * @returns {string} e.g. "9' 10 1/8\"" or "0' 11 3/4\""
  */
+// Default frame size for a job that has only a contract area: a 3:2 rectangle of exactly that
+// area, so the cut-list is never sized off a smaller frame than the customer paid for.
+export function defaultFrameDimensions(totalSqFt) {
+  const sqFt = Number(totalSqFt);
+  if (!(sqFt > 0)) return { widthMm: 900, heightMm: 600 };
+  const areaMm2 = sqFt * 144 * 25.4 * 25.4;
+  return {
+    widthMm: Math.round(Math.sqrt(areaMm2 * 1.5)),
+    heightMm: Math.round(Math.sqrt(areaMm2 / 1.5)),
+  };
+}
+
 export function mmToFtIn(mm) {
   if (!mm || isNaN(mm) || mm <= 0) return "0' 0\"";
   const totalInches = mm / 25.4;
@@ -330,6 +342,8 @@ export function calculateCutList({
     profile,
     cutItems,
     hardware,
+    vRibCount,
+    hRibCount,
     summary: {
       totalCutPieces: totalCuts,
       netLengthMeters: Math.round((totalLengthMm / 1000) * 100) / 100,

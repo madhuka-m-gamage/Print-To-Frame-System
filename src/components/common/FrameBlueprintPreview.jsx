@@ -10,6 +10,8 @@ export default function FrameBlueprintPreview({
   width = 600,
   height = 400,
   depth = 50,
+  vRibCount = 0,
+  hRibCount = 0,
   alloy = "ASTM A36 Galvanized",
   jobNo = "PTF-CAD",
   className = ""
@@ -126,21 +128,15 @@ export default function FrameBlueprintPreview({
           rx="1"
         />
 
-        {/* Center Tension Bracing Cross */}
-        <line 
-          x1={startX + 12} y1={startY + 12} 
-          x2={startX + renderW - 12} y2={startY + renderH - 12} 
-          stroke="rgba(0, 218, 243, 0.25)" 
-          strokeWidth="0.75" 
-          strokeDasharray="4 4" 
-        />
-        <line 
-          x1={startX + renderW - 12} y1={startY + 12} 
-          x2={startX + 12} y2={startY + renderH - 12} 
-          stroke="rgba(0, 218, 243, 0.25)" 
-          strokeWidth="0.75" 
-          strokeDasharray="4 4" 
-        />
+        {/* Stiffener ribs, equally spaced to match the cut-list */}
+        {Array.from({ length: vRibCount }, (_, i) => {
+          const x = startX + 12 + ((renderW - 24) * (i + 1)) / (vRibCount + 1);
+          return <line key={`v${i}`} x1={x} y1={startY + 12} x2={x} y2={startY + renderH - 12} stroke="rgba(0, 218, 243, 0.45)" strokeWidth="1.5" />;
+        })}
+        {Array.from({ length: hRibCount }, (_, i) => {
+          const y = startY + 12 + ((renderH - 24) * (i + 1)) / (hRibCount + 1);
+          return <line key={`h${i}`} x1={startX + 12} y1={y} x2={startX + renderW - 12} y2={y} stroke="rgba(0, 218, 243, 0.45)" strokeWidth="1.5" />;
+        })}
 
         {/* Dimension Callouts: Width */}
         <g stroke="#98d0da" strokeWidth="0.75" opacity="0.8">
@@ -194,7 +190,7 @@ export default function FrameBlueprintPreview({
 
       {/* Micro Spec Footer */}
       <div className="flex items-center justify-between pt-2 border-t border-outline-variant/30 text-[9px] font-mono text-on-surface-variant">
-        <span>TOLERANCE: ±0.05mm</span>
+        <span>TOLERANCE: ±2.0mm (Structural Steel)</span>
         <span className="text-secondary">FABRICATION_READY</span>
       </div>
     </div>

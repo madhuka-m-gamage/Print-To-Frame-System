@@ -36,7 +36,7 @@ import {
 } from '../common/ui';
 import { toast } from '../../utils/toast';
 import { stripEmojis, sanitizeTechnicalScope } from '../../utils/validation';
-import { calculateCutList, mmToFtIn, STEEL_PROFILES } from '../../utils/cutListEngine';
+import { calculateCutList, defaultFrameDimensions, mmToFtIn, STEEL_PROFILES } from '../../utils/cutListEngine';
 
 export default function FabricationCardDetails({ 
   job, 
@@ -57,8 +57,8 @@ export default function FabricationCardDetails({
     assignee: job.assignee || '',
     flexReceived: job.flexReceived || false,
     blueprints: job.blueprints || [],
-    frameWidth: job.frameWidth || (job.totalSqFt ? Math.round(Math.sqrt(job.totalSqFt * 144) * 25.4) : 900),
-    frameHeight: job.frameHeight || (job.totalSqFt ? Math.round(Math.sqrt(job.totalSqFt * 144) * 25.4 * 0.67) : 600),
+    frameWidth: job.frameWidth || defaultFrameDimensions(job.totalSqFt).widthMm,
+    frameHeight: job.frameHeight || defaultFrameDimensions(job.totalSqFt).heightMm,
     frameDepth: job.frameDepth || 45,
     checklist: {
       materialsCut: job.checklist?.materialsCut || false,
@@ -623,6 +623,8 @@ export default function FabricationCardDetails({
                 width={Number(form.frameWidth) || 900}
                 height={Number(form.frameHeight) || 600}
                 depth={Number(form.frameDepth) || 45}
+                vRibCount={cutList.vRibCount}
+                hRibCount={cutList.hRibCount}
                 material={STEEL_PROFILES[form.profileKey]?.label || 'Box Iron'}
                 unit="mm"
                 showDimensions={true}

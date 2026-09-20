@@ -30,3 +30,5 @@ Fabrication Kanban over `projects` (Pending, Ongoing, Ready For Inspection, Revi
 - Completed is terminal: no backward move from it, and bulk change cannot set Completed. Deal completion sets `commissionAccrued: true` and skips commission accrual when it is already set.
 
 - Stock bars: `packStockBars` in `src/utils/cutListEngine.js` packs pieces first-fit-decreasing, one kerf per cut.
+
+- A job with only `totalSqFt` gets a 3:2 default frame of that full area (`defaultFrameDimensions`). `calculateCutList` returns `vRibCount` / `hRibCount`, which the blueprint draws. New projects carry `customerId` (email, else NIC). Job deletion is Admin only (case-insensitive) and audit logged as `PROJECT_DELETED`.
