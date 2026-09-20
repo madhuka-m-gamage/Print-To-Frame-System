@@ -415,10 +415,13 @@ export default function LeadCardDetails({
 
   const activePricing = useMemo(() => {
     if (calcSqFt > 0) {
-      return calculateCost(calcTier, calcSqFt);
+      // A partner referral pays the partner's rate and keeps the 15% customer discount the
+      // referral page promises; a direct lead has neither.
+      const isReferral = Boolean(lead.partnerId || lead.source === 'Referral');
+      return calculateCost(calcTier, calcSqFt, isReferral ? 15 : 0, isReferral ? Number(lead.commissionRate) || 0 : 0);
     }
     return null;
-  }, [calcTier, calcSqFt]);
+  }, [calcTier, calcSqFt, lead.partnerId, lead.source, lead.commissionRate]);
 
   const applyPricingToLead = () => {
     if (activePricing) {

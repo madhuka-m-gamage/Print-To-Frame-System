@@ -97,6 +97,8 @@ const CostCalculator = () => {
   const [height, setHeight] = useState(5);
   const [sqFt, setSqFt] = useState(50);
   const [activeTier, setActiveTier] = useState("0-50");
+  const [discountPct, setDiscountPct] = useState(0);
+  const [commissionRate, setCommissionRate] = useState(0);
 
   useEffect(() => {
     const area = Math.max(0, length * height);
@@ -109,8 +111,8 @@ const CostCalculator = () => {
 
   const pricing = useMemo(() => {
     if (sqFt <= 0) return {};
-    return calculateCost(activeTier, sqFt) || {};
-  }, [activeTier, sqFt]);
+    return calculateCost(activeTier, sqFt, discountPct, commissionRate) || {};
+  }, [activeTier, sqFt, discountPct, commissionRate]);
 
   const tierInfo = pricingTiers[activeTier] || {};
 
@@ -201,6 +203,31 @@ const CostCalculator = () => {
         </div>
       </div>
 
+      {/* Optional discount and commission (direct leads use neither) */}
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Discount %</span>
+          <input
+            type="number"
+            min="0"
+            max="100"
+            value={discountPct}
+            onChange={(e) => setDiscountPct(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+            className="px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm font-mono outline-none focus:ring-2 focus:ring-primary/50 text-on-surface"
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Partner commission (LKR / sq ft)</span>
+          <input
+            type="number"
+            min="0"
+            value={commissionRate}
+            onChange={(e) => setCommissionRate(Math.max(0, Number(e.target.value) || 0))}
+            className="px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm font-mono outline-none focus:ring-2 focus:ring-primary/50 text-on-surface"
+          />
+        </label>
+      </div>
+
       {/* Manual Tier Select (Overrides) */}
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
@@ -283,7 +310,7 @@ const CostCalculator = () => {
                   <BreakdownRow
                     label="Sales Commission"
                     unit="SQFT"
-                    rate={tierInfo.costSalesRate}
+                    rate={commissionRate}
                     amount={ct(pricing.costSalesAmount)}
                     icon={DollarSign}
                   />
@@ -301,7 +328,7 @@ const CostCalculator = () => {
                     amount={ct(pricing.totalCost)}
                   />
                   <BreakdownRow
-                    label="Agent Discount (15%)"
+                    label={`Discount (${discountPct || 0}%)`}
                     isDeduction={true}
                     amount={ct(pricing.discount)}
                   />
@@ -376,7 +403,7 @@ const CostCalculator = () => {
                     <BreakdownRow
                       label="Sales Commission"
                       unit="SQFT"
-                      rate={tierInfo.costSalesRate}
+                      rate={commissionRate}
                       amount={ct(pricing.costSalesAmount)}
                       icon={DollarSign}
                     />
@@ -424,8 +451,9 @@ const CostCalculator = () => {
                   Calculation Method
                 </h4>
                 <p className="text-[10px] text-yellow-500 font-semibold leading-relaxed">
-                  A 15% agent discount is applied to the gross estimate. Fixed costs (Logistics + QA) are
-                  included before the profit margin is applied.
+                  An optional discount is applied to the gross estimate, and sales commission is charged only
+                  when a rate is entered (a partner referral). Fixed costs (Logistics + QA) are included
+                  before the profit margin is applied.
                 </p>
               </div>
             </div>

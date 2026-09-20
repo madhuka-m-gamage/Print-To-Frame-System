@@ -25,3 +25,5 @@ Computes price from sq ft via a five-tier engine, then staff draft versioned quo
 - Pricing constants (118.5 manufacturing per sq ft, tier table, 53.5 commission, 15% discount) live in `pricingEngine.js`.
 - `cutListEngine.js` and `FrameBlueprintPreview.jsx` belong to Fabrication; `companyInfo.js` is unused.
 - `quotations` rules allow any authenticated user to read and write; there is no `quotations` permission module.
+
+- `calculateCost(tier, sqFt, discountPct = 0, commissionRate = 0)`: no hidden discount or commission. Referral leads pass the partner's rate and 15%; direct leads pass neither. A quotation becomes `Invoiced` once its Advance invoice exists; use `isAcceptedQuote` (`src/utils/quotationStatus.js`) wherever a quote must count as accepted.

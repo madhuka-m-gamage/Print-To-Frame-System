@@ -58,7 +58,7 @@ Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 be
 - [x] 3.6: admin API
 - [ ] 4.1-4.3: payouts, referral lineage, claims and notifications
 - [ ] 5.1-5.3: Google scopes, registration, user lifecycle
-- [ ] 6.1-6.6: leads, atomic ids, customers, deals/fabrication/inspection, logistics, pricing
+- [ ] 6.1-6.6: leads, atomic ids, customers, deals/fabrication/inspection, logistics (6.6 pricing done: PR pending)
 - [ ] 7: UX and feature backlog
 - [ ] 8.1 / 8.2: docs sync, folder move
 

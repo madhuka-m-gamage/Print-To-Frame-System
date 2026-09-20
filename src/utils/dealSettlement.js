@@ -1,4 +1,5 @@
 import { matchesEntity } from './entityUtils';
+import { isAcceptedQuote } from './quotationStatus';
 
 /**
  * Amounts for the Final invoice raised when a deal completes. An Accepted
@@ -10,7 +11,7 @@ import { matchesEntity } from './entityUtils';
 export function getFinalInvoiceAmounts(deal, quotations) {
   const linked = (quotations || []).filter(q => matchesEntity(q, deal));
   const byVersionDesc = (a, b) => (Number(b.version) || 1) - (Number(a.version) || 1);
-  const accepted = linked.filter(q => q.status === 'Accepted').sort(byVersionDesc)[0] || null;
+  const accepted = linked.filter(q => isAcceptedQuote(q.status)).sort(byVersionDesc)[0] || null;
   const quote = accepted || linked[0] || null;
 
   const quotedTotal = accepted ? Number(accepted.grandTotal) || 0 : 0;

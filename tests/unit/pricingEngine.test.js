@@ -25,61 +25,61 @@ describe('pricingEngine', () => {
       expect(calculateCost('0-50', -1)).toBeNull();
     });
 
-    it('builds the cost stack from manufacturing, logistics, QA and sales cost, plus margin', () => {
+    it('builds the cost stack from manufacturing, logistics, QA and commission, plus margin', () => {
       const sqFt = 10;
       const t = pricingTiers['0-50'];
-      const res = calculateCost('0-50', sqFt);
-      const base = sqFt * t.manufRate + t.logistics + t.qa + sqFt * t.costSalesRate;
+      const res = calculateCost('0-50', sqFt, 0, 60);
+      const base = sqFt * t.manufRate + t.logistics + t.qa + sqFt * 60;
 
       expect(res.manufAmount).toBeCloseTo(sqFt * t.manufRate);
       expect(res.logistics).toBe(t.logistics);
       expect(res.qa).toBe(t.qa);
-      expect(res.costSalesAmount).toBeCloseTo(sqFt * t.costSalesRate);
+      expect(res.costSalesAmount).toBeCloseTo(sqFt * 60);
       expect(res.profitAndOH).toBeCloseTo(base * t.profitMargin);
       expect(res.totalCost).toBeCloseTo(base * (1 + t.profitMargin));
     });
 
-    // Characterisation: docs/02_modules/cost-calculator-quotation/FINDINGS.md
-    // finding 2 (inflexible 15% discount baked into the base function). The
-    // discount is applied to every quote with no way to turn it off; the fix
-    // (calculateCost takes a discountPct argument, default 0) flips this test.
-    it('always takes a hidden 15% discount off the total cost', () => {
-      const res = calculateCost('0-50', 10);
-      expect(res.discount).toBeCloseTo(res.totalCost * 0.15);
-      expect(res.finalAmount).toBeCloseTo(res.totalCost * 0.85);
-      expect(res.finalAmountPerSq).toBeCloseTo(res.finalAmount / 10);
+    // Flipped in Phase 7 6.6 (cost-calculator-quotation finding 2): the discount is a parameter
+    // that defaults to none, no longer a hidden 15% on every quote.
+    it('applies no discount by default and the given percentage when asked', () => {
+      const none = calculateCost('0-50', 10);
+      expect(none.discount).toBe(0);
+      expect(none.finalAmount).toBeCloseTo(none.totalCost);
+      const fifteen = calculateCost('0-50', 10, 15);
+      expect(fifteen.discount).toBeCloseTo(fifteen.totalCost * 0.15);
+      expect(fifteen.finalAmount).toBeCloseTo(fifteen.totalCost * 0.85);
+      expect(fifteen.discountPct).toBe(15);
+      expect(fifteen.finalAmountPerSq).toBeCloseTo(fifteen.finalAmount / 10);
     });
 
-    // Characterisation: FINDINGS.md finding 3 (hardcoded 53.5 commission vs
-    // partner rates). The 53.5 per sq ft is the tier's costSalesRate, charged
-    // regardless of which partner (if any) referred the job. Flips when the
-    // commission rate becomes a parameter.
-    it('charges a fixed 53.5 per sq ft sales cost in every tier, whatever the partner rate', () => {
+    // Flipped in Phase 7 6.6 (finding 3): commission is a parameter, 0 for a direct lead and the
+    // partner's own rate for a referral.
+    it('charges no commission by default and the partner rate when given', () => {
       for (const tier of Object.keys(pricingTiers)) {
-        const res = calculateCost(tier, 20);
-        expect(pricingTiers[tier].costSalesRate).toBe(53.5);
-        expect(res.costSalesAmount).toBeCloseTo(20 * 53.5);
+        expect(calculateCost(tier, 20).costSalesAmount).toBe(0);
+        expect(calculateCost(tier, 20, 0, 60).costSalesAmount).toBeCloseTo(20 * 60);
       }
+      expect(calculateCost('0-50', 20, 0, 60).commissionRate).toBe(60);
+      expect(calculateCost('0-50', 20, 0, 'abc').costSalesAmount).toBe(0);
     });
 
-    // Characterisation: FINDINGS.md finding 1 (severe "Profit / SQ" error).
-    // internalCostPerSq adds logistics, QA and sales cost back onto gross
-    // profit before dividing by area; the audit says it should be
-    // grossProfit / sqFt. Flips when the formula is corrected.
-    it('computes Profit / SQ as (grossProfit + logistics + qa + salesCost) / sqFt', () => {
+    it('a partner commission raises the quote', () => {
+      expect(calculateCost('0-50', 20, 0, 53.5).finalAmount).toBeGreaterThan(calculateCost('0-50', 20).finalAmount);
+    });
+
+    // Flipped in Phase 7 6.6 (finding 1): Profit / SQ is gross profit per square foot.
+    it('computes Profit / SQ as grossProfit / sqFt', () => {
       const sqFt = 10;
-      const res = calculateCost('0-50', sqFt);
-      const expected = (res.grossProfit + res.logistics + res.qa + res.costSalesAmount) / sqFt;
-      expect(res.internalCostPerSq).toBeCloseTo(expected);
-      expect(res.internalCostPerSq).not.toBeCloseTo(res.grossProfit / sqFt);
+      const res = calculateCost('0-50', sqFt, 15, 53.5);
+      expect(res.internalCostPerSq).toBeCloseTo(res.grossProfit / sqFt);
     });
 
-    it('derives gross profit as final amount less internal manufacturing and sales cost', () => {
+    it('derives gross profit as final amount less internal manufacturing and commission cost', () => {
       const sqFt = 10;
       const t = pricingTiers['0-50'];
-      const res = calculateCost('0-50', sqFt);
+      const res = calculateCost('0-50', sqFt, 0, 53.5);
       expect(res.internalManufAmount).toBeCloseTo(sqFt * t.internalManufRate);
-      expect(res.totalCostOfSales).toBeCloseTo(res.internalManufAmount + sqFt * t.costSalesRate);
+      expect(res.totalCostOfSales).toBeCloseTo(res.internalManufAmount + sqFt * 53.5);
       expect(res.grossProfit).toBeCloseTo(res.finalAmount - res.totalCostOfSales);
     });
   });
