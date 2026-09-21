@@ -17,7 +17,7 @@ Partner / referral network: public application, admin approval, QR referral link
 
 ## Triggers and side effects
 
-- Commission accrues at Hand Over (`Deals.jsx`); eligibility at full payment (`App.jsx`).
+- Commission accrues when the deal is Completed (`Deals.jsx`); eligibility at full payment (`App.jsx`, and the Partners screen through `invoicesForLineage`).
 - **"Disburse Payout" is a toast only**; nothing is written and `pending` is never reduced.
 
 ## Before you edit

@@ -17,8 +17,7 @@ Deals is the post-sale Kanban (Waiting, Fabricating, Ready To Load, Hand Over, C
 
 ## Triggers and side effects
 
-- Hand Over: accrues partner commission (`sqFt x rate`).
-- Hand Over to Completed: reserves a Final invoice id (aborts if it fails), creates a 25% Final invoice.
+- Hand Over to Completed: reserves a Final invoice id (aborts if it fails), creates a 25% Final invoice, and accrues the partner commission once (`calculateDealCommission`, `commissionAccrued`).
 - Stage moves do not sync the fabrication project.
 
 ## Before you edit

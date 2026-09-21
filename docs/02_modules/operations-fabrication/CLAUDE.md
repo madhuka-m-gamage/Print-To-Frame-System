@@ -21,7 +21,7 @@ Fabrication Kanban over `projects` (Pending, Ongoing, Ready For Inspection, Revi
 
 ## Before you edit
 
-- **Possible duplicate Final invoice** with `Deals.jsx` completion; no guard between them.
+- **Duplicate Final invoice** with `Deals.jsx` completion is guarded by `getExistingFinalInvoice` on client state (two simultaneous sessions can still race).
 - Projects are created by lead conversion in `Leads.jsx` as well as manually.
 - No stock / inventory deduction exists.
 

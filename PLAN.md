@@ -38,7 +38,7 @@ Order: A1, then A2/A3/A4 (any order), then A7 (CI), then A5 -> A6 whenever brows
 - [x] B4: Firestore rules cases (before 3.4 / 3.5; replaces Phase 7 prompt 3.1)
 - [x] B5: component cases (before 4.1)
 - [ ] B6: E2E journeys (needs A6)
-- [ ] Refresh the `TESTING.md` coverage map and characterisation register (manual, run on request after Part B phases land). Prompt: "Refresh docs/04_workflows/TESTING.md: run npm run coverage and update the coverage map (files, tests, kind, gaps), update the characterisation register from the tests that carry a finding comment, and tick the roadmap. Docs only; state only what you read; commit."
+- [x] Refresh the `TESTING.md` coverage map (done 2026-09-21, after Phase 7 step 5; refresh again after the next batch) and characterisation register (manual, run on request after Part B phases land). Prompt: "Refresh docs/04_workflows/TESTING.md: run npm run coverage and update the coverage map (files, tests, kind, gaps), update the characterisation register from the tests that carry a finding comment, and tick the roadmap. Docs only; state only what you read; commit."
 
 ### Phase 7: audit remediation
 Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 before 3.5); listeners must be gated (3.2) before restrictive rules; new collections need rules deployed first (3.4d before 4.x).
@@ -60,7 +60,8 @@ Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 be
 - [x] 5.1-5.3: Google scopes, registration, user lifecycle
 - [ ] 6.1-6.6: leads, atomic ids, customers, deals/fabrication/inspection, logistics (6.1, 6.2, 6.3, 6.4, 6.6 done in PRs; 6.5 logistics not started)
 - [ ] 7: UX and feature backlog
-- [ ] 8.1 / 8.2: docs sync, folder move
+- [x] 8.1: docs sync (TESTING.md coverage map and roadmap, root CLAUDE.md test layers and approval hand-off, stale module maps and instructions for pricing, duplicate Final guard, commission accrual)
+- [ ] 8.2: folder move
 
 ## Deferred until the live site is ready to change
 

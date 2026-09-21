@@ -23,7 +23,7 @@ No Cloud Functions. All client-side:
 
 - **Lead to Deal** (Leads.jsx): new deal `D-xxxxxx` in stage Waiting with a `jobNo` (`PTF-xxxx`), `originalLeadId` and `linkedJobNo`; original lead marked Completed and locked; customer created or incremented; Pending fabrication project created sharing the `jobNo`.
 - **Stage moves (not to Completed):** write only `stage` and `stageEnteredAt`. No project status sync was found in Deals.jsx.
-- **Hand Over to Completed** ("won", `Deals.jsx` ~227-388): reserves a Final invoice id (aborts the move if that fails); creates a **Final invoice for 25%** of the deal value (`advancePaid` recorded as 75%), linked to a quotation via `matchesEntity`, copying its line items; credits the partner (`sqFt x commissionRate`, default 53.5) to `pending` when `deal.agentId` matches a partner.
+- **Hand Over to Completed** ("won", `Deals.jsx`): reserves a Final invoice id (aborts the move if that fails) unless one already exists; creates a **Final invoice for 25%** of the deal value (`advancePaid` recorded as 75%), linked to an Accepted quotation via `matchesEntity`, copying its line items; credits the partner (`sqFt x commissionRate`, default 53.5) to `pending` once, when `deal.agentId` matches a partner. Moving forward also syncs the linked project's status (forward only).
 - **Manual "Create delivery job"** on Ready To Load / Hand Over cards writes a `logistics` job `L-DL-...`. Not automatic.
 - **Invoice marked paid** (`App.jsx` `handleMarkInvoicePaid`): may set stage to Received, set `invoicePaid`, set `referralStatus: 'Eligible for Payout'` and emit a commission notification.
 - Not found: automatic project status sync on stage change, automatic logistics creation, deal-stage trigger into the quotation builder.

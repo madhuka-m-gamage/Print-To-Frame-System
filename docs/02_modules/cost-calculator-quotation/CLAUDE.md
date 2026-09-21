@@ -22,7 +22,7 @@ Computes price from sq ft via a five-tier engine, then staff draft versioned quo
 
 ## Before you edit
 
-- Pricing constants (118.5 manufacturing per sq ft, tier table, 53.5 commission, 15% discount) live in `pricingEngine.js`.
+- Pricing constants (118.5 manufacturing per sq ft, tier table) live in `pricingEngine.js`; discount and commission are parameters, decided by `getQuotePricingTerms` in `quotePricing.js` (referral: 15% and the partner's rate, default LKR 30.00 flagged `commissionRateDefaulted`; direct: none).
 - `cutListEngine.js` and `FrameBlueprintPreview.jsx` belong to Fabrication; `companyInfo.js` is unused.
 - `quotations` rules allow any authenticated user to read and write; there is no `quotations` permission module.
 

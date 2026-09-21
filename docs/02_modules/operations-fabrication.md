@@ -38,5 +38,5 @@ The `projects` collection holds fabrication jobs, created manually or by lead co
 
 ## Open questions
 
-- **Possible duplicate Final invoices:** both this module (QA pass) and `Deals.jsx` (deal reaches Completed) create a Final invoice for 25% of the value. If both fire for the same job, the customer gets two Final invoices; no guard between them was found. See [CROSS_MODULE_TRIGGERS.md](../01_architecture/CROSS_MODULE_TRIGGERS.md).
+- **Duplicate Final invoices (guarded since Phase 7 2.1):** both this module (QA pass) and `Deals.jsx` (deal reaches Completed) create a Final invoice for 25% of the value; each now checks `getExistingFinalInvoice` first. The check runs on client state, so two sessions acting at the same moment could still both create one. See [CROSS_MODULE_TRIGGERS.md](../01_architecture/CROSS_MODULE_TRIGGERS.md).
 - Deal stage is not updated when fabrication completes, so deal and project stages advance independently.
