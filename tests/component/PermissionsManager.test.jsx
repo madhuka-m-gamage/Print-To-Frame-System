@@ -10,7 +10,7 @@ vi.mock('@/shared/utils/toast', () => ({
   showToast: vi.fn(),
 }));
 
-const { default: PermissionsManager } = await import('@/components/admin/PermissionsManager');
+const { default: PermissionsManager } = await import('@/features/admin/PermissionsManager');
 const { setDoc } = await import('firebase/firestore');
 
 const admin = { role: 'Admin', identifier: 'admin@example.com', name: 'Admin' };

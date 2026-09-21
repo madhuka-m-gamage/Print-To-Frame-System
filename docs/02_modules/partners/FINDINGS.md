@@ -11,7 +11,7 @@
 A thorough architectural and trigger audit was conducted across the Partners module, its public touchpoints, authentication and onboarding pipelines, commission ledger engines, and cross-module trigger chains:
 - **Module Documentation**: `docs/02_modules/partners/README.md`, `docs/02_modules/partners/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
 - **Target UI Components**: `src/features/partners/Partners.jsx`, `src/features/partners/PartnerQRModal.jsx`, `src/features/partners/PartnerRegistration.jsx`, `src/features/partners/ReferralForm.jsx`.
-- **Cross-Module Integrations**: `src/components/admin/AgentDatabase.jsx` (partner application review and user provisioning), `src/features/deals/Deals.jsx` (commission accrual upon stage transition), `src/App.jsx` (route guards, approval hand-off, collection subscriptions, payment clearance, and payout eligibility notifications), `src/features/leads/LeadCardDetails.jsx` (agent assignment dropdown).
+- **Cross-Module Integrations**: `src/features/admin/AgentDatabase.jsx` (partner application review and user provisioning), `src/features/deals/Deals.jsx` (commission accrual upon stage transition), `src/App.jsx` (route guards, approval hand-off, collection subscriptions, payment clearance, and payout eligibility notifications), `src/features/leads/LeadCardDetails.jsx` (agent assignment dropdown).
 - **Backend Services & Security Rules**: `api/send-email.js` (templated email delivery), `api/admin-user.js` (Firebase Admin SDK user creation and password resets), `firestore.rules` (`partners`, `partner_applications`, `leads`, missing collections).
 - **Permissions & RBAC**: `src/constants/roles.js`, `src/context/PermissionsContext.jsx`.
 

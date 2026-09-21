@@ -16,7 +16,7 @@ import ContactSyncModal from './ContactSyncModal';
 import AddressPickerModal from '@/shared/components/AddressPickerModal';
 import { usePermissions } from '@/context/PermissionsContext';
 import { sendTemplatedEmail } from '@/services/mailer';
-import { deleteUserAccount } from '@/services/adminUsers';
+import { deleteUserAccount } from '@/features/admin/adminUsers';
 import { logActivity } from '@/services/auditLog';
 import { normalizePhone, phonesMatch } from '@/shared/utils/validation';
 

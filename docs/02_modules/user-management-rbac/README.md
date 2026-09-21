@@ -4,8 +4,8 @@
 
 ## Files and folders
 
-- UI: `src/components/admin/AdminPanel.jsx` ("System Overview": audit log viewer plus `PermissionsManager`), `AgentDatabase.jsx` ("User Management": users, enrolment, pending registrations, role / status, password reset), `PermissionsManager.jsx` (role-by-module matrix editor).
-- State and constants: `src/context/PermissionsContext.jsx` (`DEFAULT_PERMISSIONS`, live `settings/permissions` sync, `canAccess`, `updatePermissions`), `src/constants/roles.js` (`SYSTEM_ROLES`, `PUBLIC_REGISTRATION_ROLES`, `ROLE_METADATA`, `getRoleCategory`), `src/services/adminUsers.js` (client wrapper for `/api/admin-user`), `src/services/auditLog.js` (`logActivity`).
+- UI: `src/features/admin/AdminPanel.jsx` ("System Overview": audit log viewer plus `PermissionsManager`), `AgentDatabase.jsx` ("User Management": users, enrolment, pending registrations, role / status, password reset), `PermissionsManager.jsx` (role-by-module matrix editor).
+- State and constants: `src/context/PermissionsContext.jsx` (`DEFAULT_PERMISSIONS`, live `settings/permissions` sync, `canAccess`, `updatePermissions`), `src/constants/roles.js` (`SYSTEM_ROLES`, `PUBLIC_REGISTRATION_ROLES`, `ROLE_METADATA`, `getRoleCategory`), `src/features/admin/adminUsers.js` (client wrapper for `/api/admin-user`), `src/services/auditLog.js` (`logActivity`).
 - Server: `api/admin-user.js` (create, resetPassword, delete), `api/_lib/firebaseAdmin.js`.
 - Rules and tests: `firestore.rules`, `tests/integration/firestoreRules.test.js`, `tests/integration/adminUser.test.js`.
 - In `src/App.jsx`: Self-Healing Super Admin Guard (`isSuperAdminEmail`, guard around 603-613), sign-in / register / pending handling (~585-660, `handleRegister` ~770), `approvePending` (~803), Partner route lock (~277-283), `pendingUsers` subscription (~721).

@@ -8,10 +8,10 @@
 - `src/features/partners/PartnerQRModal.jsx`: QR flyer and referral link kit (`${origin}/referral?ref=<partnerId>`, QR rendered by external `api.qrserver.com`; not stored).
 - `src/features/partners/PartnerRegistration.jsx`: public application form (route in `src/main.jsx`: `/partner/register` or `/register-partner`).
 - `src/features/partners/ReferralForm.jsx`: public referral landing page (`/referral?ref=<partnerId>`).
-- `src/components/admin/AgentDatabase.jsx`: reviews and approves partner applications.
+- `src/features/admin/AgentDatabase.jsx`: reviews and approves partner applications.
 - `src/App.jsx`: subscriptions, approval hand-off, payout-eligibility logic.
 - `src/features/deals/Deals.jsx`: commission accrual. Partner fields also appear in `Leads.jsx`, `LeadCardDetails.jsx` (agent picker) and `Receipts.jsx`.
-- Supporting: `src/services/firestoreSync.js` (collection names), `src/constants/emailTemplates.js`, `src/services/adminUsers.js`, `api/admin-user.js`.
+- Supporting: `src/services/firestoreSync.js` (collection names), `src/constants/emailTemplates.js`, `src/features/admin/adminUsers.js`, `api/admin-user.js`.
 
 ## Firestore collections read/written
 

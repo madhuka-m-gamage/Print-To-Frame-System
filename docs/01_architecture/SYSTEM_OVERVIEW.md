@@ -12,13 +12,13 @@ React 18 + Vite SPA. `src/main.jsx` mounts `src/App.jsx`, which owns all top-lev
 
 | Folder | Contents |
 |---|---|
-| `src/components/admin/` | AdminPanel, AgentDatabase, PermissionsManager |
-| `src/features/<domain>/` | migrated feature folders (being filled in Phase 7 8.2): `auth` (Login, authFlow), `profile` (UserProfile), `dashboard` (Dashboard, NotificationsView), `messaging` (Messages, MiniChatDrawer, FloatingMessageToast, MessagingContext, messageFilters), `leads` (Leads, LeadCardDetails, leadLineage, audioProcessing), `customers` (Customers, ContactSyncModal), `quotations` (QuotationBuilder, CostCalculator, pricingEngine, quotePricing, quotationStatus), `deals` (Deals, dealSettlement, dealProjectSync), `invoicing` (Invoices, Receipts, invoiceTemplate, receiptTemplate, invoiceSettlement, invoicePrintData), `partners` (Partners, PartnerQRModal, PartnerRegistration, ReferralForm), `fabrication` (FabricationWorks, FabricationCardDetails, FrameBlueprintPreview, cutListEngine, fabricationLink, qaGate), `logistics` (Logistics, LogisticsCardDetails, logisticsEngine, logisticsTask) |
-| `src/shared/` | `ui/` primitives, `components/` used by several features (DeleteModal, ErrorBoundary, pickers, EmailTemplateModal ...), `utils/` with no domain (dates, validation, csv, toast ...) |
-| `src/services/` | `firebase`, `firestoreSync` (CRUD + `COLLECTIONS` map + atomic ID/invoice numbering), `auditLog`, `gemini`, `adminUsers`, `mailer`, `driveService`, `contactsService`, `googleMapsService`, `dataDefaults` |
-| `src/utils/` | `cutListEngine`, `logisticsEngine`, `invoiceTemplate`, `receiptTemplate`, `stringMatch` |
+| `src/features/<domain>/` | One folder per business domain, holding its screens, logic and any domain-only client: `auth` (Login, authFlow), `profile` (UserProfile), `dashboard` (Dashboard, NotificationsView), `messaging` (Messages, MiniChatDrawer, FloatingMessageToast, MessagingContext, messageFilters), `leads` (Leads, LeadCardDetails, leadLineage, audioProcessing), `customers` (Customers, ContactSyncModal), `quotations` (QuotationBuilder, CostCalculator, pricingEngine, quotePricing, quotationStatus), `deals` (Deals, dealSettlement, dealProjectSync), `invoicing` (Invoices, Receipts, invoiceTemplate, receiptTemplate, invoiceSettlement, invoicePrintData), `partners` (Partners, PartnerQRModal, PartnerRegistration, ReferralForm), `fabrication` (FabricationWorks, FabricationCardDetails, FrameBlueprintPreview, cutListEngine, fabricationLink, qaGate), `logistics` (Logistics, LogisticsCardDetails, logisticsEngine, logisticsTask), `admin` (AdminPanel, AgentDatabase, PermissionsManager, adminUsers) |
+| `src/shared/` | Code used by several features and belonging to none: `ui/` presentational primitives, `components/` (DeleteModal, ErrorBoundary, pickers, EmailTemplateModal ...), `utils/` with no domain (dates, validation, csv, toast, entity matching ...) |
+| `src/services/` | Infrastructure clients: `firebase`, `firestoreSync` (CRUD + `COLLECTIONS` map + atomic ID/invoice numbering), `auditLog`, `gemini`, `mailer`, `driveService`, `contactsService`, `googleMapsService`, `dataDefaults` |
 | `src/context/` | `PermissionsContext` (RBAC) |
 | `src/constants/` | `roles`, `emailTemplates`, `companyInfo` |
+
+Import rule: a feature may import `@/shared`, `@/services`, `@/context`, `@/constants` and other features by `@/features/<name>/...`; `shared` never imports a feature. Outside its own folder, code imports with the `@/` alias (`@/` means `src/`).
 
 Firestore collections (from `COLLECTIONS` in `src/services/firestoreSync.js`): `leads`, `customers`, `partners`, `partner_applications`, `partner_payouts`, `projects`, `logistics`, `invoices`, `receipts`, `quotations`, `messages`, `auditLog`, `users`, `pendingUsers`, `settings`, `referral_claims`, `typing_indicators`, `counters`.
 
@@ -43,7 +43,7 @@ No shared package. Frontend-only helpers sit in `src/utils/` and `src/services/`
 
 ## Organisation (by layer vs by module)
 
-**Being reorganised by feature (Phase 7 8.2).** Business code is moving from technical folders into `src/features/<domain>`, with cross-feature code in `src/shared` and infrastructure clients in `src/services`. Features still under `src/components/` are listed in the table above; the business modules are mapped in `docs/02_modules/`.
+**By business domain.** Each domain's screens and logic live together in `src/features/<domain>`, so a change to invoicing or fabrication stays in one folder. The business modules are described in `docs/02_modules/`.
 
 ## Deployment (from CLAUDE.md, unverified here)
 

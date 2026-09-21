@@ -25,7 +25,7 @@ import { formatPhone, validatePhone, validateEmail } from '@/shared/utils/valida
 import { exportToCsv } from '@/shared/utils/csvExport';
 import { usePermissions } from '@/context/PermissionsContext';
 import { sendTemplatedEmail } from '@/services/mailer';
-import { deleteUserAccount, resetUserPassword } from '@/services/adminUsers';
+import { deleteUserAccount, resetUserPassword } from '@/features/admin/adminUsers';
 import { logActivity } from '@/services/auditLog';
 import { invoicesForLineage } from '@/features/leads/leadLineage';
 
