@@ -9,7 +9,10 @@ Live project: `print-to-frame-erp`. Always pass `--project print-to-frame-erp` e
 - **Rules:** the deployed Firestore ruleset is the old one that `main` still has (no `referral_claims` or `partner_payouts` blocks, `quotations` open to any signed-in user, `counters` open to any signed-in user, the bootstrap emails not part of `isAdmin()`).
 - **Permission matrix** (`settings/permissions`): last updated 2026-09-01 02:04 UTC, unchanged since the earlier check. Roles present: Accounts, Admin, Business Client, Customer, Logistics, Manager, Operations, Partner, Sales, Support. Modules present per role: admin, agents, calculator, customers, dashboard, invoices, leads, logistics, messages, notifications, partners, pipeline, projects. **There is no `quotations` and no `receipts` module for any role.**
 - **Code:** `main` has no commit that `staging` lacks, and `staging` is 108 commits ahead. Pull request #25 (`staging` to `main`) is open, mergeable, 100 commits, 223 files.
-- **`firebase.json`** lists three Firestore databases (`(default)` and two `ai-studio-...` ones); a plain rules deploy applies the same file to all three. The app connects to `(default)`: the committed config says so and the live matrix in `(default)` shows recent activity. If `VITE_FIREBASE_DATABASE_ID` is set to something else in the Vercel Production environment, that would change, and that cannot be seen from the repository: check it in Vercel before step 3.
+- **Confirmed by the owner, 2026-09-21:** the Firebase project is `print-to-frame-erp`, the app uses only the `(default)` Firestore database, and the two `ai-studio-...` databases exist but are not used.
+- **Two repositories, no shared history (found 2026-09-21):** the original project folder `Print-To-Frame-ERP-System` is its own git repository (`github.com/madhukagamage6/Print-To-Frame-ERP-System`, branches `main` and `staging`, last commit 2026-09-15). This repository (`madhuka-m-gamage/Print-To-Frame-System`) has a separate history that starts from a copy of that code. Their source code is nearly identical (under `src/`, `api/` and the rules only two files differ, both from the test-suite work), and their `firestore.rules` are identical. **Confirmed by the owner's screenshot and screen recording, 2026-09-21: production deploys from the original repository.** The Vercel project `print-to-frame-erp` (a different Vercel team from the `print-to-frame-system` preview project) serves `portal.print2frame.xyz` and deploys `main` of `madhukagamage6/Print-To-Frame-ERP-System`. Its latest production deployment is commit `f258270` (2026-09-15, the merge of its pull request #5, which changed only `.gitignore`); the five commits it has beyond the local copy are documentation and hygiene deletions, nothing under `src/`, `api/` or the rules. So the live code is the original `main`, which equals this repository's `main` apart from the test-suite work. **Merging pull request #25 in this repository does not change the live site.** See step 2.
+- **Storage:** the project has **no active Storage rules** (read-only check). The code has three upload paths (`partners/...` documents from the public registration form and from the Partners screen, and `blueprints/...` from fabrication). They are expected to fail against the live project (not tried), and the blueprint upload falls back to keeping files under 500KB inline. This does not affect the rollout below, but see the backlog.
+- **`firebase.json`** lists three Firestore databases (`(default)` and two `ai-studio-...` ones); a plain rules deploy applies the same file to all three. The app connects to `(default)`: the committed config says so, the live matrix in `(default)` shows recent activity, and the owner confirmed it.
 
 ## Why the order matters
 
@@ -22,7 +25,7 @@ The new client is compatible with the old, looser live rules: it writes counters
 1. **Quiet window: not required for the matrix.** Step 1 only adds keys the old code ignores, so it can be done at any time, days before the promotion, and nothing changes for anyone. After that, step 2 is an ordinary deploy that can be rolled back instantly in Vercel. Promote outside working hours if you prefer, but nothing depends on it. A short quiet moment is only worth having for step 3 (rules).
 2. **Matrix path: A, the button on the staging preview.** The Vercel project `print-to-frame-system` has no `VITE_FIREBASE_DATABASE_ID` override, so its preview uses the `(default)` database that the app and the live rules use, and it is already what you sign in to as Admin. The Admin reviews the added cells before saving, so any role's value can be changed at that moment (see the table below).
 3. **Role changes: none needed.** The restrictive rules enforce whatever the live matrix says; they do not require any role to lose access. Leave the 58 differing cells alone. Tightening an over-broad role is a business decision that can be taken later, at any time, in Permissions Manager, without code (it is in the `PLAN.md` backlog). The only values step 1 chooses are the new `quotations` and `receipts` ones below.
-4. **Environment check: half done.** The preview project has no database override (checked read-only). **Still to do by the owner:** the live production project, the one serving `portal.print2frame.xyz`, is not visible to the tooling used here (this project has only its `vercel.app` address). In that project, open Settings, Environment Variables, and confirm there is no `VITE_FIREBASE_DATABASE_ID` (or that it is `(default)`). One minute.
+4. **Environment check: done.** The preview project has no database override (read-only check), and the owner confirmed the app uses `(default)`. The live production Vercel project is not visible to the tooling, so its variables were not read; the owner's confirmation stands in for that.
 5. **Still open, not needed to go live:** whether drivers may record cash on delivery (`PLAN.md` backlog).
 
 ### What step 1 writes for `quotations` and `receipts` (from `DEFAULT_PERMISSIONS`)
@@ -43,11 +46,12 @@ Business Client has no explicit entry for either and gets the same as Customer. 
 
 ## Pre-flight (do all of it, in order, on the day)
 
+- [x] **0. What the live site deploys from: answered.** The Vercel project `print-to-frame-erp` deploys `main` of `madhukagamage6/Print-To-Frame-ERP-System` (see the facts above), so step 2 follows option B. Still to read in that project (Settings, Git): the Production Branch is `main`, and whether "Ignored Build Step" or other build filters are set.
 - [ ] `git fetch` and confirm `main` still has no commit that `staging` lacks: `git rev-list --count origin/staging..origin/main` prints `0`.
 - [ ] The latest `staging` commit has a green CI run and a green Vercel preview.
 - [ ] On the Vercel preview of `staging`, sign in as Admin and open every sidebar tab: no error, no blank screen. Create a lead, convert it, add a quote, generate an Advance invoice, upload one blueprint, record a delivery status change.
 - [ ] Take a **backup of the live matrix**: in the Firebase console open Firestore, `settings/permissions`, and copy the document JSON into a file kept outside the repository; note its `updateTime`. (Or export with `gcloud firestore export` to a bucket you control.) Without this, step 1 has no rollback.
-- [ ] Keep the deployed rules text: in the Firebase console open Firestore, Rules, and copy the whole text to a file outside the repository. `git show origin/main:firestore.rules` should be equal to it (it matched on every point checked on 2026-09-21, but it was compared by reading, not by a byte diff, so compare before relying on it for rollback).
+- [x] Keep the deployed rules text. Done 2026-09-21: the owner copied the deployed Firestore rules from the console, and a line-by-line diff against `git show origin/main:firestore.rules` found them identical (240 lines each) apart from trailing whitespace. So the rollback file for the rules steps is `git show origin/main:firestore.rules`. Repeat the comparison on the day if the rules could have been edited in the console since.
 - [ ] Tell the team the window and that staff may need to refresh.
 
 ## Step 1: matrix migration (additive)
@@ -62,13 +66,17 @@ Verify: re-read `settings/permissions`; each role has `quotations` and `receipts
 
 Rollback: restore the backup document (Admin saves it back, or paste it in the console).
 
-## Step 2: promote `staging` to `main`
+## Step 2: get the new code onto the live project
 
-Merge pull request #25 (merge commit, as before). Vercel builds `main` to production. This does not touch Firestore rules.
+The live project deploys the **original repository's `main`**, so this repository's `main` must not be assumed to be live. Choose one path; the owner decides.
 
-Verify on `portal.print2frame.xyz`: sign in as Admin, Sales, Partner and Customer and confirm each sees the right navigation and that Quotations and Receipts appear for the roles that had access to invoices. Watch the browser console for permission errors.
+**Path B1, recommended: point the live project at this repository.** In the Vercel project `print-to-frame-erp`, open Settings, Git, disconnect `madhukagamage6/Print-To-Frame-ERP-System`, connect `madhuka-m-gamage/Print-To-Frame-System` with Production Branch `main`, then merge pull request #25 (merge commit). The domains, environment variables and deployment history stay with the project. Two things to confirm first, because they decide whether this path works: the Vercel account that owns `print-to-frame-erp` can be given access to the `madhuka-m-gamage` GitHub account (the GitHub app must be installed for it), and Vercel shows the repository in the connect list. Rollback: reconnect the original repository, or use Vercel's Instant Rollback to the previous production deployment.
 
-Rollback: in Vercel, promote the previous production deployment (Instant Rollback). Do not force-push `main`.
+**Path B2, fallback: leave Vercel as it is and bring the code into the original repository.** The two histories are unrelated, so this is not a merge: in a clone of the original repository, branch from its `main`, apply this repository's `staging` tree on top as one change (the code difference is what pull request #25 shows), open it as a pull request into the original `staging`, verify its preview, then merge to `main` as you always have. This keeps the live pipeline untouched but loses the detailed history in the original repository (it stays here). It needs push access to the original repository, which this tooling does not have.
+
+Either way, rehearse first: the preview of this repository's `staging` (project `print-to-frame-system`) is the same code and uses the live database, and it has already been smoke-tested.
+
+Verify on `portal.print2frame.xyz` after deploy: sign in as Admin, Sales, Partner and Customer and confirm each sees the right navigation and that Quotations and Receipts appear for the roles that had access to invoices. Watch the browser console for permission errors.
 
 ## Step 3: additive rules (3.4d)
 
@@ -81,7 +89,7 @@ npm run test:rules                      # must pass
 firebase deploy --only firestore:rules --project print-to-frame-erp
 ```
 
-Confirm before running that a deploy applying the same file to all three databases is acceptable, or limit it to `(default)`; check `firebase deploy --help` for how, since that is not verified here. Nothing in the code reads the two `ai-studio-...` databases (see the backlog).
+A plain deploy applies the same file to all three databases in `firebase.json`. The two `ai-studio-...` databases are confirmed unused, so that is harmless, but if you would rather deploy to `(default)` only, remove those two entries from `firebase.json` first (backlog) or check `firebase deploy --help` for how to limit it, which is not verified here.
 
 Verify: repeat the role checks below. Also confirm a signed-in user can still create a lead and a deal (the counter documents `L` and `D` are created on first use) and that quotations and invoices still save.
 
