@@ -1,6 +1,6 @@
 # Cross-Module Triggers
 
-> Trigger chains between modules. One entry per chain, formatted **Trigger -> Function -> Effect -> Downstream module(s)**. Built from the module maps in [docs/02_modules/](../02_modules/); the double-Final-invoice guard check was verified directly in `Deals.jsx` and `FabricationWorks.jsx`.
+> Trigger chains between modules. One entry per chain, formatted **Trigger -> Function -> Effect -> Downstream module(s)**. Built from the module maps in [docs/02_modules/](../02_modules); the double-Final-invoice guard check was verified directly in `Deals.jsx` and `FabricationWorks.jsx`.
 
 ## Read this first
 
@@ -99,4 +99,4 @@ Link fields: invoice `quotationId`; lead / deal / job ids (`leadId`, `dealId`, `
 
 ## Not found (searched, absent)
 
-Any Firestore trigger; automatic logistics creation on stage change; deal-stage update from fabrication or logistics; invoice email; receipt email; invoice status change on receipt creation; a Google Contacts / Drive scope request in `firebase.js` (see [auth.md](../02_modules/auth.md)).
+Any Firestore trigger; automatic logistics creation on stage change; deal-stage update from fabrication or logistics; invoice email; receipt email; invoice status change on receipt creation; a Google Contacts / Drive scope request in `firebase.js` (see [auth.md](../02_modules/auth/README.md)).

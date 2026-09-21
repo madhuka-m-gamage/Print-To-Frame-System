@@ -21,7 +21,7 @@
 No Cloud Functions. Client-side:
 
 - **Stages:** Pending, Ongoing, Ready For Inspection, Revision, Completed. Forward moves in `handleMoveJob`, back moves in `handleMoveJobBack`; each move stamps `stageEnteredAt`; Revision forward goes to Ready For Inspection and sets `reworkCompletedAt`.
-- **Inspection / QA:** moving forward from Ready For Inspection opens a 4-check dialog (squareness, welds, coating, canvasTension). `handlePassQA` needs all four; `handlePassQAInner` sets Completed, `checklist.qaPassed = true` and a `qaCheck` object. Failure goes to `handleConfirmRevision` (Revision, `qaPassed = false`, `defectDetails`). See [operations-inspection.md](operations-inspection.md).
+- **Inspection / QA:** moving forward from Ready For Inspection opens a 4-check dialog (squareness, welds, coating, canvasTension). `handlePassQA` needs all four; `handlePassQAInner` sets Completed, `checklist.qaPassed = true` and a `qaCheck` object. Failure goes to `handleConfirmRevision` (Revision, `qaPassed = false`, `defectDetails`). See [operations-inspection.md](../operations-inspection/README.md).
 - **At QA pass:** if `value > 0` and `onSaveInvoice` exists, a Final invoice id is reserved first (if that fails the job is not completed), then a **25% Final invoice** is saved (status Unpaid, due in 7 days) carrying leadId / dealId / originalLeadId / convertedDealId. `FabricationWorks.jsx` ~741 (`Number(targetJob.value) * 0.25`). No `quotationId` is set.
 - **Deal / lead stage change: not found.** Nothing in this module updates a lead or deal.
 - **Dispatch to Logistics:** manual button; creates a Pending Delivery task with `linkedJobNo` and sets `dispatchedToLogistics` / `logisticsTaskId` on the project. Not automatic at Completed.
@@ -38,5 +38,5 @@ The `projects` collection holds fabrication jobs, created manually or by lead co
 
 ## Open questions
 
-- **Duplicate Final invoices (guarded since Phase 7 2.1):** both this module (QA pass) and `Deals.jsx` (deal reaches Completed) create a Final invoice for 25% of the value; each now checks `getExistingFinalInvoice` first. The check runs on client state, so two sessions acting at the same moment could still both create one. See [CROSS_MODULE_TRIGGERS.md](../01_architecture/CROSS_MODULE_TRIGGERS.md).
+- **Duplicate Final invoices (guarded since Phase 7 2.1):** both this module (QA pass) and `Deals.jsx` (deal reaches Completed) create a Final invoice for 25% of the value; each now checks `getExistingFinalInvoice` first. The check runs on client state, so two sessions acting at the same moment could still both create one. See [CROSS_MODULE_TRIGGERS.md](../../01_architecture/CROSS_MODULE_TRIGGERS.md).
 - Deal stage is not updated when fabrication completes, so deal and project stages advance independently.

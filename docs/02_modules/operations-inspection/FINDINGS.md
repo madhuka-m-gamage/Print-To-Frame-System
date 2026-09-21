@@ -1,6 +1,6 @@
 # Operations: Inspection Module Review & Correctness Audit Findings
 
-> **Scope**: Comprehensive correctness audit of `docs/02_modules/operations-inspection/CLAUDE.md`, `docs/02_modules/operations-inspection.md`, and all cross-module triggers touching Inspection documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
+> **Scope**: Comprehensive correctness audit of `docs/02_modules/operations-inspection/CLAUDE.md`, `docs/02_modules/operations-inspection/README.md`, and all cross-module triggers touching Inspection documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
 > **Branch / Worktree**: `review-operations-inspection` (`.worktrees/review-operations-inspection`)  
 > **Status**: Review & Audit Completed — All Decision Points Accepted (Ready for Implementation).
 
@@ -9,7 +9,7 @@
 ## 1. Executive Summary
 
 A deep-trace audit was conducted across the Operations: Inspection module implementation and its integration surfaces:
-- **Module Docs**: `docs/02_modules/operations-inspection.md`, `docs/02_modules/operations-inspection/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`
+- **Module Docs**: `docs/02_modules/operations-inspection/README.md`, `docs/02_modules/operations-inspection/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`
 - **UI Components**: `src/components/operations/FabricationWorks.jsx` (QA Inspection dialog, Defect modal, Kanban board), `src/components/operations/FabricationCardDetails.jsx` (Milestone checklist, A4 ticket printout)
 - **CRM Integration**: `src/components/crm/Deals.jsx` (Deal completion invoice trigger), `src/components/crm/Leads.jsx` (Project creation on deal conversion)
 - **Handlers & Services**: `src/App.jsx` (`handleSaveInvoice`, `auditLog`), `src/services/firestoreSync.js` (`generateInvoiceId`, `generateAtomicId`)
@@ -40,7 +40,7 @@ While the core concept documented in `operations-inspection.md` (that Inspection
 | **Triggers and side effects** ("Pass creates the 25% Final invoice; fail sets Revision. No audit log, no notification, no role gate...") | **Partially Accurate** | While there is no UI role restriction on the dialog, Firestore rules block `Operations` users from writing invoices under default RBAC (`invoices: none()`). |
 | **Before you edit** ("There is no lead-side site-inspection workflow") | **Accurate** | Confirmed: `LeadCardDetails` and `Dashboard` "Inspect" buttons only open detail records. |
 
-### 2.2 `docs/02_modules/operations-inspection.md`
+### 2.2 `docs/02_modules/operations-inspection/README.md`
 
 | Section / Claim | Code Status | Details / Discrepancy |
 |---|---|---|

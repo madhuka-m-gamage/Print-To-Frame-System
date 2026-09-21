@@ -20,7 +20,7 @@
 
 No Cloud Functions.
 
-- **Pass:** all four checks must be ticked. The job becomes Completed; if `value > 0` a Final invoice id is reserved and a **25% Final invoice** is created (Unpaid, due in 7 days). If id generation fails the job is not completed. See [operations-fabrication.md](operations-fabrication.md) and [invoicing.md](invoicing.md).
+- **Pass:** all four checks must be ticked. The job becomes Completed; if `value > 0` a Final invoice id is reserved and a **25% Final invoice** is created (Unpaid, due in 7 days). If id generation fails the job is not completed. See [operations-fabrication.md](../operations-fabrication/README.md) and [invoicing.md](../invoicing/README.md).
 - **Fail:** the job moves to Revision, `checklist.qaPassed` is set false, a toast is shown and the card shows a defect badge.
 - Dispatch to Logistics is a separate manual button, not triggered by a QA pass.
 - **Roles:** no per-role gate on the QA action; the dialog only defaults the inspector name from `currentUser`. `firestore.rules` uses generic `checkPermission('projects', ...)`. The role labelled "Fabrication Master" is `Operations`.

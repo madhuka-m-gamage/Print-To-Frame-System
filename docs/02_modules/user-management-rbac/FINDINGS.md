@@ -1,6 +1,6 @@
 # User Management & RBAC Review & Correctness Audit Findings
 
-> **Scope**: Correctness review of `docs/02_modules/user-management-rbac/CLAUDE.md`, `docs/02_modules/user-management-rbac.md`, `docs/03_security/RBAC_MODEL.md`, `docs/03_security/FIRESTORE_RULES_NOTES.md`, and cross-module triggers touching User Management documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
+> **Scope**: Correctness review of `docs/02_modules/user-management-rbac/CLAUDE.md`, `docs/02_modules/user-management-rbac/README.md`, `docs/03_security/RBAC_MODEL.md`, `docs/03_security/FIRESTORE_RULES_NOTES.md`, and cross-module triggers touching User Management documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
 > **Branch / Worktree**: `review-user-management-rbac` (`.worktrees/review-user-management-rbac`)  
 > **Status**: Review & Audit findings; all 12 recommended resolutions formally accepted by project owner (2026-09-20); ready for implementation.
 
@@ -9,7 +9,7 @@
 ## 1. Executive Summary
 
 A comprehensive architectural, security, and trigger audit was conducted across the User Management & RBAC module, including identity provisioning pipelines, dynamic permission matrices, serverless backend administrative endpoints, Firestore security rules, and cross-module triggers:
-- **Module Documentation**: `docs/02_modules/user-management-rbac.md`, `docs/02_modules/user-management-rbac/CLAUDE.md`, `docs/03_security/RBAC_MODEL.md`, `docs/03_security/FIRESTORE_RULES_NOTES.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
+- **Module Documentation**: `docs/02_modules/user-management-rbac/README.md`, `docs/02_modules/user-management-rbac/CLAUDE.md`, `docs/03_security/RBAC_MODEL.md`, `docs/03_security/FIRESTORE_RULES_NOTES.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
 - **Target UI Components**: `src/components/admin/AdminPanel.jsx` (System Overview, storage telemetry, and audit trail), `src/components/admin/AgentDatabase.jsx` (User Management, review queue, member workspace, and account lifecycle), `src/components/admin/PermissionsManager.jsx` (Dynamic role-by-module matrix editor).
 - **Context, Constants & Routing**: `src/context/PermissionsContext.jsx` (`DEFAULT_PERMISSIONS`, `canAccess`, live Firestore sync), `src/constants/roles.js` (`SYSTEM_ROLES`, `ROLE_METADATA`, `ROLE_CATEGORIES`, `getRoleCategory`), `src/App.jsx` (authentication state listener, self-healing super admin guard, `handleRegister`, `approvePending`, `rejectPending`, route guards, mobile navigation dock).
 - **Services & Backend Functions**: `src/services/adminUsers.js` (client wrapper for `/api/admin-user`), `src/services/auditLog.js` (`logActivity`), `api/admin-user.js` (Firebase Admin SDK account provisioning, password reset, and deletion), `src/services/mailer.js` (`sendTemplatedEmail`).
@@ -118,7 +118,7 @@ A comprehensive architectural, security, and trigger audit was conducted across 
 
 ---
 
-### 2.2 `docs/02_modules/user-management-rbac.md`
+### 2.2 `docs/02_modules/user-management-rbac/README.md`
 
 | Section / Claim | Code Status | Details / Discrepancy |
 |---|---|---|

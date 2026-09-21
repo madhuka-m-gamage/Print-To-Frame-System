@@ -1,6 +1,6 @@
 # Leads Module Review & Correctness Audit Findings
 
-> **Scope**: Correctness review of `docs/02_modules/leads/CLAUDE.md`, `docs/02_modules/leads.md`, and all cross-module triggers touching Leads documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
+> **Scope**: Correctness review of `docs/02_modules/leads/CLAUDE.md`, `docs/02_modules/leads/README.md`, and all cross-module triggers touching Leads documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
 > **Branch / Worktree**: `review-leads` (`.worktrees/review-leads`)  
 > **Status**: ✅ Decisions closed — all ambiguities resolved by product owner (A1–A7). Ready for implementation.
 
@@ -9,7 +9,7 @@
 ## 1. Executive Summary
 
 A deep-trace audit was conducted across the Leads module implementation files:
-- **Module Docs**: `docs/02_modules/leads.md`, `docs/02_modules/leads/CLAUDE.md`
+- **Module Docs**: `docs/02_modules/leads/README.md`, `docs/02_modules/leads/CLAUDE.md`
 - **UI Components**: `src/components/crm/Leads.jsx`, `src/components/crm/LeadCardDetails.jsx`, `src/components/crm/QuotationBuilder.jsx`
 - **Services & Utilities**: `src/services/gemini.js`, `src/services/pricingEngine.js`, `src/utils/audioProcessing.js`
 - **Backend Proxy**: `api/generate.js` (and dev server middleware in `vite.config.js`)
@@ -31,7 +31,7 @@ While the core architecture described in `CLAUDE.md` (client-side orchestration,
 | **Before you edit** ("A Deal is a leads document...") | **Accurate** | Confirmed: Deals live in `COLLECTIONS.LEADS`. Note: As a consequence, `match /deals/{dealId}` in `firestore.rules` is dead rules; Deals are governed by `match /leads/{leadId}`. |
 | **Before you edit** ("Leads with source == 'Referral' can be created anonymously") | **Accurate** | Confirmed in `firestore.rules:L125` and `ReferralForm.jsx:L104`. |
 
-### 2.2 `docs/02_modules/leads.md`
+### 2.2 `docs/02_modules/leads/README.md`
 
 | Section / Claim | Code Status | Details / Discrepancy |
 |---|---|---|
@@ -131,7 +131,7 @@ While the core architecture described in `CLAUDE.md` (client-side orchestration,
 
 * **Findings**:
   1. **Logistics UI Guard Mismatch**:
-     - `docs/02_modules/leads.md` states `LeadCardDetails.jsx` contains the logistics trigger.
+     - `docs/02_modules/leads/README.md` states `LeadCardDetails.jsx` contains the logistics trigger.
      - In code, `LeadCardDetails.jsx:L1666` guards the logistics card behind `{(isDeal || lead.isDeal) && ...}`.
      - For Leads, the logistics UI inside `LeadCardDetails` is hidden. Logistics pickup jobs for Leads can only be created via the Kanban card button in the `"75% Invoice Submitted"` column (`Leads.jsx:L142-L152`).
 

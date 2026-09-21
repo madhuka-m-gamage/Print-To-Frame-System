@@ -37,5 +37,5 @@ Firestore-only 1-on-1 direct chat provided by a root `MessagingProvider`. Each m
 
 ## Open questions
 
-- Confirmed in `firestore.rules`: any authenticated user can read all `messages` documents (reads are not restricted to participants), even though the client filters by `participants`; see [FIRESTORE_RULES_NOTES.md](../03_security/FIRESTORE_RULES_NOTES.md).
+- Confirmed in `firestore.rules`: any authenticated user can read all `messages` documents (reads are not restricted to participants), even though the client filters by `participants`; see [FIRESTORE_RULES_NOTES.md](../../03_security/FIRESTORE_RULES_NOTES.md).
 - The whole-collection `typing_indicators` listener reads every user's indicator.

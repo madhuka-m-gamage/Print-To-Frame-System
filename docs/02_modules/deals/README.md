@@ -38,4 +38,4 @@ Deals is the post-sale Kanban view of `leads` documents flagged `isDeal`. Conver
 
 ## Open questions
 
-- A second automatic Final-invoice creator exists in `FabricationWorks.jsx` (see [invoicing.md](invoicing.md)); how the two interact is to be resolved in [CROSS_MODULE_TRIGGERS.md](../01_architecture/CROSS_MODULE_TRIGGERS.md).
+- A second automatic Final-invoice creator exists in `FabricationWorks.jsx` (see [invoicing.md](../invoicing/README.md)); how the two interact is to be resolved in [CROSS_MODULE_TRIGGERS.md](../../01_architecture/CROSS_MODULE_TRIGGERS.md).

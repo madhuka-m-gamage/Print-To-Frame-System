@@ -1,6 +1,6 @@
 # Invoicing Module Review & Correctness Audit Findings
 
-> **Scope**: Correctness review of `docs/02_modules/invoicing/CLAUDE.md`, `docs/02_modules/invoicing.md`, and all cross-module triggers touching Invoicing documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
+> **Scope**: Correctness review of `docs/02_modules/invoicing/CLAUDE.md`, `docs/02_modules/invoicing/README.md`, and all cross-module triggers touching Invoicing documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
 > **Branch / Worktree**: `review-invoicing` (`.worktrees/review-invoicing`)  
 > **Status**: Audit complete — all proposed resolutions ACCEPTED by user (implementation plan locked).
 
@@ -9,7 +9,7 @@
 ## 1. Executive Summary
 
 A comprehensive architectural and trigger audit was conducted across the Invoicing module and its integration boundaries:
-- **Module Documentation**: `docs/02_modules/invoicing.md`, `docs/02_modules/invoicing/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
+- **Module Documentation**: `docs/02_modules/invoicing/README.md`, `docs/02_modules/invoicing/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
 - **Target UI Components**: `src/components/crm/Invoices.jsx`, `src/components/crm/QuotationBuilder.jsx`, `src/components/crm/LeadCardDetails.jsx`, `src/components/crm/Receipts.jsx`, `src/components/crm/Leads.jsx`, `src/components/crm/Deals.jsx`, `src/components/operations/FabricationWorks.jsx`.
 - **Templates & Formatting**: `src/utils/invoiceTemplate.js` (`buildInvoiceHtml`, `openInvoicePrintWindow`), `src/utils/receiptTemplate.js` (`buildReceiptHtml`, `amountToWords`).
 - **ID Generation & Atomic Counters**: `src/services/firestoreSync.js` (`generateInvoiceId`, `generateAtomicId`, `deriveReceiptId`), `src/services/auditLog.js` (`logActivity`).
@@ -60,7 +60,7 @@ A comprehensive architectural and trigger audit was conducted across the Invoici
 | **Before you edit** ("Always reserve the id with `generateInvoiceId` first; both automatic creators abort the stage change if that fails.") | **Accurate** | Confirmed: both `Deals.jsx` and `FabricationWorks.jsx` await `generateInvoiceId('Final')` and abort state transitions if the promise rejects. |
 | **Before you edit** ("One Advance and one Final per lead is a UI convention, not enforced in rules or data.") | **Critical Verification** | Confirmed: rules and backend permit unlimited invoices per lead/job. UI guards only exist in `QuotationBuilder.jsx`; `Deals.jsx` and `FabricationWorks.jsx` do **not** check existing invoices. |
 
-### 2.2 `docs/02_modules/invoicing.md`
+### 2.2 `docs/02_modules/invoicing/README.md`
 
 | Section / Claim | Code Status | Details / Discrepancy |
 |---|---|---|

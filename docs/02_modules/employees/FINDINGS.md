@@ -1,6 +1,6 @@
 # Employees Module Review & Architecture Audit Findings
 
-> **Scope**: Architectural audit, codebase verification, and accepted design decisions for `docs/02_modules/employees/CLAUDE.md`, `docs/02_modules/employees.md`, and cross-module triggers documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
+> **Scope**: Architectural audit, codebase verification, and accepted design decisions for `docs/02_modules/employees/CLAUDE.md`, `docs/02_modules/employees/README.md`, and cross-module triggers documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
 > **Branch / Worktree**: `review-employees` (`.worktrees/review-employees`)  
 > **Status**: Review & Audit findings complete. All recommended decisions formally accepted by user. Detailed HR data model specified below.
 
@@ -35,7 +35,7 @@ An in-depth architectural and code-level audit of the "Employees" domain was con
 | **Triggers & side effects** ("Enrolling creates an Auth account (`api/admin-user.js`), the `users` doc, an `ENROLL` audit entry and an `employee_invite` email.") | **Accurate** | Verified in `AgentDatabase.jsx:L309-354`. |
 | **Before you edit** ("Decide whether an Employees module is planned... Roles 'Sales Executive' and 'Fabricator' do not exist; use `Sales` and `Operations`.") | **Accurate** | Canonical roles in `src/constants/roles.js` confirm `Sales` and `Operations`. |
 
-### 2.2 `docs/02_modules/employees.md`
+### 2.2 `docs/02_modules/employees/README.md`
 
 | Section / Claim | Code Status | Verification Details |
 |---|---|---|

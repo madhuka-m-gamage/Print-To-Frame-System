@@ -34,7 +34,7 @@ Every module directory under `docs/02_modules/` contains a dedicated `FINDINGS.m
 
 ### Check 2: Link Integrity & Navigation
 - **Project Index (`PROJECT_INDEX.md`)**: Lines 29–44 contain explicit navigation entries linking each module to its specifications, Claude instructions, and review findings:
-  `- [<module>](docs/02_modules/<module>.md) | [instructions](docs/02_modules/<module>/CLAUDE.md) | [findings](docs/02_modules/<module>/FINDINGS.md)`
+  `- [<module>](02_modules/<module>.md) | [instructions](02_modules/<module>/CLAUDE.md) | [findings](02_modules/<module>/FINDINGS.md)`
 - **Module Instructions (`docs/02_modules/<module>/CLAUDE.md`)**: All 16 instruction files link directly to their peer `FINDINGS.md` file via `[FINDINGS.md](FINDINGS.md)`.
 - All relative Markdown paths were programmatically resolved and verified on disk.
 
@@ -63,24 +63,24 @@ Diff inspection via `git diff origin/staging...HEAD --stat` confirmed strictly i
 
 ## 3. Module Verification Summary Table
 
-| Module | [`FINDINGS.md`](docs/02_modules) | Content Size | [`CLAUDE.md`](docs/02_modules) Link | [`PROJECT_INDEX.md`](PROJECT_INDEX.md) Link | Conflict Markers | Code Regression (`src/`, `api/`) | Worktree Status |
+| Module | [`FINDINGS.md`](02_modules) | Content Size | [`CLAUDE.md`](02_modules) Link | [`PROJECT_INDEX.md`](../PROJECT_INDEX.md) Link | Conflict Markers | Code Regression (`src/`, `api/`) | Worktree Status |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **[auth](docs/02_modules/auth/FINDINGS.md)** | PASS | 299 lines (21.7 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
-| **[cost-calculator-quotation](docs/02_modules/cost-calculator-quotation/FINDINGS.md)** | PASS | 354 lines (28.1 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
-| **[customers](docs/02_modules/customers/FINDINGS.md)** | PASS | 441 lines (36.0 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
-| **[deals](docs/02_modules/deals/FINDINGS.md)** | PASS | 328 lines (27.4 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
-| **[employees](docs/02_modules/employees/FINDINGS.md)** | PASS | 354 lines (26.0 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
-| **[internal-messaging](docs/02_modules/internal-messaging/FINDINGS.md)** | PASS | 415 lines (33.4 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
-| **[invoicing](docs/02_modules/invoicing/FINDINGS.md)** | PASS | 428 lines (32.8 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
-| **[leads](docs/02_modules/leads/FINDINGS.md)** | PASS | 234 lines (20.0 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
-| **[notifications](docs/02_modules/notifications/FINDINGS.md)** | PASS | 432 lines (39.9 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
-| **[operations-fabrication](docs/02_modules/operations-fabrication/FINDINGS.md)** | PASS | 386 lines (31.5 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
-| **[operations-inspection](docs/02_modules/operations-inspection/FINDINGS.md)** | PASS | 293 lines (27.4 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
-| **[operations-logistics](docs/02_modules/operations-logistics/FINDINGS.md)** | PASS | 416 lines (37.4 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
-| **[partners](docs/02_modules/partners/FINDINGS.md)** | PASS | 499 lines (41.4 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
-| **[profile-settings](docs/02_modules/profile-settings/FINDINGS.md)** | PASS | 277 lines (28.9 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
-| **[receipts](docs/02_modules/receipts/FINDINGS.md)** | PASS | 228 lines (17.3 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
-| **[user-management-rbac](docs/02_modules/user-management-rbac/FINDINGS.md)** | PASS | 463 lines (46.5 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
+| **[auth](02_modules/auth/FINDINGS.md)** | PASS | 299 lines (21.7 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
+| **[cost-calculator-quotation](02_modules/cost-calculator-quotation/FINDINGS.md)** | PASS | 354 lines (28.1 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
+| **[customers](02_modules/customers/FINDINGS.md)** | PASS | 441 lines (36.0 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
+| **[deals](02_modules/deals/FINDINGS.md)** | PASS | 328 lines (27.4 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
+| **[employees](02_modules/employees/FINDINGS.md)** | PASS | 354 lines (26.0 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
+| **[internal-messaging](02_modules/internal-messaging/FINDINGS.md)** | PASS | 415 lines (33.4 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
+| **[invoicing](02_modules/invoicing/FINDINGS.md)** | PASS | 428 lines (32.8 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
+| **[leads](02_modules/leads/FINDINGS.md)** | PASS | 234 lines (20.0 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
+| **[notifications](02_modules/notifications/FINDINGS.md)** | PASS | 432 lines (39.9 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
+| **[operations-fabrication](02_modules/operations-fabrication/FINDINGS.md)** | PASS | 386 lines (31.5 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
+| **[operations-inspection](02_modules/operations-inspection/FINDINGS.md)** | PASS | 293 lines (27.4 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
+| **[operations-logistics](02_modules/operations-logistics/FINDINGS.md)** | PASS | 416 lines (37.4 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
+| **[partners](02_modules/partners/FINDINGS.md)** | PASS | 499 lines (41.4 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
+| **[profile-settings](02_modules/profile-settings/FINDINGS.md)** | PASS | 277 lines (28.9 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
+| **[receipts](02_modules/receipts/FINDINGS.md)** | PASS | 228 lines (17.3 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
+| **[user-management-rbac](02_modules/user-management-rbac/FINDINGS.md)** | PASS | 463 lines (46.5 KB) | PASS | PASS | 0 markers | Clean (0 diffs) | CLEANED (merged) |
 
 ---
 

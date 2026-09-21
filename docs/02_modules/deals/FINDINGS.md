@@ -1,6 +1,6 @@
 # Deals Module Review & Correctness Audit Findings
 
-> **Scope**: Correctness review of `docs/02_modules/deals/CLAUDE.md`, `docs/02_modules/deals.md`, and all cross-module triggers touching Deals documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
+> **Scope**: Correctness review of `docs/02_modules/deals/CLAUDE.md`, `docs/02_modules/deals/README.md`, and all cross-module triggers touching Deals documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
 > **Branch / Worktree**: `review-deals` (`.worktrees/review-deals`)  
 > **Status**: Review & Audit findings (no functional code modified).
 
@@ -9,7 +9,7 @@
 ## 1. Executive Summary
 
 A comprehensive architectural and trigger audit was conducted across the Deals module and its integration boundaries:
-- **Module Documentation**: `docs/02_modules/deals.md`, `docs/02_modules/deals/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
+- **Module Documentation**: `docs/02_modules/deals/README.md`, `docs/02_modules/deals/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
 - **Target UI Components**: `src/components/crm/Deals.jsx`, `src/components/crm/LeadCardDetails.jsx`, `src/components/crm/Leads.jsx`.
 - **Services & Utilities**: `src/utils/entityUtils.js` (`matchesEntity`), `src/utils/logisticsEngine.js`, `src/services/pricingEngine.js`, `src/utils/invoiceTemplate.js`, `src/services/firestoreSync.js`.
 - **Integration & Consumer Surfaces**: `src/App.jsx` (`handleSaveInvoice`, `handleMarkInvoicePaid`, stage transitions), `src/components/operations/FabricationWorks.jsx`, `src/components/crm/Partners.jsx`, `src/components/dashboard/Dashboard.jsx`, `firestore.rules`.
@@ -43,7 +43,7 @@ A comprehensive architectural and trigger audit was conducted across the Deals m
 | **Triggers and side effects** ("Hand Over to Completed: reserves a Final invoice id (aborts if it fails), creates a 25% Final invoice.") | **Accurate** | Confirmed: `generateInvoiceId('Final')` is awaited prior to state update; move aborts if reservation fails. |
 | **Before you edit** ("The `deals` block in `firestore.rules` and the `pipeline` permission do not govern real deal data.") | **Accurate** | Confirmed: `firestore.rules:L130-L135` matches `/deals/{dealId}`, which is never written to. |
 
-### 2.2 `docs/02_modules/deals.md`
+### 2.2 `docs/02_modules/deals/README.md`
 
 | Section / Claim | Code Status | Details / Discrepancy |
 |---|---|---|
