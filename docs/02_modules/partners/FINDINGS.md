@@ -485,15 +485,15 @@ if (r.includes('operation') || r.includes('logistics') || r.includes('fabricat')
 > All items in §5 are **accepted**. The following checklist tracks execution status. Mark `[x]` when a change is committed to the `review-partners` branch.
 
 - [ ] **D-1** — Implement real `handleDisbursePayout` in `Partners.jsx`: write `partner_payouts` doc, update leads `payoutStatus: 'Paid'`, update partner balances, emit `PAYOUT_DISBURSED` audit log.
-- [ ] **D-2** — Filter out `!lead.convertedToDeal` in `Partners.jsx` `getPartnerReferrals` and gate `Eligible for Payout` on `lead.isDeal` and full settlement.
-- [ ] **D-3** — In `Deals.jsx:L363`, add `(Number(deal.value) / 850) * commRate` fallback when `totalSqFt <= 0`; update trigger documentation.
-- [ ] **D-4** — Disable backward moves on Completed deal cards in `Deals.jsx` (`DealColumn` conditional `onMoveBack`); add `commissionAccrued: true` idempotency check.
+- [x] **D-2** — Filter out `!lead.convertedToDeal` in `Partners.jsx` `getPartnerReferrals` and gate `Eligible for Payout` on `lead.isDeal` and full settlement.
+- [x] **D-3** — In `Deals.jsx:L363`, add `(Number(deal.value) / 850) * commRate` fallback when `totalSqFt <= 0`; update trigger documentation.
+- [x] **D-4** — Disable backward moves on Completed deal cards in `Deals.jsx` (`DealColumn` conditional `onMoveBack`); add `commissionAccrued: true` idempotency check.
 - [ ] **D-5** — Update `firestore.rules` under `/partners/{partnerId}` to permit read access if `resource.data.status == 'Active'`.
-- [ ] **D-6** — Add explicit security rules in `firestore.rules` for `/referral_claims/{claimId}` and `/partner_payouts/{payoutId}`.
-- [ ] **D-7** — Standardize `publicQrUrl` in `Partners.jsx:L699` to return `${origin}/referral?ref=${pid}`.
-- [ ] **D-8** — Replace "Chat" (`messages`) with "Profile" (`profile`) in `App.jsx` Mobile Quick Dock for Partner role.
+- [x] **D-6** — Add explicit security rules in `firestore.rules` for `/referral_claims/{claimId}` and `/partner_payouts/{payoutId}`.
+- [x] **D-7** — Standardize `publicQrUrl` in `Partners.jsx:L699` to return `${origin}/referral?ref=${pid}`.
+- [x] **D-8** — Replace "Chat" (`messages`) with "Profile" (`profile`) in `App.jsx` Mobile Quick Dock for Partner role.
 - [ ] **D-9** — Add scoped read permissions in `firestore.rules` for Partner role on `/leads` and `/invoices`; scope subscriptions in `App.jsx`.
-- [ ] **D-10** — In `LeadCardDetails.jsx`, populate both `partnerId` and `agentId` with name and rate; update `App.jsx:L529` to match `partnerId || agentId`.
+- [x] **D-10** — In `LeadCardDetails.jsx`, populate both `partnerId` and `agentId` with name and rate; update `App.jsx:L529` to match `partnerId || agentId`.
 - [ ] **D-11** — Write persistent commission clearance notifications to Firestore `notifications` collection targeted to partner email/role in `App.jsx`.
 - [ ] **D-12** — Add claim linkage / conversion modal to `handleVerifyClaim` in `Partners.jsx`.
 

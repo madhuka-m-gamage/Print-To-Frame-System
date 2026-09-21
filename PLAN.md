@@ -20,9 +20,9 @@ Updated 2026-09-21. These are honest estimates, not measurements: they show wher
 | Track | Progress | Notes |
 |---|---|---|
 | Test suite (Part A setup, Part B authoring) | `[##########]` ~95% | Five layers built and in CI; B6 browser journeys parked |
-| Phase 7 fixes that do not touch the live site (steps 1 to 6, 8.1) | `[#########-]` ~90% | Done and merged into `staging`; step 7 (UX backlog) not started |
+| Phase 7 fixes that do not touch the live site (steps 1 to 6, 8.1, 8.2) | `[#########-]` ~95% | Done and merged. Steps 4.1, 4.3, 7 and B6 were moved to the follow-up backlog by the owner on 2026-09-21 |
 | 8.2 Standard project structure | `[##########]` ~100% | 12 of 12 tasks built (the last PR is open): README and env example, unused files removed, one docs folder per module, `@/` import alias, shared code, feature folders for auth, profile, dashboard, messaging, leads, customers, quotations, deals, invoicing, partners, fabrication, logistics and admin (all of `src/components` is gone). Clean-up, ADR `0003-source-layout.md` and removal of the temporary codemod are in the last PR |
-| Live rollout chain (matrix 3.3, rules 3.4d and 3.5d, payouts 4.x, promote to `main`) | `[##--------]` ~20% | Preparation done 2026-09-21: read-only live check, deployable rules branch, and the runbook `docs/04_workflows/LIVE_ROLLOUT.md`. Nothing applied to the live project; every step needs the owner's go |
+| Live rollout chain (matrix 3.3, rules 3.4d and 3.5d, move production to this repository) | `[##--------]` ~20% | Prepared, not applied. Moved to the follow-up backlog by the owner on 2026-09-21; runbook `docs/04_workflows/LIVE_ROLLOUT.md` |
 | Follow-up backlog | ~20 items listed | Tackled one by one after this workflow |
 
 Merged into `staging` so far: PRs #6 to #51. Open: the final 8.2 PR (clean-up, ADR, removal of the codemod).
@@ -51,7 +51,7 @@ Order: A1, then A2/A3/A4 (any order), then A7 (CI), then A5 -> A6 whenever brows
 - [x] B3: API handler cases (before 3.6)
 - [x] B4: Firestore rules cases (before 3.4 / 3.5; replaces Phase 7 prompt 3.1)
 - [x] B5: component cases (before 4.1)
-- [ ] B6: E2E journeys (needs A6)
+- [ ] B6: E2E journeys (needs A6). Moved to the follow-up backlog by the owner, 2026-09-21
 - [x] Refresh the `TESTING.md` coverage map (done 2026-09-21, after Phase 7 step 5; refresh again after the next batch) and characterisation register (manual, run on request after Part B phases land). Prompt: "Refresh docs/04_workflows/TESTING.md: run npm run coverage and update the coverage map (files, tests, kind, gaps), update the characterisation register from the tests that carry a finding comment, and tick the roadmap. Docs only; state only what you read; commit."
 
 ### Phase 7: audit remediation
@@ -70,10 +70,10 @@ Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 be
 - [ ] 3.4 / 3.4d: additive rules written and tested (D-5 public partner read held, see notes); deploy needs approval. Deploy the version on branch `claude/rules-3-4d-deploy` (3.4 plus the `L` and `D` counter prefixes), not the bare 3.4 commit; steps in `docs/04_workflows/LIVE_ROLLOUT.md`
 - [ ] 3.5 / 3.5d: restrictive rules written and tested (not deployed); needs 3.3 and 3.4d first, then the RBAC E2E, your approval to deploy, and a manual role check on the live site
 - [x] 3.6: admin API
-- [ ] 4.1-4.3: payouts, referral lineage, claims and notifications
+- [~] 4.1-4.3: 4.2 (referral lineage) is done. 4.1 (real payout) and 4.3 (persistent partner notifications, claim resolution) moved to the follow-up backlog by the owner, 2026-09-21
 - [x] 5.1-5.3: Google scopes, registration, user lifecycle
 - [ ] 6.1-6.6: leads, atomic ids, customers, deals/fabrication/inspection, logistics (6.1, 6.2, 6.3, 6.4, 6.6 done in PRs; 6.5 logistics not started)
-- [ ] 7: UX and feature backlog
+- [ ] 7: UX and feature backlog. Moved to the follow-up backlog by the owner, 2026-09-21 (each item runs as its own piece of work)
 - [x] 8.1: docs sync (TESTING.md coverage map and roadmap, root CLAUDE.md test layers and approval hand-off, stale module maps and instructions for pricing, duplicate Final guard, commission accrual)
 - [x] 8.2: standard project structure, in 12 small tasks (done 2026-09-21; decision recorded in `docs/05_decisions/0003-source-layout.md`)
   - [x] 1: README, `.env.example`, `.editorconfig`, `CONTRIBUTING.md`, package metadata
@@ -133,6 +133,11 @@ Owner decision 2026-09-21: side findings are parked here, not folded into the st
 - [ ] Three GitHub locations exist for this project: the original personal repository `madhukagamage6/Print-To-Frame-ERP-System` (own history, last commit 2026-09-15), the former organisation repository that redirects to `madhuka-m-gamage/Print-To-Frame-System` (this one), and the local folder `Print-To-Frame-ERP-System` that mirrors the first. Decide which is canonical, point the live Vercel project at it, and archive the others. The live deployment source is now confirmed: Vercel project `print-to-frame-erp` deploys `main` of `madhukagamage6/Print-To-Frame-ERP-System` (see the runbook, step 2); the paths to move it here are in the runbook.
 - [ ] Security sweep findings (`docs/03_security/AUTHORIZATION_MAP.md`, 2026-09-21): (a) DONE 2026-09-21: `api/send-email.js` is staff-only and template-only; still open: check the recipient against known records (some approval flows email an address before its record exists, so that needs care); (b) `api/generate.js` is open to any approved account; (c) the dev proxy in `vite.config.js` skips authentication for creating and resetting Auth users and `npm run dev` binds to `0.0.0.0`; bind to localhost and require the production token checks; (d) console-only checks the repo cannot show: Firebase project IAM members, the role of the service account stored in Vercel, who can edit Vercel variables.
 - [ ] Build an emulator test that loads the live permission matrix and prints, for every role, collection and operation, whether the deployed rules and the new rules allow it (an effective-access table), to settle the "which rule actually wins" question with data.
+- [ ] **Step 4.1, real partner payout** (partners D-1): make "Disburse Payout" write a `partner_payouts` record, mark the settled leads paid, adjust the partner's balances and audit-log it, as one atomic write. Extract the payout calculation as a tested helper first. The rules for it are already written on `staging`; it only works live after the additive rules are deployed. Moved here by the owner 2026-09-21.
+- [ ] **Step 4.3, persistent partner notifications and claim resolution** (partners D-11, D-12): write the "commission cleared" notification to a stored `notifications` collection targeted at the partner (needs a new rules block and tests), and let an Admin link an offline referral claim to a lead or convert it into a new one. No dependency on anything else. Moved here 2026-09-21.
+- [ ] **Step 7, UX and feature backlog**, each as its own separate piece of work: messaging polish, notification persistence and toast decoupling, profile items, the Employees HR model, and task-assignment fields (the fleet directory is listed above). None affects money or access. Moved here 2026-09-21.
+- [ ] **B6, end-to-end browser journeys**: the money journey (quotation to Advance to Final, exactly one Final invoice) and the RBAC journey (each role sees only its navigation; a deactivated user cannot sign in). Needs the seed data extended with Sales, Customer and Manager users. Should exist before the restrictive rules are deployed. Moved here 2026-09-21.
+- [ ] **Live rollout** (matrix migration, moving production to this repository, additive then restrictive rules): fully prepared in `docs/04_workflows/LIVE_ROLLOUT.md`; nothing has been applied to the live project. Waiting on the owner. Until it is done the live site keeps running the old code and the old rules, and the security fixes on `staging` (send-email hardening, stricter rules) do not take effect.
 - [ ] Environment variables on the Vercel preview: it needs its own `FIREBASE_SERVICE_ACCOUNT_JSON` and `GEMINI_API_KEY` in Preview scope; replace live keys with a staging project's keys once Part 1 exists.
 
 ## Antigravity Work Summary & Handoff

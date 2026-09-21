@@ -73,6 +73,7 @@ import { subscribeToNotifications, emitNotification } from "./shared/utils/event
 import { logActivity } from "./services/auditLog";
 import { ErrorBoundary } from "./shared/components/ErrorBoundary";
 import LoadingSpinner from "./shared/components/LoadingSpinner";
+import { findPartnerForLead, getLeadPartnerId } from "@/features/partners/partnerLink";
 
 
 export function oT() {
@@ -511,7 +512,7 @@ function App() {
       if (targetLead) {
         const leadDocId = targetLead._firestoreId || targetLead.id;
         const newStage = (isAdvance && targetLead.stage === '75% Invoice Submitted') ? 'Received' : targetLead.stage;
-        const isPartnerReferral = Boolean(targetLead.partnerId || targetLead.partnerName || targetLead.source === 'Referral');
+        const isPartnerReferral = Boolean(getLeadPartnerId(targetLead) || targetLead.partnerName || targetLead.source === 'Referral');
         const alreadyEligible = targetLead.referralStatus === 'Eligible for Payout';
 
         const updatedLeadPayload = {
@@ -543,10 +544,8 @@ function App() {
           // pricingMetadata.costSalesAmount (baked from a fixed internal cost
           // rate) — either would pay out a stale rate if the partner's rate
           // changed since the lead was referred/quoted.
-          const referredPartner = partners.find(p =>
-            (targetLead.partnerId && (p.partnerId === targetLead.partnerId || p.id === targetLead.partnerId)) ||
-            (targetLead.partnerName && p.name === targetLead.partnerName)
-          );
+          const referredPartner = findPartnerForLead(targetLead, partners) ||
+            partners.find(p => targetLead.partnerName && p.name === targetLead.partnerName);
           let commRate = Number(referredPartner?.commissionRate) > 0 ? Number(referredPartner.commissionRate) : 53.5;
           if (commRate > 0 && commRate <= 1) commRate = 53.5;
           const dealVal = Number(targetLead.value || 0);
@@ -558,7 +557,7 @@ function App() {
             message: `100% payment cleared for client ${targetLead.name || 'Referred Client'} (Deal ${targetLead.id}). Commission of LKR ${commAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })} is now eligible for month-end payout!`,
             date: new Date().toISOString(),
             type: 'commission',
-            partnerId: targetLead.partnerId || '',
+            partnerId: getLeadPartnerId(targetLead),
           };
           emitNotification(notif);
         }
