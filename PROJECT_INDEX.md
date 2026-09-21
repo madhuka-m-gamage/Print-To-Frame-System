@@ -46,6 +46,7 @@ Map, then per-module Claude instructions.
 ## Security
 
 - [RBAC_MODEL.md](docs/03_security/RBAC_MODEL.md)
+- [AUTHORIZATION_MAP.md](docs/03_security/AUTHORIZATION_MAP.md): every place that grants, checks or bypasses access, and the findings from the 2026-09-21 sweep
 - [FIRESTORE_RULES_NOTES.md](docs/03_security/FIRESTORE_RULES_NOTES.md)
 
 ## Workflows
