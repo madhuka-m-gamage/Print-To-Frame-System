@@ -26,7 +26,7 @@ No Cloud Functions.
 
 - **Profile mirroring:** `UserProfile.jsx` syncs to `partners` / `customers` directly (errors only warned); then `App.jsx` `handleUpdateUser` also updates `partners` for Partner users and updates local state. `handleUpdateUser` does not sync `customers`, so the two paths differ.
 - **Audit log:** `logActivity(..., 'UPDATE', 'Profile', ...)` on save.
-- **Editable:** the `users` fields listed above. **Protected on the client only:** role, status, email and identifier are absent from the save payload and display-only in the UI; whether rules also block them was not examined here (see [user-management-rbac.md](user-management-rbac.md)).
+- **Editable:** the `users` fields listed above. **Protected on the client only:** role, status, email and identifier are absent from the save payload and display-only in the UI; whether rules also block them was not examined here (see [user-management-rbac.md](../user-management-rbac/README.md)).
 - **Password change is a stub:** `handlePasswordReset` only shows a toast; there is no `updatePassword`, `reauthenticate` or `sendPasswordResetEmail` call. Emails: not found.
 
 ## Depends on / called by

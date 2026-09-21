@@ -13,7 +13,7 @@
 
 ## Firestore collections read/written
 
-**System notifications are not persisted.** They live in `useState` and are lost on reload; `NotificationsView.jsx` has no Firestore imports. The only persisted part of the feed is the message half: `MessagingContext.jsx` reads `messages` and writes `readBy` (see [internal-messaging.md](internal-messaging.md)).
+**System notifications are not persisted.** They live in `useState` and are lost on reload; `NotificationsView.jsx` has no Firestore imports. The only persisted part of the feed is the message half: `MessagingContext.jsx` reads `messages` and writes `readBy` (see [internal-messaging.md](../internal-messaging/README.md)).
 
 ## Cloud Functions / triggers
 

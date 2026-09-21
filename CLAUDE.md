@@ -93,7 +93,7 @@ erp-system/
 ├── PLAN.md                 single progress tracker, overwritten in place
 ├── docs/
 │   ├── 01_architecture/    SYSTEM_OVERVIEW, GCP_INVENTORY, CROSS_MODULE_TRIGGERS
-│   ├── 02_modules/         <module>.md, plus <module>/CLAUDE.md (under 200 lines)
+│   ├── 02_modules/         one folder per module: README.md (map), CLAUDE.md (under 200 lines), FINDINGS.md
 │   ├── 03_security/        RBAC_MODEL, FIRESTORE_RULES_NOTES
 │   ├── 04_workflows/       GIT_WORKFLOW, DEPLOY_PROCESS
 │   └── 05_decisions/       NNNN-title.md (4-digit, no dates)
@@ -104,7 +104,7 @@ erp-system/
 
 Standing rules when working in this repo:
 
-- Investigation output goes into the matching `docs/` file (functions and triggers into `GCP_INVENTORY.md`, trigger chains into `CROSS_MODULE_TRIGGERS.md`, a module's findings into `docs/02_modules/<module>.md`). Do not create `docs/module-map/`.
+- Investigation output goes into the matching `docs/` file (functions and triggers into `GCP_INVENTORY.md`, trigger chains into `CROSS_MODULE_TRIGGERS.md`, a module's map into `docs/02_modules/<module>/README.md` and its findings into `<module>/FINDINGS.md`). Do not create `docs/module-map/`.
 - Before planning or implementing any change, read `docs/04_workflows/TESTING.md` (its "Planning a change" checklist, coverage map and characterisation register). The map and register are refreshed on request, tracked in `PLAN.md`, not on every change.
 - Before editing a module, read its `docs/02_modules/<module>/CLAUDE.md` (index below; not auto-loaded because it sits under `docs/`). If you change the module's behaviour, update that module's doc and `CLAUDE.md` in the same change.
 - Update `PROJECT_INDEX.md` when a doc is added or moved, and `CHANGELOG.md` with each change. Design "why" notes go in `docs/05_decisions/` as numbered files.

@@ -1,6 +1,6 @@
 # Operations: Logistics Module Review & Correctness Audit Findings
 
-> **Scope**: Comprehensive correctness audit of `docs/02_modules/operations-logistics/CLAUDE.md`, `docs/02_modules/operations-logistics.md`, and all cross-module triggers touching Logistics in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
+> **Scope**: Comprehensive correctness audit of `docs/02_modules/operations-logistics/CLAUDE.md`, `docs/02_modules/operations-logistics/README.md`, and all cross-module triggers touching Logistics in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
 > **Branch / Worktree**: `review-operations-logistics` (`.worktrees/review-operations-logistics`)  
 > **Status**: Review & Audit findings (no functional code modified).
 
@@ -9,7 +9,7 @@
 ## 1. Executive Summary
 
 A systematic deep-trace audit was conducted across the Operations: Logistics module and its cross-module integration surfaces:
-- **Module Documentation**: `docs/02_modules/operations-logistics/CLAUDE.md`, `docs/02_modules/operations-logistics.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
+- **Module Documentation**: `docs/02_modules/operations-logistics/CLAUDE.md`, `docs/02_modules/operations-logistics/README.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
 - **Target UI Components**: `src/components/operations/Logistics.jsx`, `src/components/operations/LogisticsCardDetails.jsx`.
 - **Engines & Utilities**: `src/utils/logisticsEngine.js` (`FLEET_VEHICLES`, `DRIVER_DIRECTORY`, `calculateCODFromInvoices`, `formatDispatchMessage`, `getGoogleMapsUrl`, `getWhatsAppUrl`).
 - **Integration & Dispatch Surfaces**: `src/App.jsx` (`logisticsJobs` subscription & state handlers, RBAC routing), `src/components/operations/FabricationWorks.jsx` (`handleDispatchToLogistics`), `src/components/crm/Deals.jsx` (`handleCreateDeliveryJob`), `src/components/crm/Leads.jsx` (`handleCreateLogisticsJob`), `src/components/crm/LeadCardDetails.jsx`, `src/components/dashboard/Dashboard.jsx`, and `firestore.rules`.
@@ -47,7 +47,7 @@ A systematic deep-trace audit was conducted across the Operations: Logistics mod
 | **Before you edit** ("`DRIVER_DIRECTORY`, `FLEET_VEHICLES` and the route hub are hardcoded in code.") | **Accurate** | Confirmed: Defined as static arrays in `src/utils/logisticsEngine.js`. Route hub `"Kadawatha Central Hub"` is hardcoded in `Logistics.jsx:L414` and `L607`. |
 | **Before you edit** ("`AddressPickerModal` / Maps JS API are used by Customers, not Logistics.") | **Accurate** | Confirmed: `Logistics.jsx` and `LogisticsCardDetails.jsx` do not import or use `AddressPickerModal`. Navigation uses plain URL generation via `getGoogleMapsUrl`. |
 
-### 2.2 `docs/02_modules/operations-logistics.md`
+### 2.2 `docs/02_modules/operations-logistics/README.md`
 
 | Section / Claim | Code Status | Verification Details & Discrepancies |
 |---|---|---|

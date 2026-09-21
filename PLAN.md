@@ -13,6 +13,20 @@ Progress tracker, overwritten in place. Outputs go into the structure listed in 
 - [x] Phase 6: per-module / per-layer review sessions (16 modules reviewed via parallel worktrees, merged, and verified) -> `docs/02_modules/*/FINDINGS.md`, [docs/POST_MERGE_VERIFICATION_REPORT.md](docs/POST_MERGE_VERIFICATION_REPORT.md)
 - [ ] Phase 7: Priority bug fixes, idempotency guards, and security rules remediation -> [docs/HANDOFF_REPORT.md](docs/HANDOFF_REPORT.md) (tracked below; testing suite is built first, see Part A/B)
 
+## Progress snapshot (rough, for orientation only)
+
+Updated 2026-09-21. These are honest estimates, not measurements: they show where the work stands at a glance. Update the bars and the date whenever a task finishes.
+
+| Track | Progress | Notes |
+|---|---|---|
+| Test suite (Part A setup, Part B authoring) | `[##########]` ~95% | Five layers built and in CI; B6 browser journeys parked |
+| Phase 7 fixes that do not touch the live site (steps 1 to 6, 8.1) | `[#########-]` ~90% | Done and merged into `staging`; step 7 (UX backlog) not started |
+| 8.2 Standard project structure | `[###-------]` ~25% | 3 of 12 tasks built: README and env example, unused files removed, one docs folder per module. Next: import alias, then feature folders |
+| Live rollout chain (matrix 3.3, rules 3.4d and 3.5d, payouts 4.x, promote to `main`) | `[----------]` ~0% | Parked by design until the live site is ready to change |
+| Follow-up backlog | ~20 items listed | Tackled one by one after this workflow |
+
+Merged into `staging` so far: PRs #6 to #40. Open, waiting to be merged in order: #41 (docs sync), #42, #43 and the docs-layout PR for 8.2.
+
 ## Testing and remediation tracks
 
 The suite is built first (Part A), then characterisation tests are written (Part B, deadlines noted), then Phase 7 fixes land against that safety net. Guide: [docs/04_workflows/TESTING.md](docs/04_workflows/TESTING.md). One branch per item from `claude/dev`, one PR each into `staging`; never push to `main`, never deploy rules without approval.
@@ -64,7 +78,8 @@ Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 be
 - [ ] 8.2: standard project structure, in 12 small PRs (plan approved 2026-09-21; full plan in `~/.claude/plans/i-want-to-get-synchronous-flurry.md`)
   - [x] 1: README, `.env.example`, `.editorconfig`, `CONTRIBUTING.md`, package metadata
   - [x] 2: remove confirmed-unused files and dependencies
-  - [ ] 3: one docs folder per module (`docs/02_modules/<m>/README.md`)
+  - [x] 3: one docs folder per module (`docs/02_modules/<m>/README.md`)
+  - Progress: 3 of 12 tasks built (about 25%), all in open PRs (#42, #43, and task 3)
   - [ ] 4: `@/` import alias, codemod, and normalise imports (no moves)
   - [ ] 5-10: move into `src/features/<domain>` and `src/shared`, one group per PR (shared; auth, profile, dashboard, messaging; leads, customers, quotations; deals, invoicing, partners; fabrication, logistics; admin)
   - [ ] 11-12: clean-up, ADR `0003-source-layout.md`, remove the codemod

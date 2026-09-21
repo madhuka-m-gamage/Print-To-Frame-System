@@ -1,6 +1,6 @@
 # User Profile & Settings Module Review & Correctness Audit Findings
 
-> **Scope**: Correctness review of `docs/02_modules/profile-settings/CLAUDE.md`, `docs/02_modules/profile-settings.md`, and cross-module triggers touching User Profile and Settings.  
+> **Scope**: Correctness review of `docs/02_modules/profile-settings/CLAUDE.md`, `docs/02_modules/profile-settings/README.md`, and cross-module triggers touching User Profile and Settings.  
 > **Branch / Worktree**: `review-profile-settings` (`.worktrees/review-profile-settings`)  
 > **Status**: Review & Audit findings (no functional code modified).
 
@@ -9,7 +9,7 @@
 ## 1. Executive Summary
 
 A thorough architectural and code-level audit was conducted across the User Profile & Settings module and its integration touchpoints:
-- **Module Documentation**: `docs/02_modules/profile-settings/CLAUDE.md`, `docs/02_modules/profile-settings.md`
+- **Module Documentation**: `docs/02_modules/profile-settings/CLAUDE.md`, `docs/02_modules/profile-settings/README.md`
 - **Cross-Module Architecture**: `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`
 - **UI Components**: `src/components/common/UserProfile.jsx`, `src/components/common/ui/ImageCropModal.jsx`, `src/components/common/ui/StatusBadge.jsx`, `src/components/common/ui/PageHeader.jsx`
 - **App State & Lifecycle**: `src/App.jsx` (`handleUpdateUser`, `handleSignOut`, theme management, auth listener, users snapshot listener)
@@ -44,7 +44,7 @@ While the core presentation layer (avatar cropping, section tabs for personal, w
 | **Before you edit** ("Role, status and email are protected only by the client payload; rules block role / status changes for non-admins.") | **Contradictory / Discrepancy** | `CLAUDE.md` states "protected only by the client payload" and immediately asserts "rules block role / status changes for non-admins". Code inspection confirms `firestore.rules:L97-99` strictly enforces `request.resource.data.role == resource.data.role && ...` for non-admins. |
 | **Before you edit** ("`src/constants/companyInfo.js` is unused.") | **Accurate** | Confirmed: `COMPANY_INFO` is never imported under `src/`. Hardcoded duplicates exist throughout `UserProfile.jsx`. |
 
-### 2.2 `docs/02_modules/profile-settings.md`
+### 2.2 `docs/02_modules/profile-settings/README.md`
 
 | Section / Claim | Code Status | Details / Discrepancy |
 |---|---|---|

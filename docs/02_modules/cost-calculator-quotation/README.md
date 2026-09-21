@@ -23,7 +23,7 @@ No Cloud Functions. Client-side:
 - **AI draft:** the "AI draft" button calls Gemini via `/api/generate`, embedding the lead's `pricingMetadata` and asking that line items sum to the final net payable.
 - **Split:** the builder totals line items and splits the grand total **75% advance (`advanceDue`) / 25% balance** (`QuotationBuilder.jsx` 89-90).
 - **75% Advance invoice:** button requires quotation status `Accepted` and blocks duplicates; saves an invoice with `quotationId` and copied `lineItems`.
-- **25% Final invoice:** a matching manual handler in the builder; also created automatically at deal completion (see [deals.md](deals.md)).
+- **25% Final invoice:** a matching manual handler in the builder; also created automatically at deal completion (see [deals.md](../deals/README.md)).
 - WhatsApp text is built in the builder (`buildWhatsAppQuoteText`, no AI). Drive files attach in local component state only.
 - Not found: docx generation, email sending from quotations, quotation-to-deal or -lead auto-creation.
 

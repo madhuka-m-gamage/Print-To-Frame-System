@@ -4,7 +4,7 @@
 
 ## Files and folders
 
-**There is no separate Employees module.** No `employees` or `staff` collection, component or route exists. Employee-like data lives in the `users` collection, managed on the "User Management" tab (`activeTab === "agents"`), so the working files are documented in [user-management-rbac.md](user-management-rbac.md). Employee-related pieces:
+**There is no separate Employees module.** No `employees` or `staff` collection, component or route exists. Employee-like data lives in the `users` collection, managed on the "User Management" tab (`activeTab === "agents"`), so the working files are documented in [user-management-rbac.md](../user-management-rbac/README.md). Employee-related pieces:
 
 - `src/components/admin/AgentDatabase.jsx`: enrol users, role / status change, photo, delete, password reset, approve / reject pending registrations.
 - `src/constants/roles.js`: 10 system roles: Admin, Manager, Sales, Operations, Support, Accounts, Logistics, Partner, Business Client, Customer. Roles named "Sales Executive" or "Fabricator" do not exist (closest: `Sales`, `Operations`).
@@ -14,7 +14,7 @@
 
 ## Firestore collections read/written
 
-`users` (keyed by lowercased email), `pendingUsers`, `partner_applications`, `auditLog`, `settings/permissions`. See [user-management-rbac.md](user-management-rbac.md).
+`users` (keyed by lowercased email), `pendingUsers`, `partner_applications`, `auditLog`, `settings/permissions`. See [user-management-rbac.md](../user-management-rbac/README.md).
 
 ## Cloud Functions / triggers
 

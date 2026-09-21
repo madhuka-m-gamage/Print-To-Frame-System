@@ -1,6 +1,6 @@
 # Cost Calculator & Quotation Module Review & Correctness Audit Findings
 
-> **Scope**: Correctness review of `docs/02_modules/cost-calculator-quotation/CLAUDE.md`, `docs/02_modules/cost-calculator-quotation.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`, and decision record `docs/05_decisions/0001-why-quotation-engine-is-custom.md`.  
+> **Scope**: Correctness review of `docs/02_modules/cost-calculator-quotation/CLAUDE.md`, `docs/02_modules/cost-calculator-quotation/README.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`, and decision record `docs/05_decisions/0001-why-quotation-engine-is-custom.md`.  
 > **Branch / Worktree**: `review-cost-calculator-quotation` (`.worktrees/review-cost-calculator-quotation`)  
 > **Status**: Review & Audit findings (no functional code modified).
 
@@ -9,7 +9,7 @@
 ## 1. Executive Summary
 
 A deep-trace correctness audit was performed across the **Cost Calculator & Quotation** module implementation files:
-- **Module Documentation**: `docs/02_modules/cost-calculator-quotation.md`, `docs/02_modules/cost-calculator-quotation/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`, `docs/05_decisions/0001-why-quotation-engine-is-custom.md`.
+- **Module Documentation**: `docs/02_modules/cost-calculator-quotation/README.md`, `docs/02_modules/cost-calculator-quotation/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`, `docs/05_decisions/0001-why-quotation-engine-is-custom.md`.
 - **Target UI Components**: `src/components/tools/CostCalculator.jsx` (standalone calculator tool), `src/components/crm/QuotationBuilder.jsx` (embedded structured quote builder), `src/components/crm/LeadCardDetails.jsx` (embedded calculator & quotation wrapper).
 - **Services & Pricing Engine**: `src/services/pricingEngine.js` (five-tier pricing model), `src/services/gemini.js` (`generateStructuredQuotation`, `generateQuotation`, `generateAdvanceInvoice`).
 - **Integration Surfaces**: `src/App.jsx` (`quotations` subscription, `handleSaveInvoice`), `src/utils/entityUtils.js` (`matchesEntity`), `src/utils/invoiceTemplate.js` (invoice printing), `src/components/crm/Deals.jsx`, `src/components/operations/FabricationWorks.jsx`, `firestore.rules`.
@@ -39,7 +39,7 @@ A deep-trace correctness audit was performed across the **Cost Calculator & Quot
 | **Before you edit** ("`cutListEngine.js` and `FrameBlueprintPreview.jsx` belong to Fabrication; `companyInfo.js` is unused.") | **Accurate** | Confirmed: `companyInfo.js` is never imported in `src/`. `cutListEngine.js` and `FrameBlueprintPreview.jsx` are exclusively imported by `FabricationWorks.jsx`. |
 | **Before you edit** ("`quotations` rules allow any authenticated user to read and write; there is no `quotations` permission module.") | **Accurate** | Confirmed in `firestore.rules:L138-L140` and `PermissionsContext.jsx`. |
 
-### 2.2 `docs/02_modules/cost-calculator-quotation.md`
+### 2.2 `docs/02_modules/cost-calculator-quotation/README.md`
 
 | Section / Claim | Code Status | Details / Discrepancy |
 |---|---|---|

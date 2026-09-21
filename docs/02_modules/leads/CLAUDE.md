@@ -1,6 +1,6 @@
 # Leads: module notes for Claude
 
-Full map: [../leads.md](../leads.md). Cross-module chains: [CROSS_MODULE_TRIGGERS.md](../../01_architecture/CROSS_MODULE_TRIGGERS.md). Review findings: [FINDINGS.md](FINDINGS.md). There are no Cloud Functions; all automation is client code (`src/App.jsx`, components) or `api/*.js`.
+Full map: [README.md](README.md). Cross-module chains: [CROSS_MODULE_TRIGGERS.md](../../01_architecture/CROSS_MODULE_TRIGGERS.md). Review findings: [FINDINGS.md](FINDINGS.md). There are no Cloud Functions; all automation is client code (`src/App.jsx`, components) or `api/*.js`.
 
 ## What it does
 
@@ -18,7 +18,7 @@ Leads are `leads` documents worked as a Kanban / table. Users record or upload a
 ## Triggers and side effects
 
 - Call analysis: `extractCallScope` -> `/api/generate` (token + approved-user checked). Fills form state only after the user clicks apply; nothing persisted until save.
-- Conversion (`handleConvertConfirm`): several separate writes, not one transaction; see [deals.md](../deals.md).
+- Conversion (`handleConvertConfirm`): several separate writes, not one transaction; see [deals.md](../deals/README.md).
 
 ## Before you edit
 

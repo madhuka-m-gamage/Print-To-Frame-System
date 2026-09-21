@@ -1,6 +1,6 @@
 # Notifications Module Review & Correctness Audit Findings
 
-> **Scope**: Correctness review of `docs/02_modules/notifications/CLAUDE.md`, `docs/02_modules/notifications.md`, and all cross-module triggers touching Notifications documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
+> **Scope**: Correctness review of `docs/02_modules/notifications/CLAUDE.md`, `docs/02_modules/notifications/README.md`, and all cross-module triggers touching Notifications documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
 > **Branch / Worktree**: `review-notifications` (`.worktrees/review-notifications`)  
 > **Status**: Review & Audit findings — **All Recommended Approaches Accepted by User** (Implementation Ready).
 
@@ -57,7 +57,7 @@ A systematic architectural and trigger audit was conducted across the Notificati
 | **Before you edit** ("Entries vanish on reload and are visible only to the user whose browser fired them.") | **Accurate** | Confirmed: `notificationsList` is held only in `useState([])` in `App.jsx`. |
 | **Before you edit** ("`read` on entries is never used; only the unread counter matters.") | **Accurate** | Confirmed: `item.read` is set to `false` upon arrival but is never queried, toggled, or styled anywhere in `NotificationsView.jsx`. |
 
-### 2.2 `docs/02_modules/notifications.md`
+### 2.2 `docs/02_modules/notifications/README.md`
 
 | Section / Claim | Code Status | Details / Discrepancy |
 |---|---|---|

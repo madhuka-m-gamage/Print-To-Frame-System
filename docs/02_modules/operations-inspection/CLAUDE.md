@@ -1,6 +1,6 @@
 # Operations: Inspection: module notes for Claude
 
-Full map: [../operations-inspection.md](../operations-inspection.md). Cross-module chains: [CROSS_MODULE_TRIGGERS.md](../../01_architecture/CROSS_MODULE_TRIGGERS.md). Review findings: [FINDINGS.md](FINDINGS.md). There are no Cloud Functions; all automation is client code (`src/App.jsx`, components) or `api/*.js`.
+Full map: [README.md](README.md). Cross-module chains: [CROSS_MODULE_TRIGGERS.md](../../01_architecture/CROSS_MODULE_TRIGGERS.md). Review findings: [FINDINGS.md](FINDINGS.md). There are no Cloud Functions; all automation is client code (`src/App.jsx`, components) or `api/*.js`.
 
 ## What it does
 
@@ -20,7 +20,7 @@ Inspection is the QA gate of Fabrication, not a separate module: four checks (sq
 
 ## Before you edit
 
-- See [operations-fabrication.md](../operations-fabrication.md); change both docs together.
+- See [operations-fabrication.md](../operations-fabrication/README.md); change both docs together.
 - There is no lead-side site-inspection workflow.
 
 - `checklist.qaPassed` is set only by the QA Inspection Gate; every other save goes through `checklistWithGuardedQa`. The inspector is always the signed-in user. Defects are appended to `defectHistory`; `defectDetails` is the active one. QA pass, defect flag and rework completion are audit logged. A failed Final invoice save aborts Completed.

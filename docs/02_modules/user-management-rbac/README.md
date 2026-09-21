@@ -1,6 +1,6 @@
 # User Management & RBAC
 
-> Module map. Source: Phase 3 mapping pass (read-only). Line numbers are approximate. Firestore rule conditions for `users` create / update were not read in this pass; see [FIRESTORE_RULES_NOTES.md](../03_security/FIRESTORE_RULES_NOTES.md).
+> Module map. Source: Phase 3 mapping pass (read-only). Line numbers are approximate. Firestore rule conditions for `users` create / update were not read in this pass; see [FIRESTORE_RULES_NOTES.md](../../03_security/FIRESTORE_RULES_NOTES.md).
 
 ## Files and folders
 

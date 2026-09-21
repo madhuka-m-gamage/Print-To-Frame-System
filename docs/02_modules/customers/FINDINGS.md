@@ -1,6 +1,6 @@
 # Customers Module Review & Correctness Audit Findings
 
-> **Scope**: Correctness review of `docs/02_modules/customers/CLAUDE.md`, `docs/02_modules/customers.md`, and all cross-module triggers touching Customers documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
+> **Scope**: Correctness review of `docs/02_modules/customers/CLAUDE.md`, `docs/02_modules/customers/README.md`, and all cross-module triggers touching Customers documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
 > **Branch / Worktree**: `review-customers` (`.worktrees/review-customers`)  
 > **Status**: Review & Audit findings (no functional code modified).
 
@@ -9,7 +9,7 @@
 ## 1. Executive Summary
 
 A comprehensive architectural and code-level audit was conducted across the Customers module and its integration touchpoints:
-- **Module Documentation**: `docs/02_modules/customers/CLAUDE.md`, `docs/02_modules/customers.md`
+- **Module Documentation**: `docs/02_modules/customers/CLAUDE.md`, `docs/02_modules/customers/README.md`
 - **Cross-Module Architecture**: `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`
 - **UI Components**: `src/components/crm/Customers.jsx`, `src/components/crm/ContactSyncModal.jsx`, `src/components/common/ui/StatusBadge.jsx`
 - **Services & Utilities**: `src/services/contactsService.js`, `src/utils/stringMatch.js`, `src/services/firebase.js`, `src/services/mailer.js`, `src/services/adminUsers.js`, `src/utils/validation.js`
@@ -41,7 +41,7 @@ While the core registry design (client registry keyed by NIC/BRN, Google Contact
 | **Before you edit** ("Only delete is audit-logged from this file.") | **Accurate** | Confirmed: Neither manual customer creation nor contact import writes to `auditLog`. Only `handleDeleteProfile` calls `logActivity`. |
 | **Before you edit** ("Google Contacts sync calls People API... but `firebase.js` requests no Contacts scope") | **Accurate** | Confirmed: `firebase.js:L44-45` adds only `userinfo.email` and `userinfo.profile`. |
 
-### 2.2 `docs/02_modules/customers.md`
+### 2.2 `docs/02_modules/customers/README.md`
 
 | Section / Claim | Code Status | Details / Discrepancy |
 |---|---|---|

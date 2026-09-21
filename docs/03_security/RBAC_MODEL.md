@@ -4,7 +4,7 @@
 
 ## Roles
 
-`SYSTEM_ROLES` (`src/constants/roles.js`): Admin, Manager, Sales, Operations, Support, Accounts, Logistics, Partner, Business Client, Customer. Public registration allows only Partner and Business Client (`PUBLIC_REGISTRATION_ROLES`). A first-time Google sign-in with no profile is provisioned as `Customer`, unapproved and Pending. `Operations` is the role labelled "Fabrication Master" in the UI. There is no Employee role; staff are `users` documents with one of the internal roles (see [employees.md](../02_modules/employees.md)).
+`SYSTEM_ROLES` (`src/constants/roles.js`): Admin, Manager, Sales, Operations, Support, Accounts, Logistics, Partner, Business Client, Customer. Public registration allows only Partner and Business Client (`PUBLIC_REGISTRATION_ROLES`). A first-time Google sign-in with no profile is provisioned as `Customer`, unapproved and Pending. `Operations` is the role labelled "Fabrication Master" in the UI. There is no Employee role; staff are `users` documents with one of the internal roles (see [employees.md](../02_modules/employees/README.md)).
 
 ## Permission matrix (defaults)
 
@@ -53,7 +53,7 @@ Two hardcoded owner emails are treated as a self-healing super-admin: forced bac
 ## Open questions
 
 - The live `settings/permissions` document may differ from the defaults above; it has not been read.
-- `CLAUDE.md` says approval auto-provisions partners / customers records; the code pre-fills forms instead ([user-management-rbac.md](../02_modules/user-management-rbac.md)).
+- `CLAUDE.md` says approval auto-provisions partners / customers records; the code pre-fills forms instead ([user-management-rbac.md](../02_modules/user-management-rbac/README.md)).
 
 ## Live matrix drift (read-only fetch of `settings/permissions`, 2026-09-20)
 

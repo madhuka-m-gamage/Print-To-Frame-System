@@ -44,5 +44,5 @@ Invoices are documents in `invoices` with atomic sequential numbers. An accepted
 
 ## Open questions
 
-- Two automatic Final-invoice creators (deal completion, fabrication QA pass) can both fire for the same job; duplicate guarding between them is not established. Tracked in [CROSS_MODULE_TRIGGERS.md](../01_architecture/CROSS_MODULE_TRIGGERS.md).
+- Two automatic Final-invoice creators (deal completion, fabrication QA pass) can both fire for the same job; duplicate guarding between them is not established. Tracked in [CROSS_MODULE_TRIGGERS.md](../../01_architecture/CROSS_MODULE_TRIGGERS.md).
 - `Invoices.jsx` allows editing `amount` freely, so the 75/25 ratio is a convention, not an invariant.

@@ -26,22 +26,22 @@ One-stop map of every document in this repo. Update this file whenever a doc is 
 
 Map, then per-module Claude instructions.
 
-- [auth](docs/02_modules/auth.md) | [instructions](docs/02_modules/auth/CLAUDE.md) | [findings](docs/02_modules/auth/FINDINGS.md)
-- [cost-calculator-quotation](docs/02_modules/cost-calculator-quotation.md) | [instructions](docs/02_modules/cost-calculator-quotation/CLAUDE.md) | [findings](docs/02_modules/cost-calculator-quotation/FINDINGS.md)
-- [customers](docs/02_modules/customers.md) | [instructions](docs/02_modules/customers/CLAUDE.md) | [findings](docs/02_modules/customers/FINDINGS.md)
-- [deals](docs/02_modules/deals.md) | [instructions](docs/02_modules/deals/CLAUDE.md) | [findings](docs/02_modules/deals/FINDINGS.md)
-- [employees](docs/02_modules/employees.md) | [instructions](docs/02_modules/employees/CLAUDE.md) | [findings](docs/02_modules/employees/FINDINGS.md)
-- [internal-messaging](docs/02_modules/internal-messaging.md) | [instructions](docs/02_modules/internal-messaging/CLAUDE.md) | [findings](docs/02_modules/internal-messaging/FINDINGS.md)
-- [invoicing](docs/02_modules/invoicing.md) | [instructions](docs/02_modules/invoicing/CLAUDE.md) | [findings](docs/02_modules/invoicing/FINDINGS.md)
-- [leads](docs/02_modules/leads.md) | [instructions](docs/02_modules/leads/CLAUDE.md) | [findings](docs/02_modules/leads/FINDINGS.md)
-- [notifications](docs/02_modules/notifications.md) | [instructions](docs/02_modules/notifications/CLAUDE.md) | [findings](docs/02_modules/notifications/FINDINGS.md)
-- [operations-fabrication](docs/02_modules/operations-fabrication.md) | [instructions](docs/02_modules/operations-fabrication/CLAUDE.md) | [findings](docs/02_modules/operations-fabrication/FINDINGS.md)
-- [operations-inspection](docs/02_modules/operations-inspection.md) | [instructions](docs/02_modules/operations-inspection/CLAUDE.md) | [findings](docs/02_modules/operations-inspection/FINDINGS.md)
-- [operations-logistics](docs/02_modules/operations-logistics.md) | [instructions](docs/02_modules/operations-logistics/CLAUDE.md) | [findings](docs/02_modules/operations-logistics/FINDINGS.md)
-- [partners](docs/02_modules/partners.md) | [instructions](docs/02_modules/partners/CLAUDE.md) | [findings](docs/02_modules/partners/FINDINGS.md)
-- [profile-settings](docs/02_modules/profile-settings.md) | [instructions](docs/02_modules/profile-settings/CLAUDE.md) | [findings](docs/02_modules/profile-settings/FINDINGS.md)
-- [receipts](docs/02_modules/receipts.md) | [instructions](docs/02_modules/receipts/CLAUDE.md) | [findings](docs/02_modules/receipts/FINDINGS.md)
-- [user-management-rbac](docs/02_modules/user-management-rbac.md) | [instructions](docs/02_modules/user-management-rbac/CLAUDE.md) | [findings](docs/02_modules/user-management-rbac/FINDINGS.md)
+- [auth](docs/02_modules/auth/README.md) | [instructions](docs/02_modules/auth/CLAUDE.md) | [findings](docs/02_modules/auth/FINDINGS.md)
+- [cost-calculator-quotation](docs/02_modules/cost-calculator-quotation/README.md) | [instructions](docs/02_modules/cost-calculator-quotation/CLAUDE.md) | [findings](docs/02_modules/cost-calculator-quotation/FINDINGS.md)
+- [customers](docs/02_modules/customers/README.md) | [instructions](docs/02_modules/customers/CLAUDE.md) | [findings](docs/02_modules/customers/FINDINGS.md)
+- [deals](docs/02_modules/deals/README.md) | [instructions](docs/02_modules/deals/CLAUDE.md) | [findings](docs/02_modules/deals/FINDINGS.md)
+- [employees](docs/02_modules/employees/README.md) | [instructions](docs/02_modules/employees/CLAUDE.md) | [findings](docs/02_modules/employees/FINDINGS.md)
+- [internal-messaging](docs/02_modules/internal-messaging/README.md) | [instructions](docs/02_modules/internal-messaging/CLAUDE.md) | [findings](docs/02_modules/internal-messaging/FINDINGS.md)
+- [invoicing](docs/02_modules/invoicing/README.md) | [instructions](docs/02_modules/invoicing/CLAUDE.md) | [findings](docs/02_modules/invoicing/FINDINGS.md)
+- [leads](docs/02_modules/leads/README.md) | [instructions](docs/02_modules/leads/CLAUDE.md) | [findings](docs/02_modules/leads/FINDINGS.md)
+- [notifications](docs/02_modules/notifications/README.md) | [instructions](docs/02_modules/notifications/CLAUDE.md) | [findings](docs/02_modules/notifications/FINDINGS.md)
+- [operations-fabrication](docs/02_modules/operations-fabrication/README.md) | [instructions](docs/02_modules/operations-fabrication/CLAUDE.md) | [findings](docs/02_modules/operations-fabrication/FINDINGS.md)
+- [operations-inspection](docs/02_modules/operations-inspection/README.md) | [instructions](docs/02_modules/operations-inspection/CLAUDE.md) | [findings](docs/02_modules/operations-inspection/FINDINGS.md)
+- [operations-logistics](docs/02_modules/operations-logistics/README.md) | [instructions](docs/02_modules/operations-logistics/CLAUDE.md) | [findings](docs/02_modules/operations-logistics/FINDINGS.md)
+- [partners](docs/02_modules/partners/README.md) | [instructions](docs/02_modules/partners/CLAUDE.md) | [findings](docs/02_modules/partners/FINDINGS.md)
+- [profile-settings](docs/02_modules/profile-settings/README.md) | [instructions](docs/02_modules/profile-settings/CLAUDE.md) | [findings](docs/02_modules/profile-settings/FINDINGS.md)
+- [receipts](docs/02_modules/receipts/README.md) | [instructions](docs/02_modules/receipts/CLAUDE.md) | [findings](docs/02_modules/receipts/FINDINGS.md)
+- [user-management-rbac](docs/02_modules/user-management-rbac/README.md) | [instructions](docs/02_modules/user-management-rbac/CLAUDE.md) | [findings](docs/02_modules/user-management-rbac/FINDINGS.md)
 
 ## Security
 

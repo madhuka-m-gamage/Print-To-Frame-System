@@ -1,7 +1,7 @@
 # Auth Module: Architecture & Security Audit Findings
 
 > Comprehensive audit of the Authentication module (`src/components/auth/Login.jsx`, `src/App.jsx`, `src/services/firebase.js`, `api/_lib/firebaseAdmin.js`, `api/admin-user.js`, `api/generate.js`, `api/send-email.js`, `firestore.rules`).
-> Baseline comparison against `docs/02_modules/auth.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`, and `docs/03_security/RBAC_MODEL.md`.
+> Baseline comparison against `docs/02_modules/auth/README.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`, and `docs/03_security/RBAC_MODEL.md`.
 
 ---
 

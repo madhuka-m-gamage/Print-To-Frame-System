@@ -41,5 +41,5 @@ Customers is a client registry in the `customers` collection keyed by NIC or bus
 
 ## Open questions
 
-- `CLAUDE.md` says approval "auto-provisions" a matching customer or partner; the code pre-fills the registration form instead (see [user-management-rbac.md](user-management-rbac.md)). One of the two is out of date.
+- `CLAUDE.md` says approval "auto-provisions" a matching customer or partner; the code pre-fills the registration form instead (see [user-management-rbac.md](../user-management-rbac/README.md)). One of the two is out of date.
 - Customer matching is by exact email or phone at lead time, but by fuzzy name / NIC in the UI, so duplicates are possible across the two paths.
