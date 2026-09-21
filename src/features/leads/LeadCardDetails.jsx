@@ -25,9 +25,9 @@ import {
 import QuotationBuilder from '@/features/quotations/QuotationBuilder';
 import { downsampleAudio } from './audioProcessing';
 import { toDateObj } from '@/shared/utils/dateUtils';
-import { buildInvoiceHtml, openInvoicePrintWindow } from '@/utils/invoiceTemplate';
-import { resolveInvoiceForPrint } from '@/utils/invoicePrintData';
-import { buildReceiptHtml } from '@/utils/receiptTemplate';
+import { buildInvoiceHtml, openInvoicePrintWindow } from '@/features/invoicing/invoiceTemplate';
+import { resolveInvoiceForPrint } from '@/features/invoicing/invoicePrintData';
+import { buildReceiptHtml } from '@/features/invoicing/receiptTemplate';
 
 export default function LeadCardDetails({ 
   lead, 

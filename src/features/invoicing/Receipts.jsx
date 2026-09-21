@@ -8,8 +8,8 @@ import { logActivity } from '@/services/auditLog';
 import DeleteModal from '@/shared/components/DeleteModal';
 import { PageHeader, FilterBar, StatusBadge } from '@/shared/ui';
 import { exportToCsv } from '@/shared/utils/csvExport';
-import { buildReceiptHtml } from '@/utils/receiptTemplate';
-import { openInvoicePrintWindow } from '@/utils/invoiceTemplate';
+import { buildReceiptHtml } from './receiptTemplate';
+import { openInvoicePrintWindow } from './invoiceTemplate';
 
 // A receipt is inherently a completed record — no "mark paid" (that already
 // happened, it's why the receipt exists), no edit (correcting a mistake

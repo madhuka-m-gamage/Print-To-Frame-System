@@ -4,8 +4,8 @@
 
 ## Files and folders
 
-- `src/components/crm/Receipts.jsx`: list, detail, archive; search and filter, CSV export, print, delete.
-- `src/utils/receiptTemplate.js`: `buildReceiptHtml()`, `amountToWords()`; print window opened via `openInvoicePrintWindow` in `invoiceTemplate.js`.
+- `src/features/invoicing/Receipts.jsx`: list, detail, archive; search and filter, CSV export, print, delete.
+- `src/features/invoicing/receiptTemplate.js`: `buildReceiptHtml()`, `amountToWords()`; print window opened via `openInvoicePrintWindow` in `invoiceTemplate.js`.
 - `src/App.jsx`: `receipts` state and subscription, `handleGenerateReceipt`, lazy import and tab render.
 - `src/services/firestoreSync.js`: `COLLECTIONS.RECEIPTS`, `createDocumentIfAbsent`, `deriveReceiptId`.
 - Generation UI elsewhere: `Invoices.jsx` (receipt form), `LeadCardDetails.jsx` (per-lead advance and final receipts, reached from `Leads.jsx` and `Deals.jsx`).

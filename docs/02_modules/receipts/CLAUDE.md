@@ -8,7 +8,7 @@ Receipts are proof-of-payment records generated from a Paid invoice; the id is d
 
 ## Code
 
-- `src/components/crm/Receipts.jsx`, `src/utils/receiptTemplate.js`
+- `src/features/invoicing/Receipts.jsx`, `src/features/invoicing/receiptTemplate.js`
 - `deriveReceiptId`, `createDocumentIfAbsent` in `src/services/firestoreSync.js`; `handleGenerateReceipt` in `src/App.jsx`
 
 ## Firestore collections it owns or writes

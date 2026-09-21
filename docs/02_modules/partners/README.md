@@ -4,13 +4,13 @@
 
 ## Files and folders
 
-- `src/components/crm/Partners.jsx`: admin directory, partner self-service view, referral claims, settlements, commission ledger.
-- `src/components/crm/PartnerQRModal.jsx`: QR flyer and referral link kit (`${origin}/referral?ref=<partnerId>`, QR rendered by external `api.qrserver.com`; not stored).
-- `src/components/public/PartnerRegistration.jsx`: public application form (route in `src/main.jsx`: `/partner/register` or `/register-partner`).
-- `src/components/public/ReferralForm.jsx`: public referral landing page (`/referral?ref=<partnerId>`).
+- `src/features/partners/Partners.jsx`: admin directory, partner self-service view, referral claims, settlements, commission ledger.
+- `src/features/partners/PartnerQRModal.jsx`: QR flyer and referral link kit (`${origin}/referral?ref=<partnerId>`, QR rendered by external `api.qrserver.com`; not stored).
+- `src/features/partners/PartnerRegistration.jsx`: public application form (route in `src/main.jsx`: `/partner/register` or `/register-partner`).
+- `src/features/partners/ReferralForm.jsx`: public referral landing page (`/referral?ref=<partnerId>`).
 - `src/components/admin/AgentDatabase.jsx`: reviews and approves partner applications.
 - `src/App.jsx`: subscriptions, approval hand-off, payout-eligibility logic.
-- `src/components/crm/Deals.jsx`: commission accrual. Partner fields also appear in `Leads.jsx`, `LeadCardDetails.jsx` (agent picker) and `Receipts.jsx`.
+- `src/features/deals/Deals.jsx`: commission accrual. Partner fields also appear in `Leads.jsx`, `LeadCardDetails.jsx` (agent picker) and `Receipts.jsx`.
 - Supporting: `src/services/firestoreSync.js` (collection names), `src/constants/emailTemplates.js`, `src/services/adminUsers.js`, `api/admin-user.js`.
 
 ## Firestore collections read/written

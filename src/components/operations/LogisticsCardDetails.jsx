@@ -37,7 +37,7 @@ import TwoToneIcon from '@/shared/ui/TwoToneIcon';
 import { toast } from '@/shared/utils/toast';
 import { stripEmojis } from '@/shared/utils/validation';
 import { getCollectableInvoice } from '@/utils/logisticsEngine';
-import { buildInvoiceHtml, openInvoicePrintWindow } from '@/utils/invoiceTemplate';
+import { buildInvoiceHtml, openInvoicePrintWindow } from '@/features/invoicing/invoiceTemplate';
 import {
   getGoogleMapsUrl,
   getWhatsAppUrl,

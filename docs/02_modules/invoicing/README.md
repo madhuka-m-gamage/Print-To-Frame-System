@@ -4,8 +4,8 @@
 
 ## Files and folders
 
-- `src/components/crm/Invoices.jsx`: list, filters, detail, edit, delete, mark paid, CSV export, WhatsApp reminder, receipt form.
-- `src/utils/invoiceTemplate.js`: printable invoice HTML (`openInvoicePrintWindow`).
+- `src/features/invoicing/Invoices.jsx`: list, filters, detail, edit, delete, mark paid, CSV export, WhatsApp reminder, receipt form.
+- `src/features/invoicing/invoiceTemplate.js`: printable invoice HTML (`openInvoicePrintWindow`).
 - `src/services/firestoreSync.js`: `generateAtomicId`, `generateInvoiceId`, `INVOICES` and `COUNTERS` constants.
 - `src/App.jsx`: `handleSaveInvoice`, `handleGenerateReceipt`, `handleMarkInvoicePaid`; snapshot subscription; `<Invoices>` mount.
 - Invoice creators outside the folder: `QuotationBuilder.jsx`, `Deals.jsx`, `FabricationWorks.jsx`.

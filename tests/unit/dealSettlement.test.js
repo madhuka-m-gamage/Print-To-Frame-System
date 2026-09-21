@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getFinalInvoiceAmounts, calculateDealCommission } from '@/utils/dealSettlement';
+import { getFinalInvoiceAmounts, calculateDealCommission } from '@/features/deals/dealSettlement';
 
 describe('getFinalInvoiceAmounts', () => {
   const deal = { id: 'D-1', originalLeadId: 'L-1', value: 100000 };

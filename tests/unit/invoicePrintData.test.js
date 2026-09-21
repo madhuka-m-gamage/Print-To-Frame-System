@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveInvoiceForPrint } from '@/utils/invoicePrintData';
+import { resolveInvoiceForPrint } from '@/features/invoicing/invoicePrintData';
 
 const saved = {
   id: 'INV-ADV-0007', status: 'Paid', date: '2026-08-01', amount: 750, totalValue: 1000,

@@ -8,7 +8,7 @@ Deals is the post-sale Kanban (Waiting, Fabricating, Ready To Load, Hand Over, C
 
 ## Code
 
-- `src/components/crm/Deals.jsx`, `Leads.jsx` (conversion), `LeadCardDetails.jsx`
+- `src/features/deals/Deals.jsx`, `Leads.jsx` (conversion), `LeadCardDetails.jsx`
 - `src/shared/utils/entityUtils.js` (`matchesEntity`), `logisticsEngine.js`; handlers in `src/App.jsx`
 
 ## Firestore collections it owns or writes
@@ -29,6 +29,6 @@ Deals is the post-sale Kanban (Waiting, Fabricating, Ready To Load, Hand Over, C
 
 - Completed is terminal: no backward move from it, and bulk change cannot set Completed. Deal completion sets `commissionAccrued: true` and skips commission accrual when it is already set.
 
-- Completion amounts come from `getFinalInvoiceAmounts` (Accepted quotation, highest version, else deal value) and commission from `calculateDealCommission`, both in `src/utils/dealSettlement.js`. The invoice print template keeps its x0.25/x0.75 line scaling by owner decision.
+- Completion amounts come from `getFinalInvoiceAmounts` (Accepted quotation, highest version, else deal value) and commission from `calculateDealCommission`, both in `src/features/deals/dealSettlement.js`. The invoice print template keeps its x0.25/x0.75 line scaling by owner decision.
 
 - Moving a deal forward syncs the linked project (matched by job number) with `projectStatusForDealStage`: forward only, never back. Deleting a deal releases its original lead, marks the project `Cancelled` and keeps every financial record. `Hand Over` deals show in the dashboard action queue.

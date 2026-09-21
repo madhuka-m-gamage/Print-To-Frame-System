@@ -24,9 +24,9 @@ vi.mock('@/services/adminUsers', () => ({
   resetUserPassword: vi.fn(async () => {}),
 }));
 vi.mock('firebase/storage', () => ({ ref: vi.fn(), uploadBytes: vi.fn(), getDownloadURL: vi.fn() }));
-vi.mock('@/components/crm/PartnerQRModal', () => ({ default: () => null }));
+vi.mock('@/features/partners/PartnerQRModal', () => ({ default: () => null }));
 
-const { default: Partners } = await import('@/components/crm/Partners');
+const { default: Partners } = await import('@/features/partners/Partners');
 const sync = await import('@/services/firestoreSync');
 const { toast } = await import('@/shared/utils/toast');
 

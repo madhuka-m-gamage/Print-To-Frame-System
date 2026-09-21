@@ -18,7 +18,7 @@ vi.mock('@/shared/utils/toast', () => ({
 }));
 vi.mock('@/features/leads/LeadCardDetails', () => ({ default: () => null }));
 
-const { default: Deals } = await import('@/components/crm/Deals');
+const { default: Deals } = await import('@/features/deals/Deals');
 const sync = await import('@/services/firestoreSync');
 const { generateInvoiceId } = sync;
 
