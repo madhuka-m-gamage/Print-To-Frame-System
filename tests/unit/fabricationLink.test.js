@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { dimensionsFromLead, resolveManualJobLink, NON_BILLABLE } from '@/utils/fabricationLink';
+import { dimensionsFromLead, resolveManualJobLink, NON_BILLABLE } from '@/features/fabrication/fabricationLink';
 
 const deal = {
   id: 'D-0001', originalLeadId: 'L-0001', name: 'Client', phone: '+94711111111', company: 'Co', email: 'Client@Example.com',

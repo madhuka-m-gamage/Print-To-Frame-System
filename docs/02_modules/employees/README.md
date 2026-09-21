@@ -8,7 +8,7 @@
 
 - `src/components/admin/AgentDatabase.jsx`: enrol users, role / status change, photo, delete, password reset, approve / reject pending registrations.
 - `src/constants/roles.js`: 10 system roles: Admin, Manager, Sales, Operations, Support, Accounts, Logistics, Partner, Business Client, Customer. Roles named "Sales Executive" or "Fabricator" do not exist (closest: `Sales`, `Operations`).
-- `src/utils/logisticsEngine.js`: `DRIVER_DIRECTORY`, a **hardcoded** list of 4 named drivers / fabricators, not stored in Firestore; used by `Logistics.jsx` and `LogisticsCardDetails.jsx`.
+- `src/features/logistics/logisticsEngine.js`: `DRIVER_DIRECTORY`, a **hardcoded** list of 4 named drivers / fabricators, not stored in Firestore; used by `Logistics.jsx` and `LogisticsCardDetails.jsx`.
 - `api/admin-user.js` and `src/services/adminUsers.js`: Auth account create / reset / delete (Admin only).
 - Email template `employee_invite` (`src/constants/emailTemplates.js`).
 

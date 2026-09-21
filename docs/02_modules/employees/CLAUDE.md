@@ -9,7 +9,7 @@ There is no separate Employees feature; employee-like data is the `users` collec
 ## Code
 
 - No Employees module. Staff are `users` documents: see [user-management-rbac.md](../user-management-rbac/README.md).
-- `src/utils/logisticsEngine.js` has a hardcoded `DRIVER_DIRECTORY`.
+- `src/features/logistics/logisticsEngine.js` has a hardcoded `DRIVER_DIRECTORY`.
 
 ## Firestore collections it owns or writes
 

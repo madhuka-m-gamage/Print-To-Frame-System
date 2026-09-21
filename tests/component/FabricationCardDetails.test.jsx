@@ -9,9 +9,9 @@ vi.mock('@/shared/utils/toast', () => ({
   showToast: vi.fn(),
 }));
 vi.mock('firebase/storage', () => ({ ref: vi.fn(), uploadBytes: vi.fn(), getDownloadURL: vi.fn() }));
-vi.mock('@/components/common/FrameBlueprintPreview', () => ({ default: () => null }));
+vi.mock('@/features/fabrication/FrameBlueprintPreview', () => ({ default: () => null }));
 
-const { default: FabricationCardDetails } = await import('@/components/operations/FabricationCardDetails');
+const { default: FabricationCardDetails } = await import('@/features/fabrication/FabricationCardDetails');
 
 const render = (job) => renderWithProviders(
   <FabricationCardDetails job={makeProject({ jobNo: 'PTF-1', status: 'Ongoing', value: 250000, ...job })} onClose={vi.fn()} onSave={vi.fn()} customers={[]} />,

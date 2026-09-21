@@ -43,7 +43,7 @@ For a systematic, folder-by-folder code-review audit of the whole repo (enumerat
 
 ### Everything is one Firestore-backed SPA
 
-`src/App.jsx` is the composition root: it owns all top-level state (`leads`, `customers`, `partners`, `projects`, `logisticsJobs`, `invoices`, `quotations`, `users`), subscribes to Firestore in real time via `subscribeToCollection` (`src/services/firestoreSync.js`), and passes state + setters down as props to each lazy-loaded route component in `src/components/{crm,operations,dashboard,admin,tools}`. There is no router library — `activeTab` (a string) selects which component renders in `<main>`, gated by `canAccess(role, tab)`.
+`src/App.jsx` is the composition root: it owns all top-level state (`leads`, `customers`, `partners`, `projects`, `logisticsJobs`, `invoices`, `quotations`, `users`), subscribes to Firestore in real time via `subscribeToCollection` (`src/services/firestoreSync.js`), and passes state + setters down as props to each lazy-loaded route component in `src/features/<domain>` (the admin screens are still in `src/components/admin` until Phase 7 8.2 finishes). There is no router library — `activeTab` (a string) selects which component renders in `<main>`, gated by `canAccess(role, tab)`.
 
 - `src/services/firebase.js` — Firebase app/auth/firestore/storage init, Google OAuth (identity scopes at sign-in; Drive/Contacts scopes requested on demand via `getScopedAccessToken`), email login/register, `handleFirestoreError`.
 - `src/services/firestoreSync.js` — the CRUD/subscription layer every feature uses: `subscribeToCollection`, `addDocument`, `updateDocument`, `setDocument`, `deleteDocument`, `batchWrite`, and `COLLECTIONS` (the canonical Firestore collection-name map — always reference `COLLECTIONS.X` rather than hardcoding a collection string).
@@ -70,8 +70,8 @@ Requires a valid Firebase ID token (`Authorization: Bearer <token>`) AND that th
 ### UI conventions
 
 - Material Design–flavored Tailwind theme driven by CSS custom properties (`surface`, `on-surface`, `primary`, `outline-variant`, etc. — see `tailwind.config.js` and `brand-tokens.json`), with a `data-theme="dark"|"light"` attribute on `<html>` toggled from `App.jsx` and persisted to `localStorage`.
-- Shared primitives live in `src/components/common/ui/` (`SortableTable`, `FilterBar`, `KanbanCard`/`KanbanColumn`, `StatusBadge`, `UserAvatar`, `PageHeader`, and the `detail-modal/` compound-component set) and are re-exported from `src/shared/ui/index.js` — prefer these over building new list/table/modal chrome from scratch.
-- Route components are `React.lazy`-loaded from `App.jsx` and each module's feature components live under `src/components/{crm,operations,dashboard,admin,tools,public,auth}/`.
+- Shared primitives live in `src/shared/ui/` (`SortableTable`, `FilterBar`, `KanbanCard`/`KanbanColumn`, `StatusBadge`, `UserAvatar`, `PageHeader`, and the `detail-modal/` compound-component set) and are re-exported from `src/shared/ui/index.js` (components used by several features are in `src/shared/components/`, domain-free helpers in `src/shared/utils/`) — prefer these over building new list/table/modal chrome from scratch.
+- Route components are `React.lazy`-loaded from `App.jsx` and each business domain's screens and logic live together under `src/features/<domain>/` (import with the `@/` alias).
 - `src/features/messaging/MessagingContext.jsx` drives the in-app messaging system (floating toast + mini chat drawer + full `Messages` view) — real-time, per-user unread counts feed the sidebar badge.
 - Partner-role users get a deliberately restricted nav/routing (`dashboard`, `notifications`, `partners`, `profile` only) — this restriction is enforced redundantly in `App.jsx`'s route-protection `useEffect` and in `DEFAULT_PERMISSIONS.Partner`.
 

@@ -36,7 +36,7 @@ import {
 import TwoToneIcon from '@/shared/ui/TwoToneIcon';
 import { toast } from '@/shared/utils/toast';
 import { stripEmojis } from '@/shared/utils/validation';
-import { getCollectableInvoice } from '@/utils/logisticsEngine';
+import { getCollectableInvoice } from './logisticsEngine';
 import { buildInvoiceHtml, openInvoicePrintWindow } from '@/features/invoicing/invoiceTemplate';
 import {
   getGoogleMapsUrl,
@@ -45,7 +45,7 @@ import {
   calculateCODFromInvoices,
   FLEET_VEHICLES,
   DRIVER_DIRECTORY 
-} from '@/utils/logisticsEngine';
+} from './logisticsEngine';
 
 export default function LogisticsCardDetails({ 
   job, 

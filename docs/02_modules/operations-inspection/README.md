@@ -6,8 +6,8 @@
 
 **Inspection is not a separate module.** It is a QA gate inside Fabrication. Nothing exists in `api/` or `tests/`, and there is no lead-side site-visit or measurement workflow (`LeadCardDetails.jsx` "Inspector" and the Dashboard "Inspect" buttons only open records).
 
-- `src/components/operations/FabricationWorks.jsx`: stages (`STAGES`: Pending, Ongoing, Ready For Inspection, Revision, Completed); trigger in `handleMoveJob` and the card buttons; QA dialog (`inspectingJob` state and modal: four checks, inspector name, remarks); `handlePassQA` / `handlePassQAInner` (pass); "Fail & Send to Revision" and the defect modal (`defectJob`, `handleConfirmRevision`); Revision to Ready For Inspection stamps `reworkCompletedAt`.
-- `src/components/operations/FabricationCardDetails.jsx`: `checklist.qaPassed` toggle and a printed QA sign-off line.
+- `src/features/fabrication/FabricationWorks.jsx`: stages (`STAGES`: Pending, Ongoing, Ready For Inspection, Revision, Completed); trigger in `handleMoveJob` and the card buttons; QA dialog (`inspectingJob` state and modal: four checks, inspector name, remarks); `handlePassQA` / `handlePassQAInner` (pass); "Fail & Send to Revision" and the defect modal (`defectJob`, `handleConfirmRevision`); Revision to Ready For Inspection stamps `reworkCompletedAt`.
+- `src/features/fabrication/FabricationCardDetails.jsx`: `checklist.qaPassed` toggle and a printed QA sign-off line.
 - `src/features/dashboard/Dashboard.jsx`: counts Ready For Inspection jobs.
 - `src/constants/emailTemplates.js`: a `fabrication_ready_inspection` template exists but nothing sends it automatically.
 

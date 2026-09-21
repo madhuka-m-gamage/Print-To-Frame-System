@@ -10,7 +10,7 @@
 
 A comprehensive architectural and trigger audit was conducted across the Invoicing module and its integration boundaries:
 - **Module Documentation**: `docs/02_modules/invoicing/README.md`, `docs/02_modules/invoicing/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
-- **Target UI Components**: `src/features/invoicing/Invoices.jsx`, `src/features/quotations/QuotationBuilder.jsx`, `src/features/leads/LeadCardDetails.jsx`, `src/features/invoicing/Receipts.jsx`, `src/features/leads/Leads.jsx`, `src/features/deals/Deals.jsx`, `src/components/operations/FabricationWorks.jsx`.
+- **Target UI Components**: `src/features/invoicing/Invoices.jsx`, `src/features/quotations/QuotationBuilder.jsx`, `src/features/leads/LeadCardDetails.jsx`, `src/features/invoicing/Receipts.jsx`, `src/features/leads/Leads.jsx`, `src/features/deals/Deals.jsx`, `src/features/fabrication/FabricationWorks.jsx`.
 - **Templates & Formatting**: `src/features/invoicing/invoiceTemplate.js` (`buildInvoiceHtml`, `openInvoicePrintWindow`), `src/features/invoicing/receiptTemplate.js` (`buildReceiptHtml`, `amountToWords`).
 - **ID Generation & Atomic Counters**: `src/services/firestoreSync.js` (`generateInvoiceId`, `generateAtomicId`, `deriveReceiptId`), `src/services/auditLog.js` (`logActivity`).
 - **Handlers & Hand-offs**: `src/App.jsx` (`handleSaveInvoice`, `handleMarkInvoicePaid`, `handleGenerateReceipt`).
@@ -24,7 +24,7 @@ A comprehensive architectural and trigger audit was conducted across the Invoici
      2. 4-point QA pass approved in `FabricationWorks.jsx` (Trigger 4).
      3. "25% Final Settlement" button clicked in `QuotationBuilder.jsx` (Trigger 5b).
    - Neither `Deals.jsx` nor `FabricationWorks.jsx` checks whether a Final invoice already exists for the job/deal/lead before reserving an atomic counter and saving a new document.
-   - **Severe Downstream Impact on Logistics COD**: In `src/utils/logisticsEngine.js:L196-L199`, `calculateCODFromInvoices` calculates `totalBalanceDue` by summing **all** unpaid matched invoices (`unpaidInvoices.reduce(...)`). When duplicate 25% Final invoices exist, the delivery driver's screen instructs them to collect **50% of the contract value (2x balance)** from the client on delivery!
+   - **Severe Downstream Impact on Logistics COD**: In `src/features/logistics/logisticsEngine.js:L196-L199`, `calculateCODFromInvoices` calculates `totalBalanceDue` by summing **all** unpaid matched invoices (`unpaidInvoices.reduce(...)`). When duplicate 25% Final invoices exist, the delivery driver's screen instructs them to collect **50% of the contract value (2x balance)** from the client on delivery!
 2. **Mathematical Compounding Bug in Deal Fallback Line Items**:
    - In `Deals.jsx:L357`, if a deal has no linked quotation, fallback line items are generated with `unitPrice: finalAmount` (where `finalAmount` is already 25% of `deal.value`).
    - In `src/features/invoicing/invoiceTemplate.js:L242`, the print renderer calculates line item price as `qty * unitPrice * (isFinal ? 0.25 : 0.75)`.
@@ -297,7 +297,7 @@ flowchart TD
   2. The sales/operations coordinator marks the deal as "Completed" in the CRM Kanban $\rightarrow$ **Trigger 3 generates `INV-FIN-0002`**.
   3. If sales also opened `QuotationBuilder` and clicked "25% Final Settlement" $\rightarrow$ **Trigger 5b generates `INV-FIN-0003`**.
 * **Direct Financial Impact on Delivery (Driver COD Collection)**:
-  - In `src/utils/logisticsEngine.js:L196-L199`:
+  - In `src/features/logistics/logisticsEngine.js:L196-L199`:
     ```javascript
     const unpaidInvoices = matched.filter(inv => {
       const status = String(inv.status || 'Unpaid').toLowerCase();
@@ -383,7 +383,7 @@ flowchart TD
 | # | Decision Item | Current Implementation | Accepted Resolution | Implementation Status / Action |
 |---|---|---|---|---|
 | **D-1** | **Ownership of Final Invoice Generation** | Both `Deals.jsx` (on deal completion) and `FabricationWorks.jsx` (on QA pass) generate a 25% Final invoice. | **ACCEPTED: Option C (Immediate) + Option B (Long-term)**<br/>Add immediate duplicate guard in both components before counter reservation. Standardize on Deals completion as the canonical commercial trigger. | Guard with `invoices.some(inv => (inv.jobNo === jobNo \|\| inv.linkedJobNo === jobNo \|\| inv.dealId === dealId) && (inv.type === 'Final' \|\| inv.id?.includes('INV-FIN')))` prior to calling `generateInvoiceId('Final')`. |
-| **D-2** | **Logistics COD Balance Calculation** | `calculateCODFromInvoices` sums all unpaid invoices matching the job, doubling balance if duplicates exist. | **ACCEPTED: Option B**<br/>If multiple Final invoices exist for a job, select only the latest unpaid Final invoice by `createdAt`. | Update `calculateCODFromInvoices` in `src/utils/logisticsEngine.js` so duplicate Final invoices can never double the driver COD balance. |
+| **D-2** | **Logistics COD Balance Calculation** | `calculateCODFromInvoices` sums all unpaid invoices matching the job, doubling balance if duplicates exist. | **ACCEPTED: Option B**<br/>If multiple Final invoices exist for a job, select only the latest unpaid Final invoice by `createdAt`. | Update `calculateCODFromInvoices` in `src/features/logistics/logisticsEngine.js` so duplicate Final invoices can never double the driver COD balance. |
 | **D-3** | **Fallback Line Item Unit Price** | `Deals.jsx` passes `unitPrice: finalAmount` (25%), causing `invoiceTemplate.js` to multiply by 0.25 again (6.25%). | **ACCEPTED: Option A**<br/>Pass `unitPrice: deal.value` (100%) in `Deals.jsx` fallback line items. | Update `Deals.jsx:L357` to set `unitPrice: deal.value || 0`, allowing `invoiceTemplate.js` to scale line items correctly to 25%. |
 | **D-4** | **Invoice Editing Policy** | `Invoices.jsx` allows full editing of `amount`, `customerName`, `company`, `type`. | **ACCEPTED: Option B**<br/>Make `id` and `type` strictly immutable; restrict `amount` edits to Admin/Manager roles. | In `Invoices.jsx`, disable `type` dropdown in edit form; validate `amount` changes and restrict edit actions to authorized roles. |
 | **D-5** | **Lead Status Tracking (`invoiceGenerated`)** | `Leads.jsx` checks `lead.invoiceGenerated` and `lead.invoiceDate`, which are never written. | **ACCEPTED: Option B**<br/>Eliminate phantom field checks; derive invoice status dynamically from the `invoices` array. | Remove references to `lead.invoiceGenerated` / `lead.invoiceDate` in `Leads.jsx` and evaluate invoice status dynamically using `invoices.filter(...)`. |

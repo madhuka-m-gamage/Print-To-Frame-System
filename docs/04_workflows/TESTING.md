@@ -121,9 +121,9 @@ Snapshot from `npm run coverage` (unit and API tests only, so the component and 
 | Code | Covered by | Kind | Gaps |
 |---|---|---|---|
 | `src/shared/utils/entityUtils.js` | `tests/unit/entityUtils.test.js`, `factories.test.js` | real, including `getExistingFinalInvoice` | alias cases beyond the nine recognised fields; the guard is client-state based, so two sessions acting at once can still both miss an invoice |
-| `src/utils/cutListEngine.js` | `tests/unit/cutListEngine.test.js` | real, including first-fit-decreasing bar packing | none known |
+| `src/features/fabrication/cutListEngine.js` | `tests/unit/cutListEngine.test.js` | real, including first-fit-decreasing bar packing | none known |
 | `src/shared/utils/dateUtils.js` | `tests/unit/dateUtils.test.js` | real (about 87%) | a few branches |
-| `src/utils/logisticsEngine.js` | `tests/unit/logisticsEngine.test.js` | real, including duplicate Finals and advance-only COD | UI labels (Logistics, LogisticsCardDetails, waybill) not covered by a test |
+| `src/features/logistics/logisticsEngine.js` | `tests/unit/logisticsEngine.test.js` | real, including duplicate Finals and advance-only COD | UI labels (Logistics, LogisticsCardDetails, waybill) not covered by a test |
 | `src/constants/emailTemplates.js` | `tests/unit/emailTemplates.test.js` | real | |
 | `src/context/PermissionsContext.jsx` | `tests/unit/permissions.test.js`, `tests/component/StatusBadge.test.jsx` | real | receipts and quotations rows |
 | `api/_lib/firebaseAdmin.js` | `tests/unit/firebaseAdmin.test.js` | real | initialisation paths |

@@ -17,13 +17,13 @@ vi.mock('@/shared/utils/toast', () => ({
   showToast: vi.fn(),
 }));
 vi.mock('@/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
-vi.mock('@/components/operations/FabricationCardDetails', () => ({ default: () => null }));
-vi.mock('@/components/common/FrameBlueprintPreview', () => ({ default: () => null }));
+vi.mock('@/features/fabrication/FabricationCardDetails', () => ({ default: () => null }));
+vi.mock('@/features/fabrication/FrameBlueprintPreview', () => ({ default: () => null }));
 
 const { generateInvoiceId, generateAtomicId } = await import('@/services/firestoreSync');
 const { toast } = await import('@/shared/utils/toast');
 const { logActivity } = await import('@/services/auditLog');
-const { default: FabricationWorks } = await import('@/components/operations/FabricationWorks');
+const { default: FabricationWorks } = await import('@/features/fabrication/FabricationWorks');
 
 const admin = { role: 'Admin', name: 'Admin', identifier: 'admin@example.com' };
 

@@ -9,7 +9,7 @@ vi.mock('@/shared/utils/toast', () => ({
   showToast: vi.fn(),
 }));
 
-const { default: LogisticsCardDetails } = await import('@/components/operations/LogisticsCardDetails');
+const { default: LogisticsCardDetails } = await import('@/features/logistics/LogisticsCardDetails');
 
 const job = makeLogisticsJob({ id: 'L-DL-0001', linkedJobNo: 'PTF-0001', driver: 'Nimal' });
 const finalInv = (o = {}) => makeInvoice({ type: 'Final', linkedJobNo: 'PTF-0001', ...o });

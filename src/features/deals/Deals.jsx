@@ -13,7 +13,7 @@ import { exportToCsv } from '@/shared/utils/csvExport';
 import { matchesEntity, getExistingFinalInvoice } from '@/shared/utils/entityUtils';
 import { getFinalInvoiceAmounts, calculateDealCommission } from './dealSettlement';
 import { projectStatusForDealStage } from './dealProjectSync';
-import { buildLogisticsTask } from '@/utils/logisticsTask';
+import { buildLogisticsTask } from '@/features/logistics/logisticsTask';
 import { logActivity } from '@/services/auditLog';
 
 const DEALS_STAGES = ["Waiting", "Fabricating", "Ready To Load", "Hand Over", "Completed"];

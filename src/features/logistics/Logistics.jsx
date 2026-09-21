@@ -33,7 +33,7 @@ import { PageHeader, FilterBar, StatusBadge, KanbanColumn, KanbanCard, ModalWrap
 import TwoToneIcon from '@/shared/ui/TwoToneIcon';
 import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateAtomicId } from '@/services/firestoreSync';
 import { stripEmojis } from '@/shared/utils/validation';
-import { deliveryStatusForTask } from '@/utils/logisticsTask';
+import { deliveryStatusForTask } from './logisticsTask';
 import { usePermissions } from '@/context/PermissionsContext';
 import { generateText } from '@/services/gemini';
 import { 
@@ -43,7 +43,7 @@ import {
   calculateCODFromInvoices,
   FLEET_VEHICLES,
   DRIVER_DIRECTORY 
-} from '@/utils/logisticsEngine';
+} from './logisticsEngine';
 
 const STAGES = ["Pending", "In Transit", "Completed"];
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateCutList, mmToFtIn, ftToMm, packStockBars, STEEL_PROFILES } from '@/utils/cutListEngine';
+import { calculateCutList, mmToFtIn, ftToMm, packStockBars, STEEL_PROFILES } from '@/features/fabrication/cutListEngine';
 
 describe('cutListEngine', () => {
   it('converts mm to feet and fractional inches accurately', () => {
@@ -109,7 +109,7 @@ describe('cutListEngine', () => {
 
 describe('defaultFrameDimensions and rib counts (Phase 7 6.4b)', () => {
   it('sizes a 3:2 frame that keeps the full contract area', async () => {
-    const { defaultFrameDimensions } = await import('@/utils/cutListEngine');
+    const { defaultFrameDimensions } = await import('@/features/fabrication/cutListEngine');
     const { widthMm, heightMm } = defaultFrameDimensions(20);
     const areaSqFt = (widthMm * heightMm) / (25.4 * 25.4) / 144;
     expect(areaSqFt).toBeGreaterThan(19.9);
@@ -118,13 +118,13 @@ describe('defaultFrameDimensions and rib counts (Phase 7 6.4b)', () => {
   });
 
   it('falls back to 900 x 600 with no usable area', async () => {
-    const { defaultFrameDimensions } = await import('@/utils/cutListEngine');
+    const { defaultFrameDimensions } = await import('@/features/fabrication/cutListEngine');
     expect(defaultFrameDimensions(0)).toEqual({ widthMm: 900, heightMm: 600 });
     expect(defaultFrameDimensions(undefined)).toEqual({ widthMm: 900, heightMm: 600 });
   });
 
   it('exposes the rib counts the blueprint draws', async () => {
-    const { calculateCutList } = await import('@/utils/cutListEngine');
+    const { calculateCutList } = await import('@/features/fabrication/cutListEngine');
     const wide = calculateCutList({ widthMm: 2400, heightMm: 1500 });
     expect(wide.vRibCount).toBeGreaterThan(0);
     expect(wide.hRibCount).toBeGreaterThanOrEqual(0);
