@@ -29,19 +29,19 @@ However, the audit revealed several architectural disconnects, security gaps, an
 
 | Component / Service | File Path | Primary Responsibility | Audit Status |
 |---|---|---|---|
-| **Receipts Ledger UI** | `src/components/crm/Receipts.jsx` | List, search, filter, detail view, browser print, CSV export, delete modal | Verified with findings |
-| **Receipt Print Template** | `src/utils/receiptTemplate.js` | HTML generation for print view, English numeral-to-words converter (`amountToWords`) | Verified with findings |
+| **Receipts Ledger UI** | `src/features/invoicing/Receipts.jsx` | List, search, filter, detail view, browser print, CSV export, delete modal | Verified with findings |
+| **Receipt Print Template** | `src/features/invoicing/receiptTemplate.js` | HTML generation for print view, English numeral-to-words converter (`amountToWords`) | Verified with findings |
 | **Sync & ID Derivation** | `src/services/firestoreSync.js` | `deriveReceiptId`, `createDocumentIfAbsent`, collections mapping | Verified (Solid design) |
 | **Audit Service** | `src/services/auditLog.js` | Logs `RECEIPT_GENERATED` and `RECEIPT_DELETED` actions | Verified with minor discrepancy |
 | **Central Handler** | `src/App.jsx` | `handleGenerateReceipt`, real-time listener subscription, state propagation | Verified with findings |
 | **Security Rules** | `firestore.rules` | Access control for `/receipts/{receiptId}` | Critical disconnects identified |
-| **Originating UI Surfaces** | `src/components/crm/Invoices.jsx`<br/>`src/features/leads/LeadCardDetails.jsx` | Pre-checks and inline generation forms | Verified with findings |
+| **Originating UI Surfaces** | `src/features/invoicing/Invoices.jsx`<br/>`src/features/leads/LeadCardDetails.jsx` | Pre-checks and inline generation forms | Verified with findings |
 
 ---
 
 ## 3. Codebase Tracing & Verification
 
-### 3.1 Receipts Ledger UI (`src/components/crm/Receipts.jsx`)
+### 3.1 Receipts Ledger UI (`src/features/invoicing/Receipts.jsx`)
 
 1. **Status Badge Representation:**
    - The UI unconditionally renders `<StatusBadge status="Paid" size="xs" />` on both list items and the detail pane header.
@@ -61,7 +61,7 @@ However, the audit revealed several architectural disconnects, security gaps, an
 6. **Audit Log Name Fallback:**
    - When deleting a receipt, `Receipts.jsx` logs `currentUser?.name || 'Unknown'`. In contrast, `App.jsx` constructs `${currentUser.firstName} ${currentUser.lastName}`. If the user object lacks a top-level `.name`, deletions are attributed to `"Unknown"`.
 
-### 3.2 Canonical Print Template (`src/utils/receiptTemplate.js`)
+### 3.2 Canonical Print Template (`src/features/invoicing/receiptTemplate.js`)
 
 1. **Numeral-to-Words Conversion (`amountToWords`):**
    - Correctly handles integer chunks up to Billions, formatting cents as `XX/100` (e.g., `22526.53` $\rightarrow$ `"Twenty Two Thousand Five Hundred Twenty Six and 53/100 Rupees"`).
@@ -213,10 +213,10 @@ With all decision points aligned, the upcoming execution phase will implement th
 1. **Handler & Preconditions (`src/App.jsx`):**
    - In `handleGenerateReceipt`: add `if (invoice.status !== 'Paid')` guard.
    - Forward `notes` from UI forms to `cleanReceipt`.
-2. **UI Generation Forms (`src/components/crm/Invoices.jsx` & `LeadCardDetails.jsx`):**
+2. **UI Generation Forms (`src/features/invoicing/Invoices.jsx` & `LeadCardDetails.jsx`):**
    - Make `amountReceived` display-only / locked to `invoice.amount`.
    - Add `notes` input (cheque no, bank transfer ref, notes) to `receiptFormData`.
-3. **Receipt Ledger & Permissions (`src/components/crm/Receipts.jsx`):**
+3. **Receipt Ledger & Permissions (`src/features/invoicing/Receipts.jsx`):**
    - Condition the delete button (`Trash2`) on `isAdmin(currentUser)`.
    - Fix CSV export by disabling the button when `filteredReceipts.length === 0` and wrapping `exportToCsv` in `try / catch`.
    - Fix audit log user name fallback to use `${currentUser.firstName} ${currentUser.lastName}`.

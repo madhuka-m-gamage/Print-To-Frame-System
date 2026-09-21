@@ -4,7 +4,7 @@
 
 ## Files and folders
 
-- `src/components/crm/Deals.jsx`: Kanban and table UI. `DEALS_STAGES` = Waiting, Fabricating, Ready To Load, Hand Over, Completed.
+- `src/features/deals/Deals.jsx`: Kanban and table UI. `DEALS_STAGES` = Waiting, Fabricating, Ready To Load, Hand Over, Completed.
 - `src/features/leads/Leads.jsx`: `handleConvertConfirm` (~476-606) performs Lead-to-Deal conversion; `ConvertDealModal`.
 - `src/features/leads/LeadCardDetails.jsx`: shared Lead/Deal detail modal (`isDeal` prop); embeds `QuotationBuilder`, shows advance / final invoice cards, mark-paid and receipt buttons, and a logistics card.
 - `src/App.jsx`: mounts Deals under tab `pipeline`; holds `handleSaveInvoice`, `handleGenerateReceipt`, `handleMarkInvoicePaid`.

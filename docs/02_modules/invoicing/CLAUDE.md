@@ -8,7 +8,7 @@ Invoices are `invoices` documents numbered `INV-ADV-####` / `INV-FIN-####` from 
 
 ## Code
 
-- `src/components/crm/Invoices.jsx`, `src/utils/invoiceTemplate.js`
+- `src/features/invoicing/Invoices.jsx`, `src/features/invoicing/invoiceTemplate.js`
 - `src/services/firestoreSync.js` (`generateInvoiceId`, `generateAtomicId`); `src/App.jsx` handlers
 - Test: `tests/integration/invoiceNumbering.test.js`
 
@@ -34,6 +34,6 @@ Invoices are `invoices` documents numbered `INV-ADV-####` / `INV-FIN-####` from 
 
 - `invoiceTemplate` line totals = qty x unitPrice x (1 - discountPct) x (1 + taxPct) x 0.75 (Advance) or 0.25 (Final). Deal completion passes full-value line items so the scaling lands on 25%.
 
-- Edit policy: `id` and `type` never change; only Admin/Manager may change `amount`. An invoice with a receipt cannot be deleted; use Cancel. Full settlement (`isFullyPaid` in `src/utils/invoiceSettlement.js`) is Advance and Final both paid, or one paid invoice that bills the whole total, and `invoicePaid` is written to the lead and the deal it converted into.
+- Edit policy: `id` and `type` never change; only Admin/Manager may change `amount`. An invoice with a receipt cannot be deleted; use Cancel. Full settlement (`isFullyPaid` in `src/features/invoicing/invoiceSettlement.js`) is Advance and Final both paid, or one paid invoice that bills the whole total, and `invoicePaid` is written to the lead and the deal it converted into.
 
-- Reprints show the invoice as issued. `resolveInvoiceForPrint` (`src/utils/invoicePrintData.js`) uses the saved invoice's own line items, customer name, company and phone; only a `DRAFT-` preview (no saved invoice yet) reads the live lead and newest quotation. No PDF is stored: every print rebuilds the HTML from the saved document.
+- Reprints show the invoice as issued. `resolveInvoiceForPrint` (`src/features/invoicing/invoicePrintData.js`) uses the saved invoice's own line items, customer name, company and phone; only a `DRAFT-` preview (no saved invoice yet) reads the live lead and newest quotation. No PDF is stored: every print rebuilds the HTML from the saved document.

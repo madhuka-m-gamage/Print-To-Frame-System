@@ -8,7 +8,7 @@ Partner / referral network: public application, admin approval, QR referral link
 
 ## Code
 
-- `src/components/crm/Partners.jsx`, `PartnerQRModal.jsx`; `src/components/public/PartnerRegistration.jsx`, `ReferralForm.jsx`
+- `src/features/partners/Partners.jsx`, `PartnerQRModal.jsx`; `src/features/partners/PartnerRegistration.jsx`, `ReferralForm.jsx`
 - Approval in `src/components/admin/AgentDatabase.jsx`; accrual in `Deals.jsx`; eligibility in `src/App.jsx`
 
 ## Firestore collections it owns or writes

@@ -10,8 +10,8 @@
 
 A comprehensive architectural and trigger audit was conducted across the Invoicing module and its integration boundaries:
 - **Module Documentation**: `docs/02_modules/invoicing/README.md`, `docs/02_modules/invoicing/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
-- **Target UI Components**: `src/components/crm/Invoices.jsx`, `src/features/quotations/QuotationBuilder.jsx`, `src/features/leads/LeadCardDetails.jsx`, `src/components/crm/Receipts.jsx`, `src/features/leads/Leads.jsx`, `src/components/crm/Deals.jsx`, `src/components/operations/FabricationWorks.jsx`.
-- **Templates & Formatting**: `src/utils/invoiceTemplate.js` (`buildInvoiceHtml`, `openInvoicePrintWindow`), `src/utils/receiptTemplate.js` (`buildReceiptHtml`, `amountToWords`).
+- **Target UI Components**: `src/features/invoicing/Invoices.jsx`, `src/features/quotations/QuotationBuilder.jsx`, `src/features/leads/LeadCardDetails.jsx`, `src/features/invoicing/Receipts.jsx`, `src/features/leads/Leads.jsx`, `src/features/deals/Deals.jsx`, `src/components/operations/FabricationWorks.jsx`.
+- **Templates & Formatting**: `src/features/invoicing/invoiceTemplate.js` (`buildInvoiceHtml`, `openInvoicePrintWindow`), `src/features/invoicing/receiptTemplate.js` (`buildReceiptHtml`, `amountToWords`).
 - **ID Generation & Atomic Counters**: `src/services/firestoreSync.js` (`generateInvoiceId`, `generateAtomicId`, `deriveReceiptId`), `src/services/auditLog.js` (`logActivity`).
 - **Handlers & Hand-offs**: `src/App.jsx` (`handleSaveInvoice`, `handleMarkInvoicePaid`, `handleGenerateReceipt`).
 - **Integration Tests & Backend Security**: `tests/integration/invoiceNumbering.test.js`, `firestore.rules` (`invoices`, `counters`, `receipts`, `auditLog` collections).
@@ -27,7 +27,7 @@ A comprehensive architectural and trigger audit was conducted across the Invoici
    - **Severe Downstream Impact on Logistics COD**: In `src/utils/logisticsEngine.js:L196-L199`, `calculateCODFromInvoices` calculates `totalBalanceDue` by summing **all** unpaid matched invoices (`unpaidInvoices.reduce(...)`). When duplicate 25% Final invoices exist, the delivery driver's screen instructs them to collect **50% of the contract value (2x balance)** from the client on delivery!
 2. **Mathematical Compounding Bug in Deal Fallback Line Items**:
    - In `Deals.jsx:L357`, if a deal has no linked quotation, fallback line items are generated with `unitPrice: finalAmount` (where `finalAmount` is already 25% of `deal.value`).
-   - In `src/utils/invoiceTemplate.js:L242`, the print renderer calculates line item price as `qty * unitPrice * (isFinal ? 0.25 : 0.75)`.
+   - In `src/features/invoicing/invoiceTemplate.js:L242`, the print renderer calculates line item price as `qty * unitPrice * (isFinal ? 0.25 : 0.75)`.
    - Because `finalAmount` is already 25%, multiplying it by 0.25 again prints the line item at **6.25% (1/16th)** of the deal value, while the summary box below prints the full 25% amount!
 3. **Fabrication Final Invoices Lack Quotation and Itemization**:
    - The Final invoice generated in `FabricationWorks.jsx:L721-L747` does not link a `quotationId` or pass any `lineItems`. It relies entirely on a generic fallback row (`Custom steel framing fabrication`), while `advancePaid` and `balanceDue` fields are completely omitted from the payload.
@@ -64,8 +64,8 @@ A comprehensive architectural and trigger audit was conducted across the Invoici
 
 | Section / Claim | Code Status | Details / Discrepancy |
 |---|---|---|
-| **Files and Folders** ("`src/components/crm/Invoices.jsx`: list, filters, detail, edit, delete, mark paid, CSV export, WhatsApp reminder, receipt form.") | **Accurate** | Confirmed: all listed functionality exists in `Invoices.jsx`. |
-| **Files and Folders** ("`src/utils/invoiceTemplate.js`: printable invoice HTML (`openInvoicePrintWindow`).") | **Accurate** | Confirmed: canonical print renderer shared across views. |
+| **Files and Folders** ("`src/features/invoicing/Invoices.jsx`: list, filters, detail, edit, delete, mark paid, CSV export, WhatsApp reminder, receipt form.") | **Accurate** | Confirmed: all listed functionality exists in `Invoices.jsx`. |
+| **Files and Folders** ("`src/features/invoicing/invoiceTemplate.js`: printable invoice HTML (`openInvoicePrintWindow`).") | **Accurate** | Confirmed: canonical print renderer shared across views. |
 | **Files and Folders** ("`src/services/firestoreSync.js`: `generateAtomicId`, `generateInvoiceId`, `INVOICES` and `COUNTERS` constants.") | **Accurate** | Confirmed: lines 280-335 of `firestoreSync.js`. |
 | **Files and Folders** ("`src/App.jsx`: `handleSaveInvoice`, `handleGenerateReceipt`, `handleMarkInvoicePaid`...") | **Accurate** | Confirmed: lines 339-558 of `src/App.jsx`. |
 | **Open questions** ("Two automatic Final-invoice creators (deal completion, fabrication QA pass) can both fire for the same job; duplicate guarding between them is not established.") | **Confirmed Hazard** | Deep audit confirms **no deduplication check** exists between Trigger 3, Trigger 4, and Trigger 5b. Multiple Final invoices are created in normal business operations. |
@@ -75,7 +75,7 @@ A comprehensive architectural and trigger audit was conducted across the Invoici
 
 ## 3. Codebase Tracing & Component Verification
 
-### 3.1 Target UI Component: `src/components/crm/Invoices.jsx`
+### 3.1 Target UI Component: `src/features/invoicing/Invoices.jsx`
 
 #### 1. Archive & Filtering Capabilities:
 - Displays summary metric cards: *Total Invoiced*, *Settled Revenue*, *Outstanding Receivables*, *Overdue Exposure*, and *Total Invoices*.
@@ -114,7 +114,7 @@ A comprehensive architectural and trigger audit was conducted across the Invoici
 
 ---
 
-### 3.2 Canonical Print Template: `src/utils/invoiceTemplate.js`
+### 3.2 Canonical Print Template: `src/features/invoicing/invoiceTemplate.js`
 
 - Single canonical HTML builder (`buildInvoiceHtml`) used across Invoices, Lead details, and Logistics.
 - **Contract Value & Balance Derivation**:

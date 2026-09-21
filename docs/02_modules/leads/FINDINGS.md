@@ -13,7 +13,7 @@ A deep-trace audit was conducted across the Leads module implementation files:
 - **UI Components**: `src/features/leads/Leads.jsx`, `src/features/leads/LeadCardDetails.jsx`, `src/features/quotations/QuotationBuilder.jsx`
 - **Services & Utilities**: `src/services/gemini.js`, `src/features/quotations/pricingEngine.js`, `src/features/leads/audioProcessing.js`
 - **Backend Proxy**: `api/generate.js` (and dev server middleware in `vite.config.js`)
-- **System Integration**: `src/App.jsx`, `firestore.rules`, `src/components/crm/Partners.jsx`
+- **System Integration**: `src/App.jsx`, `firestore.rules`, `src/features/partners/Partners.jsx`
 
 While the core architecture described in `CLAUDE.md` (client-side orchestration, Deals stored as `isDeal: true` in `leads`, unpersisted audio analysis) is fundamentally confirmed, **several critical workflow breaks, state desynchronizations, and cross-module bugs** were identified.
 
@@ -215,7 +215,7 @@ All ambiguities were presented to the product owner and resolved as follows:
 - Change: Remove the customer auto-create block from `handleSaveLeadDetails`. Customer record must only be created inside `handleConvertConfirm`.
 
 **Action B — Fix partner commission eligibility gating** *(A2 — High, financial correctness)*
-- File: `src/components/crm/Partners.jsx:L278`
+- File: `src/features/partners/Partners.jsx:L278`
 - Change: Add a filter so that `leads` where `convertedToDeal === true` do not trigger `'Eligible for Payout'` based on their `stage`. Eligibility must be derived from the active Deal document (found by matching `originalLeadId`) reaching `Completed` stage and full payment cleared.
 
 **Action D — Downsample all oversized audio formats** *(A4 — Medium, data loss prevention)*

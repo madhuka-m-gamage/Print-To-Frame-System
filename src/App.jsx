@@ -32,18 +32,18 @@ import { initAuth, logout, emailLogin, emailRegister, db } from "./services/fire
 import { doc, getDoc, setDoc, collection, getDocs, deleteDoc, onSnapshot } from "firebase/firestore";
 import { subscribeToCollection, addDocument, updateDocument, batchWrite, COLLECTIONS, generateInvoiceId, deriveReceiptId, createDocumentIfAbsent } from "./services/firestoreSync";
 import { toast } from "./shared/utils/toast";
-import { isFullyPaid } from "./utils/invoiceSettlement";
+import { isFullyPaid } from "./features/invoicing/invoiceSettlement";
 import { newUserAction, shouldEvict } from "./features/auth/authFlow";
 import { UserAvatar } from "./shared/ui";
 
 // Components
 const Dashboard = React.lazy(() => import("./features/dashboard/Dashboard"));
 const Leads = React.lazy(() => import("./features/leads/Leads"));
-const Deals = React.lazy(() => import("./components/crm/Deals"));
-const Invoices = React.lazy(() => import("./components/crm/Invoices"));
-const Receipts = React.lazy(() => import("./components/crm/Receipts"));
+const Deals = React.lazy(() => import("./features/deals/Deals"));
+const Invoices = React.lazy(() => import("./features/invoicing/Invoices"));
+const Receipts = React.lazy(() => import("./features/invoicing/Receipts"));
 const Customers = React.lazy(() => import("./features/customers/Customers"));
-const Partners = React.lazy(() => import("./components/crm/Partners"));
+const Partners = React.lazy(() => import("./features/partners/Partners"));
 const FabricationWorks = React.lazy(() => import("./components/operations/FabricationWorks"));
 const Logistics = React.lazy(() => import("./components/operations/Logistics"));
 const CostCalculator = React.lazy(() => import("./features/quotations/CostCalculator"));
@@ -300,7 +300,7 @@ function App() {
   const [invoices, setInvoices] = useState(defaultInvoices);
   const [receipts, setReceipts] = useState([]);
   const [quotations, setQuotations] = useState([]);
-  // Public "Apply as a Partner" submissions (src/components/public/PartnerRegistration.jsx).
+  // Public "Apply as a Partner" submissions (src/features/partners/PartnerRegistration.jsx).
   // Reviewed centrally in User Management (AgentDatabase.jsx) alongside self-registered
   // pendingUsers, rather than in a separate approval surface inside the Partners tab.
   const [partnerApplications, setPartnerApplications] = useState([]);

@@ -11,8 +11,8 @@ import SortableTable from '@/shared/ui/SortableTable';
 import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateInvoiceId, generateAtomicId } from '@/services/firestoreSync';
 import { exportToCsv } from '@/shared/utils/csvExport';
 import { matchesEntity, getExistingFinalInvoice } from '@/shared/utils/entityUtils';
-import { getFinalInvoiceAmounts, calculateDealCommission } from '@/utils/dealSettlement';
-import { projectStatusForDealStage } from '@/utils/dealProjectSync';
+import { getFinalInvoiceAmounts, calculateDealCommission } from './dealSettlement';
+import { projectStatusForDealStage } from './dealProjectSync';
 import { buildLogisticsTask } from '@/utils/logisticsTask';
 import { logActivity } from '@/services/auditLog';
 

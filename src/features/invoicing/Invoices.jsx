@@ -9,8 +9,8 @@ import { logActivity } from '@/services/auditLog';
 import DeleteModal from '@/shared/components/DeleteModal';
 import { PageHeader, FilterBar, StatusBadge, ModalWrapper } from '@/shared/ui';
 import { exportToCsv } from '@/shared/utils/csvExport';
-import { buildInvoiceHtml, openInvoicePrintWindow } from '@/utils/invoiceTemplate';
-import { buildReceiptHtml } from '@/utils/receiptTemplate';
+import { buildInvoiceHtml, openInvoicePrintWindow } from './invoiceTemplate';
+import { buildReceiptHtml } from './receiptTemplate';
 
 export default function Invoices({ invoices = [], setInvoices, onMarkPaid, currentUser, receipts = [], onGenerateReceipt }) {
   const [searchQuery, setSearchQuery] = useState('');

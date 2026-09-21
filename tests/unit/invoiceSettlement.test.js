@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isFullyPaid, isFullSettlementInvoice } from '@/utils/invoiceSettlement';
+import { isFullyPaid, isFullSettlementInvoice } from '@/features/invoicing/invoiceSettlement';
 
 const adv = (o = {}) => ({ id: 'INV-ADV-0001', type: 'Advance', amount: 75000, totalValue: 100000, status: 'Unpaid', createdAt: '2026-01-01T00:00:00Z', ...o });
 const fin = (o = {}) => ({ id: 'INV-FIN-0001', type: 'Final', amount: 25000, totalValue: 100000, status: 'Unpaid', createdAt: '2026-01-02T00:00:00Z', ...o });

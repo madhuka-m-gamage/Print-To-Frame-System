@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { amountToWords, buildReceiptHtml } from '@/utils/receiptTemplate';
+import { amountToWords, buildReceiptHtml } from '@/features/invoicing/receiptTemplate';
 
 describe('receiptTemplate', () => {
   describe('amountToWords', () => {

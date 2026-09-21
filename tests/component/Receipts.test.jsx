@@ -15,7 +15,7 @@ vi.mock('@/shared/utils/toast', () => ({
 vi.mock('@/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
 vi.mock('@/shared/utils/csvExport', () => ({ exportToCsv: vi.fn() }));
 
-const { default: Receipts } = await import('@/components/crm/Receipts');
+const { default: Receipts } = await import('@/features/invoicing/Receipts');
 const { exportToCsv } = await import('@/shared/utils/csvExport');
 const { toast } = await import('@/shared/utils/toast');
 

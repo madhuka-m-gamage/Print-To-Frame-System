@@ -15,7 +15,7 @@ vi.mock('@/shared/utils/toast', () => ({
 }));
 vi.mock('@/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
 
-const { default: Invoices } = await import('@/components/crm/Invoices');
+const { default: Invoices } = await import('@/features/invoicing/Invoices');
 
 const admin = { role: 'Admin', name: 'Admin', identifier: 'admin@example.com' };
 

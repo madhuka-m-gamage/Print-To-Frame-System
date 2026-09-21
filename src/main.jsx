@@ -14,8 +14,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import * as Sentry from "@sentry/react";
 import App from './App.jsx';
-import ReferralForm from './components/public/ReferralForm.jsx';
-import PartnerRegistration from './components/public/PartnerRegistration.jsx';
+import ReferralForm from './features/partners/ReferralForm.jsx';
+import PartnerRegistration from './features/partners/PartnerRegistration.jsx';
 import './index.css';
 import { PermissionsProvider } from './context/PermissionsContext';
 

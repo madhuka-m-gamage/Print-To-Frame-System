@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { projectStatusForDealStage } from '@/utils/dealProjectSync';
+import { projectStatusForDealStage } from '@/features/deals/dealProjectSync';
 
 describe('projectStatusForDealStage', () => {
   it('moves a project forward to match the deal stage', () => {
