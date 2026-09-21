@@ -38,9 +38,9 @@ Three Vercel serverless functions plus one helper. Same origin as the SPA (`verc
 
 `vite.config.js` re-implements these endpoints as dev middleware, so `npm run dev` works without Vercel.
 
-## Cloud Functions (`functions/`)
+## Cloud Functions
 
-None. The folder is an empty placeholder. See [GCP_INVENTORY.md](GCP_INVENTORY.md): the GCP project has no Cloud Functions, Eventarc triggers or Scheduler jobs.
+None, and there is no `functions/` folder (the empty placeholder was removed in Phase 7 8.2). See [GCP_INVENTORY.md](GCP_INVENTORY.md): the GCP project has no Cloud Functions, Eventarc triggers or Scheduler jobs.
 
 ## Shared code
 

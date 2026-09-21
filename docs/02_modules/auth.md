@@ -39,5 +39,5 @@ Client-driven Firebase Auth via Google popup or email / password. After sign-in 
 ## Open questions
 
 - **Scope mismatch (resolved in Phase 7 5.1):** sign-in requests identity scopes only. `driveService.js` (`drive.readonly`) and `contactsService.js` (`contacts.readonly`) now get their token from `getScopedAccessToken(scope)`, an on-demand consent popup cached per scope for 55 minutes. Not tested against the live app.
-- `functions/` was described to the mapping agent as an existing folder; it is only an empty placeholder.
+- There is no `functions/` folder (an empty placeholder was removed in Phase 7 8.2).
 - Authorized domains in Firebase Console (Authentication > Settings) are not visible from the repo.

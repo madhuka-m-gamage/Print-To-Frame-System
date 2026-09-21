@@ -6,7 +6,7 @@ One-stop map of every document in this repo. Update this file whenever a doc is 
 
 - Frontend: `src/` (React + Vite SPA)
 - Backend: `api/` (Vercel serverless functions)
-- Cloud Functions source: `functions/` (none yet)
+- Cloud Functions: none (no `functions/` folder)
 - Firestore rules: `firestore.rules`
 
 ## Root
