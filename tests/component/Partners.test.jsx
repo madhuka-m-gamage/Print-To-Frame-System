@@ -19,7 +19,7 @@ vi.mock('@/shared/utils/toast', () => ({
 }));
 vi.mock('@/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
 vi.mock('@/services/mailer', () => ({ sendTemplatedEmail: vi.fn(async () => {}) }));
-vi.mock('@/services/adminUsers', () => ({
+vi.mock('@/features/admin/adminUsers', () => ({
   deleteUserAccount: vi.fn(async () => {}),
   resetUserPassword: vi.fn(async () => {}),
 }));

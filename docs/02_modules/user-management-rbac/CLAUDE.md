@@ -8,8 +8,8 @@ Registration queue, admin approval, role and status management, password reset, 
 
 ## Code
 
-- `src/components/admin/AdminPanel.jsx`, `AgentDatabase.jsx`, `PermissionsManager.jsx`
-- `src/context/PermissionsContext.jsx`, `src/constants/roles.js`, `src/services/adminUsers.js`, `auditLog.js`; `api/admin-user.js`; `firestore.rules`
+- `src/features/admin/AdminPanel.jsx`, `AgentDatabase.jsx`, `PermissionsManager.jsx`
+- `src/context/PermissionsContext.jsx`, `src/constants/roles.js`, `src/features/admin/adminUsers.js`, `auditLog.js`; `api/admin-user.js`; `firestore.rules`
 
 ## Firestore collections it owns or writes
 

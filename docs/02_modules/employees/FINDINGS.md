@@ -10,7 +10,7 @@
 
 An in-depth architectural and code-level audit of the "Employees" domain was conducted across the Print To Frame ERP codebase. The primary findings and user-approved decisions are summarized below:
 
-1. **Absence of Independent Employees Module**: There is no dedicated Employees module, UI route, component, or Firestore collection (`employees` or `staff`). Staff identities exist solely as documents in the `users` collection, administered via the "User Management" interface (`src/components/admin/AgentDatabase.jsx`, tab id `agents`).
+1. **Absence of Independent Employees Module**: There is no dedicated Employees module, UI route, component, or Firestore collection (`employees` or `staff`). Staff identities exist solely as documents in the `users` collection, administered via the "User Management" interface (`src/features/admin/AgentDatabase.jsx`, tab id `agents`).
 2. **Approved HR Data Model (Decision D1)**: Rather than maintaining an unstructured `users` record, an enterprise **HR Data Model** will be integrated into staff records, introducing formalized Employee IDs (`PTF-EMP-####`), departmental classifications, employment terms, NIC verification, emergency contacts, skills tracking, and compensation structures.
 3. **Hardcoded Staff & Driver Directory Disconnect (Decision D2)**: `src/features/logistics/logisticsEngine.js` hardcodes a static in-memory `DRIVER_DIRECTORY` (4 named individuals) and `FLEET_VEHICLES` (3 vehicles). Delivery assignment in `Logistics.jsx` and `LogisticsCardDetails.jsx` draws strictly from this array. Real staff enrolled with the `Logistics` role in `users` cannot be assigned to dispatch jobs. **Approved Resolution**: Migrate drivers to live Firestore queries of `users` where `role === 'Logistics'` (or `Operations`), and fleet units to a dynamic `settings/fleet` or `fleet` Firestore collection.
 4. **Standardized Task Assignment Across Modules (Decision D3)**: Currently, Leads only assign external referral partners, Fabrication uses an unvalidated free-text string, and Logistics uses a static array. **Approved Resolution**: Standardize operational assignments across CRM (Sales Rep), Fabrication (Factory Assignee), and Logistics (Delivery Driver) using live lookups against `users` filtered by role.
@@ -101,7 +101,7 @@ export const DRIVER_DIRECTORY = [
 
 ### 4.2 Integration Surfaces & RBAC Implementation
 
-#### Surface 1: `src/components/admin/AgentDatabase.jsx`
+#### Surface 1: `src/features/admin/AgentDatabase.jsx`
 - **Module Tabs**: Provides tabs for `all` ("All Members"), `employees` ("Internal Team"), and `clients` ("Corporate & Retail Clients"). `Partner` role users are decoupled via `nonPartnerUsers`.
 - **Filtering Logic**:
   ```javascript

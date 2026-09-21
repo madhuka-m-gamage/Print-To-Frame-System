@@ -6,10 +6,10 @@
 
 **There is no separate Employees module.** No `employees` or `staff` collection, component or route exists. Employee-like data lives in the `users` collection, managed on the "User Management" tab (`activeTab === "agents"`), so the working files are documented in [user-management-rbac.md](../user-management-rbac/README.md). Employee-related pieces:
 
-- `src/components/admin/AgentDatabase.jsx`: enrol users, role / status change, photo, delete, password reset, approve / reject pending registrations.
+- `src/features/admin/AgentDatabase.jsx`: enrol users, role / status change, photo, delete, password reset, approve / reject pending registrations.
 - `src/constants/roles.js`: 10 system roles: Admin, Manager, Sales, Operations, Support, Accounts, Logistics, Partner, Business Client, Customer. Roles named "Sales Executive" or "Fabricator" do not exist (closest: `Sales`, `Operations`).
 - `src/features/logistics/logisticsEngine.js`: `DRIVER_DIRECTORY`, a **hardcoded** list of 4 named drivers / fabricators, not stored in Firestore; used by `Logistics.jsx` and `LogisticsCardDetails.jsx`.
-- `api/admin-user.js` and `src/services/adminUsers.js`: Auth account create / reset / delete (Admin only).
+- `api/admin-user.js` and `src/features/admin/adminUsers.js`: Auth account create / reset / delete (Admin only).
 - Email template `employee_invite` (`src/constants/emailTemplates.js`).
 
 ## Firestore collections read/written

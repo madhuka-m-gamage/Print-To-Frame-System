@@ -48,10 +48,10 @@ const FabricationWorks = React.lazy(() => import("./features/fabrication/Fabrica
 const Logistics = React.lazy(() => import("./features/logistics/Logistics"));
 const CostCalculator = React.lazy(() => import("./features/quotations/CostCalculator"));
 const Messages = React.lazy(() => import("./features/messaging/Messages"));
-const AdminPanel = React.lazy(() => import("./components/admin/AdminPanel"));
+const AdminPanel = React.lazy(() => import("./features/admin/AdminPanel"));
 import Login from "./features/auth/Login";
 const NotificationsView = React.lazy(() => import("./features/dashboard/NotificationsView"));
-const AgentDatabase = React.lazy(() => import("./components/admin/AgentDatabase"));
+const AgentDatabase = React.lazy(() => import("./features/admin/AgentDatabase"));
 const UserProfile = React.lazy(() => import("./features/profile/UserProfile"));
 
 import { usePermissions } from "./context/PermissionsContext";

@@ -12,7 +12,7 @@ A comprehensive architectural and code-level audit was conducted across the Cust
 - **Module Documentation**: `docs/02_modules/customers/CLAUDE.md`, `docs/02_modules/customers/README.md`
 - **Cross-Module Architecture**: `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`
 - **UI Components**: `src/features/customers/Customers.jsx`, `src/features/customers/ContactSyncModal.jsx`, `src/shared/ui/StatusBadge.jsx`
-- **Services & Utilities**: `src/services/contactsService.js`, `src/shared/utils/stringMatch.js`, `src/services/firebase.js`, `src/services/mailer.js`, `src/services/adminUsers.js`, `src/shared/utils/validation.js`
+- **Services & Utilities**: `src/services/contactsService.js`, `src/shared/utils/stringMatch.js`, `src/services/firebase.js`, `src/services/mailer.js`, `src/features/admin/adminUsers.js`, `src/shared/utils/validation.js`
 - **Integration & Security Surfaces**: `src/App.jsx`, `firestore.rules`, `src/features/leads/Leads.jsx`, `src/features/leads/LeadCardDetails.jsx`, `src/features/fabrication/FabricationWorks.jsx`, `src/features/profile/UserProfile.jsx`
 
 While the core registry design (client registry keyed by NIC/BRN, Google Contacts import modal, approval handoff via prefill) exists as described, **several critical defects, data disconnects, RBAC security asymmetries, and workflow breaking bugs** were discovered:

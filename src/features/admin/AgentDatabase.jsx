@@ -19,7 +19,7 @@ import { SYSTEM_ROLES, ROLE_METADATA, getRoleCategory } from '@/constants/roles'
 import { formatPhone } from '@/shared/utils/validation';
 import { usePermissions } from '@/context/PermissionsContext';
 import { logActivity } from '@/services/auditLog';
-import { createUserAccount, deleteUserAccount, resetUserPassword } from '@/services/adminUsers';
+import { createUserAccount, deleteUserAccount, resetUserPassword } from './adminUsers';
 import { sendTemplatedEmail } from '@/services/mailer';
 
 export default function AgentDatabase({ 
