@@ -82,7 +82,7 @@ Requires a valid Firebase ID token (`Authorization: Bearer <token>`) AND that th
 
 ## Repository layout & documentation
 
-Code stays where the build expects it: **frontend = `src/`**, **backend = `api/`** (Vercel functions), Cloud Functions source = `functions/` (none exist; see `docs/01_architecture/GCP_INVENTORY.md`). Everything written about the system lives in the structure below; put new findings, maps and notes there, not in ad hoc files. Start at `PROJECT_INDEX.md`.
+Code stays where the build expects it: **frontend = `src/`**, **backend = `api/`** (Vercel functions), there are no Cloud Functions and no `functions/` folder (see `docs/01_architecture/GCP_INVENTORY.md`). Everything written about the system lives in the structure below; put new findings, maps and notes there, not in ad hoc files. Start at `PROJECT_INDEX.md`.
 
 ```
 erp-system/
@@ -97,7 +97,7 @@ erp-system/
 │   ├── 03_security/        RBAC_MODEL, FIRESTORE_RULES_NOTES
 │   ├── 04_workflows/       GIT_WORKFLOW, DEPLOY_PROCESS
 │   └── 05_decisions/       NNNN-title.md (4-digit, no dates)
-├── src/  api/  functions/
+├── src/  api/
 └── .claude/                settings.json (committed), settings.local.json (gitignored),
                             rules/, skills/, agents/, worktrees/ (gitignored)
 ```

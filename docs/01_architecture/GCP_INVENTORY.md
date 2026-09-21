@@ -18,8 +18,8 @@ There are **zero Cloud Functions, Eventarc triggers, Scheduler jobs, or Pub/Sub 
 |---|---|
 | `firebase.json` | **Present**. Configures Hosting (`dist`), Firestore rules for 3 databases (`(default)`, `ai-studio-printtoframeerp-66900443-b6c9-4743-892c-f50b58bf8595`, and `ai-studio-printtoframe-66900443-b6c9-4743-892c-f50b58bf8595`), and Local Emulators (Auth `9099`, Firestore `8080`, UI `4000`). **No `functions` stanza exists**. |
 | `.firebaserc` | **Not Present**. Project mapping is handled via runtime configs (`firebase-applet-config.json`) and CLI flags. |
-| `functions/` folder | **Empty Placeholder**. Contains only `.gitkeep` (`total 8`, no JavaScript/TypeScript code, no `package.json`). |
-| Functions in `functions/` | **0 functions**. No background functions, HTTP callables, or event triggers exist. |
+| `functions/` folder | **Not present**. It was an empty placeholder (only `.gitkeep`) and was removed in Phase 7 8.2. |
+| Functions in the repo | **0 functions**. No background functions, HTTP callables, or event triggers exist. |
 | Infrastructure-as-Code (IaC) | **None**. Searched for Terraform (`*.tf`), Pulumi (`Pulumi.yaml`), Serverless Framework (`serverless.yml`), AWS CDK / CloudFormation, Docker, and Kubernetes manifests — none exist. |
 | `firestore.rules` | **Present** (241 lines, ~13KB). Defines security rules, role checks (`isAdmin`, `hasRole`), super-admin guards, and collection-level permission checking across Firestore collections. |
 
@@ -34,7 +34,7 @@ While not GCP Cloud Functions, three serverless HTTPS endpoints are hosted on Ve
 | `send-email` | `api/send-email.js` | HTTPS POST | Transactional email dispatcher using SMTP / Resend. |
 | Dev Proxy | `vite.config.js` (`apiProxyPlugin`) | Local Vite middleware | Local development emulation of the `api/*.js` routes. |
 
-A comprehensive search across `api/`, `src/`, `scripts/`, and `server.archive.js` for trigger hooks (`onDocumentCreated`, `onDocumentUpdated`, `onDocumentWritten`, `onCall`, `onRequest`, `onSchedule`, `functions.firestore`, `pubsub`) confirms that no Cloud Function triggers exist anywhere in the code.
+A comprehensive search across `api/` and `src/` for trigger hooks (`onDocumentCreated`, `onDocumentUpdated`, `onDocumentWritten`, `onCall`, `onRequest`, `onSchedule`, `functions.firestore`, `pubsub`) confirms that no Cloud Function triggers exist anywhere in the code.
 
 ---
 
@@ -57,7 +57,7 @@ Queried against project `print-to-frame-erp` using `gcloud` and `firebase` CLI a
 
 | Automation Category | Defined in Repo | Deployed in GCP Console | Automation Existing Only in GCP |
 |---|---|---|---|
-| **Cloud Functions** | None (`functions/` empty) | None (`cloudfunctions` API disabled) | **None** |
+| **Cloud Functions** | None (no `functions/` folder) | None (`cloudfunctions` API disabled) | **None** |
 | **Pub/Sub Topics** | None | None (0 topics) | **None** |
 | **Scheduler Jobs** | None | None (`cloudscheduler` API disabled) | **None** |
 | **Eventarc Triggers** | None | None (`eventarc` API disabled) | **None** |
