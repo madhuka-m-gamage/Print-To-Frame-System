@@ -4,14 +4,14 @@ import { screen, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '../helpers/renderWithProviders';
 import { makeProject } from '../helpers/factories';
 
-vi.mock('../../src/utils/toast', () => ({
+vi.mock('@/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
   showToast: vi.fn(),
 }));
 vi.mock('firebase/storage', () => ({ ref: vi.fn(), uploadBytes: vi.fn(), getDownloadURL: vi.fn() }));
-vi.mock('../../src/components/common/FrameBlueprintPreview', () => ({ default: () => null }));
+vi.mock('@/components/common/FrameBlueprintPreview', () => ({ default: () => null }));
 
-const { default: FabricationCardDetails } = await import('../../src/components/operations/FabricationCardDetails');
+const { default: FabricationCardDetails } = await import('@/components/operations/FabricationCardDetails');
 
 const render = (job) => renderWithProviders(
   <FabricationCardDetails job={makeProject({ jobNo: 'PTF-1', status: 'Ongoing', value: 250000, ...job })} onClose={vi.fn()} onSave={vi.fn()} customers={[]} />,

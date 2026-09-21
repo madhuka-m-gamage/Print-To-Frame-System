@@ -12,8 +12,8 @@ import {
   ChevronRight,
   CircleCheckBig,
 } from "lucide-react";
-import { pricingTiers, calculateCost, determineTier } from "../../services/pricingEngine";
-import { PageHeader } from "../common/ui";
+import { pricingTiers, calculateCost, determineTier } from "@/services/pricingEngine";
+import { PageHeader } from "@/components/common/ui";
 
 const ct = (val) => {
   if (val === undefined || val === null) return "—";

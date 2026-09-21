@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { CircleAlert, CircleCheckBig, User, Briefcase, Mail, Lock, Phone, Building, Sparkles } from 'lucide-react';
-import { googleSignIn } from '../../services/firebase';
-import { PUBLIC_REGISTRATION_ROLES } from '../../constants/roles';
+import { googleSignIn } from '@/services/firebase';
+import { PUBLIC_REGISTRATION_ROLES } from '@/constants/roles';
 
 const EMPTY_FORM = {
   identifier: "",

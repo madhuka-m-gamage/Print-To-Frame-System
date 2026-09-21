@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getEntityIdSet, matchesEntity, getExistingFinalInvoice } from '../../src/utils/entityUtils';
+import { getEntityIdSet, matchesEntity, getExistingFinalInvoice } from '@/utils/entityUtils';
 
 describe('entityUtils', () => {
   describe('getEntityIdSet', () => {

@@ -1,11 +1,11 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, waitFor, act } from '@testing-library/react';
-import { PermissionsProvider, DEFAULT_PERMISSIONS } from '../../src/context/PermissionsContext';
+import { PermissionsProvider, DEFAULT_PERMISSIONS } from '@/context/PermissionsContext';
 
 const authState = { callback: null, ownRecord: null };
 
-vi.mock('../../src/services/firebase', () => ({
+vi.mock('@/services/firebase', () => ({
   db: {}, auth: { currentUser: null }, storage: {},
   initAuth: vi.fn((cb) => { authState.callback = cb; return () => {}; }),
   logout: vi.fn(async () => {}),
@@ -27,25 +27,25 @@ vi.mock('firebase/firestore', () => ({
     return () => {};
   }),
 }));
-vi.mock('../../src/services/firestoreSync', () => ({
+vi.mock('@/services/firestoreSync', () => ({
   COLLECTIONS: new Proxy({}, { get: (_t, key) => String(key).toLowerCase() }),
   subscribeToCollection: vi.fn(() => () => {}),
   addDocument: vi.fn(async () => {}), updateDocument: vi.fn(async () => {}), batchWrite: vi.fn(async () => {}),
   generateInvoiceId: vi.fn(async () => 'INV-ADV-0001'), deriveReceiptId: vi.fn((id) => `REC-${id}`),
   createDocumentIfAbsent: vi.fn(async () => {}),
 }));
-vi.mock('../../src/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
-vi.mock('../../src/components/auth/Login', () => ({ default: ({ errorMsg }) => <div>login screen {errorMsg}</div> }));
-vi.mock('../../src/components/tools/MiniChatDrawer', () => ({ default: () => null }));
-vi.mock('../../src/components/common/FloatingMessageToast', () => ({ default: () => null }));
-vi.mock('../../src/context/MessagingContext', () => ({
+vi.mock('@/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
+vi.mock('@/components/auth/Login', () => ({ default: ({ errorMsg }) => <div>login screen {errorMsg}</div> }));
+vi.mock('@/components/tools/MiniChatDrawer', () => ({ default: () => null }));
+vi.mock('@/components/common/FloatingMessageToast', () => ({ default: () => null }));
+vi.mock('@/context/MessagingContext', () => ({
   MessagingProvider: ({ children }) => children,
   useMessaging: () => ({ unreadCount: 0, unreadByChat: {}, conversations: [] }),
 }));
 
-const { default: App } = await import('../../src/App');
-const { logout } = await import('../../src/services/firebase');
-const { logActivity } = await import('../../src/services/auditLog');
+const { default: App } = await import('@/App');
+const { logout } = await import('@/services/firebase');
+const { logActivity } = await import('@/services/auditLog');
 
 const signIn = async () => {
   render(<PermissionsProvider><App /></PermissionsProvider>);

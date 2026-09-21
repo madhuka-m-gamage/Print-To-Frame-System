@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { checklistWithGuardedQa, withDefectRecorded } from '../../src/utils/qaGate';
+import { checklistWithGuardedQa, withDefectRecorded } from '@/utils/qaGate';
 
 describe('checklistWithGuardedQa', () => {
   const passed = { checklist: { qaPassed: true }, qaCheck: { passed: true } };

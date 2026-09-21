@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { EMAIL_TEMPLATES, interpolateTemplate } from '../../src/constants/emailTemplates.js';
+import { EMAIL_TEMPLATES, interpolateTemplate } from '@/constants/emailTemplates.js';
 
 describe('interpolateTemplate', () => {
   it('substitutes every {{token}} present in the supplied data', () => {

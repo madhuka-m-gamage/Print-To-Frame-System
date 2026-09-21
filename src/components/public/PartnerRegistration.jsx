@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { db, storage } from '../../services/firebase';
+import { db, storage } from '@/services/firebase';
 import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { COLLECTIONS } from '../../services/firestoreSync';
-import { validatePhone, validateEmail, formatPhone } from '../../utils/validation';
+import { COLLECTIONS } from '@/services/firestoreSync';
+import { validatePhone, validateEmail, formatPhone } from '@/utils/validation';
 import { 
   Building, User, Phone, Mail, MapPin, CreditCard, 
   Upload, Check, AlertCircle, FileText, Sparkles, Handshake, 

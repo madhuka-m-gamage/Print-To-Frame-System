@@ -4,7 +4,7 @@ import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../helpers/renderWithProviders';
 import { makeDeal, makeInvoice, makePartner } from '../helpers/factories';
 
-vi.mock('../../src/services/firestoreSync', () => ({
+vi.mock('@/services/firestoreSync', () => ({
   COLLECTIONS: { LEADS: 'leads', INVOICES: 'invoices', PARTNERS: 'partners', LOGISTICS: 'logistics', CUSTOMERS: 'customers' },
   addDocument: vi.fn(async () => {}),
   updateDocument: vi.fn(async () => {}),
@@ -12,14 +12,14 @@ vi.mock('../../src/services/firestoreSync', () => ({
   generateInvoiceId: vi.fn(async () => 'INV-FIN-0001'),
   generateAtomicId: vi.fn(async (prefix) => `${prefix}-0001`),
 }));
-vi.mock('../../src/utils/toast', () => ({
+vi.mock('@/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
   showToast: vi.fn(),
 }));
-vi.mock('../../src/components/crm/LeadCardDetails', () => ({ default: () => null }));
+vi.mock('@/components/crm/LeadCardDetails', () => ({ default: () => null }));
 
-const { default: Deals } = await import('../../src/components/crm/Deals');
-const sync = await import('../../src/services/firestoreSync');
+const { default: Deals } = await import('@/components/crm/Deals');
+const sync = await import('@/services/firestoreSync');
 const { generateInvoiceId } = sync;
 
 const admin = { role: 'Admin', name: 'Admin', identifier: 'admin@example.com' };

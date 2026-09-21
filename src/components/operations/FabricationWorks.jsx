@@ -31,21 +31,21 @@ import {
   Send,
   Sparkles
 } from 'lucide-react';
-import { toast } from '../../utils/toast';
-import Card from '../common/Card';
-import DeleteModal from '../common/DeleteModal';
-import FrameBlueprintPreview from '../common/FrameBlueprintPreview';
+import { toast } from '@/utils/toast';
+import Card from '@/components/common/Card';
+import DeleteModal from '@/components/common/DeleteModal';
+import FrameBlueprintPreview from '@/components/common/FrameBlueprintPreview';
 import FabricationCardDetails from './FabricationCardDetails';
-import { PageHeader, FilterBar, StatusBadge, KanbanColumn, KanbanCard, ModalWrapper } from '../common/ui';
-import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateInvoiceId, generateAtomicId } from '../../services/firestoreSync';
-import { stripEmojis, sanitizeTechnicalScope } from '../../utils/validation';
-import { generateText } from '../../services/gemini';
-import { getExistingFinalInvoice } from '../../utils/entityUtils';
-import { logActivity } from '../../services/auditLog';
-import { NON_BILLABLE, resolveManualJobLink } from '../../utils/fabricationLink';
-import { checklistWithGuardedQa, withDefectRecorded } from '../../utils/qaGate';
-import { buildLogisticsTask } from '../../utils/logisticsTask';
-import { STEEL_PROFILES, calculateCutList, mmToFtIn } from '../../utils/cutListEngine';
+import { PageHeader, FilterBar, StatusBadge, KanbanColumn, KanbanCard, ModalWrapper } from '@/components/common/ui';
+import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateInvoiceId, generateAtomicId } from '@/services/firestoreSync';
+import { stripEmojis, sanitizeTechnicalScope } from '@/utils/validation';
+import { generateText } from '@/services/gemini';
+import { getExistingFinalInvoice } from '@/utils/entityUtils';
+import { logActivity } from '@/services/auditLog';
+import { NON_BILLABLE, resolveManualJobLink } from '@/utils/fabricationLink';
+import { checklistWithGuardedQa, withDefectRecorded } from '@/utils/qaGate';
+import { buildLogisticsTask } from '@/utils/logisticsTask';
+import { STEEL_PROFILES, calculateCutList, mmToFtIn } from '@/utils/cutListEngine';
 
 const STAGES = ["Pending", "Ongoing", "Ready For Inspection", "Revision", "Completed"];
 

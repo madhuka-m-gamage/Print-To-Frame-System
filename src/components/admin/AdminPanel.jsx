@@ -5,8 +5,8 @@ import {
   Database, HardDrive, ShieldCheck, Clock, ArrowUpRight, Layers
 } from 'lucide-react';
 import PermissionsManager from './PermissionsManager';
-import { PageHeader, FilterBar, StatusBadge, TwoToneIcon } from '../common/ui';
-import { subscribeToCollection, COLLECTIONS } from '../../services/firestoreSync';
+import { PageHeader, FilterBar, StatusBadge, TwoToneIcon } from '@/components/common/ui';
+import { subscribeToCollection, COLLECTIONS } from '@/services/firestoreSync';
 
 export default function AdminPanel({ dataStore, currentUser }) {
   const [activeTab, setActiveTab] = useState('analytics'); // 'analytics' | 'permissions' | 'database' | 'audit'

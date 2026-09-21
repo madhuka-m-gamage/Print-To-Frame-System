@@ -4,12 +4,12 @@ import {
   ArrowLeft, Phone, Mail, PhoneCall, Sparkles, User, ChevronRight,
   Smile, Paperclip, MoreVertical, MessageCircle
 } from "lucide-react";
-import { toast } from "../../utils/toast";
-import { setDocument, COLLECTIONS } from "../../services/firestoreSync";
-import { db } from "../../services/firebase";
+import { toast } from "@/utils/toast";
+import { setDocument, COLLECTIONS } from "@/services/firestoreSync";
+import { db } from "@/services/firebase";
 import { collection, onSnapshot } from "firebase/firestore";
-import { PageHeader, FilterBar, StatusBadge, UserAvatar, EmailTemplateModal } from "../common/ui";
-import { useMessaging, getChannelId } from "../../context/MessagingContext";
+import { PageHeader, FilterBar, StatusBadge, UserAvatar, EmailTemplateModal } from "@/components/common/ui";
+import { useMessaging, getChannelId } from "@/context/MessagingContext";
 
 export default function Messages({ users = [], currentUser }) {
   const { 

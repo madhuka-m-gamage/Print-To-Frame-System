@@ -2,9 +2,9 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
-vi.mock('../../src/services/firebase', () => ({ googleSignIn: vi.fn() }));
+vi.mock('@/services/firebase', () => ({ googleSignIn: vi.fn() }));
 
-const { default: Login } = await import('../../src/components/auth/Login');
+const { default: Login } = await import('@/components/auth/Login');
 
 describe('Login registration form (Phase 7 5.2, DP-05)', () => {
   it('still registers as a Partner after switching between Login and Register', async () => {

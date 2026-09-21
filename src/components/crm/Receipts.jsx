@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import {
   Search, FileText, Printer, Trash2, X, ChevronRight, Calendar, Download, ArrowLeft, CreditCard
 } from 'lucide-react';
-import { deleteDocument, COLLECTIONS } from '../../services/firestoreSync';
-import { toast } from '../../utils/toast';
-import { logActivity } from '../../services/auditLog';
-import DeleteModal from '../common/DeleteModal';
-import { PageHeader, FilterBar, StatusBadge } from '../common/ui';
-import { exportToCsv } from '../../utils/csvExport';
-import { buildReceiptHtml } from '../../utils/receiptTemplate';
-import { openInvoicePrintWindow } from '../../utils/invoiceTemplate';
+import { deleteDocument, COLLECTIONS } from '@/services/firestoreSync';
+import { toast } from '@/utils/toast';
+import { logActivity } from '@/services/auditLog';
+import DeleteModal from '@/components/common/DeleteModal';
+import { PageHeader, FilterBar, StatusBadge } from '@/components/common/ui';
+import { exportToCsv } from '@/utils/csvExport';
+import { buildReceiptHtml } from '@/utils/receiptTemplate';
+import { openInvoicePrintWindow } from '@/utils/invoiceTemplate';
 
 // A receipt is inherently a completed record — no "mark paid" (that already
 // happened, it's why the receipt exists), no edit (correcting a mistake

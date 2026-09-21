@@ -7,10 +7,10 @@ import {
   ArrowUpRight, Phone, Building, ChevronRight, ShieldCheck, Layers, BarChart3,
   PhoneCall, RefreshCw, Calendar, Eye
 } from "lucide-react";
-import { generateText } from "../../services/gemini";
-import { toast } from "../../utils/toast";
-import { subscribeToCollection, COLLECTIONS } from "../../services/firestoreSync";
-import { PageHeader, FilterBar, StatusBadge, UserAvatar } from "../common/ui";
+import { generateText } from "@/services/gemini";
+import { toast } from "@/utils/toast";
+import { subscribeToCollection, COLLECTIONS } from "@/services/firestoreSync";
+import { PageHeader, FilterBar, StatusBadge, UserAvatar } from "@/components/common/ui";
 
 export const resolveDashboardDomain = (role) => {
   if (!role) return 'crm';

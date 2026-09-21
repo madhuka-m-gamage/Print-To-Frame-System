@@ -42,4 +42,28 @@ export default [
     files: ['tests/**/*.{js,jsx}'],
     languageOptions: { globals: { ...globals.node } },
   },
+  // Import style: outside its own folder, code under src/ imports with the @/ alias, and tests
+  // import app code through @/ too. (firebase-applet-config.json sits outside src, so it stays relative.)
+  {
+    files: ['src/**/*.{js,jsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          regex: '^\\.\\./(?!(?:\\.\\./)*firebase-applet-config\\.json$)',
+          message: 'Use the @/ alias instead of a parent-folder import.',
+        }],
+      }],
+    },
+  },
+  {
+    files: ['tests/unit/**/*.{js,jsx}', 'tests/component/**/*.{js,jsx}', 'tests/api/**/*.{js,jsx}', 'tests/integration/**/*.{js,jsx}', 'tests/helpers/**/*.{js,jsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          regex: '^\\.{1,2}/(?:.*/)?src/',
+          message: 'Import app code with the @/ alias (for example @/utils/toast), not a relative path into src.',
+        }],
+      }],
+    },
+  },
 ];

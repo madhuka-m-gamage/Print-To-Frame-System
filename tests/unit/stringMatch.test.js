@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeString, levenshteinDistance, stringSimilarity, findCustomerDuplicates } from '../../src/utils/stringMatch';
+import { normalizeString, levenshteinDistance, stringSimilarity, findCustomerDuplicates } from '@/utils/stringMatch';
 
 describe('normalizeString', () => {
   it('lowercases, drops punctuation and collapses whitespace', () => {

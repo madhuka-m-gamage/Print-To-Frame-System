@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
-import { db } from '../services/firebase';
-import { logActivity } from '../services/auditLog';
+import { db } from '@/services/firebase';
+import { logActivity } from '@/services/auditLog';
 
 const PermissionsContext = createContext();
 

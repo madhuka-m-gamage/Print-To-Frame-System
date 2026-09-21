@@ -8,10 +8,10 @@ import {
   Lock, KeyRound
 } from 'lucide-react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../../services/firebase';
-import { toast } from '../../utils/toast';
-import DeleteModal from '../common/DeleteModal';
-import { PageHeader, FilterBar, StatusBadge, ModalWrapper, UserAvatar, ImageCropModal, EmailTemplateModal } from '../common/ui';
+import { storage } from '@/services/firebase';
+import { toast } from '@/utils/toast';
+import DeleteModal from '@/components/common/DeleteModal';
+import { PageHeader, FilterBar, StatusBadge, ModalWrapper, UserAvatar, ImageCropModal, EmailTemplateModal } from '@/components/common/ui';
 import PartnerQRModal from './PartnerQRModal';
 import { 
   subscribeToCollection, 
@@ -19,14 +19,14 @@ import {
   updateDocument, 
   deleteDocument,
   COLLECTIONS 
-} from '../../services/firestoreSync';
-import { formatPhone, validatePhone, validateEmail } from '../../utils/validation';
-import { exportToCsv } from '../../utils/csvExport';
-import { usePermissions } from '../../context/PermissionsContext';
-import { sendTemplatedEmail } from '../../services/mailer';
-import { deleteUserAccount, resetUserPassword } from '../../services/adminUsers';
-import { logActivity } from '../../services/auditLog';
-import { invoicesForLineage } from '../../utils/leadLineage';
+} from '@/services/firestoreSync';
+import { formatPhone, validatePhone, validateEmail } from '@/utils/validation';
+import { exportToCsv } from '@/utils/csvExport';
+import { usePermissions } from '@/context/PermissionsContext';
+import { sendTemplatedEmail } from '@/services/mailer';
+import { deleteUserAccount, resetUserPassword } from '@/services/adminUsers';
+import { logActivity } from '@/services/auditLog';
+import { invoicesForLineage } from '@/utils/leadLineage';
 
 export default function Partners({ 
   partners = [], 

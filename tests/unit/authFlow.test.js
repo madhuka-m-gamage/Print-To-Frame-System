@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { newUserAction, shouldEvict } from '../../src/utils/authFlow';
+import { newUserAction, shouldEvict } from '@/utils/authFlow';
 
 describe('newUserAction', () => {
   it('always creates the record for a bootstrap admin', () => {

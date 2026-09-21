@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 let stored;
 const set = vi.fn((ref, data) => { stored = data.value; });
 
-vi.mock('../../src/services/firebase', () => ({ db: {}, handleFirestoreError: vi.fn(), OperationType: {} }));
+vi.mock('@/services/firebase', () => ({ db: {}, handleFirestoreError: vi.fn(), OperationType: {} }));
 vi.mock('firebase/firestore', () => ({
   collection: vi.fn(), doc: vi.fn((db, col, id) => ({ id })), addDoc: vi.fn(), setDoc: vi.fn(), updateDoc: vi.fn(),
   deleteDoc: vi.fn(), onSnapshot: vi.fn(), query: vi.fn(), orderBy: vi.fn(), serverTimestamp: vi.fn(), writeBatch: vi.fn(),
@@ -13,7 +13,7 @@ vi.mock('firebase/firestore', () => ({
   })),
 }));
 
-const { generateAtomicId } = await import('../../src/services/firestoreSync');
+const { generateAtomicId } = await import('@/services/firestoreSync');
 
 describe('generateAtomicId', () => {
   beforeEach(() => { stored = undefined; set.mockClear(); });

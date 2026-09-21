@@ -32,7 +32,7 @@ vi.stubGlobal('sessionStorage', {
   removeItem: (k) => { delete store[k]; },
 });
 
-const { getScopedAccessToken } = await import('../../src/services/firebase');
+const { getScopedAccessToken } = await import('@/services/firebase');
 
 const DRIVE = 'https://www.googleapis.com/auth/drive.readonly';
 

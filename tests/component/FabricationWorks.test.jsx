@@ -4,7 +4,7 @@ import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../helpers/renderWithProviders';
 import { makeProject, makeInvoice } from '../helpers/factories';
 
-vi.mock('../../src/services/firestoreSync', () => ({
+vi.mock('@/services/firestoreSync', () => ({
   COLLECTIONS: { PROJECTS: 'projects', LOGISTICS: 'logistics', INVOICES: 'invoices', LEADS: 'leads' },
   addDocument: vi.fn(async () => {}),
   updateDocument: vi.fn(async () => {}),
@@ -12,18 +12,18 @@ vi.mock('../../src/services/firestoreSync', () => ({
   generateInvoiceId: vi.fn(async () => 'INV-FIN-0001'),
   generateAtomicId: vi.fn(async (prefix) => `${prefix}-0001`),
 }));
-vi.mock('../../src/utils/toast', () => ({
+vi.mock('@/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
   showToast: vi.fn(),
 }));
-vi.mock('../../src/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
-vi.mock('../../src/components/operations/FabricationCardDetails', () => ({ default: () => null }));
-vi.mock('../../src/components/common/FrameBlueprintPreview', () => ({ default: () => null }));
+vi.mock('@/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
+vi.mock('@/components/operations/FabricationCardDetails', () => ({ default: () => null }));
+vi.mock('@/components/common/FrameBlueprintPreview', () => ({ default: () => null }));
 
-const { generateInvoiceId, generateAtomicId } = await import('../../src/services/firestoreSync');
-const { toast } = await import('../../src/utils/toast');
-const { logActivity } = await import('../../src/services/auditLog');
-const { default: FabricationWorks } = await import('../../src/components/operations/FabricationWorks');
+const { generateInvoiceId, generateAtomicId } = await import('@/services/firestoreSync');
+const { toast } = await import('@/utils/toast');
+const { logActivity } = await import('@/services/auditLog');
+const { default: FabricationWorks } = await import('@/components/operations/FabricationWorks');
 
 const admin = { role: 'Admin', name: 'Admin', identifier: 'admin@example.com' };
 

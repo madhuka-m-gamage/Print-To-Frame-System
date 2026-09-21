@@ -18,6 +18,10 @@
 
 5. Add a line to [CHANGELOG.md](CHANGELOG.md) describing the change and, if you touch a module's behaviour, update that module's notes under `docs/02_modules/`.
 
+## Import style
+
+Code under `src/` and the Vitest tests import app code with the `@/` alias (`@/utils/toast` means `src/utils/toast`). Files in the same folder or a child folder use `./`. Never use `../` to reach into another folder; ESLint fails the build if you do. The exceptions are files Vite does not process: `api/` (Vercel functions), the root config files, Playwright specs and node fixtures keep relative paths.
+
 ## Rules that are easy to break
 
 - Never commit secrets. Docs and `.env.example` list variable names only.

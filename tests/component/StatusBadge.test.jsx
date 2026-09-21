@@ -1,8 +1,8 @@
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { screen } from '@testing-library/react';
-import { StatusBadge } from '../../src/components/common/ui';
-import { usePermissions } from '../../src/context/PermissionsContext';
+import { StatusBadge } from '@/components/common/ui';
+import { usePermissions } from '@/context/PermissionsContext';
 import { renderWithProviders } from '../helpers/renderWithProviders';
 
 describe('component harness smoke', () => {

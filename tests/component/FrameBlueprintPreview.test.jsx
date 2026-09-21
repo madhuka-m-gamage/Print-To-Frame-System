@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import FrameBlueprintPreview from '../../src/components/common/FrameBlueprintPreview';
+import FrameBlueprintPreview from '@/components/common/FrameBlueprintPreview';
 
 const lineCount = (c) => c.container.querySelectorAll('line').length;
 

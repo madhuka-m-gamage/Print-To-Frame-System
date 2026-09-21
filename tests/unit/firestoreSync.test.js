@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 
-vi.mock('../../src/services/firebase', () => ({
+vi.mock('@/services/firebase', () => ({
   db: {},
   handleFirestoreError: vi.fn(),
   OperationType: {},
@@ -11,7 +11,7 @@ vi.mock('firebase/firestore', () => ({
   serverTimestamp: vi.fn(), writeBatch: vi.fn(), runTransaction: vi.fn(),
 }));
 
-const { deriveReceiptId, generateSequentialId } = await import('../../src/services/firestoreSync');
+const { deriveReceiptId, generateSequentialId } = await import('@/services/firestoreSync');
 
 describe('firestoreSync pure helpers', () => {
   describe('deriveReceiptId', () => {

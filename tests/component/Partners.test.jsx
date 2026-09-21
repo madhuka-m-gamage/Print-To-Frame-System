@@ -4,7 +4,7 @@ import { screen, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '../helpers/renderWithProviders';
 import { makePartner } from '../helpers/factories';
 
-vi.mock('../../src/services/firestoreSync', () => ({
+vi.mock('@/services/firestoreSync', () => ({
   COLLECTIONS: { PARTNERS: 'partners', LEADS: 'leads', REFERRAL_CLAIMS: 'referral_claims', USERS: 'users', PARTNER_APPLICATIONS: 'partner_applications' },
   subscribeToCollection: vi.fn(() => () => {}),
   addDocument: vi.fn(async () => {}),
@@ -13,22 +13,22 @@ vi.mock('../../src/services/firestoreSync', () => ({
   setDocument: vi.fn(async () => {}),
   batchWrite: vi.fn(async () => {}),
 }));
-vi.mock('../../src/utils/toast', () => ({
+vi.mock('@/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
   showToast: vi.fn(),
 }));
-vi.mock('../../src/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
-vi.mock('../../src/services/mailer', () => ({ sendTemplatedEmail: vi.fn(async () => {}) }));
-vi.mock('../../src/services/adminUsers', () => ({
+vi.mock('@/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
+vi.mock('@/services/mailer', () => ({ sendTemplatedEmail: vi.fn(async () => {}) }));
+vi.mock('@/services/adminUsers', () => ({
   deleteUserAccount: vi.fn(async () => {}),
   resetUserPassword: vi.fn(async () => {}),
 }));
 vi.mock('firebase/storage', () => ({ ref: vi.fn(), uploadBytes: vi.fn(), getDownloadURL: vi.fn() }));
-vi.mock('../../src/components/crm/PartnerQRModal', () => ({ default: () => null }));
+vi.mock('@/components/crm/PartnerQRModal', () => ({ default: () => null }));
 
-const { default: Partners } = await import('../../src/components/crm/Partners');
-const sync = await import('../../src/services/firestoreSync');
-const { toast } = await import('../../src/utils/toast');
+const { default: Partners } = await import('@/components/crm/Partners');
+const sync = await import('@/services/firestoreSync');
+const { toast } = await import('@/utils/toast');
 
 const admin = { role: 'Admin', name: 'Admin', identifier: 'admin@example.com' };
 
