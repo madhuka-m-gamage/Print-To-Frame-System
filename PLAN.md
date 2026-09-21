@@ -22,7 +22,7 @@ Updated 2026-09-21. These are honest estimates, not measurements: they show wher
 | Test suite (Part A setup, Part B authoring) | `[##########]` ~95% | Five layers built and in CI; B6 browser journeys parked |
 | Phase 7 fixes that do not touch the live site (steps 1 to 6, 8.1) | `[#########-]` ~90% | Done and merged into `staging`; step 7 (UX backlog) not started |
 | 8.2 Standard project structure | `[##########]` ~100% | 12 of 12 tasks built (the last PR is open): README and env example, unused files removed, one docs folder per module, `@/` import alias, shared code, feature folders for auth, profile, dashboard, messaging, leads, customers, quotations, deals, invoicing, partners, fabrication, logistics and admin (all of `src/components` is gone). Clean-up, ADR `0003-source-layout.md` and removal of the temporary codemod are in the last PR |
-| Live rollout chain (matrix 3.3, rules 3.4d and 3.5d, payouts 4.x, promote to `main`) | `[----------]` ~0% | Parked by design until the live site is ready to change |
+| Live rollout chain (matrix 3.3, rules 3.4d and 3.5d, payouts 4.x, promote to `main`) | `[##--------]` ~20% | Preparation done 2026-09-21: read-only live check, deployable rules branch, and the runbook `docs/04_workflows/LIVE_ROLLOUT.md`. Nothing applied to the live project; every step needs the owner's go |
 | Follow-up backlog | ~20 items listed | Tackled one by one after this workflow |
 
 Merged into `staging` so far: PRs #6 to #51. Open: the final 8.2 PR (clean-up, ADR, removal of the codemod).
@@ -67,7 +67,7 @@ Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 be
 - Dependencies: B1 before 2.1-2.4; B3 before 3.6; B4 before 3.4/3.5; B5 before 4.1; B2 before 6.3/6.6; 3.2 and 3.3 before 3.5; 3.4d before 4.x, 5.2, 6.2; 3.5d and 3.6 before 5.3
 - [x] 3.2: client RBAC prerequisites and matrix defaults
 - [ ] 3.3: live permissions migration (prepared: Permissions Manager has an "Add missing modules with defaults" button; the live write needs your approval and an Admin to click Save)
-- [ ] 3.4 / 3.4d: additive rules written and tested (D-5 public partner read held, see notes); deploy needs approval
+- [ ] 3.4 / 3.4d: additive rules written and tested (D-5 public partner read held, see notes); deploy needs approval. Deploy the version on branch `claude/rules-3-4d-deploy` (3.4 plus the `L` and `D` counter prefixes), not the bare 3.4 commit; steps in `docs/04_workflows/LIVE_ROLLOUT.md`
 - [ ] 3.5 / 3.5d: restrictive rules written and tested (not deployed); needs 3.3 and 3.4d first, then the RBAC E2E, your approval to deploy, and a manual role check on the live site
 - [x] 3.6: admin API
 - [ ] 4.1-4.3: payouts, referral lineage, claims and notifications
