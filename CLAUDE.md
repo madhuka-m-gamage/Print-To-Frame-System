@@ -15,10 +15,11 @@ npm run preview       # preview the production build on port 3000
 npm run lint          # eslint .
 ```
 
-There are two test layers, both real and runnable:
+There are five test layers, all real and runnable (see `docs/04_workflows/TESTING.md` for the full guide):
 - `npm test` — Vitest unit tests (`tests/unit/`), pure logic only (email template interpolation, RBAC permission-matrix shape). No Firebase dependency, runs in ~2s.
 - `npm run test:rules` — integration tests (`tests/integration/`) run against a real local Firebase Emulator (Firestore + Auth), started and torn down automatically via `firebase emulators:exec`. These exercise `firestore.rules` itself — e.g. proving a non-admin genuinely cannot escalate their own role via a direct Firestore write, not just that the UI hides the button. Needs Java installed (the emulator JARs require it) but no real Firebase project, login, or credentials — it runs against a fake `demo-print2frame-test` project id.
-- `npm run test:all` runs both in sequence.
+- `npm run test:api` runs the Vercel handler tests, `npm run test:component` the React Testing Library tests (jsdom), and `npm run test:e2e` the Playwright journeys against the emulators.
+- `npm run test:all` runs unit, API, component and rules in sequence; CI runs the same on pull requests.
 
 The previous `tests/e2e.test.js` (a Puppeteer script for a Windows/local Chrome path, never wired into `npm test` and non-functional in this environment) has been removed — this is what it was replaced with.
 
@@ -47,7 +48,7 @@ For a systematic, folder-by-folder code-review audit of the whole repo (enumerat
 - `src/services/firebase.js` — Firebase app/auth/firestore/storage init, Google OAuth (identity scopes at sign-in; Drive/Contacts scopes requested on demand via `getScopedAccessToken`), email login/register, `handleFirestoreError`.
 - `src/services/firestoreSync.js` — the CRUD/subscription layer every feature uses: `subscribeToCollection`, `addDocument`, `updateDocument`, `setDocument`, `deleteDocument`, `batchWrite`, and `COLLECTIONS` (the canonical Firestore collection-name map — always reference `COLLECTIONS.X` rather than hardcoding a collection string).
 - `src/services/dataDefaults.js` — seed/fallback data shapes when Firestore collections are empty.
-- `src/services/pricingEngine.js` — the quotation/cost-calculator pricing logic (frame sizing, sq ft, commission math).
+- `src/services/pricingEngine.js` — the quotation/cost-calculator pricing logic (`calculateCost(tier, sqFt, discountPct, commissionRate)`; the referral discount and commission rules live in `src/utils/quotePricing.js`).
 - `src/services/auditLog.js` — writes to the `auditLog` collection; call `logActivity(userId, userName, action, module, details)` after any state-changing operation (invoice created, user approved, permissions changed, etc.) — this is the established pattern throughout `App.jsx`.
 - `src/services/gemini.js` — client-side helper that calls `/api/generate` (dev: Vite middleware plugin in `vite.config.js`; prod: `api/generate.js` Vercel function).
 
@@ -60,7 +61,7 @@ Permissions are enforced in **three** places that all need to agree when changin
 
 There are two hardcoded "bootstrap super admin" emails (see `App.jsx`'s "Self-Healing Super Admin Guard" and the matching `isBootstrapSuperAdmin()` in `firestore.rules`) that always self-heal back to role `Admin` / `status: Active` on login — this is intentional and mirrored on both client and rules, don't "fix" it away.
 
-New users self-provision into `pendingUsers` (or `users` directly for the bootstrap admin emails) on first sign-in; an Admin approves via `AgentDatabase.jsx`, which also auto-provisions a matching `partners` or `customers` record depending on the granted role (`Partner` / `Business Client`). `role`, `isApproved`, and `status` are user-profile fields that must never be client-settable outside these narrow approve/self-heal paths — see the security comments at the top of the `users` match block in `firestore.rules` before touching that collection's rules.
+New users self-provision into `pendingUsers` (or `users` directly for the bootstrap admin emails) on first sign-in; an Admin approves via `AgentDatabase.jsx`, which, for a `Partner` or `Business Client`, hands off to the manual Register Partner / Register Client form (pre-filled) instead of auto-creating a bare `partners` or `customers` record. `role`, `isApproved`, and `status` are user-profile fields that must never be client-settable outside these narrow approve/self-heal paths — see the security comments at the top of the `users` match block in `firestore.rules` before touching that collection's rules.
 
 ### AI proxy (`api/generate.js`)
 

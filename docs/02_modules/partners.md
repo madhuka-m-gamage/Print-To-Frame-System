@@ -25,7 +25,7 @@
 
 No Cloud Functions. Client-side:
 
-- **Accrual:** when a deal reaches Hand Over, `partners.pending += totalSqFt x commissionRate` (`Deals.jsx`; rate read live from the partner, fallback 53.5 LKR/sq ft). This is separate from the Completed transition that creates the Final invoice; see [deals.md](deals.md).
+- **Accrual:** when a deal reaches Completed, `partners.pending += sqFt x commissionRate` once (`Deals.jsx`, `calculateDealCommission`; rate read live from the partner, fallback 53.5 LKR/sq ft, or an estimate from the value when the area is 0). It happens in the same move that creates the Final invoice; see [deals.md](deals.md). The Partners screen lists a Deal, never its converted lead stub, and treats it as payable only once its invoices are fully paid.
 - **Ledger state** (`Partners.jsx`, derived on the fly, not stored): Cancelled (stage Lost / Rejected), Paid & Settled (`payoutStatus` Paid / Settled), Eligible for Payout (fully paid, `referralStatus` Eligible, or stage Delivered / Completed), Accrued (In Production), Quoted / Pending Acceptance, Pending Quote.
 - **Pending to eligible:** in `App.jsx`, when a referred lead's invoices are fully paid, `referralStatus` becomes `Eligible for Payout` and a one-time `commission` notification is emitted (`emitNotification`).
 - **Eligible to paid: not implemented.** The "Disburse Payout" button only shows a toast with a generated transaction id. Nothing sets `payoutStatus`, writes `partner_payouts`, or reduces `pending`.
@@ -45,4 +45,4 @@ Agencies apply through a public form; an admin approves in User Management, whic
 ## Open questions
 
 - Is the payout disbursement meant to be manual outside the app? `partner_payouts` is defined but unused.
-- Accrual happens at Hand Over but eligibility at full payment; the two conditions can diverge.
+- Accrual happens at deal Completed but eligibility at full payment; the two conditions can diverge. The 53.5 default rate here differs from the LKR 30.00 default used when quoting a referral lead (see the `PLAN.md` backlog).
