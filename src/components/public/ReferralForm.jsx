@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from '@/services/firebase';
 import { collection, query, where, getDocs, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { COLLECTIONS } from '@/services/firestoreSync';
-import { validatePhone, validateEmail, formatPhone } from '@/utils/validation';
+import { validatePhone, validateEmail, formatPhone } from '@/shared/utils/validation';
 import { 
   User, Phone, Mail, Sparkles, Clock, CheckCircle2, 
   AlertCircle, ArrowRight, ShieldCheck, Tag 

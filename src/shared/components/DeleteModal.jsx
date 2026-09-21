@@ -1,6 +1,6 @@
 import React from 'react';
 import { Trash2 } from 'lucide-react';
-import ModalWrapper from './ui/detail-modal/ModalWrapper';
+import ModalWrapper from '@/shared/ui/detail-modal/ModalWrapper';
 
 /**
  * DeleteModal - Centralized confirmation dialog using the unified ModalWrapper

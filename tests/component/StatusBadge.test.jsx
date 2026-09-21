@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { screen } from '@testing-library/react';
-import { StatusBadge } from '@/components/common/ui';
+import { StatusBadge } from '@/shared/ui';
 import { usePermissions } from '@/context/PermissionsContext';
 import { renderWithProviders } from '../helpers/renderWithProviders';
 

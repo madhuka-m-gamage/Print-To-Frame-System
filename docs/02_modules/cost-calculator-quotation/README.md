@@ -8,7 +8,7 @@
 - `src/components/crm/QuotationBuilder.jsx`: embedded in `LeadCardDetails.jsx`; receives `onSaveInvoice`.
 - `src/services/pricingEngine.js`: tier table, `calculateCost`, `determineTier`.
 - `src/services/gemini.js`: `generateStructuredQuotation`, `generateQuotation` (markdown variant); both go through `callProxy` to `/api/generate`.
-- `src/constants/emailTemplates.js` (quotation templates), `src/utils/invoiceTemplate.js`, `src/utils/entityUtils.js` (`matchesEntity`).
+- `src/constants/emailTemplates.js` (quotation templates), `src/utils/invoiceTemplate.js`, `src/shared/utils/entityUtils.js` (`matchesEntity`).
 - Not part of this module despite the names: `src/utils/cutListEngine.js` and `FrameBlueprintPreview.jsx` (used by Fabrication only); `src/constants/companyInfo.js` is not imported anywhere in `src`.
 
 ## Firestore collections read/written

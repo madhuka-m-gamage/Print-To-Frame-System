@@ -33,11 +33,11 @@ import {
   DetailCustomerCard, 
   DetailModalFooter,
   StatusBadge 
-} from '@/components/common/ui';
-import { toast } from '@/utils/toast';
+} from '@/shared/ui';
+import { toast } from '@/shared/utils/toast';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/services/firebase';
-import { stripEmojis, sanitizeTechnicalScope } from '@/utils/validation';
+import { stripEmojis, sanitizeTechnicalScope } from '@/shared/utils/validation';
 import { calculateCutList, defaultFrameDimensions, mmToFtIn, STEEL_PROFILES } from '@/utils/cutListEngine';
 
 export default function FabricationCardDetails({ 

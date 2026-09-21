@@ -8,16 +8,16 @@ vi.mock('@/services/firestoreSync', () => ({
   COLLECTIONS: { RECEIPTS: 'receipts' },
   deleteDocument: vi.fn(async () => {}),
 }));
-vi.mock('@/utils/toast', () => ({
+vi.mock('@/shared/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
   showToast: vi.fn(),
 }));
 vi.mock('@/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
-vi.mock('@/utils/csvExport', () => ({ exportToCsv: vi.fn() }));
+vi.mock('@/shared/utils/csvExport', () => ({ exportToCsv: vi.fn() }));
 
 const { default: Receipts } = await import('@/components/crm/Receipts');
-const { exportToCsv } = await import('@/utils/csvExport');
-const { toast } = await import('@/utils/toast');
+const { exportToCsv } = await import('@/shared/utils/csvExport');
+const { toast } = await import('@/shared/utils/toast');
 
 const admin = { role: 'Admin', name: 'Admin', identifier: 'admin@example.com' };
 

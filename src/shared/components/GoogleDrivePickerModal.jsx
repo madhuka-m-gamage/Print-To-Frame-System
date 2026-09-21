@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { HardDrive, X, FileText, Image, Check, Search, ExternalLink, AlertCircle, RefreshCw } from 'lucide-react';
 import { fetchUserDriveFiles } from '@/services/driveService';
-import { ModalWrapper } from './ui';
-import { toast } from '@/utils/toast';
+import { ModalWrapper } from '@/shared/ui';
+import { toast } from '@/shared/utils/toast';
 
 export default function GoogleDrivePickerModal({ isOpen, onClose, onSelectFile }) {
   const [files, setFiles] = useState([]);

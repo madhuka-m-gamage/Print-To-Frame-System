@@ -32,7 +32,7 @@ Order: record -> downsample + base64 -> token-verified proxy call -> Gemini -> u
 | Downstream | Deals, Customers, Operations-Fabrication |
 | Sync / async | Awaited in-app, but multiple separate writes (not one transaction) |
 
-Does **not** touch the quotation builder or invoices. A quotation is linked later through `matchesEntity` (id lineage in `src/utils/entityUtils.js`).
+Does **not** touch the quotation builder or invoices. A quotation is linked later through `matchesEntity` (id lineage in `src/shared/utils/entityUtils.js`).
 
 ## 3. Deal reaches Completed
 
@@ -95,7 +95,7 @@ Link fields: invoice `quotationId`; lead / deal / job ids (`leadId`, `dealId`, `
 
 - Lead save auto-creates a customer (exact email or phone match for dedupe), `Leads.jsx`.
 - Fabrication "Dispatch to Logistics" (manual) creates a `logistics` task and flags the project; Deals and Leads have their own manual create-job buttons. Completing a logistics job changes nothing else.
-- Every `toast.*` call also emits a session-only notification feed entry (`src/utils/toast.js`).
+- Every `toast.*` call also emits a session-only notification feed entry (`src/shared/utils/toast.js`).
 
 ## Not found (searched, absent)
 

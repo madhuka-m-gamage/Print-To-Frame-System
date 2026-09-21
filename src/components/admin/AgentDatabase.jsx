@@ -5,17 +5,18 @@ import {
   UserCheck, AlertCircle, Camera, Sparkles, ArrowLeft, Send, Eye,
   Building, CheckCircle2, Copy, PhoneCall, Lock, RefreshCw, Layers
 } from 'lucide-react';
-import DeleteModal from '@/components/common/DeleteModal';
+import DeleteModal from '@/shared/components/DeleteModal';
 import { doc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/services/firebase';
-import { toast } from '@/utils/toast';
+import { toast } from '@/shared/utils/toast';
 import { subscribeToCollection, addDocument, updateDocument, COLLECTIONS } from '@/services/firestoreSync';
 import { 
   PageHeader, FilterBar, StatusBadge, ModalWrapper, UserAvatar, 
-  ImageCropModal, EmailTemplateModal 
-} from '@/components/common/ui';
+  ImageCropModal 
+} from '@/shared/ui';
+import EmailTemplateModal from '@/shared/components/EmailTemplateModal';
 import { SYSTEM_ROLES, ROLE_METADATA, getRoleCategory } from '@/constants/roles';
-import { formatPhone } from '@/utils/validation';
+import { formatPhone } from '@/shared/utils/validation';
 import { usePermissions } from '@/context/PermissionsContext';
 import { logActivity } from '@/services/auditLog';
 import { createUserAccount, deleteUserAccount, resetUserPassword } from '@/services/adminUsers';

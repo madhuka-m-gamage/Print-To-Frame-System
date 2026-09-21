@@ -4,11 +4,11 @@ import {
   Trash2, X, ChevronRight, AlertCircle, Building2, User, Layers, Download, MessageSquare, Clock, ArrowLeft, Receipt
 } from 'lucide-react';
 import { updateDocument, deleteDocument, COLLECTIONS } from '@/services/firestoreSync';
-import { toast } from '@/utils/toast';
+import { toast } from '@/shared/utils/toast';
 import { logActivity } from '@/services/auditLog';
-import DeleteModal from '@/components/common/DeleteModal';
-import { PageHeader, FilterBar, StatusBadge, ModalWrapper } from '@/components/common/ui';
-import { exportToCsv } from '@/utils/csvExport';
+import DeleteModal from '@/shared/components/DeleteModal';
+import { PageHeader, FilterBar, StatusBadge, ModalWrapper } from '@/shared/ui';
+import { exportToCsv } from '@/shared/utils/csvExport';
 import { buildInvoiceHtml, openInvoicePrintWindow } from '@/utils/invoiceTemplate';
 import { buildReceiptHtml } from '@/utils/receiptTemplate';
 

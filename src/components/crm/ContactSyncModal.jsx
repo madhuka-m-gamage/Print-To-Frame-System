@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Users, X, Mail, Phone, Building, Check, Search, AlertCircle, MessageSquare, RefreshCw } from 'lucide-react';
 import { fetchGoogleContacts } from '@/services/contactsService';
-import { ModalWrapper } from '@/components/common/ui';
-import { toast } from '@/utils/toast';
+import { ModalWrapper } from '@/shared/ui';
+import { toast } from '@/shared/utils/toast';
 
 export default function ContactSyncModal({ isOpen, onClose, onImportContacts }) {
   const [contacts, setContacts] = useState([]);

@@ -13,7 +13,7 @@ vi.mock('@/services/firestoreSync', () => ({
   setDocument: vi.fn(async () => {}),
   batchWrite: vi.fn(async () => {}),
 }));
-vi.mock('@/utils/toast', () => ({
+vi.mock('@/shared/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
   showToast: vi.fn(),
 }));
@@ -28,7 +28,7 @@ vi.mock('@/components/crm/PartnerQRModal', () => ({ default: () => null }));
 
 const { default: Partners } = await import('@/components/crm/Partners');
 const sync = await import('@/services/firestoreSync');
-const { toast } = await import('@/utils/toast');
+const { toast } = await import('@/shared/utils/toast');
 
 const admin = { role: 'Admin', name: 'Admin', identifier: 'admin@example.com' };
 

@@ -5,7 +5,7 @@ import {
   Sparkles, CheckCheck
 } from 'lucide-react';
 import { useMessaging, getChannelId } from '@/context/MessagingContext';
-import { UserAvatar } from '@/components/common/ui';
+import { UserAvatar } from '@/shared/ui';
 
 export default function MiniChatDrawer({ currentUser, setActiveTab }) {
   const { 

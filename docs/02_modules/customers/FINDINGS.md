@@ -11,8 +11,8 @@
 A comprehensive architectural and code-level audit was conducted across the Customers module and its integration touchpoints:
 - **Module Documentation**: `docs/02_modules/customers/CLAUDE.md`, `docs/02_modules/customers/README.md`
 - **Cross-Module Architecture**: `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`
-- **UI Components**: `src/components/crm/Customers.jsx`, `src/components/crm/ContactSyncModal.jsx`, `src/components/common/ui/StatusBadge.jsx`
-- **Services & Utilities**: `src/services/contactsService.js`, `src/utils/stringMatch.js`, `src/services/firebase.js`, `src/services/mailer.js`, `src/services/adminUsers.js`, `src/utils/validation.js`
+- **UI Components**: `src/components/crm/Customers.jsx`, `src/components/crm/ContactSyncModal.jsx`, `src/shared/ui/StatusBadge.jsx`
+- **Services & Utilities**: `src/services/contactsService.js`, `src/shared/utils/stringMatch.js`, `src/services/firebase.js`, `src/services/mailer.js`, `src/services/adminUsers.js`, `src/shared/utils/validation.js`
 - **Integration & Security Surfaces**: `src/App.jsx`, `firestore.rules`, `src/components/crm/Leads.jsx`, `src/components/crm/LeadCardDetails.jsx`, `src/components/operations/FabricationWorks.jsx`, `src/components/common/UserProfile.jsx`
 
 While the core registry design (client registry keyed by NIC/BRN, Google Contacts import modal, approval handoff via prefill) exists as described, **several critical defects, data disconnects, RBAC security asymmetries, and workflow breaking bugs** were discovered:
@@ -133,7 +133,7 @@ While the core registry design (client registry keyed by NIC/BRN, Google Contact
 * **Execution Chain**: Exact deduplication check against `customers` array $\rightarrow$ if no match, generates `AUTO-######` customer and writes to `COLLECTIONS.CUSTOMERS`.
 * **Findings & Architectural Disconnects**:
   1. **Phone Format Mismatch False-Negatives**:
-     - `LeadCardDetails.jsx:L441` formats phone inputs using `formatPhone` from `src/utils/validation.js`, which outputs spaced numbers:
+     - `LeadCardDetails.jsx:L441` formats phone inputs using `formatPhone` from `src/shared/utils/validation.js`, which outputs spaced numbers:
        ```
        +94 7X XXX XXXX  (e.g., "+94 77 123 4567")
        ```
@@ -253,7 +253,7 @@ And in `Customers.jsx:L757`:
 <StatusBadge status={inv.status || 'Unpaid'} size="xs" />
 ```
 
-Inspection of `src/components/common/ui/StatusBadge.jsx`:
+Inspection of `src/shared/ui/StatusBadge.jsx`:
 - Supported style categories:
   - Success: `['completed', 'delivered', 'canvas in', 'received', 'paid', 'approved']`
   - Progress: `['in transit', 'ongoing', 'fabricating', 'processing']`

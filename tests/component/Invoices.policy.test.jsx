@@ -9,7 +9,7 @@ vi.mock('@/services/firestoreSync', () => ({
   updateDocument: vi.fn(async () => {}),
   deleteDocument: vi.fn(async () => {}),
 }));
-vi.mock('@/utils/toast', () => ({
+vi.mock('@/shared/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
   showToast: vi.fn(),
 }));
@@ -17,7 +17,7 @@ vi.mock('@/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
 
 const { default: Invoices } = await import('@/components/crm/Invoices');
 const sync = await import('@/services/firestoreSync');
-const { toast } = await import('@/utils/toast');
+const { toast } = await import('@/shared/utils/toast');
 
 beforeEach(() => vi.clearAllMocks());
 

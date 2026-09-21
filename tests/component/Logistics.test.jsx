@@ -11,7 +11,7 @@ vi.mock('@/services/firestoreSync', () => ({
   deleteDocument: vi.fn(async () => {}),
   generateAtomicId: vi.fn(async (prefix) => `${prefix}-0001`),
 }));
-vi.mock('@/utils/toast', () => ({
+vi.mock('@/shared/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
   showToast: vi.fn(),
 }));
@@ -19,7 +19,7 @@ vi.mock('@/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
 vi.mock('@/components/operations/LogisticsCardDetails', () => ({ default: () => null }));
 
 const sync = await import('@/services/firestoreSync');
-const { toast } = await import('@/utils/toast');
+const { toast } = await import('@/shared/utils/toast');
 const { default: Logistics } = await import('@/components/operations/Logistics');
 
 const admin = { role: 'Admin', name: 'Admin', identifier: 'admin@example.com' };

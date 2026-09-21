@@ -8,9 +8,9 @@ import {
   PhoneCall, RefreshCw, Calendar, Eye
 } from "lucide-react";
 import { generateText } from "@/services/gemini";
-import { toast } from "@/utils/toast";
+import { toast } from "@/shared/utils/toast";
 import { subscribeToCollection, COLLECTIONS } from "@/services/firestoreSync";
-import { PageHeader, FilterBar, StatusBadge, UserAvatar } from "@/components/common/ui";
+import { PageHeader, FilterBar, StatusBadge, UserAvatar } from "@/shared/ui";
 
 export const resolveDashboardDomain = (role) => {
   if (!role) return 'crm';

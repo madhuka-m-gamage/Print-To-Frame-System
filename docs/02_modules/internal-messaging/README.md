@@ -29,7 +29,7 @@ No Cloud Functions. Client-side effects: a toast for an unread incoming message 
 
 ## Depends on / called by
 
-`PermissionsContext`, the `users` collection (via `App.jsx`), `firestoreSync` (`addDocument`, `updateDocument`, `setDocument`), `services/firebase`, `triggerBrowserNotification` (from `App.jsx`), `utils/toast`, `common/ui`. Consumed by `NotificationsView`.
+`PermissionsContext`, the `users` collection (via `App.jsx`), `firestoreSync` (`addDocument`, `updateDocument`, `setDocument`), `services/firebase`, `triggerBrowserNotification` (from `App.jsx`), `shared/utils/toast`, `shared/ui`. Consumed by `NotificationsView`.
 
 ## Summary
 

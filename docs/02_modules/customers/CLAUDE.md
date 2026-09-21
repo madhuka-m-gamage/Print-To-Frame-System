@@ -8,7 +8,7 @@ A client registry keyed by NIC or business registration number, filled manually,
 
 ## Code
 
-- `src/components/crm/Customers.jsx`, `ContactSyncModal.jsx`, `src/services/contactsService.js`, `src/utils/stringMatch.js`
+- `src/components/crm/Customers.jsx`, `ContactSyncModal.jsx`, `src/services/contactsService.js`, `src/shared/utils/stringMatch.js`
 
 ## Firestore collections it owns or writes
 
@@ -24,4 +24,4 @@ A client registry keyed by NIC or business registration number, filled manually,
 - Only delete is audit-logged from this file.
 - Google Contacts sync calls the People API with the sign-in token, but `firebase.js` requests no Contacts scope ([auth.md](../auth/README.md)).
 
-- Phone matching uses `normalizePhone` / `phonesMatch` (`src/utils/validation.js`) in lead-to-customer matching, customer stats and the contact import; never compare stored phones with `===`.
+- Phone matching uses `normalizePhone` / `phonesMatch` (`src/shared/utils/validation.js`) in lead-to-customer matching, customer stats and the contact import; never compare stored phones with `===`.

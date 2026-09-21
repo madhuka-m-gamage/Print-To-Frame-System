@@ -31,10 +31,10 @@ import {
 import { initAuth, logout, emailLogin, emailRegister, db } from "./services/firebase";
 import { doc, getDoc, setDoc, collection, getDocs, deleteDoc, onSnapshot } from "firebase/firestore";
 import { subscribeToCollection, addDocument, updateDocument, batchWrite, COLLECTIONS, generateInvoiceId, deriveReceiptId, createDocumentIfAbsent } from "./services/firestoreSync";
-import { toast } from "./utils/toast";
+import { toast } from "./shared/utils/toast";
 import { isFullyPaid } from "./utils/invoiceSettlement";
 import { newUserAction, shouldEvict } from "./utils/authFlow";
-import { UserAvatar } from "./components/common/ui";
+import { UserAvatar } from "./shared/ui";
 
 // Components
 const Dashboard = React.lazy(() => import("./components/dashboard/Dashboard"));
@@ -69,10 +69,10 @@ import {
   defaultInvoices,
 } from "./services/dataDefaults";
 import { Toaster } from "sonner";
-import { subscribeToNotifications, emitNotification } from "./utils/events";
+import { subscribeToNotifications, emitNotification } from "./shared/utils/events";
 import { logActivity } from "./services/auditLog";
-import { ErrorBoundary } from "./components/common/ErrorBoundary";
-import LoadingSpinner from "./components/common/LoadingSpinner";
+import { ErrorBoundary } from "./shared/components/ErrorBoundary";
+import LoadingSpinner from "./shared/components/LoadingSpinner";
 
 
 export function oT() {

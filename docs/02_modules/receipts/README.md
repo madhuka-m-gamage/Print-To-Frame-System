@@ -31,7 +31,7 @@ No Cloud Functions. Client-side only:
 
 ## Depends on / called by
 
-Invoices (source and UI host; imports `buildReceiptHtml`), Leads and Deals (`LeadCardDetails`), `auditLog`, `toast`, `common/ui`, `DeleteModal`, `csvExport`, `PermissionsContext`. `LogisticsCardDetails.jsx` imports only the `Receipt` icon; no data link.
+Invoices (source and UI host; imports `buildReceiptHtml`), Leads and Deals (`LeadCardDetails`), `auditLog`, `toast`, `shared/ui`, `DeleteModal`, `csvExport`, `PermissionsContext`. `LogisticsCardDetails.jsx` imports only the `Receipt` icon; no data link.
 
 ## Summary
 

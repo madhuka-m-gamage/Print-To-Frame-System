@@ -5,8 +5,8 @@
 ## Files and folders
 
 - `src/components/dashboard/NotificationsView.jsx`: the feed UI (lazy-loaded in `App.jsx`). Filters ALL / SYSTEM / MESSAGES plus a search box.
-- `src/utils/events.js`: `emitNotification` and `subscribeToNotifications`, built on a module-level `EventTarget`.
-- `src/utils/toast.js`: wraps Sonner toasts **and also calls `emitNotification`**; 23 files import it.
+- `src/shared/utils/events.js`: `emitNotification` and `subscribeToNotifications`, built on a module-level `EventTarget`.
+- `src/shared/utils/toast.js`: wraps Sonner toasts **and also calls `emitNotification`**; 23 files import it.
 - `src/App.jsx`: notification state (`notificationsList`, `unreadNotificationsCount`), browser `Notification` helpers (`triggerBrowserNotification`, permission requested at startup), sidebar and header bell badges, `notifications` in the restricted-role tab list.
 - `src/context/MessagingContext.jsx`: supplies direct-message items to the feed.
 - `src/context/PermissionsContext.jsx` and `PermissionsManager.jsx`: `notifications` permission is full for every role.
@@ -25,7 +25,7 @@ No Cloud Functions, FCM, service worker or server push (`public/` has no service
 
 ## Depends on / called by
 
-MessagingContext (messages, `openMiniChat`, `markAllAsRead`), PermissionsContext, Sonner and `utils/toast` (every module that toasts), `common/ui` (`PageHeader`, `FilterBar`, `StatusBadge`, `UserAvatar`), `utils/dateUtils`, invoice / lead / partner data in `App.jsx` (commission event), the users list.
+MessagingContext (messages, `openMiniChat`, `markAllAsRead`), PermissionsContext, Sonner and `shared/utils/toast` (every module that toasts), `shared/ui` (`PageHeader`, `FilterBar`, `StatusBadge`, `UserAvatar`), `shared/utils/dateUtils`, invoice / lead / partner data in `App.jsx` (commission event), the users list.
 
 ## Summary
 

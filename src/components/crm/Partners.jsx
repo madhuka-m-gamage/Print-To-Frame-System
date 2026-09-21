@@ -9,9 +9,10 @@ import {
 } from 'lucide-react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/services/firebase';
-import { toast } from '@/utils/toast';
-import DeleteModal from '@/components/common/DeleteModal';
-import { PageHeader, FilterBar, StatusBadge, ModalWrapper, UserAvatar, ImageCropModal, EmailTemplateModal } from '@/components/common/ui';
+import { toast } from '@/shared/utils/toast';
+import DeleteModal from '@/shared/components/DeleteModal';
+import { PageHeader, FilterBar, StatusBadge, ModalWrapper, UserAvatar, ImageCropModal } from '@/shared/ui';
+import EmailTemplateModal from '@/shared/components/EmailTemplateModal';
 import PartnerQRModal from './PartnerQRModal';
 import { 
   subscribeToCollection, 
@@ -20,8 +21,8 @@ import {
   deleteDocument,
   COLLECTIONS 
 } from '@/services/firestoreSync';
-import { formatPhone, validatePhone, validateEmail } from '@/utils/validation';
-import { exportToCsv } from '@/utils/csvExport';
+import { formatPhone, validatePhone, validateEmail } from '@/shared/utils/validation';
+import { exportToCsv } from '@/shared/utils/csvExport';
 import { usePermissions } from '@/context/PermissionsContext';
 import { sendTemplatedEmail } from '@/services/mailer';
 import { deleteUserAccount, resetUserPassword } from '@/services/adminUsers';

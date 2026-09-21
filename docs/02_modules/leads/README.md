@@ -32,7 +32,7 @@ No Cloud Functions exist (see [GCP_INVENTORY.md](../../01_architecture/GCP_INVEN
 
 ## Depends on / called by
 
-Customers, Deals, Projects/Fabrication, Logistics, Quotations, Invoices, Receipts, Partners (commission), `PermissionsContext` (`canAccess 'leads'`), `common/ui`, `firestoreSync`, `auditLog`, `GoogleDrivePickerModal`.
+Customers, Deals, Projects/Fabrication, Logistics, Quotations, Invoices, Receipts, Partners (commission), `PermissionsContext` (`canAccess 'leads'`), `shared/ui`, `firestoreSync`, `auditLog`, `GoogleDrivePickerModal`.
 
 ## Summary
 
@@ -41,4 +41,4 @@ Leads are `leads` Firestore documents, listened to in real time by `App.jsx` and
 ## Open questions
 
 - The `partner_payouts` write path was not traced in this pass (see [partners.md](../partners/README.md)).
-- Whether `emitNotification` (`src/utils/events.js`) persists notifications is covered in [notifications.md](../notifications/README.md).
+- Whether `emitNotification` (`src/shared/utils/events.js`) persists notifications is covered in [notifications.md](../notifications/README.md).

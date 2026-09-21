@@ -11,10 +11,10 @@
 A systematic architectural and trigger audit was conducted across the Notifications module and its integration touchpoints:
 - **Module Documentation**: notifications.md, CLAUDE.md, and CROSS_MODULE_TRIGGERS.md.
 - **Target UI Components**: `src/components/dashboard/NotificationsView.jsx`, `src/components/common/FloatingMessageToast.jsx`.
-- **Event Emitters & Interceptors**: `src/utils/events.js` (`emitNotification`, `subscribeToNotifications`), `src/utils/toast.js` (`toast.*` proxies, `showToast`).
+- **Event Emitters & Interceptors**: `src/shared/utils/events.js` (`emitNotification`, `subscribeToNotifications`), `src/shared/utils/toast.js` (`toast.*` proxies, `showToast`).
 - **Main State & Header/Sidebar Badges**: `src/App.jsx` (`notificationsList`, `unreadNotificationsCount`, `oT()`, `uT()`, `triggerBrowserNotification`, `handleSignOut`).
 - **Cross-Module Triggers**: Trigger 6c (Commission eligibility notification), Trigger 8 (Global toast interception).
-- **Context & Shared UI**: `src/context/MessagingContext.jsx`, `src/context/PermissionsContext.jsx`, `src/components/common/ui/TwoToneIcon.jsx`.
+- **Context & Shared UI**: `src/context/MessagingContext.jsx`, `src/context/PermissionsContext.jsx`, `src/shared/ui/TwoToneIcon.jsx`.
 
 ### Key Discoveries:
 
@@ -22,7 +22,7 @@ A systematic architectural and trigger audit was conducted across the Notificati
    - In `src/App.jsx:L874-L879`, `handleSignOut` clears auth tokens and user profile state, but does **not** reset `notificationsList` or `unreadNotificationsCount`.
    - On shared office workstations or tablets, if User A (e.g. an Admin or Accounts officer) logs out and User B (e.g. a Logistics driver or Partner) logs in without a full page refresh, User B inherits User A's active session notification feed, commission alerts, customer references, and unread badge count.
 2. **Extreme Feed Flooding & Alert Fatigue via Global `toast.*` Interception (Trigger 8)**:
-   - In `src/utils/toast.js:L8-L25`, every single `toast.success`, `error`, `info`, and `warning` call across 23 files (>166 call sites) is converted into an in-app system notification.
+   - In `src/shared/utils/toast.js:L8-L25`, every single `toast.success`, `error`, `info`, and `warning` call across 23 files (>166 call sites) is converted into an in-app system notification.
    - Minor transient UI actions (copying a phone number to clipboard, selecting an address, avatar crop feedback, form validation errors) create permanent entries in the notification feed and increment the header bell badge, overwhelming real operational events.
 3. **Ghost / Undefined Message Body in 95%+ of System Notifications**:
    - `toast.*(message, options = {})` passes `options.description` as `item.message`. Because almost all call sites pass only a simple string (`toast.success("Lead updated")`), `item.message` is `undefined`.
@@ -39,7 +39,7 @@ A systematic architectural and trigger audit was conducted across the Notificati
    - In `NotificationsView.jsx:L15-L24`, clicking "Clear All" executes `markAllAsRead()`. However, `messageItems` simply slices the last 30 messages regardless of read status.
    - Direct messages never leave the feed; they remain visible indefinitely. Furthermore, individual message items have no dismiss button.
 7. **Dead Code & Obfuscated Production Helper Names**:
-   - `export const showToast = (t) => { emitNotification(t); }` in `src/utils/toast.js:L27-L29` is never imported or called anywhere.
+   - `export const showToast = (t) => { emitNotification(t); }` in `src/shared/utils/toast.js:L27-L29` is never imported or called anywhere.
    - `src/App.jsx:L77-L89` retains minified utility function names `oT()` and `uT(t, e)`.
 
 ---
@@ -50,10 +50,10 @@ A systematic architectural and trigger audit was conducted across the Notificati
 
 | Section / Claim | Code Status | Details / Discrepancy |
 |---|---|---|
-| **What it does** ("A session-only in-app feed built on a browser `EventTarget`; most toasts and one commission event become feed entries; messages are merged in.") | **Accurate** | Confirmed: module relies entirely on `EventTarget` in `src/utils/events.js`. Toasts and Trigger 6c commission event feed into `notificationsList`. Direct messages from Firestore are combined into the view. |
-| **Code** (`src/components/dashboard/NotificationsView.jsx`, `src/utils/events.js`, `src/utils/toast.js`; state and badges in `src/App.jsx`) | **Incomplete Reference** | Accurately identifies primary files, but omits `src/components/common/FloatingMessageToast.jsx`, `src/context/MessagingContext.jsx`, and `src/components/common/ui/TwoToneIcon.jsx`. |
+| **What it does** ("A session-only in-app feed built on a browser `EventTarget`; most toasts and one commission event become feed entries; messages are merged in.") | **Accurate** | Confirmed: module relies entirely on `EventTarget` in `src/shared/utils/events.js`. Toasts and Trigger 6c commission event feed into `notificationsList`. Direct messages from Firestore are combined into the view. |
+| **Code** (`src/components/dashboard/NotificationsView.jsx`, `src/shared/utils/events.js`, `src/shared/utils/toast.js`; state and badges in `src/App.jsx`) | **Incomplete Reference** | Accurately identifies primary files, but omits `src/components/common/FloatingMessageToast.jsx`, `src/context/MessagingContext.jsx`, and `src/shared/ui/TwoToneIcon.jsx`. |
 | **Firestore collections** ("**Nothing persisted** for system notifications. Message read state is `messages.readBy`.") | **Accurate** | Confirmed: no `notifications` collection exists in Firestore or `firestore.rules`. Only chat message documents in `messages` have persisted read tracking. |
-| **Triggers and side effects** ("Every `toast.*` call also emits a feed entry. Browser `Notification` API only for chat messages. No FCM, email or WhatsApp channel.") | **Accurate** | Confirmed: `src/utils/toast.js` wraps all 4 Sonner toast functions. `triggerBrowserNotification` is only invoked from `MessagingContext.jsx` for chat messages. |
+| **Triggers and side effects** ("Every `toast.*` call also emits a feed entry. Browser `Notification` API only for chat messages. No FCM, email or WhatsApp channel.") | **Accurate** | Confirmed: `src/shared/utils/toast.js` wraps all 4 Sonner toast functions. `triggerBrowserNotification` is only invoked from `MessagingContext.jsx` for chat messages. |
 | **Before you edit** ("Entries vanish on reload and are visible only to the user whose browser fired them.") | **Accurate** | Confirmed: `notificationsList` is held only in `useState([])` in `App.jsx`. |
 | **Before you edit** ("`read` on entries is never used; only the unread counter matters.") | **Accurate** | Confirmed: `item.read` is set to `false` upon arrival but is never queried, toggled, or styled anywhere in `NotificationsView.jsx`. |
 
@@ -62,8 +62,8 @@ A systematic architectural and trigger audit was conducted across the Notificati
 | Section / Claim | Code Status | Details / Discrepancy |
 |---|---|---|
 | **Files and folders** ("`src/components/dashboard/NotificationsView.jsx`: the feed UI (lazy-loaded in `App.jsx`). Filters ALL / SYSTEM / MESSAGES plus a search box.") | **Accurate** | Confirmed: lazy-loaded in `src/App.jsx:L52`, provides filter pills and text search. |
-| **Files and folders** ("`src/utils/events.js`: `emitNotification` and `subscribeToNotifications`, built on a module-level `EventTarget`.") | **Accurate** | Confirmed: standard `EventTarget` instance. |
-| **Files and folders** ("`src/utils/toast.js`: wraps Sonner toasts **and also calls `emitNotification`**; 23 files import it.") | **Accurate** | Confirmed: exactly 23 files import `toast` from `utils/toast`. |
+| **Files and folders** ("`src/shared/utils/events.js`: `emitNotification` and `subscribeToNotifications`, built on a module-level `EventTarget`.") | **Accurate** | Confirmed: standard `EventTarget` instance. |
+| **Files and folders** ("`src/shared/utils/toast.js`: wraps Sonner toasts **and also calls `emitNotification`**; 23 files import it.") | **Accurate** | Confirmed: exactly 23 files import `toast` from `utils/toast`. |
 | **Files and folders** ("`src/App.jsx`: notification state (`notificationsList`, `unreadNotificationsCount`), browser `Notification` helpers...") | **Accurate** | Confirmed: lines 77-89 and lines 212-225 of `src/App.jsx`. |
 | **Open questions** ("Because feed entries are session-only, a business event (e.g. commission eligibility) is visible only to the user whose browser fired it, and only until reload. Nobody else is notified.") | **Critical Verification** | Verified and elaborated: confirmed that partner commission alerts are never routed to partners, and cross-user session pollution occurs on sign-out. |
 
@@ -118,14 +118,14 @@ A systematic architectural and trigger audit was conducted across the Notificati
 
 ---
 
-### 3.3 Event Emitters & Utilities: `src/utils/events.js` & `src/utils/toast.js`
+### 3.3 Event Emitters & Utilities: `src/shared/utils/events.js` & `src/shared/utils/toast.js`
 
-#### 1. Browser EventTarget Bus (`src/utils/events.js`):
+#### 1. Browser EventTarget Bus (`src/shared/utils/events.js`):
 - `notificationTarget = typeof window !== "undefined" ? new EventTarget() : null;`
 - Generates random ID: `"notif_" + Date.now() + "_" + Math.random().toString(36).slice(2)`.
 - **Limitation**: Scoped strictly to the JavaScript window object. No inter-tab communication (no `BroadcastChannel` or `localStorage` cross-tab events). If a user works across multiple browser tabs, events fired in Tab A are invisible in Tab B.
 
-#### 2. Toast Interceptor (`src/utils/toast.js`):
+#### 2. Toast Interceptor (`src/shared/utils/toast.js`):
 - Overrides `toast.success`, `toast.error`, `toast.info`, `toast.warning`:
   ```javascript
   const showCustomToast = (title, message, type) => {
@@ -208,9 +208,9 @@ Advance and Final Invoices Both Paid (handleMarkInvoicePaid in src/App.jsx)
 
 #### Detailed Findings on Trigger 6c:
 1. **Targeting Failure**: The notification payload specifies `partnerId: targetLead.partnerId`. However, `emitNotification` dispatches via the browser's local `EventTarget`. The event is only seen by the session user who clicked "Mark as Paid" (typically an Accounts or Admin user). The partner never receives this notification in their own portal or session.
-2. **Double Notification Artifact**: Right after `emitNotification(notif)` at `src/App.jsx:L545`, the code calls `toast.success(...)` at `L549`. Because `toast.success` is intercepted by `src/utils/toast.js`, it emits a second notification (`type: 'success'`). Marking an invoice paid generates **two separate entries** in the notification feed simultaneously and increments `unreadNotificationsCount` by 2.
+2. **Double Notification Artifact**: Right after `emitNotification(notif)` at `src/App.jsx:L545`, the code calls `toast.success(...)` at `L549`. Because `toast.success` is intercepted by `src/shared/utils/toast.js`, it emits a second notification (`type: 'success'`). Marking an invoice paid generates **two separate entries** in the notification feed simultaneously and increments `unreadNotificationsCount` by 2.
 3. **Volatility**: Because the notification is not persisted to Firestore, if the user navigates away or refreshes the page, the record of the commission alert disappears completely.
-4. **Missing Icon Configuration**: In `src/components/common/ui/TwoToneIcon.jsx`, `type: 'commission'` is not registered in `ICON_CONFIG`. It falls back to `system` (Cpu icon, cyan theme) instead of a finance icon (`DollarSign`, emerald).
+4. **Missing Icon Configuration**: In `src/shared/ui/TwoToneIcon.jsx`, `type: 'commission'` is not registered in `ICON_CONFIG`. It falls back to `system` (Cpu icon, cyan theme) instead of a finance icon (`DollarSign`, emerald).
 
 ---
 
@@ -279,7 +279,7 @@ Any Component (e.g. Leads.jsx, Invoices.jsx, UserProfile.jsx)
                       23 Files (Copy, Save, Err)│                             │ (Advance & Final Paid)
                                                 ▼                             ▼
                                   ┌───────────────────────────┐ ┌───────────────────────────┐
-                                  │    src/utils/toast.js     │ │    src/App.jsx (L545)     │
+                                  │    src/shared/utils/toast.js     │ │    src/App.jsx (L545)     │
                                   │ (showCustomToast proxy)   │ │ (partnerId attached,      │
                                   │                           │ │  but completely unused)   │
                                   └───────────────────────────┘ └───────────────────────────┘
@@ -288,7 +288,7 @@ Any Component (e.g. Leads.jsx, Invoices.jsx, UserProfile.jsx)
                                                                │
                                                                ▼
                                                 ┌───────────────────────────┐
-                                                │    src/utils/events.js    │
+                                                │    src/shared/utils/events.js    │
                                                 │ (In-memory EventTarget)   │
                                                 └───────────────────────────┘
                                                                │
@@ -322,7 +322,7 @@ Any Component (e.g. Leads.jsx, Invoices.jsx, UserProfile.jsx)
 6. **Ineffective "Clear All"**: Slicing messages causes direct messages to persist in the feed even after "Clear All" is clicked.
 7. **Double Notifications on Invoice Paid**: Both `emitNotification(commNotif)` and `toast.success` are called sequentially.
 8. **Missing UI Styles for Commission**: `TwoToneIcon` does not handle `commission`, falling back to `system`.
-9. **Dead Code**: `showToast` in `src/utils/toast.js` is never called.
+9. **Dead Code**: `showToast` in `src/shared/utils/toast.js` is never called.
 10. **Minified Names**: `oT()` and `uT()` in `src/App.jsx` are obfuscated artifact remnants.
 
 ---
@@ -334,13 +334,13 @@ All recommended approaches have been explicitly reviewed and **accepted by the u
 | ID | Category | Architectural Issue / Observation | Affected Files | Accepted Approach & Rationale | Status |
 |:---|:---|:---|:---|:---|:---|
 | **NOTIF-01** | **Security & Privacy** | Session notifications and unread badge count are not cleared on logout, leaking client/commission data to subsequent users on shared terminals. | `src/App.jsx:L874-L879` | **Option A (Accepted)**: Explicitly reset `notificationsList` (`setNotificationsList([])`) and `unreadNotificationsCount` (`setUnreadNotificationsCount(0)`) inside `handleSignOut`. Prevents any cross-session data exposure. | **APPROVED** |
-| **NOTIF-02** | **Architecture & Persistence** | System notifications (e.g. commission eligibility, invoice status, system alerts) are purely ephemeral in-memory state; lost on page refresh. | `src/App.jsx`, `src/utils/events.js`, `firestore.rules` | **Option B / C Hybrid (Accepted)**: Long-term target: Firestore `notifications` collection with user-targeted security rules. Immediate phase: Cache active session notifications in `localStorage` keyed by user identifier (`ptf_notifications_${userId}`) so feed survives refreshes without recurring DB read costs. | **APPROVED** |
-| **NOTIF-03** | **UX & Noise Reduction** | Intercepting every `toast.*` call (Trigger 8) floods the notification center with micro-actions ("Copied to clipboard", "Please enter address"). | `src/utils/toast.js` | **Option C (Accepted)**: Decouple toast alerts from the notification feed. Transient toasts remain toast-only unless explicitly requested with `{ feed: true }` or emitted via a dedicated `emitSystemNotification()` utility. Eliminates alert fatigue. | **APPROVED** |
+| **NOTIF-02** | **Architecture & Persistence** | System notifications (e.g. commission eligibility, invoice status, system alerts) are purely ephemeral in-memory state; lost on page refresh. | `src/App.jsx`, `src/shared/utils/events.js`, `firestore.rules` | **Option B / C Hybrid (Accepted)**: Long-term target: Firestore `notifications` collection with user-targeted security rules. Immediate phase: Cache active session notifications in `localStorage` keyed by user identifier (`ptf_notifications_${userId}`) so feed survives refreshes without recurring DB read costs. | **APPROVED** |
+| **NOTIF-03** | **UX & Noise Reduction** | Intercepting every `toast.*` call (Trigger 8) floods the notification center with micro-actions ("Copied to clipboard", "Please enter address"). | `src/shared/utils/toast.js` | **Option C (Accepted)**: Decouple toast alerts from the notification feed. Transient toasts remain toast-only unless explicitly requested with `{ feed: true }` or emitted via a dedicated `emitSystemNotification()` utility. Eliminates alert fatigue. | **APPROVED** |
 | **NOTIF-04** | **Business Logic / Targeting** | Trigger 6c (Commission Eligible notification) is seen only by the session user who marked the invoice paid; the Partner never receives it. | `src/App.jsx:L537-L546` | **Option B (Accepted)**: Persist partner-targeted notification records (or link to partner document/portal) so partners receive direct transparency on cleared commissions on their portal dashboard, rather than routing to the accounts clerk. | **APPROVED** |
 | **NOTIF-05** | **UI / Feed Integrity** | `NotificationsView` includes outgoing messages sent by the current user, displaying "Message from [CurrentUser]" and enabling self-replies. | `src/components/dashboard/NotificationsView.jsx:L31-L47` | **Option A (Accepted)**: Filter `messages` in `messageItems` to only include incoming messages (`msg.fromId !== currentUser.identifier`). Prevents self-message pollution and self-directed reply chat popups. | **APPROVED** |
 | **NOTIF-06** | **UI / Feed Integrity** | Clicking "Clear All" in `NotificationsView` does not dismiss or clear direct message items because `messages.slice(-30)` is unconditional. | `src/components/dashboard/NotificationsView.jsx:L15-L24` | **Option B (Accepted)**: Feed should display only unread messages (`!msg.readBy?.includes(currentUser.identifier)`). When marked read or when "Clear All" is clicked, messages drop out of the active alert stream into normal chat history. | **APPROVED** |
-| **NOTIF-07** | **Visual Design & Polish** | Missing icon mapping for `type: 'commission'` in `TwoToneIcon.jsx`, and hardcoded cyan pill badges for all non-message notification types. | `src/components/common/ui/TwoToneIcon.jsx`, `src/components/dashboard/NotificationsView.jsx:L157-L164` | **Option B (Accepted)**: Register `commission` in `ICON_CONFIG` using finance tokens (`DollarSign`, emerald gradient). Implement dynamic badge styling based on notification level (rose for `error`, amber for `warning`, emerald for `success`/`commission`). | **APPROVED** |
-| **NOTIF-08** | **Code Hygiene & Cleanup** | Dead function `showToast` in `src/utils/toast.js` and obfuscated helper names `oT()` and `uT()` in `src/App.jsx`. | `src/utils/toast.js`, `src/App.jsx:L77-L89` | **Option B (Accepted)**: Remove unused `showToast` export. Refactor minified helpers `oT` to `requestNotificationPermission` and `uT` to `createBrowserNotification`. | **APPROVED** |
+| **NOTIF-07** | **Visual Design & Polish** | Missing icon mapping for `type: 'commission'` in `TwoToneIcon.jsx`, and hardcoded cyan pill badges for all non-message notification types. | `src/shared/ui/TwoToneIcon.jsx`, `src/components/dashboard/NotificationsView.jsx:L157-L164` | **Option B (Accepted)**: Register `commission` in `ICON_CONFIG` using finance tokens (`DollarSign`, emerald gradient). Implement dynamic badge styling based on notification level (rose for `error`, amber for `warning`, emerald for `success`/`commission`). | **APPROVED** |
+| **NOTIF-08** | **Code Hygiene & Cleanup** | Dead function `showToast` in `src/shared/utils/toast.js` and obfuscated helper names `oT()` and `uT()` in `src/App.jsx`. | `src/shared/utils/toast.js`, `src/App.jsx:L77-L89` | **Option B (Accepted)**: Remove unused `showToast` export. Refactor minified helpers `oT` to `requestNotificationPermission` and `uT` to `createBrowserNotification`. | **APPROVED** |
 
 ---
 
@@ -364,7 +364,7 @@ Following user approval of all recommended approaches, the implementation roadma
   - *Outcome*: Eliminates data leakage of sensitive financial/commission data across user logins on shared devices.
 
 ### Phase 2: Signal vs. Noise UX Refactoring (Toast Decoupling)
-- **NOTIF-03 (`src/utils/toast.js`)**:
+- **NOTIF-03 (`src/shared/utils/toast.js`)**:
   - Update `toast` methods so that standard UI toasts do not pollute `emitNotification`:
     ```javascript
     export const toast = {
@@ -426,7 +426,7 @@ Following user approval of all recommended approaches, the implementation roadma
     - `warning`: `bg-amber-500/15 text-amber-500 border-amber-500/30`
     - `success` / `commission`: `bg-emerald-500/15 text-emerald-500 border-emerald-500/30`
     - `system` / default: `bg-primary/15 text-primary border-primary/30`
-- **NOTIF-08 (`src/utils/toast.js` & `src/App.jsx`)**:
-  - Delete unused `export const showToast = ...` in `src/utils/toast.js`.
+- **NOTIF-08 (`src/shared/utils/toast.js` & `src/App.jsx`)**:
+  - Delete unused `export const showToast = ...` in `src/shared/utils/toast.js`.
   - Rename `oT()` -> `requestNotificationPermission()` and `uT()` -> `createBrowserNotification()` in `src/App.jsx`.
 

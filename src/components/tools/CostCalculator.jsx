@@ -13,7 +13,7 @@ import {
   CircleCheckBig,
 } from "lucide-react";
 import { pricingTiers, calculateCost, determineTier } from "@/services/pricingEngine";
-import { PageHeader } from "@/components/common/ui";
+import { PageHeader } from "@/shared/ui";
 
 const ct = (val) => {
   if (val === undefined || val === null) return "—";

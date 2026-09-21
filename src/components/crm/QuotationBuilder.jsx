@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { Plus, Trash2, Sparkles, FileText, Copy, ChevronRight, Check, X, Layers, HardDrive, MessageCircle, Send } from 'lucide-react';
-import { toast } from '@/utils/toast';
+import { toast } from '@/shared/utils/toast';
 import { generateStructuredQuotation } from '@/services/gemini';
 import { addDocument, updateDocument, COLLECTIONS, generateInvoiceId, generateAtomicId } from '@/services/firestoreSync';
-import GoogleDrivePickerModal from '@/components/common/GoogleDrivePickerModal';
-import { ModalWrapper } from '@/components/common/ui';
-import { matchesEntity } from '@/utils/entityUtils';
+import GoogleDrivePickerModal from '@/shared/components/GoogleDrivePickerModal';
+import { ModalWrapper } from '@/shared/ui';
+import { matchesEntity } from '@/shared/utils/entityUtils';
 import { isAcceptedQuote } from '@/utils/quotationStatus';
 
 // WhatsApp renders *text* as bold and _text_ as italic client-side — this
@@ -45,7 +45,7 @@ const lineTotal = (item) => {
 };
 
 export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoice, currentUser, advanceInvoice = null, finalInvoice = null }) {
-  // matchesEntity (src/utils/entityUtils.js) resolves ID fragmentation across
+  // matchesEntity (src/shared/utils/entityUtils.js) resolves ID fragmentation across
   // the Lead -> Deal conversion lifecycle from both directions — the Deal's
   // originalLeadId pointing back, and the Lead's convertedDealId pointing
   // forward to what it became — so a quote/invoice created on either side of

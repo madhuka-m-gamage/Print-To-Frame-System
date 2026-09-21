@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { matchesEntity } from '@/utils/entityUtils';
+import { matchesEntity } from '@/shared/utils/entityUtils';
 import {
   makeLead, makeDeal, makeInvoice, makeReceipt, makePartner,
   makeProject, makeLogisticsJob, makeUser,

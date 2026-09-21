@@ -25,7 +25,7 @@ Fabrication Kanban over `projects` (Pending, Ongoing, Ready For Inspection, Revi
 - Projects are created by lead conversion in `Leads.jsx` as well as manually.
 - No stock / inventory deduction exists.
 
-- Final invoice guard: deal completion and job QA pass call `getExistingFinalInvoice` (`src/utils/entityUtils.js`) and skip creating a second Final. It runs on client state, so two sessions acting at the same moment can still both create one.
+- Final invoice guard: deal completion and job QA pass call `getExistingFinalInvoice` (`src/shared/utils/entityUtils.js`) and skip creating a second Final. It runs on client state, so two sessions acting at the same moment can still both create one.
 
 - Completed is terminal: no backward move from it, and bulk change cannot set Completed. Deal completion sets `commissionAccrued: true` and skips commission accrual when it is already set.
 

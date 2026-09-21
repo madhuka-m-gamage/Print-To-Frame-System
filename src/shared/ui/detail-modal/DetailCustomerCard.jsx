@@ -1,6 +1,6 @@
 import React from 'react';
 import { User, Phone, Mail, Building, MapPin, MessageSquare, ExternalLink } from 'lucide-react';
-import UserAvatar from '@/components/common/ui/UserAvatar';
+import UserAvatar from '@/shared/ui/UserAvatar';
 
 /**
  * DetailCustomerCard - Reusable customer contact information card across all modules.

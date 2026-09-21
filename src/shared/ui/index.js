@@ -8,5 +8,4 @@ export { default as KanbanCard } from './KanbanCard';
 export { default as UserAvatar } from './UserAvatar';
 export { default as TwoToneIcon } from './TwoToneIcon';
 export { default as ImageCropModal } from './ImageCropModal';
-export { default as EmailTemplateModal } from './EmailTemplateModal';
 export * from './detail-modal';

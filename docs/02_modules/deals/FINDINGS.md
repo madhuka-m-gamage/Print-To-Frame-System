@@ -11,7 +11,7 @@
 A comprehensive architectural and trigger audit was conducted across the Deals module and its integration boundaries:
 - **Module Documentation**: `docs/02_modules/deals/README.md`, `docs/02_modules/deals/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
 - **Target UI Components**: `src/components/crm/Deals.jsx`, `src/components/crm/LeadCardDetails.jsx`, `src/components/crm/Leads.jsx`.
-- **Services & Utilities**: `src/utils/entityUtils.js` (`matchesEntity`), `src/utils/logisticsEngine.js`, `src/services/pricingEngine.js`, `src/utils/invoiceTemplate.js`, `src/services/firestoreSync.js`.
+- **Services & Utilities**: `src/shared/utils/entityUtils.js` (`matchesEntity`), `src/utils/logisticsEngine.js`, `src/services/pricingEngine.js`, `src/utils/invoiceTemplate.js`, `src/services/firestoreSync.js`.
 - **Integration & Consumer Surfaces**: `src/App.jsx` (`handleSaveInvoice`, `handleMarkInvoicePaid`, stage transitions), `src/components/operations/FabricationWorks.jsx`, `src/components/crm/Partners.jsx`, `src/components/dashboard/Dashboard.jsx`, `firestore.rules`.
 
 ### Key Discoveries:
@@ -153,7 +153,7 @@ A comprehensive architectural and trigger audit was conducted across the Deals m
 
 ### Trigger 5: Quotation Linkage via `matchesEntity` Lineage
 
-* **Implementation**: `src/utils/entityUtils.js` (`matchesEntity`, `getEntityIdSet`).
+* **Implementation**: `src/shared/utils/entityUtils.js` (`matchesEntity`, `getEntityIdSet`).
 * **Trace & Analysis**:
   1. **Lineage Traversal**:
      - Quotes store `leadId` referencing the original lead ID (`L-xxxxxx`).
@@ -299,7 +299,7 @@ const dealsActionQueue = useMemo(() => {
 
 | # | Topic / Area | Decision Accepted | Resolution | Files to Change |
 |---|---|---|---|---|
-| **D-1** | **Duplicate Final Invoice Prevention** | ✅ ACCEPTED | Add a shared guard `getExistingFinalInvoice(invoices, entity)` exported from `entityUtils.js` (uses `matchesEntity` to match on `leadId`, `dealId`, `originalLeadId`, `linkedJobNo`). Before calling `generateInvoiceId` in `Deals.jsx` and `FabricationWorks.jsx`, check the invoices array. If a Final invoice already exists, skip creation and toast an info message linking to the existing invoice. `QuotationBuilder.jsx` already guards with `if (finalInvoice || isConvertingFinal) return;` — no change required there. | `src/utils/entityUtils.js` (add helper), `src/components/crm/Deals.jsx` (add pre-check), `src/components/operations/FabricationWorks.jsx` (add pre-check) |
+| **D-1** | **Duplicate Final Invoice Prevention** | ✅ ACCEPTED | Add a shared guard `getExistingFinalInvoice(invoices, entity)` exported from `entityUtils.js` (uses `matchesEntity` to match on `leadId`, `dealId`, `originalLeadId`, `linkedJobNo`). Before calling `generateInvoiceId` in `Deals.jsx` and `FabricationWorks.jsx`, check the invoices array. If a Final invoice already exists, skip creation and toast an info message linking to the existing invoice. `QuotationBuilder.jsx` already guards with `if (finalInvoice || isConvertingFinal) return;` — no change required there. | `src/shared/utils/entityUtils.js` (add helper), `src/components/crm/Deals.jsx` (add pre-check), `src/components/operations/FabricationWorks.jsx` (add pre-check) |
 | **D-2** | **Invoice Fallback Line Item Price Compounding** | ✅ ACCEPTED | In the fallback `lineItems` array in `Deals.jsx:L357`, change `unitPrice: finalAmount` to `unitPrice: deal.value \|\| 0`. This ensures `invoiceTemplate.js` correctly multiplies by `0.25` (for Final invoices) to arrive at the right 25% balance amount in both the line table and the totals footer. | `src/components/crm/Deals.jsx` (fallback `lineItems[0].unitPrice`) |
 | **D-3** | **Quotation Grand Total vs Deal Value Sync** | ✅ ACCEPTED | In `handleMoveForwardInner` (Deals.jsx), if an `Accepted` quotation is found via `matchesEntity`, derive `finalAmount` from `linkedQuote.grandTotal * 0.25` (or `linkedQuote.balanceDue` if already stored). Also propagate `deal.value = linkedQuote.grandTotal` to the Firestore update payload when completing, keeping the Kanban metric in sync. Quotation lookup must filter to `status === 'Accepted'` and pick the highest `version` if multiple exist. | `src/components/crm/Deals.jsx` (`handleMoveForwardInner`) |
 | **D-4** | **Stage Reversal & Commission Rollback** | ✅ ACCEPTED | Disable backward navigation from the `"Completed"` stage. In `DealColumn`, pass `onMoveBack={isLastStage ? null : handleMoveBackward}` so the `KanbanCard` back-arrow never renders for Completed cards. This eliminates the backward-move exploit without requiring commission reversal logic. | `src/components/crm/Deals.jsx` (`DealColumn` — conditional `onMoveBack` prop) |

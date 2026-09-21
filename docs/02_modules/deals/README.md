@@ -8,7 +8,7 @@
 - `src/components/crm/Leads.jsx`: `handleConvertConfirm` (~476-606) performs Lead-to-Deal conversion; `ConvertDealModal`.
 - `src/components/crm/LeadCardDetails.jsx`: shared Lead/Deal detail modal (`isDeal` prop); embeds `QuotationBuilder`, shows advance / final invoice cards, mark-paid and receipt buttons, and a logistics card.
 - `src/App.jsx`: mounts Deals under tab `pipeline`; holds `handleSaveInvoice`, `handleGenerateReceipt`, `handleMarkInvoicePaid`.
-- `src/utils/entityUtils.js` (`matchesEntity`, lead / deal id lineage), `src/utils/logisticsEngine.js`, `src/services/firestoreSync.js` (`generateInvoiceId`).
+- `src/shared/utils/entityUtils.js` (`matchesEntity`, lead / deal id lineage), `src/utils/logisticsEngine.js`, `src/services/firestoreSync.js` (`generateInvoiceId`).
 - `api/`: no deal references.
 
 ## Firestore collections read/written
@@ -30,7 +30,7 @@ No Cloud Functions. All client-side:
 
 ## Depends on / called by
 
-Leads, LeadCardDetails, QuotationBuilder, Invoices / Receipts handlers in `App.jsx`, Partners, Customers, Fabrication / Projects, Logistics; shared `entityUtils`, `firestoreSync`, `toast`, `csvExport`, `common/ui`.
+Leads, LeadCardDetails, QuotationBuilder, Invoices / Receipts handlers in `App.jsx`, Partners, Customers, Fabrication / Projects, Logistics; shared `entityUtils`, `firestoreSync`, `toast`, `csvExport`, `shared/ui`.
 
 ## Summary
 

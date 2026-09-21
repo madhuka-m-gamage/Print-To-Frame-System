@@ -1,4 +1,4 @@
-import { matchesEntity } from './entityUtils';
+import { matchesEntity } from '@/shared/utils/entityUtils';
 import { isAcceptedQuote } from './quotationStatus';
 
 /**
