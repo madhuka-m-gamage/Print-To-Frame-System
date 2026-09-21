@@ -21,11 +21,11 @@ Updated 2026-09-21. These are honest estimates, not measurements: they show wher
 |---|---|---|
 | Test suite (Part A setup, Part B authoring) | `[##########]` ~95% | Five layers built and in CI; B6 browser journeys parked |
 | Phase 7 fixes that do not touch the live site (steps 1 to 6, 8.1) | `[#########-]` ~90% | Done and merged into `staging`; step 7 (UX backlog) not started |
-| 8.2 Standard project structure | `[#######---]` ~67% | 8 of 12 tasks built: README and env example, unused files removed, one docs folder per module, `@/` import alias, shared code, feature folders for auth, profile, dashboard, messaging, leads, customers, quotations, deals, invoicing and partners. Next: fabrication, logistics, admin |
+| 8.2 Standard project structure | `[########--]` ~75% | 9 of 12 tasks built: README and env example, unused files removed, one docs folder per module, `@/` import alias, shared code, feature folders for auth, profile, dashboard, messaging, leads, customers, quotations, deals, invoicing, partners, fabrication and logistics. Next: admin, clean-up, ADR |
 | Live rollout chain (matrix 3.3, rules 3.4d and 3.5d, payouts 4.x, promote to `main`) | `[----------]` ~0% | Parked by design until the live site is ready to change |
 | Follow-up backlog | ~20 items listed | Tackled one by one after this workflow |
 
-Merged into `staging` so far: PRs #6 to #46. Open, stacked in order: task 6 (#47), task 7 (#48) and task 8 of 8.2.
+Merged into `staging` so far: PRs #6 to #46. Open, stacked in order: task 6 (#47), task 7 (#48), task 8 (#49) and task 9 of 8.2.
 
 ## Testing and remediation tracks
 
@@ -79,13 +79,14 @@ Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 be
   - [x] 1: README, `.env.example`, `.editorconfig`, `CONTRIBUTING.md`, package metadata
   - [x] 2: remove confirmed-unused files and dependencies
   - [x] 3: one docs folder per module (`docs/02_modules/<m>/README.md`)
-  - Progress: 8 of 12 tasks built (about 67%); tasks 1 to 5 are merged (#42 to #46), tasks 6 to 8 are open PRs
+  - Progress: 9 of 12 tasks built (about 75%); tasks 1 to 5 are merged (#42 to #46), tasks 6 to 9 are open PRs
   - [x] 4: `@/` import alias, codemod, and normalise imports (no moves)
   - [x] 5: shared code into `src/shared` (ui, components, utils)
   - [x] 6: `src/features` auth, profile, dashboard, messaging
   - [x] 7: `src/features` leads, customers, quotations
   - [x] 8: `src/features` deals, invoicing, partners
-  - [ ] 9-10: move into `src/features/<domain>`, one group per PR (fabrication, logistics; admin)
+  - [x] 9: `src/features` fabrication, logistics
+  - [ ] 10: `src/features/admin`
   - [ ] 11-12: clean-up, ADR `0003-source-layout.md`, remove the codemod
 
 ## Deferred until the live site is ready to change

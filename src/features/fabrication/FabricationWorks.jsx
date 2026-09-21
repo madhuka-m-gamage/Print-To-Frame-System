@@ -34,7 +34,7 @@ import {
 import { toast } from '@/shared/utils/toast';
 import Card from '@/shared/components/Card';
 import DeleteModal from '@/shared/components/DeleteModal';
-import FrameBlueprintPreview from '@/components/common/FrameBlueprintPreview';
+import FrameBlueprintPreview from './FrameBlueprintPreview';
 import FabricationCardDetails from './FabricationCardDetails';
 import { PageHeader, FilterBar, StatusBadge, KanbanColumn, KanbanCard, ModalWrapper } from '@/shared/ui';
 import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateInvoiceId, generateAtomicId } from '@/services/firestoreSync';
@@ -42,10 +42,10 @@ import { stripEmojis, sanitizeTechnicalScope } from '@/shared/utils/validation';
 import { generateText } from '@/services/gemini';
 import { getExistingFinalInvoice } from '@/shared/utils/entityUtils';
 import { logActivity } from '@/services/auditLog';
-import { NON_BILLABLE, resolveManualJobLink } from '@/utils/fabricationLink';
-import { checklistWithGuardedQa, withDefectRecorded } from '@/utils/qaGate';
-import { buildLogisticsTask } from '@/utils/logisticsTask';
-import { STEEL_PROFILES, calculateCutList, mmToFtIn } from '@/utils/cutListEngine';
+import { NON_BILLABLE, resolveManualJobLink } from './fabricationLink';
+import { checklistWithGuardedQa, withDefectRecorded } from './qaGate';
+import { buildLogisticsTask } from '@/features/logistics/logisticsTask';
+import { STEEL_PROFILES, calculateCutList, mmToFtIn } from './cutListEngine';
 
 const STAGES = ["Pending", "Ongoing", "Ready For Inspection", "Revision", "Completed"];
 

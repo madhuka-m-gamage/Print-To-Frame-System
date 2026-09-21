@@ -8,7 +8,7 @@ Kanban of pickup and delivery jobs (Pending, In Transit, Completed) with COD fro
 
 ## Code
 
-- `src/components/operations/Logistics.jsx`, `LogisticsCardDetails.jsx`, `src/utils/logisticsEngine.js`
+- `src/features/logistics/Logistics.jsx`, `LogisticsCardDetails.jsx`, `src/features/logistics/logisticsEngine.js`
 
 ## Firestore collections it owns or writes
 

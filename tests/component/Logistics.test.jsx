@@ -16,11 +16,11 @@ vi.mock('@/shared/utils/toast', () => ({
   showToast: vi.fn(),
 }));
 vi.mock('@/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
-vi.mock('@/components/operations/LogisticsCardDetails', () => ({ default: () => null }));
+vi.mock('@/features/logistics/LogisticsCardDetails', () => ({ default: () => null }));
 
 const sync = await import('@/services/firestoreSync');
 const { toast } = await import('@/shared/utils/toast');
-const { default: Logistics } = await import('@/components/operations/Logistics');
+const { default: Logistics } = await import('@/features/logistics/Logistics');
 
 const admin = { role: 'Admin', name: 'Admin', identifier: 'admin@example.com' };
 

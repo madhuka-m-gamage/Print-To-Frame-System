@@ -10,8 +10,8 @@
 
 A comprehensive architectural and trigger audit was conducted across the Operations: Fabrication module and its integration boundaries:
 - **Module Documentation**: `docs/02_modules/operations-fabrication/README.md`, `docs/02_modules/operations-fabrication/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
-- **Target UI Components**: `src/components/operations/FabricationWorks.jsx`, `src/components/operations/FabricationCardDetails.jsx`, `src/components/common/FrameBlueprintPreview.jsx`.
-- **Engines & Calculations**: `src/utils/cutListEngine.js` (`calculateCutList`, `mmToFtIn`, `ftToMm`, `STEEL_PROFILES`).
+- **Target UI Components**: `src/features/fabrication/FabricationWorks.jsx`, `src/features/fabrication/FabricationCardDetails.jsx`, `src/features/fabrication/FrameBlueprintPreview.jsx`.
+- **Engines & Calculations**: `src/features/fabrication/cutListEngine.js` (`calculateCutList`, `mmToFtIn`, `ftToMm`, `STEEL_PROFILES`).
 - **Integration Surfaces**: `src/App.jsx` (`projects` collection sync, `handleSaveInvoice`, props contract), `src/features/leads/Leads.jsx` (Trigger 2 lead conversion), `src/features/deals/Deals.jsx` (Trigger 3 completion conflict), `firestore.rules` (`match /projects/{projectId}` permissions), `api/generate.js` (AI update proxy).
 
 ### Key Discoveries:

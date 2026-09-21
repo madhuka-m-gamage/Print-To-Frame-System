@@ -4,10 +4,10 @@
 
 ## Files and folders
 
-- `src/components/operations/FabricationWorks.jsx`: Kanban board and all job handlers (`STAGES` at ~44).
-- `src/components/operations/FabricationCardDetails.jsx`: job detail modal with the cut-list editor.
-- `src/utils/cutListEngine.js`: pure functions `calculateCutList`, `mmToFtIn`, `ftToMm`, `STEEL_PROFILES` (no Firestore).
-- `src/components/common/FrameBlueprintPreview.jsx`: SVG preview only.
+- `src/features/fabrication/FabricationWorks.jsx`: Kanban board and all job handlers (`STAGES` at ~44).
+- `src/features/fabrication/FabricationCardDetails.jsx`: job detail modal with the cut-list editor.
+- `src/features/fabrication/cutListEngine.js`: pure functions `calculateCutList`, `mmToFtIn`, `ftToMm`, `STEEL_PROFILES` (no Firestore).
+- `src/features/fabrication/FrameBlueprintPreview.jsx`: SVG preview only.
 - `src/App.jsx`: lazy import, `projects` state, subscription, render (tab id `projects`, nav label "Fabrication Works"), `handleSaveInvoice`.
 
 ## Firestore collections read/written

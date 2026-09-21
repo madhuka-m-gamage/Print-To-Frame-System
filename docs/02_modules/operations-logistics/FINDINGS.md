@@ -10,9 +10,9 @@
 
 A systematic deep-trace audit was conducted across the Operations: Logistics module and its cross-module integration surfaces:
 - **Module Documentation**: `docs/02_modules/operations-logistics/CLAUDE.md`, `docs/02_modules/operations-logistics/README.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
-- **Target UI Components**: `src/components/operations/Logistics.jsx`, `src/components/operations/LogisticsCardDetails.jsx`.
-- **Engines & Utilities**: `src/utils/logisticsEngine.js` (`FLEET_VEHICLES`, `DRIVER_DIRECTORY`, `calculateCODFromInvoices`, `formatDispatchMessage`, `getGoogleMapsUrl`, `getWhatsAppUrl`).
-- **Integration & Dispatch Surfaces**: `src/App.jsx` (`logisticsJobs` subscription & state handlers, RBAC routing), `src/components/operations/FabricationWorks.jsx` (`handleDispatchToLogistics`), `src/features/deals/Deals.jsx` (`handleCreateDeliveryJob`), `src/features/leads/Leads.jsx` (`handleCreateLogisticsJob`), `src/features/leads/LeadCardDetails.jsx`, `src/features/dashboard/Dashboard.jsx`, and `firestore.rules`.
+- **Target UI Components**: `src/features/logistics/Logistics.jsx`, `src/features/logistics/LogisticsCardDetails.jsx`.
+- **Engines & Utilities**: `src/features/logistics/logisticsEngine.js` (`FLEET_VEHICLES`, `DRIVER_DIRECTORY`, `calculateCODFromInvoices`, `formatDispatchMessage`, `getGoogleMapsUrl`, `getWhatsAppUrl`).
+- **Integration & Dispatch Surfaces**: `src/App.jsx` (`logisticsJobs` subscription & state handlers, RBAC routing), `src/features/fabrication/FabricationWorks.jsx` (`handleDispatchToLogistics`), `src/features/deals/Deals.jsx` (`handleCreateDeliveryJob`), `src/features/leads/Leads.jsx` (`handleCreateLogisticsJob`), `src/features/leads/LeadCardDetails.jsx`, `src/features/dashboard/Dashboard.jsx`, and `firestore.rules`.
 - **Backend Services**: `api/generate.js` (AI proxy endpoint).
 
 ### Key Audit Discoveries:
@@ -44,7 +44,7 @@ A systematic deep-trace audit was conducted across the Operations: Logistics mod
 | **Triggers and side effects** ("All status changes and job creation are manual.") | **Accurate** | Confirmed: All creations require manual clicks (form or external buttons). Stage moves require user drag-and-drop or column arrow buttons. No automated Firestore triggers exist. |
 | **Triggers and side effects** ("AI route suggestion via `/api/generate` (hardcoded hub).") | **Broken in Implementation** | While code targets `/api/generate`, it omits authentication bearer tokens, causing HTTP 401 rejections and falling back to a static hardcoded string. Real AI suggestion is non-functional. |
 | **Triggers and side effects** ("No effect on deals or projects when Completed.") | **Accurate** | Confirmed: Transition to `Completed` writes only `{ status: "Completed", endTime, duration }` to `COLLECTIONS.LOGISTICS`. No downstream writes to `projects` or `leads`. |
-| **Before you edit** ("`DRIVER_DIRECTORY`, `FLEET_VEHICLES` and the route hub are hardcoded in code.") | **Accurate** | Confirmed: Defined as static arrays in `src/utils/logisticsEngine.js`. Route hub `"Kadawatha Central Hub"` is hardcoded in `Logistics.jsx:L414` and `L607`. |
+| **Before you edit** ("`DRIVER_DIRECTORY`, `FLEET_VEHICLES` and the route hub are hardcoded in code.") | **Accurate** | Confirmed: Defined as static arrays in `src/features/logistics/logisticsEngine.js`. Route hub `"Kadawatha Central Hub"` is hardcoded in `Logistics.jsx:L414` and `L607`. |
 | **Before you edit** ("`AddressPickerModal` / Maps JS API are used by Customers, not Logistics.") | **Accurate** | Confirmed: `Logistics.jsx` and `LogisticsCardDetails.jsx` do not import or use `AddressPickerModal`. Navigation uses plain URL generation via `getGoogleMapsUrl`. |
 
 ### 2.2 `docs/02_modules/operations-logistics/README.md`
@@ -155,7 +155,7 @@ Verification results:
 
 ### 4.1 Broken Authentication on AI Route Optimization
 
-- **Location**: `src/components/operations/Logistics.jsx:L400-L416` (`callAIInsights`)
+- **Location**: `src/features/logistics/Logistics.jsx:L400-L416` (`callAIInsights`)
 - **Vulnerability / Flaw**:
   ```javascript
   const callAIInsights = async (prompt) => {
@@ -225,7 +225,7 @@ Verification results:
 
 ### 4.3 Premature "All Settled" Status & Substring Matching in COD Engine
 
-- **Location**: `src/utils/logisticsEngine.js:L127-L218` (`calculateCODFromInvoices`)
+- **Location**: `src/features/logistics/logisticsEngine.js:L127-L218` (`calculateCODFromInvoices`)
 - **Critical Issues**:
   1. **Premature "Settled" Status When Final Invoice Not Yet Created**:
      - The COD balance is computed solely as the sum of existing unpaid invoices:
@@ -265,8 +265,8 @@ Verification results:
 ### 4.4 Disparate ID Generation Schemes: Transactional Counters vs. Timestamp Slicing
 
 - **Location**:
-  - `src/components/operations/Logistics.jsx:L462`
-  - `src/components/operations/FabricationWorks.jsx:L525`
+  - `src/features/logistics/Logistics.jsx:L462`
+  - `src/features/fabrication/FabricationWorks.jsx:L525`
   - `src/features/deals/Deals.jsx:L413`
   - `src/features/leads/Leads.jsx:L677`
 - **Tracing**:
@@ -285,9 +285,9 @@ Verification results:
 ### 4.5 Dispatch Notification & Phone Key Disconnects
 
 - **Location**:
-  - `src/components/operations/Logistics.jsx:L194-L248`
-  - `src/components/operations/LogisticsCardDetails.jsx:L126-L150`
-  - `src/utils/logisticsEngine.js:L55-L62` (`getWhatsAppUrl`)
+  - `src/features/logistics/Logistics.jsx:L194-L248`
+  - `src/features/logistics/LogisticsCardDetails.jsx:L126-L150`
+  - `src/features/logistics/logisticsEngine.js:L55-L62` (`getWhatsAppUrl`)
 - **Discrepancies**:
   1. **Kanban Card WhatsApp Button Does Not Update Notification State**:
      - `Logistics.jsx` (L212-235) renders a quick-action WhatsApp button on every card.
@@ -310,7 +310,7 @@ Verification results:
 
 ### 4.6 Lack of In-Logistics Payment Settlement and Receipt Issuance
 
-- **Location**: `src/components/operations/LogisticsCardDetails.jsx:L344-L451`
+- **Location**: `src/features/logistics/LogisticsCardDetails.jsx:L344-L451`
 - **Issue**:
   - Delivery drivers are the primary employees collecting cash on delivery (COD) across Sri Lankan field deliveries.
   - In `LogisticsCardDetails.jsx`, the modal displays matched invoices and has a "Print" button.
@@ -325,8 +325,8 @@ Verification results:
 ### 4.7 Hardcoded Fleet & Geographic Data
 
 - **Location**:
-  - `src/utils/logisticsEngine.js:L11-L22` (`FLEET_VEHICLES`, `DRIVER_DIRECTORY`)
-  - `src/components/operations/Logistics.jsx:L414, L607`
+  - `src/features/logistics/logisticsEngine.js:L11-L22` (`FLEET_VEHICLES`, `DRIVER_DIRECTORY`)
+  - `src/features/logistics/Logistics.jsx:L414, L607`
 - **Issue**:
   - `DRIVER_DIRECTORY`: Hardcoded list of 4 drivers (`Saman`, `Kamal`, `Sunil`, `Nimal`) with mock `077` phone numbers.
   - `FLEET_VEHICLES`: Hardcoded list of 3 vehicles (`WP GE 1234`, `WP LH 5678`, `WP XZ 9012`).
@@ -337,7 +337,7 @@ Verification results:
 
 ### 4.8 Optimistic Updates Without Rollback & Swallowed Errors
 
-- **Location**: `src/components/operations/Logistics.jsx:L346-L398` (`handleDrop`), `L512-L547` (`handleMoveJob`), `L549-L575` (`handleMoveJobBack`), `L577-L591` (`handleDeleteConfirm`)
+- **Location**: `src/features/logistics/Logistics.jsx:L346-L398` (`handleDrop`), `L512-L547` (`handleMoveJob`), `L549-L575` (`handleMoveJobBack`), `L577-L591` (`handleDeleteConfirm`)
 - **Tracing**:
   - When a job is moved forward (`handleMoveJob`) or backward (`handleMoveJobBack`):
     - React state is immediately updated via `setJobs(prev => prev.map(...))`.
@@ -370,7 +370,7 @@ Verification results:
 
 ### 4.10 Google Maps Deep-Link Limitation
 
-- **Location**: `src/utils/logisticsEngine.js:L29-L32` (`getGoogleMapsUrl`)
+- **Location**: `src/features/logistics/logisticsEngine.js:L29-L32` (`getGoogleMapsUrl`)
 - **Code**:
   ```javascript
   export function getGoogleMapsUrl(location) {
@@ -391,14 +391,14 @@ Verification results:
 
 | # | Topic / Area | Decision Accepted | Resolution | Files to Change |
 |---|---|---|---|---|
-| **D-1** | **Fixing AI Route Optimization Auth** | ✅ ACCEPTED | Refactor `callAIInsights` in `Logistics.jsx` to use the centralized `callProxy` from `src/services/gemini.js` (or import token-aware helper). This automatically attaches `Authorization: Bearer ${idToken}`, satisfying the security check in `api/generate.js` and restoring real dynamic multi-stop Gemini route sequence generation. | `src/components/operations/Logistics.jsx` (`callAIInsights`), `src/services/gemini.js` |
+| **D-1** | **Fixing AI Route Optimization Auth** | ✅ ACCEPTED | Refactor `callAIInsights` in `Logistics.jsx` to use the centralized `callProxy` from `src/services/gemini.js` (or import token-aware helper). This automatically attaches `Authorization: Bearer ${idToken}`, satisfying the security check in `api/generate.js` and restoring real dynamic multi-stop Gemini route sequence generation. | `src/features/logistics/Logistics.jsx` (`callAIInsights`), `src/services/gemini.js` |
 | **D-2** | **Logistics Role Permissions for Invoices** | ✅ ACCEPTED | In `PermissionsContext.jsx`, grant `invoices: read()` to the `Logistics` role in `DEFAULT_PERMISSIONS` (e.g. `{ view: true, read: true, create: false, edit: false, delete: false, export: false }`). Update `firestore.rules` if necessary so the real-time `invoices` listener does not fail with permission-denied, enabling drivers and logistics staff to view outstanding COD invoice balances. | `src/context/PermissionsContext.jsx` (`DEFAULT_PERMISSIONS.Logistics`), `firestore.rules` (`match /invoices/{invoiceId}`) |
-| **D-3** | **Unifying Cross-Module Dispatch Schema** | ✅ ACCEPTED | Standardize dispatch payload across all entrypoints (`Deals.jsx`, `Leads.jsx`, `FabricationWorks.jsx`): (1) Enforce sequential transaction ID reservation via `generateAtomicId('L-DL')` / `generateAtomicId('L-PK')`. (2) Use standard key `customerPhone` instead of `phone`. (3) Always attach `linkedJobNo` (from `deal.jobNo` or `job.jobNo`) and entity IDs (`dealId`, `leadId`). (4) Ensure default priority `"Standard"` and timestamp `createdAt` are populated. | `src/features/deals/Deals.jsx` (`handleCreateDeliveryJob`), `src/features/leads/Leads.jsx` (`handleCreateLogisticsJob`), `src/components/operations/FabricationWorks.jsx` (`handleDispatchToLogistics`) |
-| **D-4** | **Preventing Premature "Settled" COD Balance Display** | ✅ ACCEPTED | Enhance `calculateCODFromInvoices`: When matched invoices contain only a paid 75% Advance invoice and no Final invoice exists yet, inspect the linked entity/quotation total value. If total order value exceeds paid amounts, return status `"Final Invoice Pending"` with `hasUnpaid: true` or a dedicated warning state. Update `LogisticsCardDetails.jsx` and `printWaybill` so it displays *"Pending 25% Settlement Invoice Creation"* rather than falsely announcing *"ALL INVOICES SETTLED — NO CASH TO COLLECT"* or printing *"PAID / NO COLLECTION"*. | `src/utils/logisticsEngine.js` (`calculateCODFromInvoices`), `src/components/operations/Logistics.jsx`, `src/components/operations/LogisticsCardDetails.jsx` (display & waybill template) |
-| **D-5** | **Delivery Completion Downstream Side-Effects** | ✅ ACCEPTED | Maintain the core stage isolation (no direct auto-advancing of deal stages), but update `projects` upon delivery state transitions. When a delivery task moves to `"In Transit"` or `"Completed"`, update the linked project's delivery status (e.g. `deliveryStatus: 'in_transit' | 'delivered'` or update `dispatchedToLogistics: 'Delivered'`) so fabrication operators can see on their Kanban cards whether client handover succeeded. | `src/components/operations/Logistics.jsx` (`handleMoveJob`, `handleDrop`), `src/components/operations/FabricationWorks.jsx` (display card delivery badge) |
-| **D-6** | **In-Field COD Payment Recording** | ✅ ACCEPTED | Add an authorized "Record Cash Collection" action inside `LogisticsCardDetails.jsx` for delivery jobs with outstanding COD. When confirmed by the driver/dispatcher, invoke `onMarkInvoicePaid` and generate an official receipt via `onGenerateReceipt` (or pass these handlers via `App.jsx`), recording the collecting driver's name and payment method as `"Cash (COD)"`. | `src/App.jsx` (pass invoice/receipt handlers to `<Logistics>`), `src/components/operations/Logistics.jsx`, `src/components/operations/LogisticsCardDetails.jsx` |
-| **D-7** | **Fleet & Driver Directory Persistence** | ✅ ACCEPTED | Move fleet vehicles and driver directory out of hardcoded constants into Firestore (e.g. `settings/fleet` or a dedicated collection), editable by Admins in Settings/User Management. Retain `FLEET_VEHICLES` and `DRIVER_DIRECTORY` in `logisticsEngine.js` only as a safe fallback for initial seeding or offline mode. | `src/utils/logisticsEngine.js`, `src/components/operations/Logistics.jsx`, `src/components/operations/LogisticsCardDetails.jsx` |
-| **D-8** | **Optimistic Update Error Handling & State Rollback** | ✅ ACCEPTED | Update `handleMoveJob`, `handleMoveJobBack`, `handleDrop`, and `handleDeleteConfirm` in `Logistics.jsx` to retain a snapshot of previous state. In the `catch` blocks, restore the previous state and trigger `toast.error("Failed to sync stage change to server")` so the user is alerted to network or permission rejections. | `src/components/operations/Logistics.jsx` |
+| **D-3** | **Unifying Cross-Module Dispatch Schema** | ✅ ACCEPTED | Standardize dispatch payload across all entrypoints (`Deals.jsx`, `Leads.jsx`, `FabricationWorks.jsx`): (1) Enforce sequential transaction ID reservation via `generateAtomicId('L-DL')` / `generateAtomicId('L-PK')`. (2) Use standard key `customerPhone` instead of `phone`. (3) Always attach `linkedJobNo` (from `deal.jobNo` or `job.jobNo`) and entity IDs (`dealId`, `leadId`). (4) Ensure default priority `"Standard"` and timestamp `createdAt` are populated. | `src/features/deals/Deals.jsx` (`handleCreateDeliveryJob`), `src/features/leads/Leads.jsx` (`handleCreateLogisticsJob`), `src/features/fabrication/FabricationWorks.jsx` (`handleDispatchToLogistics`) |
+| **D-4** | **Preventing Premature "Settled" COD Balance Display** | ✅ ACCEPTED | Enhance `calculateCODFromInvoices`: When matched invoices contain only a paid 75% Advance invoice and no Final invoice exists yet, inspect the linked entity/quotation total value. If total order value exceeds paid amounts, return status `"Final Invoice Pending"` with `hasUnpaid: true` or a dedicated warning state. Update `LogisticsCardDetails.jsx` and `printWaybill` so it displays *"Pending 25% Settlement Invoice Creation"* rather than falsely announcing *"ALL INVOICES SETTLED — NO CASH TO COLLECT"* or printing *"PAID / NO COLLECTION"*. | `src/features/logistics/logisticsEngine.js` (`calculateCODFromInvoices`), `src/features/logistics/Logistics.jsx`, `src/features/logistics/LogisticsCardDetails.jsx` (display & waybill template) |
+| **D-5** | **Delivery Completion Downstream Side-Effects** | ✅ ACCEPTED | Maintain the core stage isolation (no direct auto-advancing of deal stages), but update `projects` upon delivery state transitions. When a delivery task moves to `"In Transit"` or `"Completed"`, update the linked project's delivery status (e.g. `deliveryStatus: 'in_transit' | 'delivered'` or update `dispatchedToLogistics: 'Delivered'`) so fabrication operators can see on their Kanban cards whether client handover succeeded. | `src/features/logistics/Logistics.jsx` (`handleMoveJob`, `handleDrop`), `src/features/fabrication/FabricationWorks.jsx` (display card delivery badge) |
+| **D-6** | **In-Field COD Payment Recording** | ✅ ACCEPTED | Add an authorized "Record Cash Collection" action inside `LogisticsCardDetails.jsx` for delivery jobs with outstanding COD. When confirmed by the driver/dispatcher, invoke `onMarkInvoicePaid` and generate an official receipt via `onGenerateReceipt` (or pass these handlers via `App.jsx`), recording the collecting driver's name and payment method as `"Cash (COD)"`. | `src/App.jsx` (pass invoice/receipt handlers to `<Logistics>`), `src/features/logistics/Logistics.jsx`, `src/features/logistics/LogisticsCardDetails.jsx` |
+| **D-7** | **Fleet & Driver Directory Persistence** | ✅ ACCEPTED | Move fleet vehicles and driver directory out of hardcoded constants into Firestore (e.g. `settings/fleet` or a dedicated collection), editable by Admins in Settings/User Management. Retain `FLEET_VEHICLES` and `DRIVER_DIRECTORY` in `logisticsEngine.js` only as a safe fallback for initial seeding or offline mode. | `src/features/logistics/logisticsEngine.js`, `src/features/logistics/Logistics.jsx`, `src/features/logistics/LogisticsCardDetails.jsx` |
+| **D-8** | **Optimistic Update Error Handling & State Rollback** | ✅ ACCEPTED | Update `handleMoveJob`, `handleMoveJobBack`, `handleDrop`, and `handleDeleteConfirm` in `Logistics.jsx` to retain a snapshot of previous state. In the `catch` blocks, restore the previous state and trigger `toast.error("Failed to sync stage change to server")` so the user is alerted to network or permission rejections. | `src/features/logistics/Logistics.jsx` |
 
 ---
 

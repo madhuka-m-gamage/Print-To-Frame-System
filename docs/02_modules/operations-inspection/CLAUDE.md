@@ -8,7 +8,7 @@ Inspection is the QA gate of Fabrication, not a separate module: four checks (sq
 
 ## Code
 
-- Inside `src/components/operations/FabricationWorks.jsx` (QA dialog, `handlePassQA`, `handleConfirmRevision`) and `FabricationCardDetails.jsx`.
+- Inside `src/features/fabrication/FabricationWorks.jsx` (QA dialog, `handlePassQA`, `handleConfirmRevision`) and `FabricationCardDetails.jsx`.
 
 ## Firestore collections it owns or writes
 
