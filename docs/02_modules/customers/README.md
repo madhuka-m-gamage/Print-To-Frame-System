@@ -4,8 +4,8 @@
 
 ## Files and folders
 
-- `src/components/crm/Customers.jsx`: main UI (registry, create form, detail view with related leads / invoices / projects, CSV export, AI-drafted WhatsApp message).
-- `src/components/crm/ContactSyncModal.jsx` and `src/services/contactsService.js`: one-way Google Contacts import (People API `connections`, using the user's access token). Only `Customers.jsx` uses them.
+- `src/features/customers/Customers.jsx`: main UI (registry, create form, detail view with related leads / invoices / projects, CSV export, AI-drafted WhatsApp message).
+- `src/features/customers/ContactSyncModal.jsx` and `src/services/contactsService.js`: one-way Google Contacts import (People API `connections`, using the user's access token). Only `Customers.jsx` uses them.
 - `src/shared/utils/stringMatch.js`: `findCustomerDuplicates` (fuzzy match, default threshold 0.72).
 - `src/App.jsx`: lazy load, `customers` state, subscription, tab route, and the approval hand-off.
 - `src/services/dataDefaults.js` (`defaultCustomers = []`), `src/services/firestoreSync.js` (`COLLECTIONS.CUSTOMERS`), `firestore.rules` (customers block).

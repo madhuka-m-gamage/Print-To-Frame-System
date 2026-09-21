@@ -27,7 +27,7 @@ import { usePermissions } from '@/context/PermissionsContext';
 import { sendTemplatedEmail } from '@/services/mailer';
 import { deleteUserAccount, resetUserPassword } from '@/services/adminUsers';
 import { logActivity } from '@/services/auditLog';
-import { invoicesForLineage } from '@/utils/leadLineage';
+import { invoicesForLineage } from '@/features/leads/leadLineage';
 
 export default function Partners({ 
   partners = [], 

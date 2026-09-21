@@ -1,5 +1,5 @@
 import { matchesEntity } from '@/shared/utils/entityUtils';
-import { isAcceptedQuote } from './quotationStatus';
+import { isAcceptedQuote } from '@/features/quotations/quotationStatus';
 
 /**
  * Amounts for the Final invoice raised when a deal completes. An Accepted

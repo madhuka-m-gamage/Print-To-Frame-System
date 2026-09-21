@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateCost, determineTier, pricingTiers } from '@/services/pricingEngine';
+import { calculateCost, determineTier, pricingTiers } from '@/features/quotations/pricingEngine';
 
 describe('pricingEngine', () => {
   describe('determineTier', () => {

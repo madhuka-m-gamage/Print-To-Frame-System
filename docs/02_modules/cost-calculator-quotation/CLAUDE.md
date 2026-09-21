@@ -8,8 +8,8 @@ Computes price from sq ft via a five-tier engine, then staff draft versioned quo
 
 ## Code
 
-- `src/components/tools/CostCalculator.jsx`, `src/components/crm/QuotationBuilder.jsx`
-- `src/services/pricingEngine.js`, `gemini.js`
+- `src/features/quotations/CostCalculator.jsx`, `src/features/quotations/QuotationBuilder.jsx`
+- `src/features/quotations/pricingEngine.js`, `gemini.js`
 
 ## Firestore collections it owns or writes
 
@@ -26,4 +26,4 @@ Computes price from sq ft via a five-tier engine, then staff draft versioned quo
 - `cutListEngine.js` and `FrameBlueprintPreview.jsx` belong to Fabrication; `companyInfo.js` is unused.
 - `quotations` rules allow any authenticated user to read and write; there is no `quotations` permission module.
 
-- `calculateCost(tier, sqFt, discountPct = 0, commissionRate = 0)`: no hidden discount or commission. Referral leads pass the partner's rate and 15%; direct leads pass neither. A quotation becomes `Invoiced` once its Advance invoice exists; use `isAcceptedQuote` (`src/utils/quotationStatus.js`) wherever a quote must count as accepted.
+- `calculateCost(tier, sqFt, discountPct = 0, commissionRate = 0)`: no hidden discount or commission. Referral leads pass the partner's rate and 15%; direct leads pass neither. A quotation becomes `Invoiced` once its Advance invoice exists; use `isAcceptedQuote` (`src/features/quotations/quotationStatus.js`) wherever a quote must count as accepted.

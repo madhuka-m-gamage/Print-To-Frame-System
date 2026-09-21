@@ -10,8 +10,8 @@
 
 A comprehensive architectural and trigger audit was conducted across the Deals module and its integration boundaries:
 - **Module Documentation**: `docs/02_modules/deals/README.md`, `docs/02_modules/deals/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
-- **Target UI Components**: `src/components/crm/Deals.jsx`, `src/components/crm/LeadCardDetails.jsx`, `src/components/crm/Leads.jsx`.
-- **Services & Utilities**: `src/shared/utils/entityUtils.js` (`matchesEntity`), `src/utils/logisticsEngine.js`, `src/services/pricingEngine.js`, `src/utils/invoiceTemplate.js`, `src/services/firestoreSync.js`.
+- **Target UI Components**: `src/components/crm/Deals.jsx`, `src/features/leads/LeadCardDetails.jsx`, `src/features/leads/Leads.jsx`.
+- **Services & Utilities**: `src/shared/utils/entityUtils.js` (`matchesEntity`), `src/utils/logisticsEngine.js`, `src/features/quotations/pricingEngine.js`, `src/utils/invoiceTemplate.js`, `src/services/firestoreSync.js`.
 - **Integration & Consumer Surfaces**: `src/App.jsx` (`handleSaveInvoice`, `handleMarkInvoicePaid`, stage transitions), `src/components/operations/FabricationWorks.jsx`, `src/components/crm/Partners.jsx`, `src/features/dashboard/Dashboard.jsx`, `firestore.rules`.
 
 ### Key Discoveries:

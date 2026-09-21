@@ -4,9 +4,9 @@
 
 ## Files and folders
 
-- `src/components/tools/CostCalculator.jsx`: standalone page (tab `calculator`, lazy-loaded in `App.jsx`). No Firestore access.
-- `src/components/crm/QuotationBuilder.jsx`: embedded in `LeadCardDetails.jsx`; receives `onSaveInvoice`.
-- `src/services/pricingEngine.js`: tier table, `calculateCost`, `determineTier`.
+- `src/features/quotations/CostCalculator.jsx`: standalone page (tab `calculator`, lazy-loaded in `App.jsx`). No Firestore access.
+- `src/features/quotations/QuotationBuilder.jsx`: embedded in `LeadCardDetails.jsx`; receives `onSaveInvoice`.
+- `src/features/quotations/pricingEngine.js`: tier table, `calculateCost`, `determineTier`.
 - `src/services/gemini.js`: `generateStructuredQuotation`, `generateQuotation` (markdown variant); both go through `callProxy` to `/api/generate`.
 - `src/constants/emailTemplates.js` (quotation templates), `src/utils/invoiceTemplate.js`, `src/shared/utils/entityUtils.js` (`matchesEntity`).
 - Not part of this module despite the names: `src/utils/cutListEngine.js` and `FrameBlueprintPreview.jsx` (used by Fabrication only); `src/constants/companyInfo.js` is not imported anywhere in `src`.
@@ -33,7 +33,7 @@ Leads (`LeadCardDetails` owns the sq-ft inputs and `applyPricingToLead`, which w
 
 ## Summary
 
-Sq ft is length x height. `determineTier` picks one of five bands (<=50, <=70, <=100, <=150, 150+ sq ft). `calculateCost` works out manufacturing (sq ft x 118.5), fixed per-tier logistics and QA, tier profit and overhead (about 37-40% of base). Discount and partner commission are parameters (`calculateCost(tier, sqFt, discountPct, commissionRate)`), both 0 by default: `getQuotePricingTerms` (`src/utils/quotePricing.js`) gives a referral lead 15% off and its partner's rate (LKR 30.00 per sq ft, flagged `commissionRateDefaulted`, when the partner has none), and a direct lead neither. `applyPricingToLead` stores the final amount and metadata on the lead. Staff draft quotation line items by hand or with Gemini; quotations are saved as versioned documents (Draft, Sent, Accepted, Rejected), and an Accepted quote produces the 75% Advance invoice.
+Sq ft is length x height. `determineTier` picks one of five bands (<=50, <=70, <=100, <=150, 150+ sq ft). `calculateCost` works out manufacturing (sq ft x 118.5), fixed per-tier logistics and QA, tier profit and overhead (about 37-40% of base). Discount and partner commission are parameters (`calculateCost(tier, sqFt, discountPct, commissionRate)`), both 0 by default: `getQuotePricingTerms` (`src/features/quotations/quotePricing.js`) gives a referral lead 15% off and its partner's rate (LKR 30.00 per sq ft, flagged `commissionRateDefaulted`, when the partner has none), and a direct lead neither. `applyPricingToLead` stores the final amount and metadata on the lead. Staff draft quotation line items by hand or with Gemini; quotations are saved as versioned documents (Draft, Sent, Accepted, Rejected), and an Accepted quote produces the 75% Advance invoice.
 
 ## Open questions
 

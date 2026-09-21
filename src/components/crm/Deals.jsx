@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { toast } from '@/shared/utils/toast';
 import DeleteModal from '@/shared/components/DeleteModal';
-import LeadCardDetails from './LeadCardDetails';
+import LeadCardDetails from '@/features/leads/LeadCardDetails';
 import { PageHeader, FilterBar, KanbanColumn, KanbanCard, StatusBadge } from '@/shared/ui';
 import SortableTable from '@/shared/ui/SortableTable';
 import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateInvoiceId, generateAtomicId } from '@/services/firestoreSync';

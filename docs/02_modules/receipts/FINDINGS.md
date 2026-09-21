@@ -35,7 +35,7 @@ However, the audit revealed several architectural disconnects, security gaps, an
 | **Audit Service** | `src/services/auditLog.js` | Logs `RECEIPT_GENERATED` and `RECEIPT_DELETED` actions | Verified with minor discrepancy |
 | **Central Handler** | `src/App.jsx` | `handleGenerateReceipt`, real-time listener subscription, state propagation | Verified with findings |
 | **Security Rules** | `firestore.rules` | Access control for `/receipts/{receiptId}` | Critical disconnects identified |
-| **Originating UI Surfaces** | `src/components/crm/Invoices.jsx`<br/>`src/components/crm/LeadCardDetails.jsx` | Pre-checks and inline generation forms | Verified with findings |
+| **Originating UI Surfaces** | `src/components/crm/Invoices.jsx`<br/>`src/features/leads/LeadCardDetails.jsx` | Pre-checks and inline generation forms | Verified with findings |
 
 ---
 

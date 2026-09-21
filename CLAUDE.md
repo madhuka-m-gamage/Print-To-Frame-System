@@ -48,7 +48,7 @@ For a systematic, folder-by-folder code-review audit of the whole repo (enumerat
 - `src/services/firebase.js` — Firebase app/auth/firestore/storage init, Google OAuth (identity scopes at sign-in; Drive/Contacts scopes requested on demand via `getScopedAccessToken`), email login/register, `handleFirestoreError`.
 - `src/services/firestoreSync.js` — the CRUD/subscription layer every feature uses: `subscribeToCollection`, `addDocument`, `updateDocument`, `setDocument`, `deleteDocument`, `batchWrite`, and `COLLECTIONS` (the canonical Firestore collection-name map — always reference `COLLECTIONS.X` rather than hardcoding a collection string).
 - `src/services/dataDefaults.js` — seed/fallback data shapes when Firestore collections are empty.
-- `src/services/pricingEngine.js` — the quotation/cost-calculator pricing logic (`calculateCost(tier, sqFt, discountPct, commissionRate)`; the referral discount and commission rules live in `src/utils/quotePricing.js`).
+- `src/features/quotations/pricingEngine.js` — the quotation/cost-calculator pricing logic (`calculateCost(tier, sqFt, discountPct, commissionRate)`; the referral discount and commission rules live in `src/features/quotations/quotePricing.js`).
 - `src/services/auditLog.js` — writes to the `auditLog` collection; call `logActivity(userId, userName, action, module, details)` after any state-changing operation (invoice created, user approved, permissions changed, etc.) — this is the established pattern throughout `App.jsx`.
 - `src/services/gemini.js` — client-side helper that calls `/api/generate` (dev: Vite middleware plugin in `vite.config.js`; prod: `api/generate.js` Vercel function).
 

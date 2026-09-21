@@ -10,8 +10,8 @@
 
 A deep-trace correctness audit was performed across the **Cost Calculator & Quotation** module implementation files:
 - **Module Documentation**: `docs/02_modules/cost-calculator-quotation/README.md`, `docs/02_modules/cost-calculator-quotation/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`, `docs/05_decisions/0001-why-quotation-engine-is-custom.md`.
-- **Target UI Components**: `src/components/tools/CostCalculator.jsx` (standalone calculator tool), `src/components/crm/QuotationBuilder.jsx` (embedded structured quote builder), `src/components/crm/LeadCardDetails.jsx` (embedded calculator & quotation wrapper).
-- **Services & Pricing Engine**: `src/services/pricingEngine.js` (five-tier pricing model), `src/services/gemini.js` (`generateStructuredQuotation`, `generateQuotation`, `generateAdvanceInvoice`).
+- **Target UI Components**: `src/features/quotations/CostCalculator.jsx` (standalone calculator tool), `src/features/quotations/QuotationBuilder.jsx` (embedded structured quote builder), `src/features/leads/LeadCardDetails.jsx` (embedded calculator & quotation wrapper).
+- **Services & Pricing Engine**: `src/features/quotations/pricingEngine.js` (five-tier pricing model), `src/services/gemini.js` (`generateStructuredQuotation`, `generateQuotation`, `generateAdvanceInvoice`).
 - **Integration Surfaces**: `src/App.jsx` (`quotations` subscription, `handleSaveInvoice`), `src/shared/utils/entityUtils.js` (`matchesEntity`), `src/utils/invoiceTemplate.js` (invoice printing), `src/components/crm/Deals.jsx`, `src/components/operations/FabricationWorks.jsx`, `firestore.rules`.
 
 ### Key Findings Summary:
@@ -43,7 +43,7 @@ A deep-trace correctness audit was performed across the **Cost Calculator & Quot
 
 | Section / Claim | Code Status | Details / Discrepancy |
 |---|---|---|
-| **Files and Folders** ("`src/components/tools/CostCalculator.jsx`: standalone page... No Firestore access.") | **Accurate** | Confirmed: It is an isolated calculator tool (`tab === 'calculator'`) with local state only. |
+| **Files and Folders** ("`src/features/quotations/CostCalculator.jsx`: standalone page... No Firestore access.") | **Accurate** | Confirmed: It is an isolated calculator tool (`tab === 'calculator'`) with local state only. |
 | **Files and Folders** ("`src/services/gemini.js`: `generateStructuredQuotation`, `generateQuotation` (markdown variant)...") | **Partially Accurate** | `generateQuotation` (markdown) and `generateAdvanceInvoice` are defined in `gemini.js` but are **dead code** (never imported or called anywhere in `src/`). Only `generateStructuredQuotation` is used. |
 | **Files and Folders** ("`src/constants/emailTemplates.js` (quotation templates)") | **Misleading** | While `EMAIL_TEMPLATES` contains `quote_submission` and `quote_followup`, no email sending functionality is wired into `QuotationBuilder.jsx`, `CostCalculator.jsx`, or `LeadCardDetails.jsx`. |
 | **Firestore collections** ("`auditLog (INVOICE_CREATED only; there is no quotation-specific audit entry)`") | **Accurate** | Neither quotation creation, update, version cloning, nor status changes are logged to `auditLog`. |
@@ -173,7 +173,7 @@ A deep-trace correctness audit was performed across the **Cost Calculator & Quot
 The pricing engine implements a five-tier pricing model based on square footage:
 
 ```javascript
-// Pricing tiers in src/services/pricingEngine.js
+// Pricing tiers in src/features/quotations/pricingEngine.js
 "0-50":   { manufRate: 118.5, logistics: 2000, qa: 2000, costSalesRate: 53.5, profitMargin: 0.3997, internalManufRate: 40 }
 "50-70":  { manufRate: 118.5, logistics: 2000, qa: 2000, costSalesRate: 53.5, profitMargin: 0.4000, internalManufRate: 40 }
 "70-100": { manufRate: 118.5, logistics: 3000, qa: 4000, costSalesRate: 53.5, profitMargin: 0.3672, internalManufRate: 40 }

@@ -38,15 +38,15 @@ import { UserAvatar } from "./shared/ui";
 
 // Components
 const Dashboard = React.lazy(() => import("./features/dashboard/Dashboard"));
-const Leads = React.lazy(() => import("./components/crm/Leads"));
+const Leads = React.lazy(() => import("./features/leads/Leads"));
 const Deals = React.lazy(() => import("./components/crm/Deals"));
 const Invoices = React.lazy(() => import("./components/crm/Invoices"));
 const Receipts = React.lazy(() => import("./components/crm/Receipts"));
-const Customers = React.lazy(() => import("./components/crm/Customers"));
+const Customers = React.lazy(() => import("./features/customers/Customers"));
 const Partners = React.lazy(() => import("./components/crm/Partners"));
 const FabricationWorks = React.lazy(() => import("./components/operations/FabricationWorks"));
 const Logistics = React.lazy(() => import("./components/operations/Logistics"));
-const CostCalculator = React.lazy(() => import("./components/tools/CostCalculator"));
+const CostCalculator = React.lazy(() => import("./features/quotations/CostCalculator"));
 const Messages = React.lazy(() => import("./features/messaging/Messages"));
 const AdminPanel = React.lazy(() => import("./components/admin/AdminPanel"));
 import Login from "./features/auth/Login";

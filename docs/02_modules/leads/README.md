@@ -4,12 +4,12 @@
 
 ## Files and folders
 
-- `src/components/crm/Leads.jsx`: Kanban and table UI, stage moves, add / convert / delete, Deal and Project creation (`handleConvertConfirm` ~476-606).
-- `src/components/crm/LeadCardDetails.jsx`: lead detail modal (also used for Deals via an `isDeal` prop). Holds the call-recording UI, pricing calculator, invoice and receipt panels, and the logistics trigger.
-- `src/components/crm/QuotationBuilder.jsx`: embedded in the lead modal; see [cost-calculator-quotation.md](../cost-calculator-quotation/README.md).
+- `src/features/leads/Leads.jsx`: Kanban and table UI, stage moves, add / convert / delete, Deal and Project creation (`handleConvertConfirm` ~476-606).
+- `src/features/leads/LeadCardDetails.jsx`: lead detail modal (also used for Deals via an `isDeal` prop). Holds the call-recording UI, pricing calculator, invoice and receipt panels, and the logistics trigger.
+- `src/features/quotations/QuotationBuilder.jsx`: embedded in the lead modal; see [cost-calculator-quotation.md](../cost-calculator-quotation/README.md).
 - `src/services/gemini.js`: `extractCallScope`, `generateStructuredQuotation`, `generateAdvanceInvoice`.
-- `src/services/pricingEngine.js`: `calculateCost`, `determineTier`.
-- `src/utils/audioProcessing.js`: `downsampleAudio`.
+- `src/features/quotations/pricingEngine.js`: `calculateCost`, `determineTier`.
+- `src/features/leads/audioProcessing.js`: `downsampleAudio`.
 - `api/generate.js`: Vercel proxy for Gemini.
 - `src/App.jsx`: lazy-loads Leads, subscribes to `leads`, and defines `handleSaveInvoice`, `handleMarkInvoicePaid`, `handleGenerateReceipt`.
 - `ContactSyncModal.jsx` and `src/services/contactsService.js` are **not** part of Leads (only `Customers.jsx` imports them).
