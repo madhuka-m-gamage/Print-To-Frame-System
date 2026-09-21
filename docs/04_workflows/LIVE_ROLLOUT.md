@@ -49,7 +49,7 @@ Business Client has no explicit entry for either and gets the same as Customer. 
 - [ ] The latest `staging` commit has a green CI run and a green Vercel preview.
 - [ ] On the Vercel preview of `staging`, sign in as Admin and open every sidebar tab: no error, no blank screen. Create a lead, convert it, add a quote, generate an Advance invoice, upload one blueprint, record a delivery status change.
 - [ ] Take a **backup of the live matrix**: in the Firebase console open Firestore, `settings/permissions`, and copy the document JSON into a file kept outside the repository; note its `updateTime`. (Or export with `gcloud firestore export` to a bucket you control.) Without this, step 1 has no rollback.
-- [ ] Keep the deployed rules text: in the Firebase console open Firestore, Rules, and copy the whole text to a file outside the repository. `git show origin/main:firestore.rules` should be equal to it (it matched on every point checked on 2026-09-21, but it was compared by reading, not by a byte diff, so compare before relying on it for rollback).
+- [x] Keep the deployed rules text. Done 2026-09-21: the owner copied the deployed Firestore rules from the console, and a line-by-line diff against `git show origin/main:firestore.rules` found them identical (240 lines each) apart from trailing whitespace. So the rollback file for the rules steps is `git show origin/main:firestore.rules`. Repeat the comparison on the day if the rules could have been edited in the console since.
 - [ ] Tell the team the window and that staff may need to refresh.
 
 ## Step 1: matrix migration (additive)
