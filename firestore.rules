@@ -16,9 +16,30 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/users/$(request.auth.token.email)).data.role == role;
     }
     
-    // Check if the user is an Admin
+    // The caller's own users document. Only call after checking exists().
+    function callerDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.token.email)).data;
+    }
+
+    // An approved, active account. A Deactivated or Disabled status always wins, even
+    // when isApproved is still true; otherwise the account needs isApproved == true or
+    // status == 'Active' (auth DP-03, rbac finding 1).
+    function isActiveUser() {
+      return isAuthenticated()
+        && exists(/databases/$(database)/documents/users/$(request.auth.token.email))
+        && !(callerDoc().get('status', '') in ['Deactivated', 'Disabled'])
+        && (callerDoc().get('isApproved', false) == true || callerDoc().get('status', '') == 'Active');
+    }
+
+    // Check if the user is an Admin. The bootstrap owner emails count as Admin even
+    // before their users document exists or if it is ever corrupted (auth DP-06).
     function isAdmin() {
-      return hasRole('admin') || hasRole('Admin');
+      return ((hasRole('admin') || hasRole('Admin')) && isActiveUser())
+        || (isAuthenticated() && isBootstrapSuperAdmin(request.auth.token.email));
+    }
+
+    function isAdminRole(role) {
+      return role in ['Admin', 'admin'];
     }
 
     // The two hardcoded owner emails the client app itself treats as a bootstrap/
@@ -32,7 +53,7 @@ service cloud.firestore {
     // Dynamic Permission Check (supports both new granular {view, create, edit, delete, export} and legacy {read, write})
     function checkPermission(module, action) {
       return isAdmin() || (
-        isAuthenticated() 
+        isActiveUser()
         && exists(/databases/$(database)/documents/users/$(request.auth.token.email))
         && exists(/databases/$(database)/documents/settings/permissions)
         && (
@@ -81,10 +102,18 @@ service cloud.firestore {
     // Anything else — including a non-admin flipping their own role to 'Admin', or
     // self-approving / self-reactivating after being deactivated, via the Firestore SDK
     // directly (bypassing the UI) — is rejected.
+    // Read: Admin, the user themselves, or a role that manages users or uses messaging
+    // (rbac finding 12). A Manager holding the agents permission may also administer
+    // users (employees D4), but never grant Admin, touch an Admin, or change their own
+    // role, approval or status.
     match /users/{userId} {
-      allow read: if isAuthenticated();
+      allow read: if isAdmin()
+        || (isAuthenticated() && request.auth.token.email == userId)
+        || checkPermission('agents', 'view')
+        || checkPermission('messages', 'view');
 
       allow create: if isAdmin()
+        || (checkPermission('agents', 'create') && !isAdminRole(request.resource.data.get('role', '')))
         || (isAuthenticated() && request.auth.token.email == userId && (
              (request.resource.data.role == 'Customer'
                && request.resource.data.isApproved == false
@@ -93,6 +122,10 @@ service cloud.firestore {
            ));
 
       allow update: if isAdmin()
+        || (checkPermission('agents', 'edit')
+             && request.auth.token.email != userId
+             && !isAdminRole(resource.data.get('role', ''))
+             && !isAdminRole(request.resource.data.get('role', '')))
         || (isAuthenticated() && request.auth.token.email == userId && (
              (request.resource.data.role == resource.data.role
                && request.resource.data.isApproved == resource.data.isApproved
@@ -100,14 +133,21 @@ service cloud.firestore {
              || (isBootstrapSuperAdmin(userId) && request.resource.data.role == 'Admin')
            ));
 
-      allow delete: if isAdmin();
+      allow delete: if isAdmin()
+        || (checkPermission('agents', 'delete')
+             && request.auth.token.email != userId
+             && !isAdminRole(resource.data.get('role', '')));
     }
 
     // ── Pending Users ─────────────────────────────────────
     match /pendingUsers/{userId} {
       allow create: if true;
       allow read: if isAuthenticated() && request.auth.token.email == userId;
-      allow read, update, delete: if isAdmin();
+      // An applicant may finish their own registration record (auth DP-02), but never
+      // mark it approved; approval is an Admin action.
+      allow update: if isAuthenticated() && request.auth.token.email == userId
+        && request.resource.data.get('isApproved', false) == false;
+      allow read, update, delete: if isAdmin() || checkPermission('agents', 'edit');
     }
 
     // ── Partner Applications (public "Register Partner" request form) ────
@@ -116,18 +156,28 @@ service cloud.firestore {
     // same review-queue shape as pendingUsers above.
     match /partner_applications/{applicationId} {
       allow create: if true;
-      allow read, update, delete: if isAdmin();
+      allow read, update, delete: if isAdmin() || checkPermission('agents', 'edit');
     }
 
     // ── Leads (CRM) ──────────────────────────────────────
+    // Deals are stored here with isDeal == true, so they are governed by the pipeline
+    // permission and plain leads by the leads permission; either one may read.
     match /leads/{leadId} {
-      allow read: if checkPermission('leads', 'view') || checkPermission('leads', 'read');
-      allow create: if checkPermission('leads', 'create') || checkPermission('leads', 'write') || (request.resource.data.source == 'Referral');
-      allow update: if checkPermission('leads', 'edit') || checkPermission('leads', 'write');
-      allow delete: if isAdmin();
+      allow read: if checkPermission('leads', 'view') || checkPermission('leads', 'read')
+        || checkPermission('pipeline', 'view') || checkPermission('pipeline', 'read');
+      allow create: if (request.resource.data.get('isDeal', false) == true
+            ? (checkPermission('pipeline', 'create') || checkPermission('pipeline', 'write'))
+            : (checkPermission('leads', 'create') || checkPermission('leads', 'write')))
+        || (request.resource.data.get('source', '') == 'Referral');
+      allow update: if (resource.data.get('isDeal', false) == true
+            ? (checkPermission('pipeline', 'edit') || checkPermission('pipeline', 'write'))
+            : (checkPermission('leads', 'edit') || checkPermission('leads', 'write')));
+      allow delete: if checkPermission('leads', 'delete');
     }
 
     // ── Deals ────────────────────────────────────────────
+    // Unused: the app stores deals in `leads` with isDeal == true (see above). Kept only
+    // so a stray write to a `deals` collection is not silently denied by the catch-all.
     match /deals/{dealId} {
       allow read: if checkPermission('pipeline', 'view') || checkPermission('pipeline', 'read');
       allow create, update: if checkPermission('pipeline', 'create') || checkPermission('pipeline', 'edit') || checkPermission('pipeline', 'write');
@@ -136,21 +186,42 @@ service cloud.firestore {
 
     // ── Quotations ────────────────────────────────────────
     match /quotations/{quotationId} {
-      allow read, write: if isAuthenticated();
+      allow read: if checkPermission('quotations', 'view') || checkPermission('quotations', 'read');
+      allow create: if checkPermission('quotations', 'create') || checkPermission('quotations', 'write');
+      allow update: if checkPermission('quotations', 'edit') || checkPermission('quotations', 'write');
+      allow delete: if checkPermission('quotations', 'delete');
     }
 
     // ── Sequential-ID counters (e.g. invoice numbering) ──────
     // Holds only a single incrementing integer per prefix — no business
     // data — written via a Firestore transaction from generateInvoiceId().
+    // Only the known prefixes, holding a single positive integer { value } that can
+    // step ahead by at most one, so a caller cannot invent a counter or jump a
+    // sequence forward. There is deliberately no lower bound against the stored value:
+    // client transactions are checked at commit against the latest document, so under
+    // contention a queued writer holds a value that is already behind it and a strict
+    // "must increase" rule rejects legitimate calls. A signed-in user can therefore
+    // still lower a counter; closing that needs the numbering moved server-side.
+    function isKnownCounter(counterId) {
+      return counterId in ['INV-ADV', 'INV-FIN', 'L-DL', 'L-PK', 'PTF', 'QT', 'L', 'D'];
+    }
     match /counters/{counterId} {
-      allow read, write: if isAuthenticated();
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isKnownCounter(counterId)
+        && request.resource.data.keys().hasOnly(['value'])
+        && request.resource.data.value == 1;
+      allow update: if isAuthenticated() && isKnownCounter(counterId)
+        && request.resource.data.keys().hasOnly(['value'])
+        && request.resource.data.value is int
+        && request.resource.data.value >= 1
+        && request.resource.data.value <= resource.data.value + 1;
     }
 
     // ── Invoices ─────────────────────────────────────────
     match /invoices/{invoiceId} {
       allow read: if checkPermission('invoices', 'view') || checkPermission('invoices', 'read') || (isAuthenticated() && resource.data.customerId == request.auth.token.email) || (isAuthenticated() && resource.data.partnerId == request.auth.token.email);
       allow create, update: if checkPermission('invoices', 'create') || checkPermission('invoices', 'edit') || checkPermission('invoices', 'write');
-      allow delete: if isAdmin();
+      allow delete: if checkPermission('invoices', 'delete');
     }
 
     // ── Receipts (payment-received records issued against paid invoices) ──
@@ -159,12 +230,18 @@ service cloud.firestore {
         || (isAuthenticated() && resource.data.customerId == request.auth.token.email)
         || (isAuthenticated() && resource.data.partnerId == request.auth.token.email);
       allow create, update: if checkPermission('receipts', 'create') || checkPermission('receipts', 'edit') || checkPermission('receipts', 'write');
-      allow delete: if isAdmin();
+      allow delete: if checkPermission('receipts', 'delete');
     }
 
     // ── Customers ────────────────────────────────────────
     match /customers/{customerId} {
-      allow read: if checkPermission('customers', 'view') || checkPermission('customers', 'read');
+      allow read: if checkPermission('customers', 'view') || checkPermission('customers', 'read')
+        || (isAuthenticated() && (resource.data.email == request.auth.token.email || resource.data.nic == request.auth.token.email));
+      // A client may keep their own profile up to date (customers Decision 9), and only
+      // the fields UserProfile.jsx syncs, never order or financial fields.
+      allow update: if isAuthenticated()
+        && (resource.data.email == request.auth.token.email || resource.data.nic == request.auth.token.email)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'photoURL', 'phone', 'address']);
       allow create, update: if checkPermission('customers', 'create') || checkPermission('customers', 'edit') || checkPermission('customers', 'write');
       allow delete: if checkPermission('customers', 'delete') || isAdmin();
     }
@@ -176,18 +253,40 @@ service cloud.firestore {
       allow delete: if checkPermission('partners', 'delete') || isAdmin();
     }
 
+    // ── Referral Claims (partners report referrals the system missed) ──────
+    // Any signed-in user may file a claim; only staff reviewers and the claiming partner
+    // read them, and only an Admin resolves or removes them (partners D-6).
+    match /referral_claims/{claimId} {
+      allow create: if isAuthenticated();
+      allow read: if isAdmin()
+        || (checkPermission('partners', 'view') && !hasRole('Partner'))
+        || (isAuthenticated() && resource.data.get('partnerEmail', '') == request.auth.token.email);
+      allow update, delete: if isAdmin();
+    }
+
+    // ── Partner Payouts (commission disbursement records) ──────────────────
+    // Written only by an Admin. Partners see their own payouts; the Partner role's
+    // partners permission does not open other partners' payouts (partners D-6).
+    match /partner_payouts/{payoutId} {
+      allow read: if isAdmin()
+        || (checkPermission('partners', 'view') && !hasRole('Partner'))
+        || (isAuthenticated() && (resource.data.get('partnerEmail', '') == request.auth.token.email
+             || resource.data.get('partnerId', '') == request.auth.token.email));
+      allow create, update, delete: if isAdmin();
+    }
+
     // ── Fabrication / Projects ───────────────────────────
     match /projects/{projectId} {
       allow read: if checkPermission('projects', 'view') || checkPermission('projects', 'read') || (isAuthenticated() && resource.data.customerId == request.auth.token.email);
       allow create, update: if checkPermission('projects', 'create') || checkPermission('projects', 'edit') || checkPermission('projects', 'write');
-      allow delete: if isAdmin();
+      allow delete: if checkPermission('projects', 'delete');
     }
 
     // ── Logistics ────────────────────────────────────────
     match /logistics/{logId} {
       allow read: if checkPermission('logistics', 'view') || checkPermission('logistics', 'read') || (isAuthenticated() && resource.data.customerId == request.auth.token.email);
       allow create, update: if checkPermission('logistics', 'create') || checkPermission('logistics', 'edit') || checkPermission('logistics', 'write');
-      allow delete: if isAdmin();
+      allow delete: if checkPermission('logistics', 'delete');
     }
 
     // ── Pricing Config (Admin-only write) ────────────────
@@ -202,12 +301,18 @@ service cloud.firestore {
     // the original sender (or an Admin) can edit a message. A conversation participant
     // may still update a message that isn't theirs, but ONLY to touch `readBy` — this is
     // what markChatAsRead() needs to record read receipts on the other party's messages.
+    // Read: only a conversation's participants (or an Admin) with the messages permission.
+    // Create: only as yourself and only into a conversation you are part of (D-MSG-01/02).
     match /messages/{messageId} {
-      allow read, create: if isAuthenticated();
+      allow read: if checkPermission('messages', 'view')
+        && (isAdmin() || request.auth.token.email in resource.data.participants);
+      allow create: if checkPermission('messages', 'create')
+        && request.resource.data.fromId == request.auth.token.email
+        && request.auth.token.email in request.resource.data.participants;
       allow update: if isAdmin()
         || (isAuthenticated() && resource.data.fromId == request.auth.token.email)
         || (isAuthenticated() && request.auth.token.email in resource.data.participants
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy']));
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy', 'updatedAt']));
       allow delete: if isAdmin() || (
         isAuthenticated() &&
         resource.data.fromId == request.auth.token.email &&

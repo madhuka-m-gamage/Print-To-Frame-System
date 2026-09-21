@@ -1,6 +1,6 @@
 # Partners Module Review & Correctness Audit Findings
 
-> **Scope**: Correctness review of `docs/02_modules/partners/CLAUDE.md`, `docs/02_modules/partners.md`, and all cross-module triggers touching Partners documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
+> **Scope**: Correctness review of `docs/02_modules/partners/CLAUDE.md`, `docs/02_modules/partners/README.md`, and all cross-module triggers touching Partners documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
 > **Branch / Worktree**: `review-partners` (`.worktrees/review-partners`)  
 > **Status**: Review & Audit complete — all 12 decision points accepted by product owner on 2026-09-20. Ready for implementation.
 
@@ -9,9 +9,9 @@
 ## 1. Executive Summary
 
 A thorough architectural and trigger audit was conducted across the Partners module, its public touchpoints, authentication and onboarding pipelines, commission ledger engines, and cross-module trigger chains:
-- **Module Documentation**: `docs/02_modules/partners.md`, `docs/02_modules/partners/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
-- **Target UI Components**: `src/components/crm/Partners.jsx`, `src/components/crm/PartnerQRModal.jsx`, `src/components/public/PartnerRegistration.jsx`, `src/components/public/ReferralForm.jsx`.
-- **Cross-Module Integrations**: `src/components/admin/AgentDatabase.jsx` (partner application review and user provisioning), `src/components/crm/Deals.jsx` (commission accrual upon stage transition), `src/App.jsx` (route guards, approval hand-off, collection subscriptions, payment clearance, and payout eligibility notifications), `src/components/crm/LeadCardDetails.jsx` (agent assignment dropdown).
+- **Module Documentation**: `docs/02_modules/partners/README.md`, `docs/02_modules/partners/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
+- **Target UI Components**: `src/features/partners/Partners.jsx`, `src/features/partners/PartnerQRModal.jsx`, `src/features/partners/PartnerRegistration.jsx`, `src/features/partners/ReferralForm.jsx`.
+- **Cross-Module Integrations**: `src/features/admin/AgentDatabase.jsx` (partner application review and user provisioning), `src/features/deals/Deals.jsx` (commission accrual upon stage transition), `src/App.jsx` (route guards, approval hand-off, collection subscriptions, payment clearance, and payout eligibility notifications), `src/features/leads/LeadCardDetails.jsx` (agent assignment dropdown).
 - **Backend Services & Security Rules**: `api/send-email.js` (templated email delivery), `api/admin-user.js` (Firebase Admin SDK user creation and password resets), `firestore.rules` (`partners`, `partner_applications`, `leads`, missing collections).
 - **Permissions & RBAC**: `src/constants/roles.js`, `src/context/PermissionsContext.jsx`.
 
@@ -76,7 +76,7 @@ A thorough architectural and trigger audit was conducted across the Partners mod
 | **Before you edit** ("Ledger states are derived on the fly in `Partners.jsx`, not stored.") | **Accurate** | Confirmed: `getPartnerReferrals` derives ledger states dynamically in memory from `leads` and `invoices`. |
 | **Before you edit** ("Partner users are restricted to dashboard, notifications, partners, profile (route guard + matrix).") | **Partially Discrepant** | The route guard whitelists these 4 tabs, but the Mobile Quick Dock includes a 5th tab (`messages`), causing an immediate redirect bounce. |
 
-### 2.2 `docs/02_modules/partners.md`
+### 2.2 `docs/02_modules/partners/README.md`
 
 | Section / Claim | Code Status | Details / Discrepancy |
 |---|---|---|
@@ -94,7 +94,7 @@ A thorough architectural and trigger audit was conducted across the Partners mod
 ### Trigger 6a: Public Referral Form Submission
 
 * **Trigger**: Prospective customer visits `/referral?ref=<partnerId>` and submits the contact form.
-* **Implementation**: `src/components/public/ReferralForm.jsx:L74-L128`.
+* **Implementation**: `src/features/partners/ReferralForm.jsx:L74-L128`.
 * **Trace & Analysis**:
   1. **Partner ID Resolution**:
      - Extracts `pid` from URL query parameter `?ref=` or `?partnerId=`.
@@ -139,7 +139,7 @@ A thorough architectural and trigger audit was conducted across the Partners mod
 ### Trigger 6b: Deal Completion Commission Accrual
 
 * **Trigger**: Deal card moved from `"Hand Over"` to `"Completed"` on the Deals Kanban board.
-* **Implementation**: `src/components/crm/Deals.jsx:L362-L385`.
+* **Implementation**: `src/features/deals/Deals.jsx:L362-L385`.
 * **Trace & Analysis**:
   1. **Execution Timing Discrepancy**:
      - Documented as occurring upon entering "Hand Over".
@@ -448,7 +448,7 @@ In `Partners.jsx:L801-L808`, the Admin Claims Desk displays a button: "Verify & 
 
 ### 4.10 Dashboard Domain Misclassification
 
-In `src/components/dashboard/Dashboard.jsx:L22`:
+In `src/features/dashboard/Dashboard.jsx:L22`:
 ```javascript
 if (r.includes('operation') || r.includes('logistics') || r.includes('fabricat') || r.includes('workshop') || r.includes('partner')) {
   return 'operations';
@@ -465,18 +465,18 @@ if (r.includes('operation') || r.includes('logistics') || r.includes('fabricat')
 
 | # | Topic / Area | Decision Accepted | Resolution | Files to Change |
 |---|---|---|---|---|
-| **D-1** | **Payout Settlement Persistence (Trigger 6d)** | ✅ ACCEPTED | Implement real month-end settlement transaction: create document in `COLLECTIONS.PARTNER_PAYOUTS` (`partner_payouts`) with amount, partner ID, transaction ref (`TXN-######`), timestamp, and list of settled lead IDs; update matching leads to `payoutStatus: 'Paid'`; debit `partner.pending` and increment `partner.settled` (or `paid`); record `PAYOUT_DISBURSED` in `auditLog`. Wire this directly to the "Disburse Payout" button in `Partners.jsx`. | `src/components/crm/Partners.jsx` (`handleDisbursePayout`), `src/services/auditLog.js` |
-| **D-2** | **Referral Ledger Lineage & Premature Eligibility** | ✅ ACCEPTED | In `getPartnerReferrals` (`Partners.jsx`), filter out converted lead ancestors (`!lead.convertedToDeal`). Evaluate `Eligible for Payout` strictly when `lead.isDeal && (lead.referralStatus === 'Eligible for Payout' \|\| paymentStatus === '100% Fully Settled')`. This eliminates duplicate referral rows and prevents unconverted/in-progress deals from prematurely showing as payable. | `src/components/crm/Partners.jsx` (`getPartnerReferrals`) |
-| **D-3** | **Commission Accrual Timing & Zero SqFt Fallback (Trigger 6b)** | ✅ ACCEPTED | Maintain accrual on Deal Completion in `Deals.jsx:L332` and update documentation to reflect actual behavior. In `Deals.jsx:L363`, add fallback when `totalSqFt <= 0`: `const effectiveSqFt = Number(deal.totalSqFt) > 0 ? Number(deal.totalSqFt) : 0; const commissionAmount = effectiveSqFt > 0 ? effectiveSqFt * commRate : (Number(deal.value \|\| 0) / 850) * commRate;`. Only increment `partner.totalSqFt` when `effectiveSqFt > 0`. | `src/components/crm/Deals.jsx` (`handleMoveForwardInner`), `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`, `docs/02_modules/partners.md` |
-| **D-4** | **Stage Reversal Commission Duplication** | ✅ ACCEPTED | Lock completed deals from backward transition (`onMoveBack = null` for last stage in `DealColumn`). Additionally, flag the deal document with `commissionAccrued: true` upon completion so any future state transitions will not duplicate the commission accrual. | `src/components/crm/Deals.jsx` (`DealColumn`, `handleMoveForwardInner`) |
+| **D-1** | **Payout Settlement Persistence (Trigger 6d)** | ✅ ACCEPTED | Implement real month-end settlement transaction: create document in `COLLECTIONS.PARTNER_PAYOUTS` (`partner_payouts`) with amount, partner ID, transaction ref (`TXN-######`), timestamp, and list of settled lead IDs; update matching leads to `payoutStatus: 'Paid'`; debit `partner.pending` and increment `partner.settled` (or `paid`); record `PAYOUT_DISBURSED` in `auditLog`. Wire this directly to the "Disburse Payout" button in `Partners.jsx`. | `src/features/partners/Partners.jsx` (`handleDisbursePayout`), `src/services/auditLog.js` |
+| **D-2** | **Referral Ledger Lineage & Premature Eligibility** | ✅ ACCEPTED | In `getPartnerReferrals` (`Partners.jsx`), filter out converted lead ancestors (`!lead.convertedToDeal`). Evaluate `Eligible for Payout` strictly when `lead.isDeal && (lead.referralStatus === 'Eligible for Payout' \|\| paymentStatus === '100% Fully Settled')`. This eliminates duplicate referral rows and prevents unconverted/in-progress deals from prematurely showing as payable. | `src/features/partners/Partners.jsx` (`getPartnerReferrals`) |
+| **D-3** | **Commission Accrual Timing & Zero SqFt Fallback (Trigger 6b)** | ✅ ACCEPTED | Maintain accrual on Deal Completion in `Deals.jsx:L332` and update documentation to reflect actual behavior. In `Deals.jsx:L363`, add fallback when `totalSqFt <= 0`: `const effectiveSqFt = Number(deal.totalSqFt) > 0 ? Number(deal.totalSqFt) : 0; const commissionAmount = effectiveSqFt > 0 ? effectiveSqFt * commRate : (Number(deal.value \|\| 0) / 850) * commRate;`. Only increment `partner.totalSqFt` when `effectiveSqFt > 0`. | `src/features/deals/Deals.jsx` (`handleMoveForwardInner`), `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`, `docs/02_modules/partners/README.md` |
+| **D-4** | **Stage Reversal Commission Duplication** | ✅ ACCEPTED | Lock completed deals from backward transition (`onMoveBack = null` for last stage in `DealColumn`). Additionally, flag the deal document with `commissionAccrued: true` upon completion so any future state transitions will not duplicate the commission accrual. | `src/features/deals/Deals.jsx` (`DealColumn`, `handleMoveForwardInner`) |
 | **D-5** | **Public Partner Lookup Security Rules (Trigger 6a)** | ✅ ACCEPTED | Update `firestore.rules` under `match /partners/{partnerId}` to permit public read access for active partners: `allow read: if checkPermission('partners', 'view') \|\| checkPermission('partners', 'read') \|\| (resource.data.status == 'Active') \|\| (isAuthenticated() && partnerId == request.auth.token.email);`. This ensures `ReferralForm.jsx` displays the partner's actual studio branding and negotiated commission rate. | `firestore.rules` (`match /partners/{partnerId}`) |
 | **D-6** | **Missing Firestore Security Rules for Claims & Payouts** | ✅ ACCEPTED | Add explicit match blocks in `firestore.rules`: (1) `/referral_claims/{claimId}`: allow create if authenticated or submitting pending claim; allow read if partner view permission or admin; allow update/delete if admin. (2) `/partner_payouts/{payoutId}`: allow read if partner view permission or matching partner email; allow create/update/delete if admin. | `firestore.rules` (add `referral_claims` and `partner_payouts` match blocks) |
-| **D-7** | **Marketing URL Discrepancy** | ✅ ACCEPTED | Standardize `publicQrUrl` in `Partners.jsx:L699` to return `${origin}/referral?ref=${pid}`, identical to `PartnerQRModal.jsx`, ensuring partners copy the valid internal referral form route. | `src/components/crm/Partners.jsx` (`publicQrUrl`) |
+| **D-7** | **Marketing URL Discrepancy** | ✅ ACCEPTED | Standardize `publicQrUrl` in `Partners.jsx:L699` to return `${origin}/referral?ref=${pid}`, identical to `PartnerQRModal.jsx`, ensuring partners copy the valid internal referral form route. | `src/features/partners/Partners.jsx` (`publicQrUrl`) |
 | **D-8** | **Partner Mobile Navigation Dock Conflict** | ✅ ACCEPTED | Align mobile dock with role permissions. In `App.jsx:L1458-L1464`, replace the "Chat" (`messages`) button with "Profile" (`profile`) in the Partner Mobile Quick Dock, eliminating the tab collision and redirect loop. | `src/App.jsx` (Mobile Quick Dock navigation) |
 | **D-9** | **Partner Role Read Access to Referred Leads & Invoices** | ✅ ACCEPTED | In `firestore.rules`, update `/leads/{leadId}` and `/invoices/{invoiceId}` to allow read if the authenticated user is the assigned partner (`resource.data.partnerId == request.auth.token.email \|\| resource.data.agentId == getUserData().partnerId`). In `App.jsx`, scope collection subscriptions for the Partner role to their own records. | `firestore.rules` (`leads` and `invoices` match blocks), `src/App.jsx` (`subscribeToCollection`) |
-| **D-10** | **Field Discrepancy: `partnerId` vs `agentId`** | ✅ ACCEPTED | Normalize field assignment across the CRM: when selecting an agent in `LeadCardDetails.jsx`, write both `agentId: p.partnerId` and `partnerId: p.partnerId`, along with `partnerName: p.name` and `commissionRate: p.commissionRate`. Update `App.jsx:L529` to match on `targetLead.partnerId \|\| targetLead.agentId`. | `src/components/crm/LeadCardDetails.jsx` (`handleInputChange`), `src/App.jsx` (`handleMarkInvoicePaid`) |
+| **D-10** | **Field Discrepancy: `partnerId` vs `agentId`** | ✅ ACCEPTED | Normalize field assignment across the CRM: when selecting an agent in `LeadCardDetails.jsx`, write both `agentId: p.partnerId` and `partnerId: p.partnerId`, along with `partnerName: p.name` and `commissionRate: p.commissionRate`. Update `App.jsx:L529` to match on `targetLead.partnerId \|\| targetLead.agentId`. | `src/features/leads/LeadCardDetails.jsx` (`handleInputChange`), `src/App.jsx` (`handleMarkInvoicePaid`) |
 | **D-11** | **Commission Notification Persistence & Targeting** | ✅ ACCEPTED | In `App.jsx:L545`, write commission clearance notifications to the `notifications` Firestore collection tagged with `recipientEmail: referredPartner?.email` and `targetRole: 'Partner'`, allowing persistent delivery across reloads to the partner portal. | `src/App.jsx` (`handleMarkInvoicePaid`) |
-| **D-12** | **Offline Referral Claims Workflow Resolution** | ✅ ACCEPTED | Implement claim resolution workflow in `Partners.jsx`: when an admin clicks "Verify & Credit Commission", open a modal allowing the admin to link the claim to an existing lead (setting `partnerId`) or convert the claim into a new Lead with `source: 'Referral'`, ensuring real downstream pipeline and commission linkage. | `src/components/crm/Partners.jsx` (`handleVerifyClaim`) |
+| **D-12** | **Offline Referral Claims Workflow Resolution** | ✅ ACCEPTED | Implement claim resolution workflow in `Partners.jsx`: when an admin clicks "Verify & Credit Commission", open a modal allowing the admin to link the claim to an existing lead (setting `partnerId`) or convert the claim into a new Lead with `source: 'Referral'`, ensuring real downstream pipeline and commission linkage. | `src/features/partners/Partners.jsx` (`handleVerifyClaim`) |
 
 ---
 
@@ -485,15 +485,15 @@ if (r.includes('operation') || r.includes('logistics') || r.includes('fabricat')
 > All items in §5 are **accepted**. The following checklist tracks execution status. Mark `[x]` when a change is committed to the `review-partners` branch.
 
 - [ ] **D-1** — Implement real `handleDisbursePayout` in `Partners.jsx`: write `partner_payouts` doc, update leads `payoutStatus: 'Paid'`, update partner balances, emit `PAYOUT_DISBURSED` audit log.
-- [ ] **D-2** — Filter out `!lead.convertedToDeal` in `Partners.jsx` `getPartnerReferrals` and gate `Eligible for Payout` on `lead.isDeal` and full settlement.
-- [ ] **D-3** — In `Deals.jsx:L363`, add `(Number(deal.value) / 850) * commRate` fallback when `totalSqFt <= 0`; update trigger documentation.
-- [ ] **D-4** — Disable backward moves on Completed deal cards in `Deals.jsx` (`DealColumn` conditional `onMoveBack`); add `commissionAccrued: true` idempotency check.
+- [x] **D-2** — Filter out `!lead.convertedToDeal` in `Partners.jsx` `getPartnerReferrals` and gate `Eligible for Payout` on `lead.isDeal` and full settlement.
+- [x] **D-3** — In `Deals.jsx:L363`, add `(Number(deal.value) / 850) * commRate` fallback when `totalSqFt <= 0`; update trigger documentation.
+- [x] **D-4** — Disable backward moves on Completed deal cards in `Deals.jsx` (`DealColumn` conditional `onMoveBack`); add `commissionAccrued: true` idempotency check.
 - [ ] **D-5** — Update `firestore.rules` under `/partners/{partnerId}` to permit read access if `resource.data.status == 'Active'`.
-- [ ] **D-6** — Add explicit security rules in `firestore.rules` for `/referral_claims/{claimId}` and `/partner_payouts/{payoutId}`.
-- [ ] **D-7** — Standardize `publicQrUrl` in `Partners.jsx:L699` to return `${origin}/referral?ref=${pid}`.
-- [ ] **D-8** — Replace "Chat" (`messages`) with "Profile" (`profile`) in `App.jsx` Mobile Quick Dock for Partner role.
+- [x] **D-6** — Add explicit security rules in `firestore.rules` for `/referral_claims/{claimId}` and `/partner_payouts/{payoutId}`.
+- [x] **D-7** — Standardize `publicQrUrl` in `Partners.jsx:L699` to return `${origin}/referral?ref=${pid}`.
+- [x] **D-8** — Replace "Chat" (`messages`) with "Profile" (`profile`) in `App.jsx` Mobile Quick Dock for Partner role.
 - [ ] **D-9** — Add scoped read permissions in `firestore.rules` for Partner role on `/leads` and `/invoices`; scope subscriptions in `App.jsx`.
-- [ ] **D-10** — In `LeadCardDetails.jsx`, populate both `partnerId` and `agentId` with name and rate; update `App.jsx:L529` to match `partnerId || agentId`.
+- [x] **D-10** — In `LeadCardDetails.jsx`, populate both `partnerId` and `agentId` with name and rate; update `App.jsx:L529` to match `partnerId || agentId`.
 - [ ] **D-11** — Write persistent commission clearance notifications to Firestore `notifications` collection targeted to partner email/role in `App.jsx`.
 - [ ] **D-12** — Add claim linkage / conversion modal to `handleVerifyClaim` in `Partners.jsx`.
 

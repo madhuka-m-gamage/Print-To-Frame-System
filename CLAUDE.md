@@ -15,10 +15,11 @@ npm run preview       # preview the production build on port 3000
 npm run lint          # eslint .
 ```
 
-There are two test layers, both real and runnable:
+There are five test layers, all real and runnable (see `docs/04_workflows/TESTING.md` for the full guide):
 - `npm test` — Vitest unit tests (`tests/unit/`), pure logic only (email template interpolation, RBAC permission-matrix shape). No Firebase dependency, runs in ~2s.
 - `npm run test:rules` — integration tests (`tests/integration/`) run against a real local Firebase Emulator (Firestore + Auth), started and torn down automatically via `firebase emulators:exec`. These exercise `firestore.rules` itself — e.g. proving a non-admin genuinely cannot escalate their own role via a direct Firestore write, not just that the UI hides the button. Needs Java installed (the emulator JARs require it) but no real Firebase project, login, or credentials — it runs against a fake `demo-print2frame-test` project id.
-- `npm run test:all` runs both in sequence.
+- `npm run test:api` runs the Vercel handler tests, `npm run test:component` the React Testing Library tests (jsdom), and `npm run test:e2e` the Playwright journeys against the emulators.
+- `npm run test:all` runs unit, API, component and rules in sequence; CI runs the same on pull requests.
 
 The previous `tests/e2e.test.js` (a Puppeteer script for a Windows/local Chrome path, never wired into `npm test` and non-functional in this environment) has been removed — this is what it was replaced with.
 
@@ -42,12 +43,12 @@ For a systematic, folder-by-folder code-review audit of the whole repo (enumerat
 
 ### Everything is one Firestore-backed SPA
 
-`src/App.jsx` is the composition root: it owns all top-level state (`leads`, `customers`, `partners`, `projects`, `logisticsJobs`, `invoices`, `quotations`, `users`), subscribes to Firestore in real time via `subscribeToCollection` (`src/services/firestoreSync.js`), and passes state + setters down as props to each lazy-loaded route component in `src/components/{crm,operations,dashboard,admin,tools}`. There is no router library — `activeTab` (a string) selects which component renders in `<main>`, gated by `canAccess(role, tab)`.
+`src/App.jsx` is the composition root: it owns all top-level state (`leads`, `customers`, `partners`, `projects`, `logisticsJobs`, `invoices`, `quotations`, `users`), subscribes to Firestore in real time via `subscribeToCollection` (`src/services/firestoreSync.js`), and passes state + setters down as props to each lazy-loaded route component in `src/features/<domain>`. There is no router library — `activeTab` (a string) selects which component renders in `<main>`, gated by `canAccess(role, tab)`.
 
-- `src/services/firebase.js` — Firebase app/auth/firestore/storage init, Google OAuth (with Drive/Contacts scopes), email login/register, `handleFirestoreError`.
+- `src/services/firebase.js` — Firebase app/auth/firestore/storage init, Google OAuth (identity scopes at sign-in; Drive/Contacts scopes requested on demand via `getScopedAccessToken`), email login/register, `handleFirestoreError`.
 - `src/services/firestoreSync.js` — the CRUD/subscription layer every feature uses: `subscribeToCollection`, `addDocument`, `updateDocument`, `setDocument`, `deleteDocument`, `batchWrite`, and `COLLECTIONS` (the canonical Firestore collection-name map — always reference `COLLECTIONS.X` rather than hardcoding a collection string).
 - `src/services/dataDefaults.js` — seed/fallback data shapes when Firestore collections are empty.
-- `src/services/pricingEngine.js` — the quotation/cost-calculator pricing logic (frame sizing, sq ft, commission math).
+- `src/features/quotations/pricingEngine.js` — the quotation/cost-calculator pricing logic (`calculateCost(tier, sqFt, discountPct, commissionRate)`; the referral discount and commission rules live in `src/features/quotations/quotePricing.js`).
 - `src/services/auditLog.js` — writes to the `auditLog` collection; call `logActivity(userId, userName, action, module, details)` after any state-changing operation (invoice created, user approved, permissions changed, etc.) — this is the established pattern throughout `App.jsx`.
 - `src/services/gemini.js` — client-side helper that calls `/api/generate` (dev: Vite middleware plugin in `vite.config.js`; prod: `api/generate.js` Vercel function).
 
@@ -60,7 +61,7 @@ Permissions are enforced in **three** places that all need to agree when changin
 
 There are two hardcoded "bootstrap super admin" emails (see `App.jsx`'s "Self-Healing Super Admin Guard" and the matching `isBootstrapSuperAdmin()` in `firestore.rules`) that always self-heal back to role `Admin` / `status: Active` on login — this is intentional and mirrored on both client and rules, don't "fix" it away.
 
-New users self-provision into `pendingUsers` (or `users` directly for the bootstrap admin emails) on first sign-in; an Admin approves via `AgentDatabase.jsx`, which also auto-provisions a matching `partners` or `customers` record depending on the granted role (`Partner` / `Business Client`). `role`, `isApproved`, and `status` are user-profile fields that must never be client-settable outside these narrow approve/self-heal paths — see the security comments at the top of the `users` match block in `firestore.rules` before touching that collection's rules.
+New users self-provision into `pendingUsers` (or `users` directly for the bootstrap admin emails) on first sign-in; an Admin approves via `AgentDatabase.jsx`, which, for a `Partner` or `Business Client`, hands off to the manual Register Partner / Register Client form (pre-filled) instead of auto-creating a bare `partners` or `customers` record. `role`, `isApproved`, and `status` are user-profile fields that must never be client-settable outside these narrow approve/self-heal paths — see the security comments at the top of the `users` match block in `firestore.rules` before touching that collection's rules.
 
 ### AI proxy (`api/generate.js`)
 
@@ -69,9 +70,9 @@ Requires a valid Firebase ID token (`Authorization: Bearer <token>`) AND that th
 ### UI conventions
 
 - Material Design–flavored Tailwind theme driven by CSS custom properties (`surface`, `on-surface`, `primary`, `outline-variant`, etc. — see `tailwind.config.js` and `brand-tokens.json`), with a `data-theme="dark"|"light"` attribute on `<html>` toggled from `App.jsx` and persisted to `localStorage`.
-- Shared primitives live in `src/components/common/ui/` (`SortableTable`, `FilterBar`, `KanbanCard`/`KanbanColumn`, `StatusBadge`, `UserAvatar`, `PageHeader`, and the `detail-modal/` compound-component set) and are re-exported from `src/components/common/ui/index.js` — prefer these over building new list/table/modal chrome from scratch.
-- Route components are `React.lazy`-loaded from `App.jsx` and each module's feature components live under `src/components/{crm,operations,dashboard,admin,tools,public,auth}/`.
-- `src/context/MessagingContext.jsx` drives the in-app messaging system (floating toast + mini chat drawer + full `Messages` view) — real-time, per-user unread counts feed the sidebar badge.
+- Shared primitives live in `src/shared/ui/` (`SortableTable`, `FilterBar`, `KanbanCard`/`KanbanColumn`, `StatusBadge`, `UserAvatar`, `PageHeader`, and the `detail-modal/` compound-component set) and are re-exported from `src/shared/ui/index.js` (components used by several features are in `src/shared/components/`, domain-free helpers in `src/shared/utils/`) — prefer these over building new list/table/modal chrome from scratch.
+- Route components are `React.lazy`-loaded from `App.jsx` and each business domain's screens and logic live together under `src/features/<domain>/` (import with the `@/` alias).
+- `src/features/messaging/MessagingContext.jsx` drives the in-app messaging system (floating toast + mini chat drawer + full `Messages` view) — real-time, per-user unread counts feed the sidebar badge.
 - Partner-role users get a deliberately restricted nav/routing (`dashboard`, `notifications`, `partners`, `profile` only) — this restriction is enforced redundantly in `App.jsx`'s route-protection `useEffect` and in `DEFAULT_PERMISSIONS.Partner`.
 
 ### Planning & Workflow
@@ -81,7 +82,7 @@ Requires a valid Firebase ID token (`Authorization: Bearer <token>`) AND that th
 
 ## Repository layout & documentation
 
-Code stays where the build expects it: **frontend = `src/`**, **backend = `api/`** (Vercel functions), Cloud Functions source = `functions/` (none exist; see `docs/01_architecture/GCP_INVENTORY.md`). Everything written about the system lives in the structure below; put new findings, maps and notes there, not in ad hoc files. Start at `PROJECT_INDEX.md`.
+Code stays where the build expects it: **frontend = `src/`**, **backend = `api/`** (Vercel functions), there are no Cloud Functions and no `functions/` folder (see `docs/01_architecture/GCP_INVENTORY.md`). Everything written about the system lives in the structure below; put new findings, maps and notes there, not in ad hoc files. Start at `PROJECT_INDEX.md`.
 
 ```
 erp-system/
@@ -92,18 +93,18 @@ erp-system/
 ├── PLAN.md                 single progress tracker, overwritten in place
 ├── docs/
 │   ├── 01_architecture/    SYSTEM_OVERVIEW, GCP_INVENTORY, CROSS_MODULE_TRIGGERS
-│   ├── 02_modules/         <module>.md, plus <module>/CLAUDE.md (under 200 lines)
+│   ├── 02_modules/         one folder per module: README.md (map), CLAUDE.md (under 200 lines), FINDINGS.md
 │   ├── 03_security/        RBAC_MODEL, FIRESTORE_RULES_NOTES
 │   ├── 04_workflows/       GIT_WORKFLOW, DEPLOY_PROCESS
 │   └── 05_decisions/       NNNN-title.md (4-digit, no dates)
-├── src/  api/  functions/
+├── src/  api/
 └── .claude/                settings.json (committed), settings.local.json (gitignored),
                             rules/, skills/, agents/, worktrees/ (gitignored)
 ```
 
 Standing rules when working in this repo:
 
-- Investigation output goes into the matching `docs/` file (functions and triggers into `GCP_INVENTORY.md`, trigger chains into `CROSS_MODULE_TRIGGERS.md`, a module's findings into `docs/02_modules/<module>.md`). Do not create `docs/module-map/`.
+- Investigation output goes into the matching `docs/` file (functions and triggers into `GCP_INVENTORY.md`, trigger chains into `CROSS_MODULE_TRIGGERS.md`, a module's map into `docs/02_modules/<module>/README.md` and its findings into `<module>/FINDINGS.md`). Do not create `docs/module-map/`.
 - Before planning or implementing any change, read `docs/04_workflows/TESTING.md` (its "Planning a change" checklist, coverage map and characterisation register). The map and register are refreshed on request, tracked in `PLAN.md`, not on every change.
 - Before editing a module, read its `docs/02_modules/<module>/CLAUDE.md` (index below; not auto-loaded because it sits under `docs/`). If you change the module's behaviour, update that module's doc and `CLAUDE.md` in the same change.
 - Update `PROJECT_INDEX.md` when a doc is added or moved, and `CHANGELOG.md` with each change. Design "why" notes go in `docs/05_decisions/` as numbered files.

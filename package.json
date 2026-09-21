@@ -1,7 +1,11 @@
 {
-  "name": "mcp-erp-app",
+  "name": "print-to-frame-erp",
+  "version": "1.0.0",
+  "description": "Print To Frame ERP/CRM: leads to deals, fabrication, logistics and invoicing",
   "private": true,
-  "version": "0.0.0",
+  "engines": {
+    "node": ">=22"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 3000",
@@ -24,7 +28,6 @@
   "dependencies": {
     "@google/genai": "^1.47.0",
     "@sentry/react": "^10.66.0",
-    "docx": "^9.7.1",
     "firebase": "^10.11.0",
     "firebase-admin": "^13.10.0",
     "lucide-react": "^0.469.0",
@@ -46,12 +49,10 @@
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/coverage-v8": "^4.1.11",
     "autoprefixer": "^10.4.20",
-    "concurrently": "^10.0.3",
     "eslint": "^9.17.0",
     "eslint-plugin-react": "^7.37.2",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.16",
-    "glob": "^13.0.6",
     "globals": "^15.14.0",
     "jsdom": "^29.1.1",
     "postcss": "^8.4.49",

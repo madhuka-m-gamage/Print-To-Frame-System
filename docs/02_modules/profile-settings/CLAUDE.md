@@ -1,6 +1,6 @@
 # User Profile & Settings: module notes for Claude
 
-Full map: [../profile-settings.md](../profile-settings.md). Cross-module chains: [CROSS_MODULE_TRIGGERS.md](../../01_architecture/CROSS_MODULE_TRIGGERS.md). Review findings: [FINDINGS.md](FINDINGS.md). There are no Cloud Functions; all automation is client code (`src/App.jsx`, components) or `api/*.js`.
+Full map: [README.md](README.md). Cross-module chains: [CROSS_MODULE_TRIGGERS.md](../../01_architecture/CROSS_MODULE_TRIGGERS.md). Review findings: [FINDINGS.md](FINDINGS.md). There are no Cloud Functions; all automation is client code (`src/App.jsx`, components) or `api/*.js`.
 
 ## What it does
 
@@ -8,7 +8,7 @@ One self-service profile page plus a theme toggle. There is no separate settings
 
 ## Code
 
-- `src/components/common/UserProfile.jsx`, theme toggle and `handleUpdateUser` in `src/App.jsx`
+- `src/features/profile/UserProfile.jsx`, theme toggle and `handleUpdateUser` in `src/App.jsx`
 
 ## Firestore collections it owns or writes
 

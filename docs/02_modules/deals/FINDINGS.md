@@ -1,6 +1,6 @@
 # Deals Module Review & Correctness Audit Findings
 
-> **Scope**: Correctness review of `docs/02_modules/deals/CLAUDE.md`, `docs/02_modules/deals.md`, and all cross-module triggers touching Deals documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
+> **Scope**: Correctness review of `docs/02_modules/deals/CLAUDE.md`, `docs/02_modules/deals/README.md`, and all cross-module triggers touching Deals documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
 > **Branch / Worktree**: `review-deals` (`.worktrees/review-deals`)  
 > **Status**: Review & Audit findings (no functional code modified).
 
@@ -9,10 +9,10 @@
 ## 1. Executive Summary
 
 A comprehensive architectural and trigger audit was conducted across the Deals module and its integration boundaries:
-- **Module Documentation**: `docs/02_modules/deals.md`, `docs/02_modules/deals/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
-- **Target UI Components**: `src/components/crm/Deals.jsx`, `src/components/crm/LeadCardDetails.jsx`, `src/components/crm/Leads.jsx`.
-- **Services & Utilities**: `src/utils/entityUtils.js` (`matchesEntity`), `src/utils/logisticsEngine.js`, `src/services/pricingEngine.js`, `src/utils/invoiceTemplate.js`, `src/services/firestoreSync.js`.
-- **Integration & Consumer Surfaces**: `src/App.jsx` (`handleSaveInvoice`, `handleMarkInvoicePaid`, stage transitions), `src/components/operations/FabricationWorks.jsx`, `src/components/crm/Partners.jsx`, `src/components/dashboard/Dashboard.jsx`, `firestore.rules`.
+- **Module Documentation**: `docs/02_modules/deals/README.md`, `docs/02_modules/deals/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
+- **Target UI Components**: `src/features/deals/Deals.jsx`, `src/features/leads/LeadCardDetails.jsx`, `src/features/leads/Leads.jsx`.
+- **Services & Utilities**: `src/shared/utils/entityUtils.js` (`matchesEntity`), `src/features/logistics/logisticsEngine.js`, `src/features/quotations/pricingEngine.js`, `src/features/invoicing/invoiceTemplate.js`, `src/services/firestoreSync.js`.
+- **Integration & Consumer Surfaces**: `src/App.jsx` (`handleSaveInvoice`, `handleMarkInvoicePaid`, stage transitions), `src/features/fabrication/FabricationWorks.jsx`, `src/features/partners/Partners.jsx`, `src/features/dashboard/Dashboard.jsx`, `firestore.rules`.
 
 ### Key Discoveries:
 1. **Critical Final Invoice Hazards (Trigger 3 vs 4 vs 5b)**:
@@ -43,7 +43,7 @@ A comprehensive architectural and trigger audit was conducted across the Deals m
 | **Triggers and side effects** ("Hand Over to Completed: reserves a Final invoice id (aborts if it fails), creates a 25% Final invoice.") | **Accurate** | Confirmed: `generateInvoiceId('Final')` is awaited prior to state update; move aborts if reservation fails. |
 | **Before you edit** ("The `deals` block in `firestore.rules` and the `pipeline` permission do not govern real deal data.") | **Accurate** | Confirmed: `firestore.rules:L130-L135` matches `/deals/{dealId}`, which is never written to. |
 
-### 2.2 `docs/02_modules/deals.md`
+### 2.2 `docs/02_modules/deals/README.md`
 
 | Section / Claim | Code Status | Details / Discrepancy |
 |---|---|---|
@@ -115,7 +115,7 @@ A comprehensive architectural and trigger audit was conducted across the Deals m
        ]
        ```
        Here, `unitPrice` is set to `finalAmount` (25% of `deal.value`).
-     - In `src/utils/invoiceTemplate.js:L242`, the print renderer calculates line item price as:
+     - In `src/features/invoicing/invoiceTemplate.js:L242`, the print renderer calculates line item price as:
        ```javascript
        ${(Number(item.qty || 1) * Number(item.unitPrice || 0) * (isFinal ? 0.25 : 0.75)).toLocaleString(...)}
        ```
@@ -142,7 +142,7 @@ A comprehensive architectural and trigger audit was conducted across the Deals m
      - `FabricationWorks.jsx` does not look up quotations, sets `quotationId: ''`, lacks `lineItems` (falls back to generic string in template), and omits `advancePaid` and `balanceDue`.
   3. **Severe Downstream Distortions**:
      - **Accounts Receivable Inflation**: Outstanding receivables in Invoices and Dashboard double or triple.
-     - **Logistics COD Collection Overcharge**: In `src/utils/logisticsEngine.js:L196-L200` (`calculateCODFromInvoices`):
+     - **Logistics COD Collection Overcharge**: In `src/features/logistics/logisticsEngine.js:L196-L200` (`calculateCODFromInvoices`):
        ```javascript
        const totalBalanceDue = unpaidInvoices.reduce((sum, inv) => sum + Number(inv.amount || 0), 0);
        ```
@@ -153,7 +153,7 @@ A comprehensive architectural and trigger audit was conducted across the Deals m
 
 ### Trigger 5: Quotation Linkage via `matchesEntity` Lineage
 
-* **Implementation**: `src/utils/entityUtils.js` (`matchesEntity`, `getEntityIdSet`).
+* **Implementation**: `src/shared/utils/entityUtils.js` (`matchesEntity`, `getEntityIdSet`).
 * **Trace & Analysis**:
   1. **Lineage Traversal**:
      - Quotes store `leadId` referencing the original lead ID (`L-xxxxxx`).
@@ -281,7 +281,7 @@ match /deals/{dealId} {
 
 ### 4.5 Dashboard Action Queue Exclusion
 
-In `src/components/dashboard/Dashboard.jsx:L127-L135`:
+In `src/features/dashboard/Dashboard.jsx:L127-L135`:
 ```javascript
 const dealsActionQueue = useMemo(() => {
   return leads
@@ -299,16 +299,16 @@ const dealsActionQueue = useMemo(() => {
 
 | # | Topic / Area | Decision Accepted | Resolution | Files to Change |
 |---|---|---|---|---|
-| **D-1** | **Duplicate Final Invoice Prevention** | ✅ ACCEPTED | Add a shared guard `getExistingFinalInvoice(invoices, entity)` exported from `entityUtils.js` (uses `matchesEntity` to match on `leadId`, `dealId`, `originalLeadId`, `linkedJobNo`). Before calling `generateInvoiceId` in `Deals.jsx` and `FabricationWorks.jsx`, check the invoices array. If a Final invoice already exists, skip creation and toast an info message linking to the existing invoice. `QuotationBuilder.jsx` already guards with `if (finalInvoice || isConvertingFinal) return;` — no change required there. | `src/utils/entityUtils.js` (add helper), `src/components/crm/Deals.jsx` (add pre-check), `src/components/operations/FabricationWorks.jsx` (add pre-check) |
-| **D-2** | **Invoice Fallback Line Item Price Compounding** | ✅ ACCEPTED | In the fallback `lineItems` array in `Deals.jsx:L357`, change `unitPrice: finalAmount` to `unitPrice: deal.value \|\| 0`. This ensures `invoiceTemplate.js` correctly multiplies by `0.25` (for Final invoices) to arrive at the right 25% balance amount in both the line table and the totals footer. | `src/components/crm/Deals.jsx` (fallback `lineItems[0].unitPrice`) |
-| **D-3** | **Quotation Grand Total vs Deal Value Sync** | ✅ ACCEPTED | In `handleMoveForwardInner` (Deals.jsx), if an `Accepted` quotation is found via `matchesEntity`, derive `finalAmount` from `linkedQuote.grandTotal * 0.25` (or `linkedQuote.balanceDue` if already stored). Also propagate `deal.value = linkedQuote.grandTotal` to the Firestore update payload when completing, keeping the Kanban metric in sync. Quotation lookup must filter to `status === 'Accepted'` and pick the highest `version` if multiple exist. | `src/components/crm/Deals.jsx` (`handleMoveForwardInner`) |
-| **D-4** | **Stage Reversal & Commission Rollback** | ✅ ACCEPTED | Disable backward navigation from the `"Completed"` stage. In `DealColumn`, pass `onMoveBack={isLastStage ? null : handleMoveBackward}` so the `KanbanCard` back-arrow never renders for Completed cards. This eliminates the backward-move exploit without requiring commission reversal logic. | `src/components/crm/Deals.jsx` (`DealColumn` — conditional `onMoveBack` prop) |
-| **D-5** | **Table View Bulk Stage Move Bypass** | ✅ ACCEPTED | In `handleBulkStageChange`, guard against the `"Completed"` target: `if (targetStage === 'Completed') { toast.error('...use the Kanban board...'); return; }`. This closes the bypass cleanly. The `<select>` option for "Completed" remains visible but is disallowed server-side by the handler, and a toast explains why. | `src/components/crm/Deals.jsx` (`handleBulkStageChange`) |
-| **D-6** | **Deals / Fabrication Status Synchronization** | ✅ ACCEPTED | Implement lightweight one-way sync at known milestone crossings only — don't attempt full bidirectional sync, which would introduce circular update risk. **Rules:** (1) Deal moves to `"Fabricating"` → update linked project `status: "Ongoing"`. (2) Deal moves to `"Ready To Load"` → update linked project `status: "Ready For Inspection"`. (3) Deal moves to `"Completed"` → update linked project `status: "Completed"`. Deal stage is always the source of truth. FabricationWorks QA pass does **not** update the deal stage (the deal still requires a salesperson to move it forward). The `linkedJobNo` / `jobNo` field is the join key. | `src/components/crm/Deals.jsx` (`handleMoveForwardInner` — add `updateDocument(COLLECTIONS.PROJECTS, ...)` calls keyed by `deal.jobNo`) |
-| **D-7** | **Zero SqFt Commission Fallback** | ✅ ACCEPTED | Mirror the fallback already in `Partners.jsx:L262-L264`. In `Deals.jsx` commission block, after resolving `sqFt`: `const effectiveSqFt = sqFt > 0 ? sqFt : 0; const commissionAmount = effectiveSqFt > 0 ? effectiveSqFt * commRate : (Number(deal.value) / 850) * commRate;`. Apply same fallback when writing `partners.totalSqFt` — only add `sqFt` to `totalSqFt` when `sqFt > 0` (the estimated value shouldn't inflate the area counter). | `src/components/crm/Deals.jsx` (commission block in `handleMoveForwardInner`) |
+| **D-1** | **Duplicate Final Invoice Prevention** | ✅ ACCEPTED | Add a shared guard `getExistingFinalInvoice(invoices, entity)` exported from `entityUtils.js` (uses `matchesEntity` to match on `leadId`, `dealId`, `originalLeadId`, `linkedJobNo`). Before calling `generateInvoiceId` in `Deals.jsx` and `FabricationWorks.jsx`, check the invoices array. If a Final invoice already exists, skip creation and toast an info message linking to the existing invoice. `QuotationBuilder.jsx` already guards with `if (finalInvoice || isConvertingFinal) return;` — no change required there. | `src/shared/utils/entityUtils.js` (add helper), `src/features/deals/Deals.jsx` (add pre-check), `src/features/fabrication/FabricationWorks.jsx` (add pre-check) |
+| **D-2** | **Invoice Fallback Line Item Price Compounding** | ✅ ACCEPTED | In the fallback `lineItems` array in `Deals.jsx:L357`, change `unitPrice: finalAmount` to `unitPrice: deal.value \|\| 0`. This ensures `invoiceTemplate.js` correctly multiplies by `0.25` (for Final invoices) to arrive at the right 25% balance amount in both the line table and the totals footer. | `src/features/deals/Deals.jsx` (fallback `lineItems[0].unitPrice`) |
+| **D-3** | **Quotation Grand Total vs Deal Value Sync** | ✅ ACCEPTED | In `handleMoveForwardInner` (Deals.jsx), if an `Accepted` quotation is found via `matchesEntity`, derive `finalAmount` from `linkedQuote.grandTotal * 0.25` (or `linkedQuote.balanceDue` if already stored). Also propagate `deal.value = linkedQuote.grandTotal` to the Firestore update payload when completing, keeping the Kanban metric in sync. Quotation lookup must filter to `status === 'Accepted'` and pick the highest `version` if multiple exist. | `src/features/deals/Deals.jsx` (`handleMoveForwardInner`) |
+| **D-4** | **Stage Reversal & Commission Rollback** | ✅ ACCEPTED | Disable backward navigation from the `"Completed"` stage. In `DealColumn`, pass `onMoveBack={isLastStage ? null : handleMoveBackward}` so the `KanbanCard` back-arrow never renders for Completed cards. This eliminates the backward-move exploit without requiring commission reversal logic. | `src/features/deals/Deals.jsx` (`DealColumn` — conditional `onMoveBack` prop) |
+| **D-5** | **Table View Bulk Stage Move Bypass** | ✅ ACCEPTED | In `handleBulkStageChange`, guard against the `"Completed"` target: `if (targetStage === 'Completed') { toast.error('...use the Kanban board...'); return; }`. This closes the bypass cleanly. The `<select>` option for "Completed" remains visible but is disallowed server-side by the handler, and a toast explains why. | `src/features/deals/Deals.jsx` (`handleBulkStageChange`) |
+| **D-6** | **Deals / Fabrication Status Synchronization** | ✅ ACCEPTED | Implement lightweight one-way sync at known milestone crossings only — don't attempt full bidirectional sync, which would introduce circular update risk. **Rules:** (1) Deal moves to `"Fabricating"` → update linked project `status: "Ongoing"`. (2) Deal moves to `"Ready To Load"` → update linked project `status: "Ready For Inspection"`. (3) Deal moves to `"Completed"` → update linked project `status: "Completed"`. Deal stage is always the source of truth. FabricationWorks QA pass does **not** update the deal stage (the deal still requires a salesperson to move it forward). The `linkedJobNo` / `jobNo` field is the join key. | `src/features/deals/Deals.jsx` (`handleMoveForwardInner` — add `updateDocument(COLLECTIONS.PROJECTS, ...)` calls keyed by `deal.jobNo`) |
+| **D-7** | **Zero SqFt Commission Fallback** | ✅ ACCEPTED | Mirror the fallback already in `Partners.jsx:L262-L264`. In `Deals.jsx` commission block, after resolving `sqFt`: `const effectiveSqFt = sqFt > 0 ? sqFt : 0; const commissionAmount = effectiveSqFt > 0 ? effectiveSqFt * commRate : (Number(deal.value) / 850) * commRate;`. Apply same fallback when writing `partners.totalSqFt` — only add `sqFt` to `totalSqFt` when `sqFt > 0` (the estimated value shouldn't inflate the area counter). | `src/features/deals/Deals.jsx` (commission block in `handleMoveForwardInner`) |
 | **D-8** | **RBAC & Firestore Rules Alignment** | ✅ ACCEPTED | Update `firestore.rules` `/leads/{leadId}` to also accept `pipeline` permissions: `allow read: if checkPermission('leads','view') \|\| checkPermission('leads','read') \|\| checkPermission('pipeline','view') \|\| checkPermission('pipeline','read');` and similarly for create/update/delete. Retain the existing `/deals/{dealId}` block but add a comment that it matches a phantom collection and will be removed in a future cleanup pass. | `firestore.rules` (`match /leads/{leadId}` — widen read/write conditions) |
-| **D-9** | **Dashboard Hand Over Visibility** | ✅ ACCEPTED | Add `"Hand Over"` to `dealsActionQueue` filter in `Dashboard.jsx:L128`: `["Waiting", "Fabricating", "Ready To Load", "Hand Over"]`. No other changes needed; the card already renders correctly for this stage. | `src/components/dashboard/Dashboard.jsx` (`dealsActionQueue` filter array) |
-| **D-10** | **Deal Deletion Cascade & Audit Logging** | ✅ ACCEPTED | Extend `handleDeleteConfirm` in `Deals.jsx`: (1) Write `DEAL_DELETED` to `auditLog` via `logActivity`. (2) Update the original lead document (`originalLeadId` pointer) to clear the lock: `{ convertedToDeal: false, convertedDealId: null }` so the lead is no longer permanently orphaned. (3) Do **not** cascade-delete invoices, receipts, or logistics — those are financial records; instead update the linked `projects` doc to `status: "Cancelled"` with a note. The Firestore write sequence: auditLog → unlock lead → cancel project → delete deal (in that order; proceed even if non-critical steps fail, log errors). | `src/components/crm/Deals.jsx` (`handleDeleteConfirm` — add audit log, lead unlock, project cancel) |
+| **D-9** | **Dashboard Hand Over Visibility** | ✅ ACCEPTED | Add `"Hand Over"` to `dealsActionQueue` filter in `Dashboard.jsx:L128`: `["Waiting", "Fabricating", "Ready To Load", "Hand Over"]`. No other changes needed; the card already renders correctly for this stage. | `src/features/dashboard/Dashboard.jsx` (`dealsActionQueue` filter array) |
+| **D-10** | **Deal Deletion Cascade & Audit Logging** | ✅ ACCEPTED | Extend `handleDeleteConfirm` in `Deals.jsx`: (1) Write `DEAL_DELETED` to `auditLog` via `logActivity`. (2) Update the original lead document (`originalLeadId` pointer) to clear the lock: `{ convertedToDeal: false, convertedDealId: null }` so the lead is no longer permanently orphaned. (3) Do **not** cascade-delete invoices, receipts, or logistics — those are financial records; instead update the linked `projects` doc to `status: "Cancelled"` with a note. The Firestore write sequence: auditLog → unlock lead → cancel project → delete deal (in that order; proceed even if non-critical steps fail, log errors). | `src/features/deals/Deals.jsx` (`handleDeleteConfirm` — add audit log, lead unlock, project cancel) |
 
 ---
 
@@ -316,13 +316,13 @@ const dealsActionQueue = useMemo(() => {
 
 > All items in §5 are **accepted**. The following checklist tracks execution status. Mark `[x]` when a change is committed to `review-deals` branch.
 
-- [ ] **D-1** — Add `getExistingFinalInvoice` helper to `entityUtils.js`; guard Deals.jsx and FabricationWorks.jsx before invoice generation.
-- [ ] **D-2** — Fix fallback `lineItems[0].unitPrice` in `Deals.jsx:L357` (`finalAmount` → `deal.value`).
-- [ ] **D-3** — Derive `finalAmount` from `linkedQuote.grandTotal * 0.25` in `handleMoveForwardInner`; filter quotation match to `Accepted` status, highest version; sync `deal.value` on completion.
-- [ ] **D-4** — Pass `onMoveBack={isLastStage ? null : handleMoveBackward}` in `DealColumn`.
-- [ ] **D-5** — Guard `handleBulkStageChange` against `targetStage === 'Completed'` with toast error.
-- [ ] **D-6** — Add project status sync writes in `handleMoveForwardInner` for `Fabricating` → `Ongoing`, `Ready To Load` → `Ready For Inspection`, `Completed` → `Completed`.
-- [ ] **D-7** — Add `(deal.value / 850) * commRate` fallback when `totalSqFt <= 0` in commission block.
-- [ ] **D-8** — Widen `match /leads/{leadId}` in `firestore.rules` to accept `pipeline` permissions.
-- [ ] **D-9** — Add `"Hand Over"` to `dealsActionQueue` filter in `Dashboard.jsx`.
-- [ ] **D-10** — Extend `handleDeleteConfirm`: audit log, lead lock-clear, project cancel.
+- [x] **D-1** — Add `getExistingFinalInvoice` helper to `entityUtils.js`; guard Deals.jsx and FabricationWorks.jsx before invoice generation.
+- [x] **D-2** — Fix fallback `lineItems[0].unitPrice` in `Deals.jsx:L357` (`finalAmount` → `deal.value`).
+- [x] **D-3** — Derive `finalAmount` from `linkedQuote.grandTotal * 0.25` in `handleMoveForwardInner`; filter quotation match to `Accepted` status, highest version; sync `deal.value` on completion.
+- [x] **D-4** — Pass `onMoveBack={isLastStage ? null : handleMoveBackward}` in `DealColumn`.
+- [x] **D-5** — Guard `handleBulkStageChange` against `targetStage === 'Completed'` with toast error.
+- [x] **D-6** — Add project status sync writes in `handleMoveForwardInner` for `Fabricating` → `Ongoing`, `Ready To Load` → `Ready For Inspection`, `Completed` → `Completed`.
+- [x] **D-7** — Add `(deal.value / 850) * commRate` fallback when `totalSqFt <= 0` in commission block.
+- [x] **D-8** — Widen `match /leads/{leadId}` in `firestore.rules` to accept `pipeline` permissions.
+- [x] **D-9** — Add `"Hand Over"` to `dealsActionQueue` filter in `Dashboard.jsx`.
+- [x] **D-10** — Extend `handleDeleteConfirm`: audit log, lead lock-clear, project cancel.

@@ -1,6 +1,6 @@
 # Employees: module notes for Claude
 
-Full map: [../employees.md](../employees.md). Cross-module chains: [CROSS_MODULE_TRIGGERS.md](../../01_architecture/CROSS_MODULE_TRIGGERS.md). Review findings: [FINDINGS.md](FINDINGS.md). There are no Cloud Functions; all automation is client code (`src/App.jsx`, components) or `api/*.js`.
+Full map: [README.md](README.md). Cross-module chains: [CROSS_MODULE_TRIGGERS.md](../../01_architecture/CROSS_MODULE_TRIGGERS.md). Review findings: [FINDINGS.md](FINDINGS.md). There are no Cloud Functions; all automation is client code (`src/App.jsx`, components) or `api/*.js`.
 
 ## What it does
 
@@ -8,8 +8,8 @@ There is no separate Employees feature; employee-like data is the `users` collec
 
 ## Code
 
-- No Employees module. Staff are `users` documents: see [user-management-rbac.md](../user-management-rbac.md).
-- `src/utils/logisticsEngine.js` has a hardcoded `DRIVER_DIRECTORY`.
+- No Employees module. Staff are `users` documents: see [user-management-rbac.md](../user-management-rbac/README.md).
+- `src/features/logistics/logisticsEngine.js` has a hardcoded `DRIVER_DIRECTORY`.
 
 ## Firestore collections it owns or writes
 

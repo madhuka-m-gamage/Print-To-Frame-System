@@ -1,6 +1,6 @@
 # User Profile & Settings Module Review & Correctness Audit Findings
 
-> **Scope**: Correctness review of `docs/02_modules/profile-settings/CLAUDE.md`, `docs/02_modules/profile-settings.md`, and cross-module triggers touching User Profile and Settings.  
+> **Scope**: Correctness review of `docs/02_modules/profile-settings/CLAUDE.md`, `docs/02_modules/profile-settings/README.md`, and cross-module triggers touching User Profile and Settings.  
 > **Branch / Worktree**: `review-profile-settings` (`.worktrees/review-profile-settings`)  
 > **Status**: Review & Audit findings (no functional code modified).
 
@@ -9,13 +9,13 @@
 ## 1. Executive Summary
 
 A thorough architectural and code-level audit was conducted across the User Profile & Settings module and its integration touchpoints:
-- **Module Documentation**: `docs/02_modules/profile-settings/CLAUDE.md`, `docs/02_modules/profile-settings.md`
+- **Module Documentation**: `docs/02_modules/profile-settings/CLAUDE.md`, `docs/02_modules/profile-settings/README.md`
 - **Cross-Module Architecture**: `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`
-- **UI Components**: `src/components/common/UserProfile.jsx`, `src/components/common/ui/ImageCropModal.jsx`, `src/components/common/ui/StatusBadge.jsx`, `src/components/common/ui/PageHeader.jsx`
+- **UI Components**: `src/features/profile/UserProfile.jsx`, `src/shared/ui/ImageCropModal.jsx`, `src/shared/ui/StatusBadge.jsx`, `src/shared/ui/PageHeader.jsx`
 - **App State & Lifecycle**: `src/App.jsx` (`handleUpdateUser`, `handleSignOut`, theme management, auth listener, users snapshot listener)
 - **Tokens & Styling**: `brand-tokens.json`, `tailwind.config.js`, `src/index.css`
 - **Security Rules & RBAC**: `firestore.rules` (`/users/{userId}`, `/partners/{partnerId}`, `/customers/{customerId}`, `/settings/permissions`), `src/context/PermissionsContext.jsx`
-- **Constants & Utilities**: `src/constants/companyInfo.js`, `src/utils/toast.js`, `src/services/auditLog.js`
+- **Constants & Utilities**: `src/constants/companyInfo.js`, `src/shared/utils/toast.js`, `src/services/auditLog.js`
 
 While the core presentation layer (avatar cropping, section tabs for personal, workspace, and preferences) is implemented, **critical architectural defects, security rule permission failures, dual sync race conditions, and UI stubs** were identified:
 1. **Broken Customer Profile Mirroring (Silent Firestore Permission Denied)**: `UserProfile.jsx` attempts to query and update `COLLECTIONS.CUSTOMERS` when a Customer or Business Client edits their profile. However, `firestore.rules` lacks any self-read/update rule on `/customers/{customerId}` (unlike `/projects` or `/invoices`), and `PermissionsContext` grants `customers: none()` to these roles. Consequently, customer updates fail with `permission-denied` 100% of the time, caught silently with `console.warn` while the UI falsely reports success.
@@ -44,7 +44,7 @@ While the core presentation layer (avatar cropping, section tabs for personal, w
 | **Before you edit** ("Role, status and email are protected only by the client payload; rules block role / status changes for non-admins.") | **Contradictory / Discrepancy** | `CLAUDE.md` states "protected only by the client payload" and immediately asserts "rules block role / status changes for non-admins". Code inspection confirms `firestore.rules:L97-99` strictly enforces `request.resource.data.role == resource.data.role && ...` for non-admins. |
 | **Before you edit** ("`src/constants/companyInfo.js` is unused.") | **Accurate** | Confirmed: `COMPANY_INFO` is never imported under `src/`. Hardcoded duplicates exist throughout `UserProfile.jsx`. |
 
-### 2.2 `docs/02_modules/profile-settings.md`
+### 2.2 `docs/02_modules/profile-settings/README.md`
 
 | Section / Claim | Code Status | Details / Discrepancy |
 |---|---|---|
@@ -128,7 +128,7 @@ Profile and settings updates are currently omitted from `docs/01_architecture/CR
 
 ## 4. Codebase Tracing & Verification
 
-### 4.1 Target UI Component: `src/components/common/UserProfile.jsx`
+### 4.1 Target UI Component: `src/features/profile/UserProfile.jsx`
 
 1. **Password Reset Disconnect (`L214-217`)**:
    ```javascript
@@ -225,7 +225,7 @@ In `UserProfile.jsx:L320`:
 ```javascript
 <StatusBadge status={currentUser?.role || 'Member'} size="sm" />
 ```
-Inspection of `src/components/common/ui/StatusBadge.jsx`:
+Inspection of `src/shared/ui/StatusBadge.jsx`:
 - `STATUS_STYLES` categories:
   - Success: `['completed', 'delivered', 'canvas in', 'received', 'paid', 'approved']`
   - Progress: `['in transit', 'ongoing', 'fabricating', 'processing']`

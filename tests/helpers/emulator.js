@@ -41,25 +41,29 @@ const write = { view: true, create: true, edit: true, delete: false, export: fal
 const read = { view: true, create: false, edit: false, delete: false, export: false };
 const ops = { view: true, create: true, edit: true, delete: true, export: false };
 const none = { view: false, create: false, edit: false, delete: false, export: false };
+const viewCreate = { ...none, view: true, create: true };
+const viewEdit = { ...none, view: true, edit: true };
 
-// Matrix for the modules firestore.rules passes to checkPermission(). It is an independent
+// Matrix for the modules firestore.rules passes to checkPermission(), plus quotations,
+// messages and agents, which the Phase 7 rules changes will check. It is an independent
 // fixture, not an import of DEFAULT_PERMISSIONS: that module imports src/services/firebase.js,
-// which calls initializeApp against real Firebase. Update it when the matrix changes.
+// which calls initializeApp against real Firebase. Update it by hand when the matrix changes
+// (last synced with DEFAULT_PERMISSIONS at Phase 7 step 3.2).
 export const PERMISSIONS_FIXTURE = {
-  Admin: { leads: full, pipeline: full, customers: full, partners: full, invoices: full, receipts: full, projects: full, logistics: full },
-  Manager: { leads: full, pipeline: full, customers: full, partners: full, invoices: full, receipts: full, projects: full, logistics: full },
-  Sales: { leads: write, pipeline: write, customers: write, partners: write, invoices: write, receipts: write, projects: read, logistics: read },
-  Operations: { leads: none, pipeline: none, customers: read, partners: none, invoices: none, receipts: none, projects: ops, logistics: ops },
-  Support: { leads: read, pipeline: read, customers: read, partners: read, invoices: read, receipts: read, projects: read, logistics: read },
+  Admin: { leads: full, pipeline: full, customers: full, partners: full, invoices: full, receipts: full, projects: full, logistics: full, quotations: full, messages: full, agents: full },
+  Manager: { leads: full, pipeline: full, customers: full, partners: full, invoices: full, receipts: { ...full, delete: false }, projects: full, logistics: full, quotations: full, messages: full, agents: full },
+  Sales: { leads: write, pipeline: write, customers: write, partners: write, invoices: write, receipts: write, projects: read, logistics: read, quotations: full, messages: full, agents: none },
+  Operations: { leads: none, pipeline: none, customers: read, partners: none, invoices: viewCreate, receipts: none, projects: ops, logistics: ops, quotations: none, messages: full, agents: none },
+  Support: { leads: read, pipeline: read, customers: read, partners: read, invoices: read, receipts: read, projects: read, logistics: read, quotations: read, messages: full, agents: none },
   Accounts: {
     leads: read, pipeline: read, customers: read, partners: read,
     invoices: { ...write, export: true }, receipts: { ...write, export: true },
-    projects: read, logistics: none,
+    projects: read, logistics: none, quotations: read, messages: full, agents: none,
   },
-  Logistics: { leads: none, pipeline: none, customers: read, partners: none, invoices: none, receipts: none, projects: read, logistics: ops },
-  Partner: { leads: none, pipeline: none, customers: none, partners: full, invoices: none, receipts: none, projects: none, logistics: none },
-  Customer: { leads: none, pipeline: none, customers: none, partners: none, invoices: read, receipts: read, projects: read, logistics: read },
-  'Business Client': { leads: none, pipeline: none, customers: none, partners: none, invoices: read, receipts: read, projects: read, logistics: read },
+  Logistics: { leads: none, pipeline: none, customers: read, partners: none, invoices: read, receipts: none, projects: read, logistics: ops, quotations: none, messages: full, agents: none },
+  Partner: { leads: none, pipeline: none, customers: none, partners: viewEdit, invoices: none, receipts: none, projects: none, logistics: none, quotations: none, messages: none, agents: none },
+  Customer: { leads: none, pipeline: none, customers: none, partners: none, invoices: read, receipts: none, projects: read, logistics: read, quotations: none, messages: none, agents: none },
+  'Business Client': { leads: none, pipeline: none, customers: none, partners: none, invoices: read, receipts: none, projects: read, logistics: read, quotations: none, messages: none, agents: none },
 };
 
 // Writes settings/permissions with security rules disabled. checkPermission() reads this

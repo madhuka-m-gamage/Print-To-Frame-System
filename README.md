@@ -1,41 +1,86 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Print To Frame ERP
 
-# Run and deploy your AI Studio app
+A single-page ERP/CRM for a custom-framing business: leads, quotations, deals, fabrication, logistics and invoicing, plus a partner referral network. React 18 + Vite in the browser, Firebase (Auth, Firestore, Storage) as the only backend, and a few Vercel serverless functions in `api/` for the AI proxy, email and admin user actions.
 
-This contains everything you need to run your app locally.
+## Prerequisites
 
-View your app in AI Studio: https://ai.studio/apps/66900443-b6c9-4743-892c-f50b58bf8595
+- Node 22 (`nvm use` reads `.nvmrc`)
+- Java 21 and the Firebase CLI (`npm install -g firebase-tools`), only for the rules tests
+- A browser and, for end-to-end tests, Playwright (`npx playwright install`)
 
-## Run Locally
+## Getting started
 
-**Prerequisites:**  Node.js
+```bash
+npm ci
+cp .env.example .env.local   # then fill in what you need; see the comments in the file
+npm run dev                  # http://localhost:3000
+```
 
+To run the whole app against the local Firebase emulators with fake data instead of a real project:
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. For outbound email (enrollment invites, password resets, etc.), also set `SMTP_USER`
-   (the sending mailbox, e.g. `info@print2frame.xyz`) and `SMTP_APP_PASSWORD` (a Gmail
-   [App Password](https://myaccount.google.com/apppasswords) for that mailbox — not the
-   account's normal login password) in `.env.local`. In production these are set as
-   Vercel environment variables instead.
-4. For admin actions that create or reset a user's Firebase Auth password (enroll
-   member, admin password reset), also set `FIREBASE_SERVICE_ACCOUNT_JSON` — the full
-   JSON key for a Firebase service account with Auth Admin privileges, as a single-line
-   string — in `.env.local`. This is required even in dev, since these actions modify
-   real Firebase Auth accounts; there's no way to fake that locally.
-5. Run the app:
-   `npm run dev`
+```bash
+npx firebase emulators:start --only firestore,auth --project demo-print2frame-test
+npm run seed:emulator        # in a second terminal
+npm run dev:emulated
+```
 
-## Running the tests
+The emulator setup covers Firestore and Auth only. File uploads (partner documents, fabrication blueprints) need a real Storage bucket. Seeded logins are listed in [docs/04_workflows/TESTING.md](docs/04_workflows/TESTING.md).
 
-- `npm test` — Vitest unit tests for pure logic. No setup needed.
-- `npm run test:api` — API handler tests (`api/*.js`) with mocked Firebase Admin, Gemini and SMTP.
-- `npm run test:component` — React component tests (jsdom + React Testing Library).
-- `npm run test:rules` — integration tests against a real local Firebase Emulator, proving `firestore.rules` enforces what it claims to (e.g. that a non-admin can't grant themselves Admin via a direct Firestore write). Needs Java and the `firebase` CLI (`npm install -g firebase-tools`), but no real Firebase project or credentials.
-- `npm run test:all` — all of the above, in sequence.
-- `npm run coverage` — unit and API tests with a coverage report in `coverage/` (no threshold).
+Server-side features (AI drafting, email, creating or resetting Firebase Auth users) need real credentials: `GEMINI_API_KEY`, `SMTP_USER` and `SMTP_APP_PASSWORD`, and `FIREBASE_SERVICE_ACCOUNT_JSON`. Never commit them. In production they are Vercel environment variables.
 
-CI (`.github/workflows/test.yml`) runs lint, unit, API, component, build and the rules suite on pull requests to `staging` and `main`. See `docs/04_workflows/TESTING.md` for adding tests.
+## Scripts
+
+| Script | What it does |
+|---|---|
+| `npm run dev` | Vite dev server on port 3000, with a local proxy for `/api/*` |
+| `npm run dev:emulated` | Dev server in `test` mode, using the emulator settings in `.env.test` |
+| `npm run build` / `npm run preview` | Production build to `dist/`, and serve it locally |
+| `npm run lint` | ESLint over the whole repo |
+| `npm test` | Unit tests (`tests/unit`) |
+| `npm run test:api` | API handler tests with mocked Firebase Admin, Gemini and SMTP |
+| `npm run test:component` | React component tests (jsdom and Testing Library) |
+| `npm run test:rules` | `firestore.rules` tests on the Firebase emulator (needs Java) |
+| `npm run test:e2e` | Playwright browser tests against the emulators |
+| `npm run test:all` | Unit, API, component and rules tests in sequence |
+| `npm run coverage` | Unit and API tests with a coverage report in `coverage/` |
+| `npm run seed:emulator` | Load fake users and data into a running emulator |
+
+`push:staging` and `deploy:live` are maintainer shortcuts for the release flow below; do not run them casually.
+
+## Testing
+
+Five layers, each with one job: unit, API, component, rules and end to end. Pick the cheapest layer that can prove the behaviour. The guide, the coverage map and how to add a test are in [docs/04_workflows/TESTING.md](docs/04_workflows/TESTING.md). CI runs lint, unit, API, component, build and rules on every pull request.
+
+## Project structure
+
+```
+api/            Vercel serverless functions (AI proxy, email, admin user actions)
+public/         static assets
+src/
+  main.jsx      entry point (also mounts the two public pages)
+  App.jsx       composition root: state, Firestore listeners, routing by tab
+  features/     one folder per business domain: its screens, logic and domain-only client
+                (leads, customers, quotations, deals, invoicing, partners, fabrication,
+                logistics, messaging, dashboard, profile, admin, auth)
+  shared/       code used by several features: ui/ primitives, components/, utils/
+  services/     infrastructure clients: Firebase, Firestore sync, audit log, Gemini, mail, Drive, Maps
+  context/      permissions provider
+  constants/    roles, company info, email templates
+tests/          unit, api, component, integration (rules), e2e, helpers, fixtures
+docs/           architecture, per-module notes, security, workflows, decisions
+firestore.rules Firestore security rules (deployed by hand, never by a push)
+```
+
+Imports outside a file's own folder use the `@/` alias (`@/` means `src/`); a feature may import `shared`, `services`, `context`, `constants` and other features, but `shared` never imports a feature. The reasoning is in [docs/05_decisions/0003-source-layout.md](docs/05_decisions/0003-source-layout.md).
+
+Access control is enforced in three places that must agree: `src/context/PermissionsContext.jsx`, `firestore.rules` and `src/constants/roles.js` (see [docs/03_security/RBAC_MODEL.md](docs/03_security/RBAC_MODEL.md)).
+
+## Branches and deploys
+
+- Work on a branch, open a pull request into `staging`. `staging` builds a Vercel preview.
+- `main` is production (`portal.print2frame.xyz`). It only receives a reviewed merge from `staging`.
+- Pushing does not deploy Firestore rules. Any change to `firestore.rules` is deployed separately by an authorised maintainer with `firebase deploy --only firestore:rules --project <project-id>`. See [docs/04_workflows/DEPLOY_PROCESS.md](docs/04_workflows/DEPLOY_PROCESS.md) and [docs/04_workflows/GIT_WORKFLOW.md](docs/04_workflows/GIT_WORKFLOW.md).
+
+## Documentation
+
+Everything written about the system is listed in [PROJECT_INDEX.md](PROJECT_INDEX.md). Progress and open work are tracked in [PLAN.md](PLAN.md), changes in [CHANGELOG.md](CHANGELOG.md), and how to contribute in [CONTRIBUTING.md](CONTRIBUTING.md).

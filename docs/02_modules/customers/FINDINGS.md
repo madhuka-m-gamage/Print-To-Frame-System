@@ -1,6 +1,6 @@
 # Customers Module Review & Correctness Audit Findings
 
-> **Scope**: Correctness review of `docs/02_modules/customers/CLAUDE.md`, `docs/02_modules/customers.md`, and all cross-module triggers touching Customers documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
+> **Scope**: Correctness review of `docs/02_modules/customers/CLAUDE.md`, `docs/02_modules/customers/README.md`, and all cross-module triggers touching Customers documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
 > **Branch / Worktree**: `review-customers` (`.worktrees/review-customers`)  
 > **Status**: Review & Audit findings (no functional code modified).
 
@@ -9,11 +9,11 @@
 ## 1. Executive Summary
 
 A comprehensive architectural and code-level audit was conducted across the Customers module and its integration touchpoints:
-- **Module Documentation**: `docs/02_modules/customers/CLAUDE.md`, `docs/02_modules/customers.md`
+- **Module Documentation**: `docs/02_modules/customers/CLAUDE.md`, `docs/02_modules/customers/README.md`
 - **Cross-Module Architecture**: `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`
-- **UI Components**: `src/components/crm/Customers.jsx`, `src/components/crm/ContactSyncModal.jsx`, `src/components/common/ui/StatusBadge.jsx`
-- **Services & Utilities**: `src/services/contactsService.js`, `src/utils/stringMatch.js`, `src/services/firebase.js`, `src/services/mailer.js`, `src/services/adminUsers.js`, `src/utils/validation.js`
-- **Integration & Security Surfaces**: `src/App.jsx`, `firestore.rules`, `src/components/crm/Leads.jsx`, `src/components/crm/LeadCardDetails.jsx`, `src/components/operations/FabricationWorks.jsx`, `src/components/common/UserProfile.jsx`
+- **UI Components**: `src/features/customers/Customers.jsx`, `src/features/customers/ContactSyncModal.jsx`, `src/shared/ui/StatusBadge.jsx`
+- **Services & Utilities**: `src/services/contactsService.js`, `src/shared/utils/stringMatch.js`, `src/services/firebase.js`, `src/services/mailer.js`, `src/features/admin/adminUsers.js`, `src/shared/utils/validation.js`
+- **Integration & Security Surfaces**: `src/App.jsx`, `firestore.rules`, `src/features/leads/Leads.jsx`, `src/features/leads/LeadCardDetails.jsx`, `src/features/fabrication/FabricationWorks.jsx`, `src/features/profile/UserProfile.jsx`
 
 While the core registry design (client registry keyed by NIC/BRN, Google Contacts import modal, approval handoff via prefill) exists as described, **several critical defects, data disconnects, RBAC security asymmetries, and workflow breaking bugs** were discovered:
 1. **Double Order Count Bug**: Saving a lead creates a customer with `orders: 1`. Converting that lead later increments `orders` to `2`, so a single incoming order is counted twice.
@@ -41,7 +41,7 @@ While the core registry design (client registry keyed by NIC/BRN, Google Contact
 | **Before you edit** ("Only delete is audit-logged from this file.") | **Accurate** | Confirmed: Neither manual customer creation nor contact import writes to `auditLog`. Only `handleDeleteProfile` calls `logActivity`. |
 | **Before you edit** ("Google Contacts sync calls People API... but `firebase.js` requests no Contacts scope") | **Accurate** | Confirmed: `firebase.js:L44-45` adds only `userinfo.email` and `userinfo.profile`. |
 
-### 2.2 `docs/02_modules/customers.md`
+### 2.2 `docs/02_modules/customers/README.md`
 
 | Section / Claim | Code Status | Details / Discrepancy |
 |---|---|---|
@@ -133,7 +133,7 @@ While the core registry design (client registry keyed by NIC/BRN, Google Contact
 * **Execution Chain**: Exact deduplication check against `customers` array $\rightarrow$ if no match, generates `AUTO-######` customer and writes to `COLLECTIONS.CUSTOMERS`.
 * **Findings & Architectural Disconnects**:
   1. **Phone Format Mismatch False-Negatives**:
-     - `LeadCardDetails.jsx:L441` formats phone inputs using `formatPhone` from `src/utils/validation.js`, which outputs spaced numbers:
+     - `LeadCardDetails.jsx:L441` formats phone inputs using `formatPhone` from `src/shared/utils/validation.js`, which outputs spaced numbers:
        ```
        +94 7X XXX XXXX  (e.g., "+94 77 123 4567")
        ```
@@ -211,7 +211,7 @@ While the core registry design (client registry keyed by NIC/BRN, Google Contact
 
 ### 4.1 Target UI Components
 
-#### `src/components/crm/Customers.jsx`
+#### `src/features/customers/Customers.jsx`
 1. **Total Absence of Edit Feature**:
    - `Customers.jsx` provides no UI or handler to update an existing customer's contact number, email, delivery address, company name, or account type.
    - `updateDocument` is not imported from `firestoreSync.js`.
@@ -231,7 +231,7 @@ While the core registry design (client registry keyed by NIC/BRN, Google Contact
 5. **AI WhatsApp Message Generator**:
    - `handleGenerateWhatsAppMsg` (line 360) calls `generateText` via Gemini. It is purely client-side and copies to clipboard; it correctly writes no Firestore state.
 
-#### `src/components/crm/ContactSyncModal.jsx`
+#### `src/features/customers/ContactSyncModal.jsx`
 1. **Selection Reset on Filtering**:
    - Search input filters `contacts`, but `toggleAll` uses `filteredContacts.map(c => c.resourceName)`.
    - Selection state (`selectedContactIds`) is maintained across filter queries, which works correctly.
@@ -253,7 +253,7 @@ And in `Customers.jsx:L757`:
 <StatusBadge status={inv.status || 'Unpaid'} size="xs" />
 ```
 
-Inspection of `src/components/common/ui/StatusBadge.jsx`:
+Inspection of `src/shared/ui/StatusBadge.jsx`:
 - Supported style categories:
   - Success: `['completed', 'delivered', 'canvas in', 'received', 'paid', 'approved']`
   - Progress: `['in transit', 'ongoing', 'fabricating', 'processing']`

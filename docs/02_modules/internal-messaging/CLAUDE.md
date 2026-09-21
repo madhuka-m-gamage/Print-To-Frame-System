@@ -1,6 +1,6 @@
 # Internal Messaging: module notes for Claude
 
-Full map: [../internal-messaging.md](../internal-messaging.md). Audit findings & open questions: [FINDINGS.md](FINDINGS.md). Cross-module chains: [CROSS_MODULE_TRIGGERS.md](../../01_architecture/CROSS_MODULE_TRIGGERS.md). There are no Cloud Functions; all automation is client code (`src/App.jsx`, components) or `api/*.js`.
+Full map: [README.md](README.md). Audit findings & open questions: [FINDINGS.md](FINDINGS.md). Cross-module chains: [CROSS_MODULE_TRIGGERS.md](../../01_architecture/CROSS_MODULE_TRIGGERS.md). There are no Cloud Functions; all automation is client code (`src/App.jsx`, components) or `api/*.js`.
 
 ## What it does
 
@@ -8,7 +8,7 @@ Full map: [../internal-messaging.md](../internal-messaging.md). Audit findings &
 
 ## Code
 
-- `src/context/MessagingContext.jsx`, `src/components/tools/Messages.jsx`, `MiniChatDrawer.jsx`, `src/components/common/FloatingMessageToast.jsx`
+- `src/features/messaging/MessagingContext.jsx`, `src/features/messaging/Messages.jsx`, `MiniChatDrawer.jsx`, `src/features/messaging/FloatingMessageToast.jsx`
 
 ## Firestore collections it owns or writes
 

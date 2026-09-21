@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react';
-import { PermissionsProvider, DEFAULT_PERMISSIONS } from '../../src/context/PermissionsContext';
+import { PermissionsProvider, DEFAULT_PERMISSIONS } from '@/context/PermissionsContext';
 
 /**
  * Renders `ui` inside PermissionsProvider.

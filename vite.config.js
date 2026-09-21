@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { GoogleGenAI } from '@google/genai'
@@ -213,6 +214,7 @@ function apiProxyPlugin() {
 
 // https://vite.dev/config/
 export default defineConfig({
+  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   plugins: [react(), apiProxyPlugin()],
   server: {
     host: '0.0.0.0',
@@ -223,7 +225,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        // Split heavy vendors out of the entry chunk. The big wins are docx and
+        // Split heavy vendors out of the entry chunk. The big win is
         // recharts (used by only a couple of routes); lucide-react is imported
         // icon-by-icon everywhere, so its chunk buys cache stability rather
         // than a smaller initial download.
@@ -237,7 +239,6 @@ export default defineConfig({
           ],
           'vendor-sentry': ['@sentry/react'],
           'vendor-charts': ['recharts'],
-          'vendor-docx': ['docx'],
           'vendor-genai': ['@google/genai'],
           'vendor-icons': ['lucide-react'],
         },

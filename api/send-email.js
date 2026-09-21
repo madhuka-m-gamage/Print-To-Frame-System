@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import { getAdminAuth, getAdminFirestore } from './_lib/firebaseAdmin.js';
 import { EMAIL_TEMPLATES, interpolateTemplate } from '../src/constants/emailTemplates.js';
+import { SYSTEM_ROLES, ROLE_CATEGORIES } from '../src/constants/roles.js';
 
 // Only these origins may call this endpoint from a browser — mirrors api/generate.js.
 const ALLOWED_ORIGINS = [
@@ -28,6 +29,20 @@ function getTransporter() {
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// This endpoint sends from the company mailbox, so only staff may use it (never Partner,
+// Business Client or Customer), and only with the fixed templates the app actually sends.
+// Adding a template here is a deliberate decision, not a side effect of adding a template.
+const STAFF_ROLES = SYSTEM_ROLES.filter((role) => !ROLE_CATEGORIES.EXTERNAL.includes(role));
+const SENDABLE_TEMPLATES = new Set([
+  'client_approval',
+  'client_activation_confirmed',
+  'partner_approval',
+  'partner_activation_confirmed',
+  'employee_invite',
+  'password_reset',
+  'registration_declined',
+]);
 
 export default async function handler(req, res) {
   const origin = req.headers.origin;
@@ -69,42 +84,44 @@ export default async function handler(req, res) {
 
     const userSnap = await getAdminFirestore().collection('users').doc(decodedToken.email).get();
     const userData = userSnap.data();
-    const isApproved = userSnap.exists
+    // A Deactivated or Disabled account is rejected even if it still carries isApproved: true.
+    const isBlocked = userSnap.exists && ['deactivated', 'disabled'].includes(String(userData.status || '').toLowerCase());
+    const isApproved = userSnap.exists && !isBlocked
       && (userData.isApproved === true || userData.status === 'Active' || userData.status === undefined);
     if (!isApproved) {
       return res.status(403).json({ error: 'Your account is pending approval or has been deactivated.' });
     }
+    if (!STAFF_ROLES.includes(userData.role)) {
+      return res.status(403).json({ error: 'Only staff accounts can send email from the company mailbox.' });
+    }
 
-    const { to, templateId, data, subject: rawSubject, body: rawBody } = req.body || {};
+    const { to, templateId, data } = req.body || {};
 
     if (!to || !EMAIL_RE.test(to)) {
       return res.status(400).json({ error: 'Missing or invalid "to" address' });
     }
 
-    let subject;
-    let html;
-
-    if (templateId) {
-      const template = EMAIL_TEMPLATES.find(t => t.id === templateId);
-      if (!template) {
-        return res.status(400).json({ error: `Unknown templateId "${templateId}"` });
-      }
-      subject = interpolateTemplate(template.subject, data || {});
-      // Templates are authored as plain text with line breaks; render that as HTML
-      // rather than sending the literal newlines, which most mail clients collapse.
-      const plainBody = interpolateTemplate(template.body, data || {});
-      html = `<pre style="font-family: inherit; white-space: pre-wrap; word-wrap: break-word;">${plainBody
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')}</pre>`;
-    } else if (rawSubject && rawBody) {
-      // Pre-rendered path, for callers that already built subject/body themselves
-      // (e.g. the manual EmailTemplateModal "send" action, if wired up later).
-      subject = rawSubject;
-      html = rawBody;
-    } else {
-      return res.status(400).json({ error: 'Provide either "templateId" (+ optional "data") or "subject" + "body"' });
+    if (!templateId) {
+      // Free-form subject and body used to be accepted here. Nothing in the app sends that,
+      // and it let any approved account write its own message, so it is no longer supported.
+      return res.status(400).json({ error: 'Provide a "templateId" (+ optional "data"); free-form email is not supported' });
     }
+
+    const template = EMAIL_TEMPLATES.find(t => t.id === templateId);
+    if (!template) {
+      return res.status(400).json({ error: `Unknown templateId "${templateId}"` });
+    }
+    if (!SENDABLE_TEMPLATES.has(templateId)) {
+      return res.status(400).json({ error: `Template "${templateId}" cannot be sent through this endpoint` });
+    }
+    const subject = interpolateTemplate(template.subject, data || {});
+    // Templates are authored as plain text with line breaks; render that as HTML
+    // rather than sending the literal newlines, which most mail clients collapse.
+    const plainBody = interpolateTemplate(template.body, data || {});
+    const html = `<pre style="font-family: inherit; white-space: pre-wrap; word-wrap: break-word;">${plainBody
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')}</pre>`;
 
     const transporter = getTransporter();
     await transporter.sendMail({

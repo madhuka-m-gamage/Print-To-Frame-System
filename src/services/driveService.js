@@ -1,13 +1,12 @@
 /**
  * Google Drive Integration Service using Workspace API & OAuth access token
  */
-import { getAccessToken } from './firebase';
+import { getScopedAccessToken } from './firebase';
+
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
 
 export async function fetchUserDriveFiles() {
-  const token = await getAccessToken();
-  if (!token) {
-    throw new Error('Not authenticated with Google Workspace. Please sign in with Google.');
-  }
+  const token = await getScopedAccessToken(DRIVE_SCOPE);
 
   try {
     const response = await fetch(

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
-import { db } from '../services/firebase';
-import { logActivity } from '../services/auditLog';
+import { db } from '@/services/firebase';
+import { logActivity } from '@/services/auditLog';
 
 const PermissionsContext = createContext();
 
@@ -20,36 +20,42 @@ const ops = () => ({ view: true, create: true, edit: true, delete: true, export:
 
 export const DEFAULT_PERMISSIONS = {
   Admin: {
+    quotations: full(),
     dashboard: full(), notifications: full(), messages: full(),
     leads: full(), pipeline: full(), customers: full(), partners: full(),
     invoices: full(), receipts: full(), projects: full(), logistics: full(),
     agents: full(), calculator: full(), admin: full(),
   },
   Manager: {
+    quotations: full(),
     dashboard: full(), notifications: full(), messages: full(),
     leads: full(), pipeline: full(), customers: full(), partners: full(),
-    invoices: full(), receipts: full(), projects: full(), logistics: full(),
-    agents: read(), calculator: full(), admin: read(),
+    invoices: full(), receipts: { ...full(), delete: false }, projects: full(), logistics: full(),
+    agents: full(), calculator: full(), admin: none(),
   },
   Sales: {
+    quotations: full(),
     dashboard: full(), notifications: full(), messages: full(),
     leads: write(), pipeline: write(), customers: write(), partners: write(),
     invoices: write(), receipts: write(), projects: read(), logistics: read(),
     agents: none(), calculator: full(), admin: none(),
   },
   Operations: {
+    quotations: none(),
     dashboard: full(), notifications: full(), messages: full(),
     leads: none(), pipeline: none(), customers: read(), partners: none(),
-    invoices: none(), receipts: none(), projects: ops(), logistics: ops(),
+    invoices: { ...none(), view: true, create: true }, receipts: none(), projects: ops(), logistics: ops(),
     agents: none(), calculator: full(), admin: none(),
   },
   Support: {
+    quotations: read(),
     dashboard: read(), notifications: full(), messages: full(),
     leads: read(), pipeline: read(), customers: read(), partners: read(),
     invoices: read(), receipts: read(), projects: read(), logistics: read(),
     agents: none(), calculator: none(), admin: none(),
   },
   Accounts: {
+    quotations: read(),
     dashboard: read(), notifications: full(), messages: full(),
     leads: read(), pipeline: read(), customers: read(), partners: read(),
     invoices: { view: true, create: true, edit: true, delete: false, export: true },
@@ -58,27 +64,31 @@ export const DEFAULT_PERMISSIONS = {
     agents: none(), calculator: { view: true, create: true, edit: true, delete: false, export: true }, admin: none(),
   },
   Logistics: {
+    quotations: none(),
     dashboard: read(), notifications: full(), messages: full(),
     leads: none(), pipeline: none(), customers: read(), partners: none(),
-    invoices: none(), receipts: none(), projects: read(), logistics: ops(),
+    invoices: read(), receipts: none(), projects: read(), logistics: ops(),
     agents: none(), calculator: none(), admin: none(),
   },
   Partner: {
+    quotations: none(),
     dashboard: full(), notifications: full(), messages: none(),
-    leads: none(), pipeline: none(), customers: none(), partners: full(),
+    leads: none(), pipeline: none(), customers: none(), partners: { ...none(), view: true, edit: true },
     invoices: none(), receipts: none(), projects: none(), logistics: none(),
     agents: none(), calculator: none(), admin: none(),
   },
   Customer: {
-    dashboard: full(), notifications: full(), messages: full(),
+    quotations: none(),
+    dashboard: full(), notifications: full(), messages: none(),
     leads: none(), pipeline: none(), customers: none(), partners: none(),
-    invoices: read(), receipts: read(), projects: read(), logistics: read(),
+    invoices: read(), receipts: none(), projects: read(), logistics: read(),
     agents: none(), calculator: none(), admin: none(),
   },
   'Business Client': {
-    dashboard: full(), notifications: full(), messages: full(),
+    quotations: none(),
+    dashboard: full(), notifications: full(), messages: none(),
     leads: none(), pipeline: none(), customers: none(), partners: none(),
-    invoices: read(), receipts: read(), projects: read(), logistics: read(),
+    invoices: read(), receipts: none(), projects: read(), logistics: read(),
     agents: none(), calculator: none(), admin: none(),
   },
 };

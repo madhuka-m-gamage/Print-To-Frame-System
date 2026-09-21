@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateCutList, mmToFtIn, ftToMm, STEEL_PROFILES } from '../../src/utils/cutListEngine';
+import { calculateCutList, mmToFtIn, ftToMm, packStockBars, STEEL_PROFILES } from '@/features/fabrication/cutListEngine';
 
 describe('cutListEngine', () => {
   it('converts mm to feet and fractional inches accurately', () => {
@@ -75,5 +75,59 @@ describe('cutListEngine', () => {
     expect(result.dimensions.heightMm).toBe(600);
     expect(result.profile.id).toBe('box_1_5');
     expect(result.cutItems.length).toBeGreaterThanOrEqual(4);
+  });
+
+  describe('packStockBars (first-fit-decreasing)', () => {
+    it('packs pieces into as few bars as first-fit-decreasing allows', () => {
+      // 3000 + 3000 fill one 6000 bar and three 2000s fill another; a linear estimate with a
+      // 5% allowance would have ordered three bars.
+      expect(packStockBars([3000, 3000, 2000, 2000, 2000], 6000, 0).bars).toBe(2);
+    });
+
+    it('charges one kerf per cut and reports the length the bars must carry', () => {
+      const res = packStockBars([2000, 2000, 2000], 6000, 10);
+      expect(res.usedMm).toBe(6030);
+      expect(res.bars).toBe(2);
+    });
+
+    it('lays a piece longer than a bar across whole bars and reuses the offcut', () => {
+      expect(packStockBars([7000, 1000], 6000, 0).bars).toBe(2);
+      expect(packStockBars([13000], 6000, 0).bars).toBe(3);
+    });
+
+    it('needs no bars for no pieces', () => {
+      expect(packStockBars([], 6000, 3).bars).toBe(0);
+    });
+  });
+
+  it('orders bars with packing, not a linear estimate, in the cut list summary', () => {
+    const res = calculateCutList({ widthMm: 3048, heightMm: 1219, depthMm: 50, profileKey: 'box_2_0' });
+    const pieces = res.cutItems.flatMap(i => Array(i.qty).fill(i.lengthMm));
+    expect(res.summary.standardStockBars).toBe(Math.max(1, packStockBars(pieces, 6096, 3).bars));
+  });
+});
+
+describe('defaultFrameDimensions and rib counts (Phase 7 6.4b)', () => {
+  it('sizes a 3:2 frame that keeps the full contract area', async () => {
+    const { defaultFrameDimensions } = await import('@/features/fabrication/cutListEngine');
+    const { widthMm, heightMm } = defaultFrameDimensions(20);
+    const areaSqFt = (widthMm * heightMm) / (25.4 * 25.4) / 144;
+    expect(areaSqFt).toBeGreaterThan(19.9);
+    expect(areaSqFt).toBeLessThan(20.1);
+    expect(widthMm / heightMm).toBeCloseTo(1.5, 1);
+  });
+
+  it('falls back to 900 x 600 with no usable area', async () => {
+    const { defaultFrameDimensions } = await import('@/features/fabrication/cutListEngine');
+    expect(defaultFrameDimensions(0)).toEqual({ widthMm: 900, heightMm: 600 });
+    expect(defaultFrameDimensions(undefined)).toEqual({ widthMm: 900, heightMm: 600 });
+  });
+
+  it('exposes the rib counts the blueprint draws', async () => {
+    const { calculateCutList } = await import('@/features/fabrication/cutListEngine');
+    const wide = calculateCutList({ widthMm: 2400, heightMm: 1500 });
+    expect(wide.vRibCount).toBeGreaterThan(0);
+    expect(wide.hRibCount).toBeGreaterThanOrEqual(0);
+    expect(calculateCutList({ widthMm: 300, heightMm: 300 }).vRibCount).toBe(0);
   });
 });

@@ -1,6 +1,6 @@
 # Employees Module Review & Architecture Audit Findings
 
-> **Scope**: Architectural audit, codebase verification, and accepted design decisions for `docs/02_modules/employees/CLAUDE.md`, `docs/02_modules/employees.md`, and cross-module triggers documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
+> **Scope**: Architectural audit, codebase verification, and accepted design decisions for `docs/02_modules/employees/CLAUDE.md`, `docs/02_modules/employees/README.md`, and cross-module triggers documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
 > **Branch / Worktree**: `review-employees` (`.worktrees/review-employees`)  
 > **Status**: Review & Audit findings complete. All recommended decisions formally accepted by user. Detailed HR data model specified below.
 
@@ -10,14 +10,14 @@
 
 An in-depth architectural and code-level audit of the "Employees" domain was conducted across the Print To Frame ERP codebase. The primary findings and user-approved decisions are summarized below:
 
-1. **Absence of Independent Employees Module**: There is no dedicated Employees module, UI route, component, or Firestore collection (`employees` or `staff`). Staff identities exist solely as documents in the `users` collection, administered via the "User Management" interface (`src/components/admin/AgentDatabase.jsx`, tab id `agents`).
+1. **Absence of Independent Employees Module**: There is no dedicated Employees module, UI route, component, or Firestore collection (`employees` or `staff`). Staff identities exist solely as documents in the `users` collection, administered via the "User Management" interface (`src/features/admin/AgentDatabase.jsx`, tab id `agents`).
 2. **Approved HR Data Model (Decision D1)**: Rather than maintaining an unstructured `users` record, an enterprise **HR Data Model** will be integrated into staff records, introducing formalized Employee IDs (`PTF-EMP-####`), departmental classifications, employment terms, NIC verification, emergency contacts, skills tracking, and compensation structures.
-3. **Hardcoded Staff & Driver Directory Disconnect (Decision D2)**: `src/utils/logisticsEngine.js` hardcodes a static in-memory `DRIVER_DIRECTORY` (4 named individuals) and `FLEET_VEHICLES` (3 vehicles). Delivery assignment in `Logistics.jsx` and `LogisticsCardDetails.jsx` draws strictly from this array. Real staff enrolled with the `Logistics` role in `users` cannot be assigned to dispatch jobs. **Approved Resolution**: Migrate drivers to live Firestore queries of `users` where `role === 'Logistics'` (or `Operations`), and fleet units to a dynamic `settings/fleet` or `fleet` Firestore collection.
+3. **Hardcoded Staff & Driver Directory Disconnect (Decision D2)**: `src/features/logistics/logisticsEngine.js` hardcodes a static in-memory `DRIVER_DIRECTORY` (4 named individuals) and `FLEET_VEHICLES` (3 vehicles). Delivery assignment in `Logistics.jsx` and `LogisticsCardDetails.jsx` draws strictly from this array. Real staff enrolled with the `Logistics` role in `users` cannot be assigned to dispatch jobs. **Approved Resolution**: Migrate drivers to live Firestore queries of `users` where `role === 'Logistics'` (or `Operations`), and fleet units to a dynamic `settings/fleet` or `fleet` Firestore collection.
 4. **Standardized Task Assignment Across Modules (Decision D3)**: Currently, Leads only assign external referral partners, Fabrication uses an unvalidated free-text string, and Logistics uses a static array. **Approved Resolution**: Standardize operational assignments across CRM (Sales Rep), Fabrication (Factory Assignee), and Logistics (Delivery Driver) using live lookups against `users` filtered by role.
 5. **RBAC Delegation for Managers & Admins (Decision D4)**: Management actions in `AgentDatabase.jsx` are gated in the UI by `canAccess(currentUser?.role, 'agents', 'edit')`, but `firestore.rules` and `api/admin-user.js` strictly enforce `role === 'Admin'`. **Approved Resolution**: Update both `firestore.rules` and `api/admin-user.js` to authorize both **Admins and Managers** who have been granted `agents` management authority in the permissions matrix.
 6. **Atomic User Deletion Ordering (Decision D5)**: Deleting a user in `AgentDatabase.jsx` deletes the Firestore profile before deleting the Firebase Auth account. If the backend fails, the Auth account becomes orphaned, blocking future re-enrollment with `auth/email-already-exists`. **Approved Resolution**: Reorder deletion to remove the Auth account first (or implement rollback logic if either step fails).
 7. **Internal Staff Approval Notifications (Decision D6)**: Approving an applicant into an internal employee role currently sends no notification. **Approved Resolution**: Automatically dispatch an `employee_approved` / `employee_invite` email upon internal user approval.
-8. **Removal of Dead UI Navigation Link (Decision D7)**: `src/components/common/UserProfile.jsx` features an "Execution Plan" button that navigates to a non-existent tab (`roadmap`), causing a blank viewport. **Approved Resolution**: Remove the dead button completely.
+8. **Removal of Dead UI Navigation Link (Decision D7)**: `src/features/profile/UserProfile.jsx` features an "Execution Plan" button that navigates to a non-existent tab (`roadmap`), causing a blank viewport. **Approved Resolution**: Remove the dead button completely.
 9. **UI & Status Badge Alignment (Decision D8)**: `StatusBadge.jsx` is imported but unused in `AgentDatabase.jsx`, and email defaulting sends internal onboarding emails to retail `Customer` profiles. **Approved Resolution**: Add `Active` / `Deactivated` support to `StatusBadge.jsx`, replace hardcoded status pills, and correct email template defaulting.
 
 ---
@@ -30,18 +30,18 @@ An in-depth architectural and code-level audit of the "Employees" domain was con
 |---|---|---|
 | **What it does** ("There is no separate Employees feature; employee-like data is the `users` collection managed in User Management. No HR data exists.") | **Accurate** | Verified. No `employees` collection or standalone HR routes exist in the codebase. Staff records live in `users`. |
 | **Code** ("Staff are `users` documents: see `user-management-rbac.md`.") | **Accurate** | Verified. Managed via `AgentDatabase.jsx` and `App.jsx`. |
-| **Code** ("`src/utils/logisticsEngine.js` has a hardcoded `DRIVER_DIRECTORY`.") | **Accurate** | Verified. Lines 17–22 of `logisticsEngine.js` declare 4 hardcoded drivers. |
+| **Code** ("`src/features/logistics/logisticsEngine.js` has a hardcoded `DRIVER_DIRECTORY`.") | **Accurate** | Verified. Lines 17–22 of `logisticsEngine.js` declare 4 hardcoded drivers. |
 | **Firestore collections** ("`users`, `pendingUsers`, `auditLog`") | **Accurate** | Verified. In addition, `AgentDatabase.jsx` reads `partner_applications` and writes `settings/permissions` indirectly via `PermissionsManager.jsx`. |
 | **Triggers & side effects** ("Enrolling creates an Auth account (`api/admin-user.js`), the `users` doc, an `ENROLL` audit entry and an `employee_invite` email.") | **Accurate** | Verified in `AgentDatabase.jsx:L309-354`. |
 | **Before you edit** ("Decide whether an Employees module is planned... Roles 'Sales Executive' and 'Fabricator' do not exist; use `Sales` and `Operations`.") | **Accurate** | Canonical roles in `src/constants/roles.js` confirm `Sales` and `Operations`. |
 
-### 2.2 `docs/02_modules/employees.md`
+### 2.2 `docs/02_modules/employees/README.md`
 
 | Section / Claim | Code Status | Verification Details |
 |---|---|---|
 | **Files and Folders** ("There is no separate Employees module... `AgentDatabase.jsx`: enrol users, role / status change, photo, delete, password reset...") | **Accurate** | Confirmed all listed UI capabilities in `AgentDatabase.jsx`. |
 | **Files and Folders** ("`src/constants/roles.js`: 10 system roles...") | **Accurate** | Verified: `Admin`, `Manager`, `Sales`, `Operations`, `Support`, `Accounts`, `Logistics`, `Partner`, `Business Client`, `Customer`. |
-| **Files and Folders** ("`src/utils/logisticsEngine.js`: `DRIVER_DIRECTORY`, a hardcoded list of 4 named drivers / fabricators...") | **Accurate** | Verified. Also includes `FLEET_VEHICLES` (3 vehicles). |
+| **Files and Folders** ("`src/features/logistics/logisticsEngine.js`: `DRIVER_DIRECTORY`, a hardcoded list of 4 named drivers / fabricators...") | **Accurate** | Verified. Also includes `FLEET_VEHICLES` (3 vehicles). |
 | **Cloud Functions / triggers** ("All admin actions write to `auditLog`.") | **Partially Inaccurate** | `handleSaveDetails` (updating profile details such as name, contact, company, location, job title, and bio) **omits** `logActivity`. Only `ENROLL`, `DELETE`, `ROLE_CHANGE`, `STATUS_CHANGE`, and `PASSWORD_RESET` write to `auditLog`. |
 | **Summary & Open Questions** ("Is an Employees module (HR data) planned, or is `users` intended to be the employee record?") | **Resolved** | Stakeholders approved designing an **HR Data Model** to formalize staff records within the system. |
 
@@ -74,10 +74,10 @@ An in-depth architectural and code-level audit of the "Employees" domain was con
 
 ## 4. Codebase Tracing & Verification Details
 
-### 4.1 Hardcoded Staff & Fleet Directories (`src/utils/logisticsEngine.js`)
+### 4.1 Hardcoded Staff & Fleet Directories (`src/features/logistics/logisticsEngine.js`)
 
 ```javascript
-// src/utils/logisticsEngine.js:17-22
+// src/features/logistics/logisticsEngine.js:17-22
 export const DRIVER_DIRECTORY = [
   { name: 'Saman (Master Welder)', phone: '0771234567', role: 'Lead Driver / Fabricator' },
   { name: 'Kamal (Assistant)', phone: '0772345678', role: 'Driver Assistant' },
@@ -101,7 +101,7 @@ export const DRIVER_DIRECTORY = [
 
 ### 4.2 Integration Surfaces & RBAC Implementation
 
-#### Surface 1: `src/components/admin/AgentDatabase.jsx`
+#### Surface 1: `src/features/admin/AgentDatabase.jsx`
 - **Module Tabs**: Provides tabs for `all` ("All Members"), `employees` ("Internal Team"), and `clients` ("Corporate & Retail Clients"). `Partner` role users are decoupled via `nonPartnerUsers`.
 - **Filtering Logic**:
   ```javascript
@@ -180,7 +180,7 @@ export const DRIVER_DIRECTORY = [
 
 ---
 
-### 4.4 User Profile & UI Disconnects (`src/components/common/UserProfile.jsx`)
+### 4.4 User Profile & UI Disconnects (`src/features/profile/UserProfile.jsx`)
 
 1. **Dead Jump Link (`roadmap`)**:
    - `UserProfile.jsx:L718`:
@@ -234,7 +234,7 @@ All recommended decision points were reviewed and explicitly accepted by the use
 | **D4** | **Manager RBAC Delegation** | **Allow Managers & Admins** | **ACCEPTED** | Update both `firestore.rules` (allow update/delete on `/users/{userId}` if `isAdmin()` or `hasRole('Manager') && checkPermission('agents', action)`) and `api/admin-user.js` (allow callers with `role === 'Admin'` OR `role === 'Manager'`). |
 | **D5** | **User Deletion Ordering** | **Safe Auth-First Deletion** | **ACCEPTED** | Reorder deletion sequence: call `deleteUserAccount` first; only upon confirmed deletion proceed to `deleteDoc` (or rollback on failure), preventing orphaned Firebase Auth logins. |
 | **D6** | **Staff Approval Notifications** | **Email Notifications** | **ACCEPTED** | Send an automated `employee_approved` / `employee_invite` email when an internal staff applicant is approved in User Management. |
-| **D7** | **Dead UI Link in `UserProfile.jsx`** | **Remove Button** | **ACCEPTED** | Remove the dead "Execution Plan" (`roadmap`) navigation button from `src/components/common/UserProfile.jsx`. |
+| **D7** | **Dead UI Link in `UserProfile.jsx`** | **Remove Button** | **ACCEPTED** | Remove the dead "Execution Plan" (`roadmap`) navigation button from `src/features/profile/UserProfile.jsx`. |
 | **D8** | **StatusBadge & Template Defaults** | **Standardize Badge & Templates** | **ACCEPTED** | Add `active` and `deactivated` support to `StatusBadge.jsx`, use it in `AgentDatabase.jsx`, and fix `Customer` email defaulting in `AgentDatabase.jsx:L752`. |
 
 ---

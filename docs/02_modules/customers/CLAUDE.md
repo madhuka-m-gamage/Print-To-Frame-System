@@ -1,6 +1,6 @@
 # Customers: module notes for Claude
 
-Full map: [../customers.md](../customers.md). Cross-module chains: [CROSS_MODULE_TRIGGERS.md](../../01_architecture/CROSS_MODULE_TRIGGERS.md). Review findings: [FINDINGS.md](FINDINGS.md). There are no Cloud Functions; all automation is client code (`src/App.jsx`, components) or `api/*.js`.
+Full map: [README.md](README.md). Cross-module chains: [CROSS_MODULE_TRIGGERS.md](../../01_architecture/CROSS_MODULE_TRIGGERS.md). Review findings: [FINDINGS.md](FINDINGS.md). There are no Cloud Functions; all automation is client code (`src/App.jsx`, components) or `api/*.js`.
 
 ## What it does
 
@@ -8,7 +8,7 @@ A client registry keyed by NIC or business registration number, filled manually,
 
 ## Code
 
-- `src/components/crm/Customers.jsx`, `ContactSyncModal.jsx`, `src/services/contactsService.js`, `src/utils/stringMatch.js`
+- `src/features/customers/Customers.jsx`, `ContactSyncModal.jsx`, `src/services/contactsService.js`, `src/shared/utils/stringMatch.js`
 
 ## Firestore collections it owns or writes
 
@@ -22,4 +22,6 @@ A client registry keyed by NIC or business registration number, filled manually,
 ## Before you edit
 
 - Only delete is audit-logged from this file.
-- Google Contacts sync calls the People API with the sign-in token, but `firebase.js` requests no Contacts scope ([auth.md](../auth.md)).
+- Google Contacts sync calls the People API with the sign-in token, but `firebase.js` requests no Contacts scope ([auth.md](../auth/README.md)).
+
+- Phone matching uses `normalizePhone` / `phonesMatch` (`src/shared/utils/validation.js`) in lead-to-customer matching, customer stats and the contact import; never compare stored phones with `===`.

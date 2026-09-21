@@ -1,6 +1,6 @@
 # Operations: Fabrication Module Review & Correctness Audit Findings
 
-> **Scope**: Correctness review of `docs/02_modules/operations-fabrication/CLAUDE.md`, `docs/02_modules/operations-fabrication.md`, and all cross-module triggers touching Operations: Fabrication documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
+> **Scope**: Correctness review of `docs/02_modules/operations-fabrication/CLAUDE.md`, `docs/02_modules/operations-fabrication/README.md`, and all cross-module triggers touching Operations: Fabrication documented in `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.  
 > **Branch / Worktree**: `review-operations-fabrication` (`.worktrees/review-operations-fabrication`)  
 > **Status**: Review & Audit complete — **all 11 decision points accepted by product owner on 2026-09-20. Implementation may proceed.**
 
@@ -9,10 +9,10 @@
 ## 1. Executive Summary
 
 A comprehensive architectural and trigger audit was conducted across the Operations: Fabrication module and its integration boundaries:
-- **Module Documentation**: `docs/02_modules/operations-fabrication.md`, `docs/02_modules/operations-fabrication/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
-- **Target UI Components**: `src/components/operations/FabricationWorks.jsx`, `src/components/operations/FabricationCardDetails.jsx`, `src/components/common/FrameBlueprintPreview.jsx`.
-- **Engines & Calculations**: `src/utils/cutListEngine.js` (`calculateCutList`, `mmToFtIn`, `ftToMm`, `STEEL_PROFILES`).
-- **Integration Surfaces**: `src/App.jsx` (`projects` collection sync, `handleSaveInvoice`, props contract), `src/components/crm/Leads.jsx` (Trigger 2 lead conversion), `src/components/crm/Deals.jsx` (Trigger 3 completion conflict), `firestore.rules` (`match /projects/{projectId}` permissions), `api/generate.js` (AI update proxy).
+- **Module Documentation**: `docs/02_modules/operations-fabrication/README.md`, `docs/02_modules/operations-fabrication/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
+- **Target UI Components**: `src/features/fabrication/FabricationWorks.jsx`, `src/features/fabrication/FabricationCardDetails.jsx`, `src/features/fabrication/FrameBlueprintPreview.jsx`.
+- **Engines & Calculations**: `src/features/fabrication/cutListEngine.js` (`calculateCutList`, `mmToFtIn`, `ftToMm`, `STEEL_PROFILES`).
+- **Integration Surfaces**: `src/App.jsx` (`projects` collection sync, `handleSaveInvoice`, props contract), `src/features/leads/Leads.jsx` (Trigger 2 lead conversion), `src/features/deals/Deals.jsx` (Trigger 3 completion conflict), `firestore.rules` (`match /projects/{projectId}` permissions), `api/generate.js` (AI update proxy).
 
 ### Key Discoveries:
 
@@ -72,7 +72,7 @@ A comprehensive architectural and trigger audit was conducted across the Operati
 | **Before you edit** ("Possible duplicate Final invoice with `Deals.jsx` completion; no guard between them.") | **Critical Verification** | Confirmed: Both modules independently invoke `onSaveInvoice` with a newly minted `INV-FIN` ID without querying existing invoices. |
 | **Before you edit** ("No stock / inventory deduction exists.") | **Accurate** | Confirmed: `cutListEngine.js` calculates bar counts and kerf waste, but there is no inventory collection or deduction logic. |
 
-### 2.2 `docs/02_modules/operations-fabrication.md`
+### 2.2 `docs/02_modules/operations-fabrication/README.md`
 
 | Section / Claim | Code Status | Details / Discrepancy |
 |---|---|---|
