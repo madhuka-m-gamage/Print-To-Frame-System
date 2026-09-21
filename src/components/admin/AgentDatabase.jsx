@@ -5,21 +5,21 @@ import {
   UserCheck, AlertCircle, Camera, Sparkles, ArrowLeft, Send, Eye,
   Building, CheckCircle2, Copy, PhoneCall, Lock, RefreshCw, Layers
 } from 'lucide-react';
-import DeleteModal from '../common/DeleteModal';
+import DeleteModal from '@/components/common/DeleteModal';
 import { doc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../services/firebase';
-import { toast } from '../../utils/toast';
-import { subscribeToCollection, addDocument, updateDocument, COLLECTIONS } from '../../services/firestoreSync';
+import { db } from '@/services/firebase';
+import { toast } from '@/utils/toast';
+import { subscribeToCollection, addDocument, updateDocument, COLLECTIONS } from '@/services/firestoreSync';
 import { 
   PageHeader, FilterBar, StatusBadge, ModalWrapper, UserAvatar, 
   ImageCropModal, EmailTemplateModal 
-} from '../common/ui';
-import { SYSTEM_ROLES, ROLE_METADATA, getRoleCategory } from '../../constants/roles';
-import { formatPhone } from '../../utils/validation';
-import { usePermissions } from '../../context/PermissionsContext';
-import { logActivity } from '../../services/auditLog';
-import { createUserAccount, deleteUserAccount, resetUserPassword } from '../../services/adminUsers';
-import { sendTemplatedEmail } from '../../services/mailer';
+} from '@/components/common/ui';
+import { SYSTEM_ROLES, ROLE_METADATA, getRoleCategory } from '@/constants/roles';
+import { formatPhone } from '@/utils/validation';
+import { usePermissions } from '@/context/PermissionsContext';
+import { logActivity } from '@/services/auditLog';
+import { createUserAccount, deleteUserAccount, resetUserPassword } from '@/services/adminUsers';
+import { sendTemplatedEmail } from '@/services/mailer';
 
 export default function AgentDatabase({ 
   users = [], 

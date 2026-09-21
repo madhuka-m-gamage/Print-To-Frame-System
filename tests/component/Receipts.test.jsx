@@ -4,20 +4,20 @@ import { screen, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '../helpers/renderWithProviders';
 import { makeReceipt } from '../helpers/factories';
 
-vi.mock('../../src/services/firestoreSync', () => ({
+vi.mock('@/services/firestoreSync', () => ({
   COLLECTIONS: { RECEIPTS: 'receipts' },
   deleteDocument: vi.fn(async () => {}),
 }));
-vi.mock('../../src/utils/toast', () => ({
+vi.mock('@/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
   showToast: vi.fn(),
 }));
-vi.mock('../../src/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
-vi.mock('../../src/utils/csvExport', () => ({ exportToCsv: vi.fn() }));
+vi.mock('@/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
+vi.mock('@/utils/csvExport', () => ({ exportToCsv: vi.fn() }));
 
-const { default: Receipts } = await import('../../src/components/crm/Receipts');
-const { exportToCsv } = await import('../../src/utils/csvExport');
-const { toast } = await import('../../src/utils/toast');
+const { default: Receipts } = await import('@/components/crm/Receipts');
+const { exportToCsv } = await import('@/utils/csvExport');
+const { toast } = await import('@/utils/toast');
 
 const admin = { role: 'Admin', name: 'Admin', identifier: 'admin@example.com' };
 

@@ -3,18 +3,18 @@ import {
   Plus, ArrowLeft, ArrowRight, Truck, Check, Trash2, Calendar, 
   User, DollarSign, Archive, X, LayoutGrid, List, Download, ArrowUpDown, Clock, Sparkles
 } from 'lucide-react';
-import { toast } from '../../utils/toast';
+import { toast } from '@/utils/toast';
 import LeadCardDetails from './LeadCardDetails';
-import DeleteModal from '../common/DeleteModal';
-import { PageHeader, FilterBar, StatusBadge, KanbanColumn, KanbanCard, DetailModalLayout, DetailModalHeader, DetailModalFooter } from '../common/ui';
-import SortableTable from '../common/ui/SortableTable';
-import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateAtomicId } from '../../services/firestoreSync';
-import { dimensionsFromLead } from '../../utils/fabricationLink';
-import { buildLogisticsTask } from '../../utils/logisticsTask';
-import { sanitizeTechnicalScope, stripEmojis, phonesMatch } from '../../utils/validation';
-import { exportToCsv } from '../../utils/csvExport';
-import { logActivity } from '../../services/auditLog';
-import { matchesEntity } from '../../utils/entityUtils';
+import DeleteModal from '@/components/common/DeleteModal';
+import { PageHeader, FilterBar, StatusBadge, KanbanColumn, KanbanCard, DetailModalLayout, DetailModalHeader, DetailModalFooter } from '@/components/common/ui';
+import SortableTable from '@/components/common/ui/SortableTable';
+import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateAtomicId } from '@/services/firestoreSync';
+import { dimensionsFromLead } from '@/utils/fabricationLink';
+import { buildLogisticsTask } from '@/utils/logisticsTask';
+import { sanitizeTechnicalScope, stripEmojis, phonesMatch } from '@/utils/validation';
+import { exportToCsv } from '@/utils/csvExport';
+import { logActivity } from '@/services/auditLog';
+import { matchesEntity } from '@/utils/entityUtils';
 
 const STAGES = ["Intake", "Processing", "75% Invoice Submitted", "Received", "Completed"];
 

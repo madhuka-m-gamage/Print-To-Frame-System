@@ -4,18 +4,18 @@ import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../helpers/renderWithProviders';
 import { makeInvoice } from '../helpers/factories';
 
-vi.mock('../../src/services/firestoreSync', () => ({
+vi.mock('@/services/firestoreSync', () => ({
   COLLECTIONS: { INVOICES: 'invoices', LEADS: 'leads' },
   updateDocument: vi.fn(async () => {}),
   deleteDocument: vi.fn(async () => {}),
 }));
-vi.mock('../../src/utils/toast', () => ({
+vi.mock('@/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
   showToast: vi.fn(),
 }));
-vi.mock('../../src/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
+vi.mock('@/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
 
-const { default: Invoices } = await import('../../src/components/crm/Invoices');
+const { default: Invoices } = await import('@/components/crm/Invoices');
 
 const admin = { role: 'Admin', name: 'Admin', identifier: 'admin@example.com' };
 

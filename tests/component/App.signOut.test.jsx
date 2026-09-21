@@ -1,12 +1,12 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { PermissionsProvider, DEFAULT_PERMISSIONS } from '../../src/context/PermissionsContext';
+import { PermissionsProvider, DEFAULT_PERMISSIONS } from '@/context/PermissionsContext';
 
 const adminUser = { identifier: 'admin@example.com', name: 'Admin User', role: 'Admin', isApproved: true, status: 'Active' };
 const authState = { callback: null };
 
-vi.mock('../../src/services/firebase', () => ({
+vi.mock('@/services/firebase', () => ({
   db: {},
   auth: { currentUser: null },
   storage: {},
@@ -29,7 +29,7 @@ vi.mock('firebase/firestore', () => ({
     return () => {};
   }),
 }));
-vi.mock('../../src/services/firestoreSync', () => ({
+vi.mock('@/services/firestoreSync', () => ({
   COLLECTIONS: new Proxy({}, { get: (_t, key) => String(key).toLowerCase() }),
   subscribeToCollection: vi.fn(() => () => {}),
   addDocument: vi.fn(async () => {}),
@@ -39,17 +39,17 @@ vi.mock('../../src/services/firestoreSync', () => ({
   deriveReceiptId: vi.fn((id) => `REC-${id}`),
   createDocumentIfAbsent: vi.fn(async () => {}),
 }));
-vi.mock('../../src/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
-vi.mock('../../src/components/auth/Login', () => ({ default: () => <div>login screen</div> }));
-vi.mock('../../src/components/tools/MiniChatDrawer', () => ({ default: () => null }));
-vi.mock('../../src/components/common/FloatingMessageToast', () => ({ default: () => null }));
-vi.mock('../../src/context/MessagingContext', () => ({
+vi.mock('@/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
+vi.mock('@/components/auth/Login', () => ({ default: () => <div>login screen</div> }));
+vi.mock('@/components/tools/MiniChatDrawer', () => ({ default: () => null }));
+vi.mock('@/components/common/FloatingMessageToast', () => ({ default: () => null }));
+vi.mock('@/context/MessagingContext', () => ({
   MessagingProvider: ({ children }) => children,
   useMessaging: () => ({ unreadCount: 0, unreadByChat: {}, conversations: [] }),
 }));
 
-const { default: App } = await import('../../src/App');
-const { emitNotification } = await import('../../src/utils/events');
+const { default: App } = await import('@/App');
+const { emitNotification } = await import('@/utils/events');
 
 const bells = () => screen.queryAllByLabelText('Notifications');
 

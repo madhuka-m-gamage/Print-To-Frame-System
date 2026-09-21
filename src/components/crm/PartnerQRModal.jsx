@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { QrCode, Copy, Check, Download, ExternalLink, Sparkles, Building, Printer, Share2 } from 'lucide-react';
-import { toast } from '../../utils/toast';
-import ModalWrapper from '../common/ui/detail-modal/ModalWrapper';
+import { toast } from '@/utils/toast';
+import ModalWrapper from '@/components/common/ui/detail-modal/ModalWrapper';
 
 export default function PartnerQRModal({ isOpen, onClose, partner }) {
   const [copied, setCopied] = useState(false);

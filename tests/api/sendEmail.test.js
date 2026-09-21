@@ -82,7 +82,7 @@ describe('api/send-email.js payload', () => {
   });
 
   it('renders a known template, HTML-escaping the plain-text body', async () => {
-    const { EMAIL_TEMPLATES } = await import('../../src/constants/emailTemplates.js');
+    const { EMAIL_TEMPLATES } = await import('@/constants/emailTemplates.js');
     const res = await call(await load(), { body: { to: 'a@b.co', templateId: EMAIL_TEMPLATES[0].id, data: {} } });
     expect(res.statusCode).toBe(200);
     const sent = sendMail.mock.calls[0][0];

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildInvoiceHtml } from '../../src/utils/invoiceTemplate';
+import { buildInvoiceHtml } from '@/utils/invoiceTemplate';
 
 const money = (n, opts = { minimumFractionDigits: 2, maximumFractionDigits: 2 }) => n.toLocaleString(undefined, opts);
 

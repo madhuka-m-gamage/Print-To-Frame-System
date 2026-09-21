@@ -7,12 +7,12 @@ import {
   Map, MessageSquare, Calculator
 } from 'lucide-react';
 import { doc, updateDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../../services/firebase';
-import { COLLECTIONS } from '../../services/firestoreSync';
-import { toast } from '../../utils/toast';
-import { logActivity } from '../../services/auditLog';
-import { PageHeader, StatusBadge, ImageCropModal } from '../common/ui';
-import { toDateObj } from '../../utils/dateUtils';
+import { db } from '@/services/firebase';
+import { COLLECTIONS } from '@/services/firestoreSync';
+import { toast } from '@/utils/toast';
+import { logActivity } from '@/services/auditLog';
+import { PageHeader, StatusBadge, ImageCropModal } from './ui';
+import { toDateObj } from '@/utils/dateUtils';
 
 const AVATAR_PRESETS = [
   { id: 'craftsman', label: 'Master Framer', bg: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40', icon: Hammer },

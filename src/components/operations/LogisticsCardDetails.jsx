@@ -32,12 +32,12 @@ import {
   DetailCustomerCard, 
   DetailModalFooter,
   StatusBadge 
-} from '../common/ui';
-import TwoToneIcon from '../common/ui/TwoToneIcon';
-import { toast } from '../../utils/toast';
-import { stripEmojis } from '../../utils/validation';
-import { getCollectableInvoice } from '../../utils/logisticsEngine';
-import { buildInvoiceHtml, openInvoicePrintWindow } from '../../utils/invoiceTemplate';
+} from '@/components/common/ui';
+import TwoToneIcon from '@/components/common/ui/TwoToneIcon';
+import { toast } from '@/utils/toast';
+import { stripEmojis } from '@/utils/validation';
+import { getCollectableInvoice } from '@/utils/logisticsEngine';
+import { buildInvoiceHtml, openInvoicePrintWindow } from '@/utils/invoiceTemplate';
 import {
   getGoogleMapsUrl,
   getWhatsAppUrl,
@@ -45,7 +45,7 @@ import {
   calculateCODFromInvoices,
   FLEET_VEHICLES,
   DRIVER_DIRECTORY 
-} from '../../utils/logisticsEngine';
+} from '@/utils/logisticsEngine';
 
 export default function LogisticsCardDetails({ 
   job, 

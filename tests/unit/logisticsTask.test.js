@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildLogisticsTask, deliveryStatusForTask } from '../../src/utils/logisticsTask';
+import { buildLogisticsTask, deliveryStatusForTask } from '@/utils/logisticsTask';
 
 describe('buildLogisticsTask', () => {
   const task = buildLogisticsTask({

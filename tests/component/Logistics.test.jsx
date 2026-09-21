@@ -4,23 +4,23 @@ import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../helpers/renderWithProviders';
 import { makeLogisticsJob, makeProject } from '../helpers/factories';
 
-vi.mock('../../src/services/firestoreSync', () => ({
+vi.mock('@/services/firestoreSync', () => ({
   COLLECTIONS: { LOGISTICS: 'logistics', PROJECTS: 'projects', INVOICES: 'invoices', COUNTERS: 'counters' },
   addDocument: vi.fn(async () => {}),
   updateDocument: vi.fn(async () => {}),
   deleteDocument: vi.fn(async () => {}),
   generateAtomicId: vi.fn(async (prefix) => `${prefix}-0001`),
 }));
-vi.mock('../../src/utils/toast', () => ({
+vi.mock('@/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
   showToast: vi.fn(),
 }));
-vi.mock('../../src/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
-vi.mock('../../src/components/operations/LogisticsCardDetails', () => ({ default: () => null }));
+vi.mock('@/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
+vi.mock('@/components/operations/LogisticsCardDetails', () => ({ default: () => null }));
 
-const sync = await import('../../src/services/firestoreSync');
-const { toast } = await import('../../src/utils/toast');
-const { default: Logistics } = await import('../../src/components/operations/Logistics');
+const sync = await import('@/services/firestoreSync');
+const { toast } = await import('@/utils/toast');
+const { default: Logistics } = await import('@/components/operations/Logistics');
 
 const admin = { role: 'Admin', name: 'Admin', identifier: 'admin@example.com' };
 

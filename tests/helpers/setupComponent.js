@@ -6,7 +6,7 @@ import { cleanup } from '@testing-library/react';
 // component test. PermissionsProvider subscribes to settings/permissions through
 // firebase/firestore; the stub answers synchronously from globalThis.__TEST_PERMISSIONS__,
 // which renderWithProviders sets.
-vi.mock('../../src/services/firebase', () => ({
+vi.mock('@/services/firebase', () => ({
   db: {},
   auth: { currentUser: null },
   storage: {},

@@ -3,18 +3,18 @@ import {
   Plus, ArrowLeft, ArrowRight, Trash2, Calendar, User, DollarSign, 
   Check, LayoutGrid, List, Download, Truck 
 } from 'lucide-react';
-import { toast } from '../../utils/toast';
-import DeleteModal from '../common/DeleteModal';
+import { toast } from '@/utils/toast';
+import DeleteModal from '@/components/common/DeleteModal';
 import LeadCardDetails from './LeadCardDetails';
-import { PageHeader, FilterBar, KanbanColumn, KanbanCard, StatusBadge } from '../common/ui';
-import SortableTable from '../common/ui/SortableTable';
-import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateInvoiceId, generateAtomicId } from '../../services/firestoreSync';
-import { exportToCsv } from '../../utils/csvExport';
-import { matchesEntity, getExistingFinalInvoice } from '../../utils/entityUtils';
-import { getFinalInvoiceAmounts, calculateDealCommission } from '../../utils/dealSettlement';
-import { projectStatusForDealStage } from '../../utils/dealProjectSync';
-import { buildLogisticsTask } from '../../utils/logisticsTask';
-import { logActivity } from '../../services/auditLog';
+import { PageHeader, FilterBar, KanbanColumn, KanbanCard, StatusBadge } from '@/components/common/ui';
+import SortableTable from '@/components/common/ui/SortableTable';
+import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateInvoiceId, generateAtomicId } from '@/services/firestoreSync';
+import { exportToCsv } from '@/utils/csvExport';
+import { matchesEntity, getExistingFinalInvoice } from '@/utils/entityUtils';
+import { getFinalInvoiceAmounts, calculateDealCommission } from '@/utils/dealSettlement';
+import { projectStatusForDealStage } from '@/utils/dealProjectSync';
+import { buildLogisticsTask } from '@/utils/logisticsTask';
+import { logActivity } from '@/services/auditLog';
 
 const DEALS_STAGES = ["Waiting", "Fabricating", "Ready To Load", "Hand Over", "Completed"];
 

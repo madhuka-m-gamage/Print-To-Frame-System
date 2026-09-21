@@ -6,12 +6,12 @@ import {
   Music, Volume2, RefreshCw, CheckCircle2, AlertCircle, Loader2, Truck,
   PhoneCall, Mic, Square, Radio, RotateCcw, Receipt
 } from 'lucide-react';
-import { toast } from '../../utils/toast';
-import { calculateCost, determineTier } from '../../services/pricingEngine';
-import { getQuotePricingTerms, DEFAULT_REFERRAL_COMMISSION_RATE } from '../../utils/quotePricing';
-import { extractCallScope } from '../../services/gemini';
-import { validatePhone, validateEmail, formatPhone, sanitizeTechnicalScope, stripEmojis } from '../../utils/validation';
-import Card from '../common/Card';
+import { toast } from '@/utils/toast';
+import { calculateCost, determineTier } from '@/services/pricingEngine';
+import { getQuotePricingTerms, DEFAULT_REFERRAL_COMMISSION_RATE } from '@/utils/quotePricing';
+import { extractCallScope } from '@/services/gemini';
+import { validatePhone, validateEmail, formatPhone, sanitizeTechnicalScope, stripEmojis } from '@/utils/validation';
+import Card from '@/components/common/Card';
 import { 
   DetailModalLayout, 
   DetailModalHeader, 
@@ -21,13 +21,13 @@ import {
   DetailCustomerCard, 
   DetailModalFooter,
   StatusBadge 
-} from '../common/ui';
+} from '@/components/common/ui';
 import QuotationBuilder from './QuotationBuilder';
-import { downsampleAudio } from '../../utils/audioProcessing';
-import { toDateObj } from '../../utils/dateUtils';
-import { buildInvoiceHtml, openInvoicePrintWindow } from '../../utils/invoiceTemplate';
-import { resolveInvoiceForPrint } from '../../utils/invoicePrintData';
-import { buildReceiptHtml } from '../../utils/receiptTemplate';
+import { downsampleAudio } from '@/utils/audioProcessing';
+import { toDateObj } from '@/utils/dateUtils';
+import { buildInvoiceHtml, openInvoicePrintWindow } from '@/utils/invoiceTemplate';
+import { resolveInvoiceForPrint } from '@/utils/invoicePrintData';
+import { buildReceiptHtml } from '@/utils/receiptTemplate';
 
 export default function LeadCardDetails({ 
   lead, 

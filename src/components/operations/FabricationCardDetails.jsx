@@ -23,7 +23,7 @@ import {
   Compass,
   Package
 } from 'lucide-react';
-import FrameBlueprintPreview from '../common/FrameBlueprintPreview';
+import FrameBlueprintPreview from '@/components/common/FrameBlueprintPreview';
 import { 
   DetailModalLayout, 
   DetailModalHeader, 
@@ -33,12 +33,12 @@ import {
   DetailCustomerCard, 
   DetailModalFooter,
   StatusBadge 
-} from '../common/ui';
-import { toast } from '../../utils/toast';
+} from '@/components/common/ui';
+import { toast } from '@/utils/toast';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../../services/firebase';
-import { stripEmojis, sanitizeTechnicalScope } from '../../utils/validation';
-import { calculateCutList, defaultFrameDimensions, mmToFtIn, STEEL_PROFILES } from '../../utils/cutListEngine';
+import { storage } from '@/services/firebase';
+import { stripEmojis, sanitizeTechnicalScope } from '@/utils/validation';
+import { calculateCutList, defaultFrameDimensions, mmToFtIn, STEEL_PROFILES } from '@/utils/cutListEngine';
 
 export default function FabricationCardDetails({ 
   job, 

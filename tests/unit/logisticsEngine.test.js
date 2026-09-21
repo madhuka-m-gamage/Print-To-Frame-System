@@ -7,7 +7,7 @@ import {
   calculateCODFromInvoices,
   FLEET_VEHICLES,
   DRIVER_DIRECTORY
-} from '../../src/utils/logisticsEngine';
+} from '@/utils/logisticsEngine';
 
 describe('logisticsEngine', () => {
   it('generates proper Google Maps navigation URLs', () => {
@@ -194,7 +194,7 @@ describe('logisticsEngine', () => {
 
 describe('getCollectableInvoice (Phase 7 6.5b)', () => {
   it('offers only a genuinely unpaid primary invoice', async () => {
-    const { getCollectableInvoice } = await import('../../src/utils/logisticsEngine');
+    const { getCollectableInvoice } = await import('@/utils/logisticsEngine');
     const unpaid = { id: 'INV-FIN-0001', status: 'Unpaid' };
     expect(getCollectableInvoice({ primaryInvoice: unpaid })).toBe(unpaid);
     expect(getCollectableInvoice({ primaryInvoice: { status: 'Paid' } })).toBeNull();
@@ -203,7 +203,7 @@ describe('getCollectableInvoice (Phase 7 6.5b)', () => {
   });
 
   it('offers nothing while the Final invoice does not exist yet, or when there is no invoice', async () => {
-    const { getCollectableInvoice } = await import('../../src/utils/logisticsEngine');
+    const { getCollectableInvoice } = await import('@/utils/logisticsEngine');
     expect(getCollectableInvoice({ primaryInvoice: { status: 'Unpaid' }, finalInvoicePending: true })).toBeNull();
     expect(getCollectableInvoice({})).toBeNull();
     expect(getCollectableInvoice()).toBeNull();

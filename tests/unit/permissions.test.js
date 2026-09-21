@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { DEFAULT_PERMISSIONS } from '../../src/context/PermissionsContext.jsx';
-import { SYSTEM_ROLES } from '../../src/constants/roles.js';
+import { DEFAULT_PERMISSIONS } from '@/context/PermissionsContext.jsx';
+import { SYSTEM_ROLES } from '@/constants/roles.js';
 
 const MODULES = [
   'dashboard', 'notifications', 'messages', 'leads', 'pipeline', 'customers',

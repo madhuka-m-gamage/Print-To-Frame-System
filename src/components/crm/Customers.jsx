@@ -4,21 +4,21 @@ import {
   Sparkles, MessageSquare, Check, X, DollarSign, MapPin, Plus, 
   ChevronRight, Calendar, ExternalLink, Copy, ShieldCheck, Download, AlertTriangle, Camera, ArrowLeft
 } from 'lucide-react';
-import { toast } from '../../utils/toast';
-import { generateText } from '../../services/gemini';
-import DeleteModal from '../common/DeleteModal';
-import { PageHeader, FilterBar, StatusBadge, ModalWrapper, UserAvatar, ImageCropModal } from '../common/ui';
-import ActivityTimeline from '../common/ui/ActivityTimeline';
-import { addDocument, deleteDocument, COLLECTIONS } from '../../services/firestoreSync';
-import { exportToCsv } from '../../utils/csvExport';
-import { findCustomerDuplicates } from '../../utils/stringMatch';
+import { toast } from '@/utils/toast';
+import { generateText } from '@/services/gemini';
+import DeleteModal from '@/components/common/DeleteModal';
+import { PageHeader, FilterBar, StatusBadge, ModalWrapper, UserAvatar, ImageCropModal } from '@/components/common/ui';
+import ActivityTimeline from '@/components/common/ui/ActivityTimeline';
+import { addDocument, deleteDocument, COLLECTIONS } from '@/services/firestoreSync';
+import { exportToCsv } from '@/utils/csvExport';
+import { findCustomerDuplicates } from '@/utils/stringMatch';
 import ContactSyncModal from './ContactSyncModal';
-import AddressPickerModal from '../common/AddressPickerModal';
-import { usePermissions } from '../../context/PermissionsContext';
-import { sendTemplatedEmail } from '../../services/mailer';
-import { deleteUserAccount } from '../../services/adminUsers';
-import { logActivity } from '../../services/auditLog';
-import { normalizePhone, phonesMatch } from '../../utils/validation';
+import AddressPickerModal from '@/components/common/AddressPickerModal';
+import { usePermissions } from '@/context/PermissionsContext';
+import { sendTemplatedEmail } from '@/services/mailer';
+import { deleteUserAccount } from '@/services/adminUsers';
+import { logActivity } from '@/services/auditLog';
+import { normalizePhone, phonesMatch } from '@/utils/validation';
 
 export default function Customers({ customers = [], setCustomers, users = [], setUsers, dataStore, currentUser, prefillClient, onClientPrefillConsumed }) {
   const { canAccess } = usePermissions();

@@ -2,15 +2,15 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../helpers/renderWithProviders';
-import { DEFAULT_PERMISSIONS } from '../../src/context/PermissionsContext';
+import { DEFAULT_PERMISSIONS } from '@/context/PermissionsContext';
 
-vi.mock('../../src/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
-vi.mock('../../src/utils/toast', () => ({
+vi.mock('@/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
+vi.mock('@/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
   showToast: vi.fn(),
 }));
 
-const { default: PermissionsManager } = await import('../../src/components/admin/PermissionsManager');
+const { default: PermissionsManager } = await import('@/components/admin/PermissionsManager');
 const { setDoc } = await import('firebase/firestore');
 
 const admin = { role: 'Admin', identifier: 'admin@example.com', name: 'Admin' };

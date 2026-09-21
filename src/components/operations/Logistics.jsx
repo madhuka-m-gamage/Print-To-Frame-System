@@ -25,17 +25,17 @@ import {
   Layers,
   Sparkles
 } from 'lucide-react';
-import { toast } from '../../utils/toast';
-import Card from '../common/Card';
-import DeleteModal from '../common/DeleteModal';
+import { toast } from '@/utils/toast';
+import Card from '@/components/common/Card';
+import DeleteModal from '@/components/common/DeleteModal';
 import LogisticsCardDetails from './LogisticsCardDetails';
-import { PageHeader, FilterBar, StatusBadge, KanbanColumn, KanbanCard, ModalWrapper } from '../common/ui';
-import TwoToneIcon from '../common/ui/TwoToneIcon';
-import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateAtomicId } from '../../services/firestoreSync';
-import { stripEmojis } from '../../utils/validation';
-import { deliveryStatusForTask } from '../../utils/logisticsTask';
-import { usePermissions } from '../../context/PermissionsContext';
-import { generateText } from '../../services/gemini';
+import { PageHeader, FilterBar, StatusBadge, KanbanColumn, KanbanCard, ModalWrapper } from '@/components/common/ui';
+import TwoToneIcon from '@/components/common/ui/TwoToneIcon';
+import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateAtomicId } from '@/services/firestoreSync';
+import { stripEmojis } from '@/utils/validation';
+import { deliveryStatusForTask } from '@/utils/logisticsTask';
+import { usePermissions } from '@/context/PermissionsContext';
+import { generateText } from '@/services/gemini';
 import { 
   getGoogleMapsUrl, 
   getWhatsAppUrl, 
@@ -43,7 +43,7 @@ import {
   calculateCODFromInvoices,
   FLEET_VEHICLES,
   DRIVER_DIRECTORY 
-} from '../../utils/logisticsEngine';
+} from '@/utils/logisticsEngine';
 
 const STAGES = ["Pending", "In Transit", "Completed"];
 

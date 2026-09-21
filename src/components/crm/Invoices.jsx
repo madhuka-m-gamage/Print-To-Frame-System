@@ -3,14 +3,14 @@ import {
   Search, FileText, Check, DollarSign, Calendar, Printer, Edit2,
   Trash2, X, ChevronRight, AlertCircle, Building2, User, Layers, Download, MessageSquare, Clock, ArrowLeft, Receipt
 } from 'lucide-react';
-import { updateDocument, deleteDocument, COLLECTIONS } from '../../services/firestoreSync';
-import { toast } from '../../utils/toast';
-import { logActivity } from '../../services/auditLog';
-import DeleteModal from '../common/DeleteModal';
-import { PageHeader, FilterBar, StatusBadge, ModalWrapper } from '../common/ui';
-import { exportToCsv } from '../../utils/csvExport';
-import { buildInvoiceHtml, openInvoicePrintWindow } from '../../utils/invoiceTemplate';
-import { buildReceiptHtml } from '../../utils/receiptTemplate';
+import { updateDocument, deleteDocument, COLLECTIONS } from '@/services/firestoreSync';
+import { toast } from '@/utils/toast';
+import { logActivity } from '@/services/auditLog';
+import DeleteModal from '@/components/common/DeleteModal';
+import { PageHeader, FilterBar, StatusBadge, ModalWrapper } from '@/components/common/ui';
+import { exportToCsv } from '@/utils/csvExport';
+import { buildInvoiceHtml, openInvoicePrintWindow } from '@/utils/invoiceTemplate';
+import { buildReceiptHtml } from '@/utils/receiptTemplate';
 
 export default function Invoices({ invoices = [], setInvoices, onMarkPaid, currentUser, receipts = [], onGenerateReceipt }) {
   const [searchQuery, setSearchQuery] = useState('');

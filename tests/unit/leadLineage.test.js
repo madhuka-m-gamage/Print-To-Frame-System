@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getLineageIds, invoicesForLineage } from '../../src/utils/leadLineage';
+import { getLineageIds, invoicesForLineage } from '@/utils/leadLineage';
 
 describe('lead lineage', () => {
   it('lists a record id, its original lead and its converted deal, skipping blanks', () => {

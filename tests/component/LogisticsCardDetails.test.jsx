@@ -4,12 +4,12 @@ import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../helpers/renderWithProviders';
 import { makeLogisticsJob, makeInvoice } from '../helpers/factories';
 
-vi.mock('../../src/utils/toast', () => ({
+vi.mock('@/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
   showToast: vi.fn(),
 }));
 
-const { default: LogisticsCardDetails } = await import('../../src/components/operations/LogisticsCardDetails');
+const { default: LogisticsCardDetails } = await import('@/components/operations/LogisticsCardDetails');
 
 const job = makeLogisticsJob({ id: 'L-DL-0001', linkedJobNo: 'PTF-0001', driver: 'Nimal' });
 const finalInv = (o = {}) => makeInvoice({ type: 'Final', linkedJobNo: 'PTF-0001', ...o });

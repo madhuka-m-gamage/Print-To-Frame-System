@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { db } from '../services/firebase';
+import { db } from '@/services/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { addDocument, updateDocument, COLLECTIONS } from '../services/firestoreSync';
-import { triggerBrowserNotification } from '../App';
+import { addDocument, updateDocument, COLLECTIONS } from '@/services/firestoreSync';
+import { triggerBrowserNotification } from '@/App';
 
 const MessagingContext = createContext(null);
 
