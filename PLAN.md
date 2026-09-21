@@ -21,11 +21,11 @@ Updated 2026-09-21. These are honest estimates, not measurements: they show wher
 |---|---|---|
 | Test suite (Part A setup, Part B authoring) | `[##########]` ~95% | Five layers built and in CI; B6 browser journeys parked |
 | Phase 7 fixes that do not touch the live site (steps 1 to 6, 8.1) | `[#########-]` ~90% | Done and merged into `staging`; step 7 (UX backlog) not started |
-| 8.2 Standard project structure | `[#########-]` ~83% | 10 of 12 tasks built: README and env example, unused files removed, one docs folder per module, `@/` import alias, shared code, feature folders for auth, profile, dashboard, messaging, leads, customers, quotations, deals, invoicing, partners, fabrication, logistics and admin (all of `src/components` is gone). Next: final clean-up, the ADR and removing the codemod |
+| 8.2 Standard project structure | `[##########]` ~100% | 12 of 12 tasks built (the last PR is open): README and env example, unused files removed, one docs folder per module, `@/` import alias, shared code, feature folders for auth, profile, dashboard, messaging, leads, customers, quotations, deals, invoicing, partners, fabrication, logistics and admin (all of `src/components` is gone). Clean-up, ADR `0003-source-layout.md` and removal of the temporary codemod are in the last PR |
 | Live rollout chain (matrix 3.3, rules 3.4d and 3.5d, payouts 4.x, promote to `main`) | `[----------]` ~0% | Parked by design until the live site is ready to change |
 | Follow-up backlog | ~20 items listed | Tackled one by one after this workflow |
 
-Merged into `staging` so far: PRs #6 to #46. Open, stacked in order: task 6 (#47), task 7 (#48), task 8 (#49), task 9 (#50) and task 10 of 8.2.
+Merged into `staging` so far: PRs #6 to #51. Open: the final 8.2 PR (clean-up, ADR, removal of the codemod).
 
 ## Testing and remediation tracks
 
@@ -75,7 +75,7 @@ Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 be
 - [ ] 6.1-6.6: leads, atomic ids, customers, deals/fabrication/inspection, logistics (6.1, 6.2, 6.3, 6.4, 6.6 done in PRs; 6.5 logistics not started)
 - [ ] 7: UX and feature backlog
 - [x] 8.1: docs sync (TESTING.md coverage map and roadmap, root CLAUDE.md test layers and approval hand-off, stale module maps and instructions for pricing, duplicate Final guard, commission accrual)
-- [ ] 8.2: standard project structure, in 12 small PRs (plan approved 2026-09-21; full plan in `~/.claude/plans/i-want-to-get-synchronous-flurry.md`)
+- [x] 8.2: standard project structure, in 12 small tasks (done 2026-09-21; decision recorded in `docs/05_decisions/0003-source-layout.md`)
   - [x] 1: README, `.env.example`, `.editorconfig`, `CONTRIBUTING.md`, package metadata
   - [x] 2: remove confirmed-unused files and dependencies
   - [x] 3: one docs folder per module (`docs/02_modules/<m>/README.md`)
@@ -122,6 +122,10 @@ Owner decision 2026-09-21: side findings are parked here, not folded into the st
 - [ ] `Deals.jsx` completion calls `onSaveInvoice` without waiting for it, unlike the Fabrication QA pass, so a failed Final invoice save still completes the deal. Make it await and abort like Fabrication.
 - [ ] Logistics D-7: the fleet vehicles and driver directory are hardcoded in `logisticsEngine.js`. Move them to Firestore (`settings/fleet` or a collection) editable by Admins, keeping the constants as a fallback. Needs a rules change, so it is live-affecting and belongs with the parked rules deploys.
 - [ ] Cash on delivery for drivers: the Logistics role has read-only invoices and no receipts in `DEFAULT_PERMISSIONS`, so a driver cannot record cash collection; only Admin and Manager can. Decide whether drivers may (widening the matrix and the live rules) or a dispatcher records it for them.
+- [ ] Split the very large files (over 800 lines): `Partners.jsx` 1,800, `LeadCardDetails.jsx` 1,770, `FabricationWorks.jsx` 1,650, `App.jsx` 1,640 (state, listeners and handlers mixed), `AgentDatabase.jsx` 1,360, `Customers.jsx` 1,110, `Logistics.jsx` 1,050, and others. Extract logic into the feature's own files with tests first; the layout work (ADR 0003) deliberately left this alone.
+- [ ] Add a code formatter (Prettier) as its own change, since it rewrites most files.
+- [ ] Repository hygiene left over from the layout work: `public/portal-login-template.html` and `public/web and erp design theme.md` (not on the approved removal list), the `@google/genai` dependency (the browser calls the AI through the server proxy, so it may be unused apart from `vite.config.js`), about 90 stale `claude/*` branches on the remote, a PR template under `.github/`, and a decision on a `LICENSE`.
+- [ ] `firebase.json` still lists two AI Studio Firestore databases besides `(default)`; every rules deploy targets all three. Decide with the environments plan (Part 1).
 - [ ] Environment variables on the Vercel preview: it needs its own `FIREBASE_SERVICE_ACCOUNT_JSON` and `GEMINI_API_KEY` in Preview scope; replace live keys with a staging project's keys once Part 1 exists.
 
 ## Antigravity Work Summary & Handoff
