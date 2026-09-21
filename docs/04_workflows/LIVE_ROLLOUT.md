@@ -10,6 +10,7 @@ Live project: `print-to-frame-erp`. Always pass `--project print-to-frame-erp` e
 - **Permission matrix** (`settings/permissions`): last updated 2026-09-01 02:04 UTC, unchanged since the earlier check. Roles present: Accounts, Admin, Business Client, Customer, Logistics, Manager, Operations, Partner, Sales, Support. Modules present per role: admin, agents, calculator, customers, dashboard, invoices, leads, logistics, messages, notifications, partners, pipeline, projects. **There is no `quotations` and no `receipts` module for any role.**
 - **Code:** `main` has no commit that `staging` lacks, and `staging` is 108 commits ahead. Pull request #25 (`staging` to `main`) is open, mergeable, 100 commits, 223 files.
 - **Confirmed by the owner, 2026-09-21:** the Firebase project is `print-to-frame-erp`, the app uses only the `(default)` Firestore database, and the two `ai-studio-...` databases exist but are not used.
+- **Two repositories, no shared history (found 2026-09-21):** the original project folder `Print-To-Frame-ERP-System` is its own git repository (`github.com/madhukagamage6/Print-To-Frame-ERP-System`, branches `main` and `staging`, last commit 2026-09-15). This repository (`madhuka-m-gamage/Print-To-Frame-System`) has a separate history that starts from a copy of that code. Their source code is nearly identical (under `src/`, `api/` and the rules only two files differ, both from the test-suite work), and their `firestore.rules` are identical. **Which one the live Vercel project deploys from is not known**; it cannot be read from here because the live project is in a Vercel account this tooling cannot see. See pre-flight item 0 and step 2.
 - **Storage:** the project has **no active Storage rules** (read-only check). The code has three upload paths (`partners/...` documents from the public registration form and from the Partners screen, and `blueprints/...` from fabrication). They are expected to fail against the live project (not tried), and the blueprint upload falls back to keeping files under 500KB inline. This does not affect the rollout below, but see the backlog.
 - **`firebase.json`** lists three Firestore databases (`(default)` and two `ai-studio-...` ones); a plain rules deploy applies the same file to all three. The app connects to `(default)`: the committed config says so, the live matrix in `(default)` shows recent activity, and the owner confirmed it.
 
@@ -45,6 +46,7 @@ Business Client has no explicit entry for either and gets the same as Customer. 
 
 ## Pre-flight (do all of it, in order, on the day)
 
+- [ ] **0. Find out what the live site deploys from.** In Vercel, in the account that owns `portal.print2frame.xyz`, open the project, Settings, Git: note the connected repository and the Production Branch. If it is `madhuka-m-gamage/Print-To-Frame-System` and `main`, step 2 works as written. If it is `madhukagamage6/Print-To-Frame-ERP-System`, merging pull request #25 here changes nothing live; follow step 2 option B. Do not go further until this is known.
 - [ ] `git fetch` and confirm `main` still has no commit that `staging` lacks: `git rev-list --count origin/staging..origin/main` prints `0`.
 - [ ] The latest `staging` commit has a green CI run and a green Vercel preview.
 - [ ] On the Vercel preview of `staging`, sign in as Admin and open every sidebar tab: no error, no blank screen. Create a lead, convert it, add a quote, generate an Advance invoice, upload one blueprint, record a delivery status change.
@@ -66,7 +68,9 @@ Rollback: restore the backup document (Admin saves it back, or paste it in the c
 
 ## Step 2: promote `staging` to `main`
 
-Merge pull request #25 (merge commit, as before). Vercel builds `main` to production. This does not touch Firestore rules.
+**Option A (live project is connected to this repository's `main`):** merge pull request #25 (merge commit, as before). Vercel builds `main` to production. This does not touch Firestore rules.
+
+**Option B (live project is connected to the original repository):** merging #25 here does nothing to the live site. Choose one, with the owner: (1) in the live Vercel project, Settings, Git, disconnect the original repository and connect `madhuka-m-gamage/Print-To-Frame-System` with Production Branch `main`, then merge #25 (recommended; rollback is reconnecting the original repository, or Vercel's Instant Rollback); or (2) bring the same code into the original repository. The two histories are unrelated, so that means replacing its branch contents, which is a force-push-class change and is not recommended. Either way the code is nearly the same, so a preview build of `staging` is a fair rehearsal.
 
 Verify on `portal.print2frame.xyz`: sign in as Admin, Sales, Partner and Customer and confirm each sees the right navigation and that Quotations and Receipts appear for the roles that had access to invoices. Watch the browser console for permission errors.
 
