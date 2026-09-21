@@ -4,7 +4,7 @@ One-stop map of every document in this repo. Update this file whenever a doc is 
 
 ## Code layout
 
-- Frontend: `src/` (React + Vite SPA)
+- Frontend: `src/` (React + Vite SPA), organised by business domain in `src/features/<domain>`, with cross-feature code in `src/shared` and infrastructure clients in `src/services`
 - Backend: `api/` (Vercel serverless functions)
 - Cloud Functions: none (no `functions/` folder)
 - Firestore rules: `firestore.rules`
@@ -60,3 +60,4 @@ Map, then per-module Claude instructions.
 
 - [0001-why-quotation-engine-is-custom.md](docs/05_decisions/0001-why-quotation-engine-is-custom.md)
 - [0002-deferred-until-live-rollout.md](docs/05_decisions/0002-deferred-until-live-rollout.md)
+- [0003-source-layout.md](docs/05_decisions/0003-source-layout.md): `src/features`, `src/shared` and the `@/` import alias

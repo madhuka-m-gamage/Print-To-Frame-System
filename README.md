@@ -57,16 +57,21 @@ Five layers, each with one job: unit, API, component, rules and end to end. Pick
 api/            Vercel serverless functions (AI proxy, email, admin user actions)
 public/         static assets
 src/
+  main.jsx      entry point (also mounts the two public pages)
   App.jsx       composition root: state, Firestore listeners, routing by tab
-  components/   screens and shared UI (being reorganised into features/ and shared/, see PLAN.md 8.2)
-  services/     Firebase, Firestore sync, audit log, Gemini, mail and other clients
-  utils/        pure business logic and helpers
-  context/      permissions and messaging providers
+  features/     one folder per business domain: its screens, logic and domain-only client
+                (leads, customers, quotations, deals, invoicing, partners, fabrication,
+                logistics, messaging, dashboard, profile, admin, auth)
+  shared/       code used by several features: ui/ primitives, components/, utils/
+  services/     infrastructure clients: Firebase, Firestore sync, audit log, Gemini, mail, Drive, Maps
+  context/      permissions provider
   constants/    roles, company info, email templates
 tests/          unit, api, component, integration (rules), e2e, helpers, fixtures
 docs/           architecture, per-module notes, security, workflows, decisions
 firestore.rules Firestore security rules (deployed by hand, never by a push)
 ```
+
+Imports outside a file's own folder use the `@/` alias (`@/` means `src/`); a feature may import `shared`, `services`, `context`, `constants` and other features, but `shared` never imports a feature. The reasoning is in [docs/05_decisions/0003-source-layout.md](docs/05_decisions/0003-source-layout.md).
 
 Access control is enforced in three places that must agree: `src/context/PermissionsContext.jsx`, `firestore.rules` and `src/constants/roles.js` (see [docs/03_security/RBAC_MODEL.md](docs/03_security/RBAC_MODEL.md)).
 
