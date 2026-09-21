@@ -88,6 +88,23 @@ describe('Deals Completed-stage locks and commission', () => {
     expect(setLeads).toHaveBeenCalled();
   });
 
+  // Phase 7 4.2 (partners D-10): a deal from the public referral form carries partnerId and no
+  // agentId, and used to be skipped, so its partner was never credited.
+  it('credits the partner of a deal that carries partnerId and no agentId', async () => {
+    renderDeals({ dealOverrides: { partnerId: 'P-1', agentId: undefined, totalSqFt: 10 }, partners: [partner()], setPartners: vi.fn() });
+    fireEvent.click(screen.getByRole('button', { name: /for Kasun Silva/i }));
+    await waitFor(() => expect(sync.updateDocument).toHaveBeenCalledWith('partners', expect.anything(), { pending: 535, totalSqFt: 10 }));
+  });
+
+  it('credits nobody for a deal whose agent is the "Direct" placeholder', async () => {
+    const setPartners = vi.fn();
+    renderDeals({ dealOverrides: { agentId: 'Direct', totalSqFt: 10 }, partners: [partner()], setPartners });
+    fireEvent.click(screen.getByRole('button', { name: /for Kasun Silva/i }));
+    await waitFor(() => expect(sync.updateDocument).toHaveBeenCalledWith('leads', expect.anything(), expect.objectContaining({ stage: 'Completed' })));
+    expect(setPartners).not.toHaveBeenCalled();
+    expect(sync.updateDocument).not.toHaveBeenCalledWith('partners', expect.anything(), expect.anything());
+  });
+
   it('does not accrue commission again when the deal is already marked commissionAccrued', async () => {
     const setPartners = vi.fn();
     renderDeals({ dealOverrides: { ...agentDeal, commissionAccrued: true }, partners: [partner()], setPartners });

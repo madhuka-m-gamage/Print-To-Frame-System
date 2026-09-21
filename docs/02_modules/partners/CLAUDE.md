@@ -17,6 +17,7 @@ Partner / referral network: public application, admin approval, QR referral link
 
 ## Triggers and side effects
 
+- A lead or deal links to its partner by `partnerId` or `agentId` (`'Direct'` means none); always resolve it with `getLeadPartnerId` / `findPartnerForLead` (`src/features/partners/partnerLink.js`), never a single field. Choosing an agent on the lead card writes `agentId`, `partnerId`, both names and the partner's rate, and quoting uses the partner's current rate (`pricingLeadView`). The public referral form no longer invents a 53.5 rate.
 - Commission accrues when the deal is Completed (`Deals.jsx`); eligibility at full payment (`App.jsx`, and the Partners screen through `invoicesForLineage`).
 - **"Disburse Payout" is a toast only**; nothing is written and `pending` is never reduced.
 

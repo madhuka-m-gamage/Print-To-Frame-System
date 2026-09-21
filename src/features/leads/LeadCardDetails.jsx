@@ -28,6 +28,7 @@ import { toDateObj } from '@/shared/utils/dateUtils';
 import { buildInvoiceHtml, openInvoicePrintWindow } from '@/features/invoicing/invoiceTemplate';
 import { resolveInvoiceForPrint } from '@/features/invoicing/invoicePrintData';
 import { buildReceiptHtml } from '@/features/invoicing/receiptTemplate';
+import { partnerFieldsFor, pricingLeadView } from '@/features/partners/partnerLink';
 
 export default function LeadCardDetails({ 
   lead, 
@@ -415,10 +416,12 @@ export default function LeadCardDetails({
     }
   }, [calcLength, calcHeight]);
 
+  // Quote with the assigned partner's current rate (not a rate saved on the lead earlier), and
+  // pick up an agent chosen on this card before it has been saved.
   const pricingTerms = useMemo(
-    () => getQuotePricingTerms(lead),
+    () => getQuotePricingTerms(pricingLeadView(lead, formData, partners)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [lead.partnerId, lead.source, lead.commissionRate]
+    [lead.partnerId, lead.source, lead.commissionRate, formData.source, formData.partnerId, formData.agentId, formData.commissionRate, partners]
   );
 
   const activePricing = useMemo(() => {
@@ -492,9 +495,13 @@ export default function LeadCardDetails({
     const { name, value } = e.target;
     setFormData(prev => {
       const updated = { ...prev, [name]: value };
-      // Clear agent selection if source is not Referral
+      // Clear the partner if the source is not Referral; choosing an agent fills every partner
+      // field (agentId, partnerId, names and the partner's rate), not just agentId.
       if (name === 'source' && value !== 'Referral') {
-        updated.agentId = '';
+        Object.assign(updated, partnerFieldsFor(null));
+      }
+      if (name === 'agentId') {
+        Object.assign(updated, partnerFieldsFor(partners.find((p) => (p.partnerId || p.id) === value)));
       }
       return updated;
     });

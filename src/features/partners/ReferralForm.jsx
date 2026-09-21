@@ -106,7 +106,7 @@ export default function ReferralForm() {
         agentName: partnerDetails?.name || partnerId || 'Partner Referral',
         partnerId: partnerId || '',
         partnerName: partnerDetails?.name || partnerId || '',
-        commissionRate: Number(partnerDetails?.commissionRate) > 1 ? Number(partnerDetails?.commissionRate) : 53.5,
+        commissionRate: Number(partnerDetails?.commissionRate) > 1 ? Number(partnerDetails?.commissionRate) : 0,
         stage: 'Intake',
         value: 0,
         totalSqFt: 0,

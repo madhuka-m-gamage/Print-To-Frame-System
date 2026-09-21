@@ -15,6 +15,7 @@ import { getFinalInvoiceAmounts, calculateDealCommission } from './dealSettlemen
 import { projectStatusForDealStage } from './dealProjectSync';
 import { buildLogisticsTask } from '@/features/logistics/logisticsTask';
 import { logActivity } from '@/services/auditLog';
+import { findPartnerForLead, getLeadPartnerId } from '@/features/partners/partnerLink';
 
 const DEALS_STAGES = ["Waiting", "Fabricating", "Ready To Load", "Hand Over", "Completed"];
 
@@ -382,13 +383,14 @@ export default function Deals({
           });
         }
 
-        if (deal.agentId && partners.length && setPartners && !deal.commissionAccrued) {
-          const agent = partners.find(p => p.partnerId === deal.agentId);
+        const dealPartnerId = getLeadPartnerId(deal);
+        if (dealPartnerId && partners.length && setPartners && !deal.commissionAccrued) {
+          const agent = findPartnerForLead(deal, partners);
           const { commissionAmount, sqFtToAdd: sqFt } = calculateDealCommission({ ...deal, value: amounts.totalValue }, agent);
 
           if (agent) {
             setPartners(prevPartners => prevPartners.map(p =>
-              p.partnerId === deal.agentId
+              p.partnerId === agent.partnerId
                 ? { ...p, pending: (p.pending || 0) + commissionAmount, totalSqFt: (p.totalSqFt || 0) + sqFt }
                 : p
             ));

@@ -704,7 +704,8 @@ export default function Partners({
 
   const publicQrUrl = (partner) => {
     const pid = partner?.partnerId || partner?.id || 'P-1001';
-    return `https://print2frame.xyz/client-detail-submitting-form?ref=${pid}`;
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://portal.print2frame.xyz';
+    return `${origin}/referral?ref=${pid}`;
   };
 
   // ─────────────────────────────────────────────────────────────────────────────
