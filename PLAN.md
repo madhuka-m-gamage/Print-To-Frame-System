@@ -22,6 +22,7 @@ Updated 2026-09-21. These are honest estimates, not measurements: they show wher
 | Test suite (Part A setup, Part B authoring) | `[##########]` ~95% | Five layers built and in CI; B6 browser journeys parked |
 | Phase 7 fixes that do not touch the live site (steps 1 to 6, 8.1, 8.2) | `[#########-]` ~95% | Done and merged. Steps 4.1, 4.3, 7 and B6 were moved to the follow-up backlog by the owner on 2026-09-21 |
 | 8.2 Standard project structure | `[##########]` ~100% | 12 of 12 tasks built (the last PR is open): README and env example, unused files removed, one docs folder per module, `@/` import alias, shared code, feature folders for auth, profile, dashboard, messaging, leads, customers, quotations, deals, invoicing, partners, fabrication, logistics and admin (all of `src/components` is gone). Clean-up, ADR `0003-source-layout.md` and removal of the temporary codemod are in the last PR |
+| Project folder move (`erp-system` up to `Print-To-Frame-System`) | `[##########]` 100% | Done 2026-09-21, verified from the new root |
 | Live rollout chain (matrix 3.3, rules 3.4d and 3.5d, move production to this repository) | `[##--------]` ~20% | Prepared, not applied. Moved to the follow-up backlog by the owner on 2026-09-21; runbook `docs/04_workflows/LIVE_ROLLOUT.md` |
 | Follow-up backlog | ~20 items listed | Tackled one by one after this workflow |
 
