@@ -9,7 +9,9 @@ Live project: `print-to-frame-erp`. Always pass `--project print-to-frame-erp` e
 - **Rules:** the deployed Firestore ruleset is the old one that `main` still has (no `referral_claims` or `partner_payouts` blocks, `quotations` open to any signed-in user, `counters` open to any signed-in user, the bootstrap emails not part of `isAdmin()`).
 - **Permission matrix** (`settings/permissions`): last updated 2026-09-01 02:04 UTC, unchanged since the earlier check. Roles present: Accounts, Admin, Business Client, Customer, Logistics, Manager, Operations, Partner, Sales, Support. Modules present per role: admin, agents, calculator, customers, dashboard, invoices, leads, logistics, messages, notifications, partners, pipeline, projects. **There is no `quotations` and no `receipts` module for any role.**
 - **Code:** `main` has no commit that `staging` lacks, and `staging` is 108 commits ahead. Pull request #25 (`staging` to `main`) is open, mergeable, 100 commits, 223 files.
-- **`firebase.json`** lists three Firestore databases (`(default)` and two `ai-studio-...` ones); a plain rules deploy applies the same file to all three. The app connects to `(default)`: the committed config says so and the live matrix in `(default)` shows recent activity. If `VITE_FIREBASE_DATABASE_ID` is set to something else in the Vercel Production environment, that would change, and that cannot be seen from the repository: check it in Vercel before step 3.
+- **Confirmed by the owner, 2026-09-21:** the Firebase project is `print-to-frame-erp`, the app uses only the `(default)` Firestore database, and the two `ai-studio-...` databases exist but are not used.
+- **Storage:** the project has **no active Storage rules** (read-only check). The code has three upload paths (`partners/...` documents from the public registration form and from the Partners screen, and `blueprints/...` from fabrication). They are expected to fail against the live project (not tried), and the blueprint upload falls back to keeping files under 500KB inline. This does not affect the rollout below, but see the backlog.
+- **`firebase.json`** lists three Firestore databases (`(default)` and two `ai-studio-...` ones); a plain rules deploy applies the same file to all three. The app connects to `(default)`: the committed config says so, the live matrix in `(default)` shows recent activity, and the owner confirmed it.
 
 ## Why the order matters
 
@@ -22,7 +24,7 @@ The new client is compatible with the old, looser live rules: it writes counters
 1. **Quiet window: not required for the matrix.** Step 1 only adds keys the old code ignores, so it can be done at any time, days before the promotion, and nothing changes for anyone. After that, step 2 is an ordinary deploy that can be rolled back instantly in Vercel. Promote outside working hours if you prefer, but nothing depends on it. A short quiet moment is only worth having for step 3 (rules).
 2. **Matrix path: A, the button on the staging preview.** The Vercel project `print-to-frame-system` has no `VITE_FIREBASE_DATABASE_ID` override, so its preview uses the `(default)` database that the app and the live rules use, and it is already what you sign in to as Admin. The Admin reviews the added cells before saving, so any role's value can be changed at that moment (see the table below).
 3. **Role changes: none needed.** The restrictive rules enforce whatever the live matrix says; they do not require any role to lose access. Leave the 58 differing cells alone. Tightening an over-broad role is a business decision that can be taken later, at any time, in Permissions Manager, without code (it is in the `PLAN.md` backlog). The only values step 1 chooses are the new `quotations` and `receipts` ones below.
-4. **Environment check: half done.** The preview project has no database override (checked read-only). **Still to do by the owner:** the live production project, the one serving `portal.print2frame.xyz`, is not visible to the tooling used here (this project has only its `vercel.app` address). In that project, open Settings, Environment Variables, and confirm there is no `VITE_FIREBASE_DATABASE_ID` (or that it is `(default)`). One minute.
+4. **Environment check: done.** The preview project has no database override (read-only check), and the owner confirmed the app uses `(default)`. The live production Vercel project is not visible to the tooling, so its variables were not read; the owner's confirmation stands in for that.
 5. **Still open, not needed to go live:** whether drivers may record cash on delivery (`PLAN.md` backlog).
 
 ### What step 1 writes for `quotations` and `receipts` (from `DEFAULT_PERMISSIONS`)
@@ -81,7 +83,7 @@ npm run test:rules                      # must pass
 firebase deploy --only firestore:rules --project print-to-frame-erp
 ```
 
-Confirm before running that a deploy applying the same file to all three databases is acceptable, or limit it to `(default)`; check `firebase deploy --help` for how, since that is not verified here. Nothing in the code reads the two `ai-studio-...` databases (see the backlog).
+A plain deploy applies the same file to all three databases in `firebase.json`. The two `ai-studio-...` databases are confirmed unused, so that is harmless, but if you would rather deploy to `(default)` only, remove those two entries from `firebase.json` first (backlog) or check `firebase deploy --help` for how to limit it, which is not verified here.
 
 Verify: repeat the role checks below. Also confirm a signed-in user can still create a lead and a deal (the counter documents `L` and `D` are created on first use) and that quotations and invoices still save.
 
