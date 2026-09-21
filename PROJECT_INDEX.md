@@ -50,6 +50,7 @@ Map, then per-module Claude instructions.
 
 ## Workflows
 
+- [LIVE_ROLLOUT.md](docs/04_workflows/LIVE_ROLLOUT.md): the ordered, approval-gated runbook for the live matrix, code promotion and rules deploys
 - [GIT_WORKFLOW.md](docs/04_workflows/GIT_WORKFLOW.md)
 - [DEPLOY_PROCESS.md](docs/04_workflows/DEPLOY_PROCESS.md)
 - [TESTING.md](docs/04_workflows/TESTING.md)
