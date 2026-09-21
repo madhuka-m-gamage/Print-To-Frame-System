@@ -8,7 +8,7 @@ A session-only in-app feed built on a browser `EventTarget`; most toasts and one
 
 ## Code
 
-- `src/components/dashboard/NotificationsView.jsx`, `src/shared/utils/events.js`, `src/shared/utils/toast.js`; state and badges in `src/App.jsx`
+- `src/features/dashboard/NotificationsView.jsx`, `src/shared/utils/events.js`, `src/shared/utils/toast.js`; state and badges in `src/App.jsx`
 
 ## Firestore collections it owns or writes
 

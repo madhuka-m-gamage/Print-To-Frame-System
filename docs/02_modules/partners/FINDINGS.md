@@ -448,7 +448,7 @@ In `Partners.jsx:L801-L808`, the Admin Claims Desk displays a button: "Verify & 
 
 ### 4.10 Dashboard Domain Misclassification
 
-In `src/components/dashboard/Dashboard.jsx:L22`:
+In `src/features/dashboard/Dashboard.jsx:L22`:
 ```javascript
 if (r.includes('operation') || r.includes('logistics') || r.includes('fabricat') || r.includes('workshop') || r.includes('partner')) {
   return 'operations';

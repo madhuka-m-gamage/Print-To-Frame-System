@@ -33,11 +33,11 @@ import { doc, getDoc, setDoc, collection, getDocs, deleteDoc, onSnapshot } from 
 import { subscribeToCollection, addDocument, updateDocument, batchWrite, COLLECTIONS, generateInvoiceId, deriveReceiptId, createDocumentIfAbsent } from "./services/firestoreSync";
 import { toast } from "./shared/utils/toast";
 import { isFullyPaid } from "./utils/invoiceSettlement";
-import { newUserAction, shouldEvict } from "./utils/authFlow";
+import { newUserAction, shouldEvict } from "./features/auth/authFlow";
 import { UserAvatar } from "./shared/ui";
 
 // Components
-const Dashboard = React.lazy(() => import("./components/dashboard/Dashboard"));
+const Dashboard = React.lazy(() => import("./features/dashboard/Dashboard"));
 const Leads = React.lazy(() => import("./components/crm/Leads"));
 const Deals = React.lazy(() => import("./components/crm/Deals"));
 const Invoices = React.lazy(() => import("./components/crm/Invoices"));
@@ -47,17 +47,17 @@ const Partners = React.lazy(() => import("./components/crm/Partners"));
 const FabricationWorks = React.lazy(() => import("./components/operations/FabricationWorks"));
 const Logistics = React.lazy(() => import("./components/operations/Logistics"));
 const CostCalculator = React.lazy(() => import("./components/tools/CostCalculator"));
-const Messages = React.lazy(() => import("./components/tools/Messages"));
+const Messages = React.lazy(() => import("./features/messaging/Messages"));
 const AdminPanel = React.lazy(() => import("./components/admin/AdminPanel"));
-import Login from "./components/auth/Login";
-const NotificationsView = React.lazy(() => import("./components/dashboard/NotificationsView"));
+import Login from "./features/auth/Login";
+const NotificationsView = React.lazy(() => import("./features/dashboard/NotificationsView"));
 const AgentDatabase = React.lazy(() => import("./components/admin/AgentDatabase"));
-const UserProfile = React.lazy(() => import("./components/common/UserProfile"));
+const UserProfile = React.lazy(() => import("./features/profile/UserProfile"));
 
 import { usePermissions } from "./context/PermissionsContext";
-import { MessagingProvider, useMessaging } from "./context/MessagingContext";
-import FloatingMessageToast from "./components/common/FloatingMessageToast";
-import MiniChatDrawer from "./components/tools/MiniChatDrawer";
+import { MessagingProvider, useMessaging } from "./features/messaging/MessagingContext";
+import FloatingMessageToast from "./features/messaging/FloatingMessageToast";
+import MiniChatDrawer from "./features/messaging/MiniChatDrawer";
 
 // Defaults
 import {

@@ -11,7 +11,7 @@
 A thorough architectural and code-level audit was conducted across the User Profile & Settings module and its integration touchpoints:
 - **Module Documentation**: `docs/02_modules/profile-settings/CLAUDE.md`, `docs/02_modules/profile-settings/README.md`
 - **Cross-Module Architecture**: `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`
-- **UI Components**: `src/components/common/UserProfile.jsx`, `src/shared/ui/ImageCropModal.jsx`, `src/shared/ui/StatusBadge.jsx`, `src/shared/ui/PageHeader.jsx`
+- **UI Components**: `src/features/profile/UserProfile.jsx`, `src/shared/ui/ImageCropModal.jsx`, `src/shared/ui/StatusBadge.jsx`, `src/shared/ui/PageHeader.jsx`
 - **App State & Lifecycle**: `src/App.jsx` (`handleUpdateUser`, `handleSignOut`, theme management, auth listener, users snapshot listener)
 - **Tokens & Styling**: `brand-tokens.json`, `tailwind.config.js`, `src/index.css`
 - **Security Rules & RBAC**: `firestore.rules` (`/users/{userId}`, `/partners/{partnerId}`, `/customers/{customerId}`, `/settings/permissions`), `src/context/PermissionsContext.jsx`
@@ -128,7 +128,7 @@ Profile and settings updates are currently omitted from `docs/01_architecture/CR
 
 ## 4. Codebase Tracing & Verification
 
-### 4.1 Target UI Component: `src/components/common/UserProfile.jsx`
+### 4.1 Target UI Component: `src/features/profile/UserProfile.jsx`
 
 1. **Password Reset Disconnect (`L214-217`)**:
    ```javascript

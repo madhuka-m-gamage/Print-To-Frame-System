@@ -17,7 +17,7 @@ An in-depth architectural and code-level audit of the "Employees" domain was con
 5. **RBAC Delegation for Managers & Admins (Decision D4)**: Management actions in `AgentDatabase.jsx` are gated in the UI by `canAccess(currentUser?.role, 'agents', 'edit')`, but `firestore.rules` and `api/admin-user.js` strictly enforce `role === 'Admin'`. **Approved Resolution**: Update both `firestore.rules` and `api/admin-user.js` to authorize both **Admins and Managers** who have been granted `agents` management authority in the permissions matrix.
 6. **Atomic User Deletion Ordering (Decision D5)**: Deleting a user in `AgentDatabase.jsx` deletes the Firestore profile before deleting the Firebase Auth account. If the backend fails, the Auth account becomes orphaned, blocking future re-enrollment with `auth/email-already-exists`. **Approved Resolution**: Reorder deletion to remove the Auth account first (or implement rollback logic if either step fails).
 7. **Internal Staff Approval Notifications (Decision D6)**: Approving an applicant into an internal employee role currently sends no notification. **Approved Resolution**: Automatically dispatch an `employee_approved` / `employee_invite` email upon internal user approval.
-8. **Removal of Dead UI Navigation Link (Decision D7)**: `src/components/common/UserProfile.jsx` features an "Execution Plan" button that navigates to a non-existent tab (`roadmap`), causing a blank viewport. **Approved Resolution**: Remove the dead button completely.
+8. **Removal of Dead UI Navigation Link (Decision D7)**: `src/features/profile/UserProfile.jsx` features an "Execution Plan" button that navigates to a non-existent tab (`roadmap`), causing a blank viewport. **Approved Resolution**: Remove the dead button completely.
 9. **UI & Status Badge Alignment (Decision D8)**: `StatusBadge.jsx` is imported but unused in `AgentDatabase.jsx`, and email defaulting sends internal onboarding emails to retail `Customer` profiles. **Approved Resolution**: Add `Active` / `Deactivated` support to `StatusBadge.jsx`, replace hardcoded status pills, and correct email template defaulting.
 
 ---
@@ -180,7 +180,7 @@ export const DRIVER_DIRECTORY = [
 
 ---
 
-### 4.4 User Profile & UI Disconnects (`src/components/common/UserProfile.jsx`)
+### 4.4 User Profile & UI Disconnects (`src/features/profile/UserProfile.jsx`)
 
 1. **Dead Jump Link (`roadmap`)**:
    - `UserProfile.jsx:L718`:
@@ -234,7 +234,7 @@ All recommended decision points were reviewed and explicitly accepted by the use
 | **D4** | **Manager RBAC Delegation** | **Allow Managers & Admins** | **ACCEPTED** | Update both `firestore.rules` (allow update/delete on `/users/{userId}` if `isAdmin()` or `hasRole('Manager') && checkPermission('agents', action)`) and `api/admin-user.js` (allow callers with `role === 'Admin'` OR `role === 'Manager'`). |
 | **D5** | **User Deletion Ordering** | **Safe Auth-First Deletion** | **ACCEPTED** | Reorder deletion sequence: call `deleteUserAccount` first; only upon confirmed deletion proceed to `deleteDoc` (or rollback on failure), preventing orphaned Firebase Auth logins. |
 | **D6** | **Staff Approval Notifications** | **Email Notifications** | **ACCEPTED** | Send an automated `employee_approved` / `employee_invite` email when an internal staff applicant is approved in User Management. |
-| **D7** | **Dead UI Link in `UserProfile.jsx`** | **Remove Button** | **ACCEPTED** | Remove the dead "Execution Plan" (`roadmap`) navigation button from `src/components/common/UserProfile.jsx`. |
+| **D7** | **Dead UI Link in `UserProfile.jsx`** | **Remove Button** | **ACCEPTED** | Remove the dead "Execution Plan" (`roadmap`) navigation button from `src/features/profile/UserProfile.jsx`. |
 | **D8** | **StatusBadge & Template Defaults** | **Standardize Badge & Templates** | **ACCEPTED** | Add `active` and `deactivated` support to `StatusBadge.jsx`, use it in `AgentDatabase.jsx`, and fix `Customer` email defaulting in `AgentDatabase.jsx:L752`. |
 
 ---

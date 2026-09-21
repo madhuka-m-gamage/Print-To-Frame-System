@@ -10,7 +10,7 @@ import { db } from "@/services/firebase";
 import { collection, onSnapshot } from "firebase/firestore";
 import { PageHeader, FilterBar, StatusBadge, UserAvatar } from "@/shared/ui";
 import EmailTemplateModal from "@/shared/components/EmailTemplateModal";
-import { useMessaging, getChannelId } from "@/context/MessagingContext";
+import { useMessaging, getChannelId } from "./MessagingContext";
 
 export default function Messages({ users = [], currentUser }) {
   const { 

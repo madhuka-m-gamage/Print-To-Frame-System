@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Send, X, ExternalLink, CornerDownLeft } from 'lucide-react';
-import { useMessaging } from '@/context/MessagingContext';
+import { useMessaging } from './MessagingContext';
 import { UserAvatar } from '@/shared/ui';
 
 export default function FloatingMessageToast({ setActiveTab }) {

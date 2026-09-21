@@ -10,11 +10,11 @@
 
 A systematic architectural and trigger audit was conducted across the Notifications module and its integration touchpoints:
 - **Module Documentation**: notifications.md, CLAUDE.md, and CROSS_MODULE_TRIGGERS.md.
-- **Target UI Components**: `src/components/dashboard/NotificationsView.jsx`, `src/components/common/FloatingMessageToast.jsx`.
+- **Target UI Components**: `src/features/dashboard/NotificationsView.jsx`, `src/features/messaging/FloatingMessageToast.jsx`.
 - **Event Emitters & Interceptors**: `src/shared/utils/events.js` (`emitNotification`, `subscribeToNotifications`), `src/shared/utils/toast.js` (`toast.*` proxies, `showToast`).
 - **Main State & Header/Sidebar Badges**: `src/App.jsx` (`notificationsList`, `unreadNotificationsCount`, `oT()`, `uT()`, `triggerBrowserNotification`, `handleSignOut`).
 - **Cross-Module Triggers**: Trigger 6c (Commission eligibility notification), Trigger 8 (Global toast interception).
-- **Context & Shared UI**: `src/context/MessagingContext.jsx`, `src/context/PermissionsContext.jsx`, `src/shared/ui/TwoToneIcon.jsx`.
+- **Context & Shared UI**: `src/features/messaging/MessagingContext.jsx`, `src/context/PermissionsContext.jsx`, `src/shared/ui/TwoToneIcon.jsx`.
 
 ### Key Discoveries:
 
@@ -51,7 +51,7 @@ A systematic architectural and trigger audit was conducted across the Notificati
 | Section / Claim | Code Status | Details / Discrepancy |
 |---|---|---|
 | **What it does** ("A session-only in-app feed built on a browser `EventTarget`; most toasts and one commission event become feed entries; messages are merged in.") | **Accurate** | Confirmed: module relies entirely on `EventTarget` in `src/shared/utils/events.js`. Toasts and Trigger 6c commission event feed into `notificationsList`. Direct messages from Firestore are combined into the view. |
-| **Code** (`src/components/dashboard/NotificationsView.jsx`, `src/shared/utils/events.js`, `src/shared/utils/toast.js`; state and badges in `src/App.jsx`) | **Incomplete Reference** | Accurately identifies primary files, but omits `src/components/common/FloatingMessageToast.jsx`, `src/context/MessagingContext.jsx`, and `src/shared/ui/TwoToneIcon.jsx`. |
+| **Code** (`src/features/dashboard/NotificationsView.jsx`, `src/shared/utils/events.js`, `src/shared/utils/toast.js`; state and badges in `src/App.jsx`) | **Incomplete Reference** | Accurately identifies primary files, but omits `src/features/messaging/FloatingMessageToast.jsx`, `src/features/messaging/MessagingContext.jsx`, and `src/shared/ui/TwoToneIcon.jsx`. |
 | **Firestore collections** ("**Nothing persisted** for system notifications. Message read state is `messages.readBy`.") | **Accurate** | Confirmed: no `notifications` collection exists in Firestore or `firestore.rules`. Only chat message documents in `messages` have persisted read tracking. |
 | **Triggers and side effects** ("Every `toast.*` call also emits a feed entry. Browser `Notification` API only for chat messages. No FCM, email or WhatsApp channel.") | **Accurate** | Confirmed: `src/shared/utils/toast.js` wraps all 4 Sonner toast functions. `triggerBrowserNotification` is only invoked from `MessagingContext.jsx` for chat messages. |
 | **Before you edit** ("Entries vanish on reload and are visible only to the user whose browser fired them.") | **Accurate** | Confirmed: `notificationsList` is held only in `useState([])` in `App.jsx`. |
@@ -61,7 +61,7 @@ A systematic architectural and trigger audit was conducted across the Notificati
 
 | Section / Claim | Code Status | Details / Discrepancy |
 |---|---|---|
-| **Files and folders** ("`src/components/dashboard/NotificationsView.jsx`: the feed UI (lazy-loaded in `App.jsx`). Filters ALL / SYSTEM / MESSAGES plus a search box.") | **Accurate** | Confirmed: lazy-loaded in `src/App.jsx:L52`, provides filter pills and text search. |
+| **Files and folders** ("`src/features/dashboard/NotificationsView.jsx`: the feed UI (lazy-loaded in `App.jsx`). Filters ALL / SYSTEM / MESSAGES plus a search box.") | **Accurate** | Confirmed: lazy-loaded in `src/App.jsx:L52`, provides filter pills and text search. |
 | **Files and folders** ("`src/shared/utils/events.js`: `emitNotification` and `subscribeToNotifications`, built on a module-level `EventTarget`.") | **Accurate** | Confirmed: standard `EventTarget` instance. |
 | **Files and folders** ("`src/shared/utils/toast.js`: wraps Sonner toasts **and also calls `emitNotification`**; 23 files import it.") | **Accurate** | Confirmed: exactly 23 files import `toast` from `utils/toast`. |
 | **Files and folders** ("`src/App.jsx`: notification state (`notificationsList`, `unreadNotificationsCount`), browser `Notification` helpers...") | **Accurate** | Confirmed: lines 77-89 and lines 212-225 of `src/App.jsx`. |
@@ -71,7 +71,7 @@ A systematic architectural and trigger audit was conducted across the Notificati
 
 ## 3. Codebase Tracing & Component Verification
 
-### 3.1 Target UI Component: `src/components/dashboard/NotificationsView.jsx`
+### 3.1 Target UI Component: `src/features/dashboard/NotificationsView.jsx`
 
 #### 1. Message Aggregation & Profile Resolution:
 - Lines 31-47 build `messageItems` from `messages.slice(-30).reverse()`.
@@ -107,9 +107,9 @@ A systematic architectural and trigger audit was conducted across the Notificati
 
 ---
 
-### 3.2 Target UI Component: `src/components/common/FloatingMessageToast.jsx`
+### 3.2 Target UI Component: `src/features/messaging/FloatingMessageToast.jsx`
 
-- Managed via `src/context/MessagingContext.jsx`: displays incoming direct messages with sender avatar, text preview, 7-second auto-dismiss, inline quick reply, and "Open Chat" buttons.
+- Managed via `src/features/messaging/MessagingContext.jsx`: displays incoming direct messages with sender avatar, text preview, 7-second auto-dismiss, inline quick reply, and "Open Chat" buttons.
 - Rendered in `src/App.jsx:L1203` directly adjacent to `<Toaster position="bottom-right" richColors duration={3000} />`.
 - **Layout Stacking & Collision**:
   - `FloatingMessageToast` is fixed at `bottom-22 right-4 sm:right-5 z-50`.
@@ -337,9 +337,9 @@ All recommended approaches have been explicitly reviewed and **accepted by the u
 | **NOTIF-02** | **Architecture & Persistence** | System notifications (e.g. commission eligibility, invoice status, system alerts) are purely ephemeral in-memory state; lost on page refresh. | `src/App.jsx`, `src/shared/utils/events.js`, `firestore.rules` | **Option B / C Hybrid (Accepted)**: Long-term target: Firestore `notifications` collection with user-targeted security rules. Immediate phase: Cache active session notifications in `localStorage` keyed by user identifier (`ptf_notifications_${userId}`) so feed survives refreshes without recurring DB read costs. | **APPROVED** |
 | **NOTIF-03** | **UX & Noise Reduction** | Intercepting every `toast.*` call (Trigger 8) floods the notification center with micro-actions ("Copied to clipboard", "Please enter address"). | `src/shared/utils/toast.js` | **Option C (Accepted)**: Decouple toast alerts from the notification feed. Transient toasts remain toast-only unless explicitly requested with `{ feed: true }` or emitted via a dedicated `emitSystemNotification()` utility. Eliminates alert fatigue. | **APPROVED** |
 | **NOTIF-04** | **Business Logic / Targeting** | Trigger 6c (Commission Eligible notification) is seen only by the session user who marked the invoice paid; the Partner never receives it. | `src/App.jsx:L537-L546` | **Option B (Accepted)**: Persist partner-targeted notification records (or link to partner document/portal) so partners receive direct transparency on cleared commissions on their portal dashboard, rather than routing to the accounts clerk. | **APPROVED** |
-| **NOTIF-05** | **UI / Feed Integrity** | `NotificationsView` includes outgoing messages sent by the current user, displaying "Message from [CurrentUser]" and enabling self-replies. | `src/components/dashboard/NotificationsView.jsx:L31-L47` | **Option A (Accepted)**: Filter `messages` in `messageItems` to only include incoming messages (`msg.fromId !== currentUser.identifier`). Prevents self-message pollution and self-directed reply chat popups. | **APPROVED** |
-| **NOTIF-06** | **UI / Feed Integrity** | Clicking "Clear All" in `NotificationsView` does not dismiss or clear direct message items because `messages.slice(-30)` is unconditional. | `src/components/dashboard/NotificationsView.jsx:L15-L24` | **Option B (Accepted)**: Feed should display only unread messages (`!msg.readBy?.includes(currentUser.identifier)`). When marked read or when "Clear All" is clicked, messages drop out of the active alert stream into normal chat history. | **APPROVED** |
-| **NOTIF-07** | **Visual Design & Polish** | Missing icon mapping for `type: 'commission'` in `TwoToneIcon.jsx`, and hardcoded cyan pill badges for all non-message notification types. | `src/shared/ui/TwoToneIcon.jsx`, `src/components/dashboard/NotificationsView.jsx:L157-L164` | **Option B (Accepted)**: Register `commission` in `ICON_CONFIG` using finance tokens (`DollarSign`, emerald gradient). Implement dynamic badge styling based on notification level (rose for `error`, amber for `warning`, emerald for `success`/`commission`). | **APPROVED** |
+| **NOTIF-05** | **UI / Feed Integrity** | `NotificationsView` includes outgoing messages sent by the current user, displaying "Message from [CurrentUser]" and enabling self-replies. | `src/features/dashboard/NotificationsView.jsx:L31-L47` | **Option A (Accepted)**: Filter `messages` in `messageItems` to only include incoming messages (`msg.fromId !== currentUser.identifier`). Prevents self-message pollution and self-directed reply chat popups. | **APPROVED** |
+| **NOTIF-06** | **UI / Feed Integrity** | Clicking "Clear All" in `NotificationsView` does not dismiss or clear direct message items because `messages.slice(-30)` is unconditional. | `src/features/dashboard/NotificationsView.jsx:L15-L24` | **Option B (Accepted)**: Feed should display only unread messages (`!msg.readBy?.includes(currentUser.identifier)`). When marked read or when "Clear All" is clicked, messages drop out of the active alert stream into normal chat history. | **APPROVED** |
+| **NOTIF-07** | **Visual Design & Polish** | Missing icon mapping for `type: 'commission'` in `TwoToneIcon.jsx`, and hardcoded cyan pill badges for all non-message notification types. | `src/shared/ui/TwoToneIcon.jsx`, `src/features/dashboard/NotificationsView.jsx:L157-L164` | **Option B (Accepted)**: Register `commission` in `ICON_CONFIG` using finance tokens (`DollarSign`, emerald gradient). Implement dynamic badge styling based on notification level (rose for `error`, amber for `warning`, emerald for `success`/`commission`). | **APPROVED** |
 | **NOTIF-08** | **Code Hygiene & Cleanup** | Dead function `showToast` in `src/shared/utils/toast.js` and obfuscated helper names `oT()` and `uT()` in `src/App.jsx`. | `src/shared/utils/toast.js`, `src/App.jsx:L77-L89` | **Option B (Accepted)**: Remove unused `showToast` export. Refactor minified helpers `oT` to `requestNotificationPermission` and `uT` to `createBrowserNotification`. | **APPROVED** |
 
 ---
@@ -383,7 +383,7 @@ Following user approval of all recommended approaches, the implementation roadma
   - *Outcome*: Eliminates feed flooding from clipboard copies, search inputs, and modal validations.
 
 ### Phase 3: Feed Integrity & Direct Message Hygiene
-- **NOTIF-05 & NOTIF-06 (`src/components/dashboard/NotificationsView.jsx`)**:
+- **NOTIF-05 & NOTIF-06 (`src/features/dashboard/NotificationsView.jsx`)**:
   - Filter `messageItems` to unread incoming messages only:
     ```javascript
     const messageItems = useMemo(() => {

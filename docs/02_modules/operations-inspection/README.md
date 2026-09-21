@@ -8,7 +8,7 @@
 
 - `src/components/operations/FabricationWorks.jsx`: stages (`STAGES`: Pending, Ongoing, Ready For Inspection, Revision, Completed); trigger in `handleMoveJob` and the card buttons; QA dialog (`inspectingJob` state and modal: four checks, inspector name, remarks); `handlePassQA` / `handlePassQAInner` (pass); "Fail & Send to Revision" and the defect modal (`defectJob`, `handleConfirmRevision`); Revision to Ready For Inspection stamps `reworkCompletedAt`.
 - `src/components/operations/FabricationCardDetails.jsx`: `checklist.qaPassed` toggle and a printed QA sign-off line.
-- `src/components/dashboard/Dashboard.jsx`: counts Ready For Inspection jobs.
+- `src/features/dashboard/Dashboard.jsx`: counts Ready For Inspection jobs.
 - `src/constants/emailTemplates.js`: a `fabrication_ready_inspection` template exists but nothing sends it automatically.
 
 ## Firestore collections read/written

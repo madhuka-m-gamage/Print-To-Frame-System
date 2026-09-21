@@ -4,7 +4,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 vi.mock('@/services/firebase', () => ({ googleSignIn: vi.fn() }));
 
-const { default: Login } = await import('@/components/auth/Login');
+const { default: Login } = await import('@/features/auth/Login');
 
 describe('Login registration form (Phase 7 5.2, DP-05)', () => {
   it('still registers as a Partner after switching between Login and Register', async () => {

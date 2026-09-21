@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getIncomingMessages } from '@/utils/messageFilters';
+import { getIncomingMessages } from '@/features/messaging/messageFilters';
 
 describe('getIncomingMessages', () => {
   const msgs = [

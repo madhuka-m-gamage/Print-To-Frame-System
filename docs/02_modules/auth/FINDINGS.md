@@ -1,6 +1,6 @@
 # Auth Module: Architecture & Security Audit Findings
 
-> Comprehensive audit of the Authentication module (`src/components/auth/Login.jsx`, `src/App.jsx`, `src/services/firebase.js`, `api/_lib/firebaseAdmin.js`, `api/admin-user.js`, `api/generate.js`, `api/send-email.js`, `firestore.rules`).
+> Comprehensive audit of the Authentication module (`src/features/auth/Login.jsx`, `src/App.jsx`, `src/services/firebase.js`, `api/_lib/firebaseAdmin.js`, `api/admin-user.js`, `api/generate.js`, `api/send-email.js`, `firestore.rules`).
 > Baseline comparison against `docs/02_modules/auth/README.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`, and `docs/03_security/RBAC_MODEL.md`.
 
 ---
@@ -229,7 +229,7 @@ All recommendations below have been formally **accepted** for implementation.
 | **DP-02** | **Pending User Provisioning Model & Registration Race** | `App.jsx` (lines 648–656, 770–795)<br>`firestore.rules` (lines 107–111) | **ACCEPTED (Option A)** | **Permit `pendingUsers` Updates in Security Rules**: Update `firestore.rules` for `/pendingUsers/{userId}` to allow updates for unapproved registration data during onboarding (`allow update: if request.auth.token.email == userId || !resource.data.isApproved;`). This resolves the race where `initAuth` creates a shell document and causes `handleRegister` to fail with permission-denied. |
 | **DP-03** | **Security Rule Enforcement of Deactivation** | `firestore.rules` (`checkPermission`) | **ACCEPTED (Option A)** | **Database-Level Deactivation Defense**: Update `checkPermission()` in `firestore.rules` to strictly enforce that the user profile is active and approved (`get(.../users/$(token.email)).data.status == 'Active' && get(.../users/$(token.email)).data.isApproved == true`). Prevents deactivated or unapproved accounts with valid tokens from making direct SDK reads/writes. |
 | **DP-04** | **Client Real-Time Eviction on Deactivation** | `src/App.jsx` (lines 694–715) | **ACCEPTED (Option A)** | **Real-Time UI Session Eviction**: Expand `onSnapshot(users)` in `App.jsx` to observe `status` and `isApproved`. If the currently authenticated user's record is marked inactive, disabled, or unapproved in Firestore, immediately invoke `handleSignOut()` / `logout()` with an informative banner. |
-| **DP-05** | **Registration Form Role State** | `src/components/auth/Login.jsx` (line 268) | **ACCEPTED (Option A)** | **Form State Alignment**: Fix the view-toggle handler in `Login.jsx` to default to `role: "Partner"` (the first option in `PUBLIC_REGISTRATION_ROLES` and `<select>`), eliminating the ghost `"Customer"` state and rendering the correct conditional fields. |
+| **DP-05** | **Registration Form Role State** | `src/features/auth/Login.jsx` (line 268) | **ACCEPTED (Option A)** | **Form State Alignment**: Fix the view-toggle handler in `Login.jsx` to default to `role: "Partner"` (the first option in `PUBLIC_REGISTRATION_ROLES` and `<select>`), eliminating the ghost `"Customer"` state and rendering the correct conditional fields. |
 | **DP-06** | **Super Admin Configuration Hardcoding** | `src/App.jsx` (line 94)<br>`firestore.rules` (line 29) | **ACCEPTED (Option A)** | **Synchronized Self-Healing Lists**: Maintain hardcoded bootstrap administrator lists in both files to ensure self-healing capability is resilient against database or rule corruption. Update `isAdmin()` in `firestore.rules` to include `isBootstrapSuperAdmin(request.auth.token.email)` so super admins possess administrative privileges even before their initial document is written. |
 | **DP-07** | **Audit Logging Parity & Race Condition** | `src/App.jsx` (lines 658, 763, 783)<br>`src/services/auditLog.js` | **ACCEPTED (Option A)** | **Audit Parity & Awaited Writes**: Add `logActivity(..., 'LOGIN', ...)` inside `initAuth()` for Google sign-in and session restore events. Explicitly `await logActivity(...)` before calling `logout()` in registration flows so audit log writes are not aborted or rejected due to premature session termination. |
 | **DP-08** | **Route Guard Module Identifier** | `src/App.jsx` (line 1503) | **ACCEPTED (Option A)** | **Module Key Correction**: Replace `'fabrication'` with `'projects'` in `App.jsx` line 1503 to match `DEFAULT_PERMISSIONS` and the `settings/permissions` schema. |
@@ -274,7 +274,7 @@ Based on the accepted decisions, the following technical actions are scheduled f
    }
    ```
 
-### 5.2 Client Authentication & UI (`src/App.jsx` & `src/components/auth/Login.jsx`)
+### 5.2 Client Authentication & UI (`src/App.jsx` & `src/features/auth/Login.jsx`)
 1. **Fix Registration Role State in `Login.jsx`**:
    Update line 268 to set `role: "Partner"` instead of `"Customer"`.
 2. **Prevent Trigger 7a Race Condition in `App.jsx`**:
