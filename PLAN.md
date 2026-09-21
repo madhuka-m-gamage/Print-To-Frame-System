@@ -61,7 +61,13 @@ Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 be
 - [ ] 6.1-6.6: leads, atomic ids, customers, deals/fabrication/inspection, logistics (6.1, 6.2, 6.3, 6.4, 6.6 done in PRs; 6.5 logistics not started)
 - [ ] 7: UX and feature backlog
 - [x] 8.1: docs sync (TESTING.md coverage map and roadmap, root CLAUDE.md test layers and approval hand-off, stale module maps and instructions for pricing, duplicate Final guard, commission accrual)
-- [ ] 8.2: folder move
+- [ ] 8.2: standard project structure, in 12 small PRs (plan approved 2026-09-21; full plan in `~/.claude/plans/i-want-to-get-synchronous-flurry.md`)
+  - [x] 1: README, `.env.example`, `.editorconfig`, `CONTRIBUTING.md`, package metadata
+  - [ ] 2: remove confirmed-unused files and dependencies
+  - [ ] 3: one docs folder per module (`docs/02_modules/<m>/README.md`)
+  - [ ] 4: `@/` import alias, codemod, and normalise imports (no moves)
+  - [ ] 5-10: move into `src/features/<domain>` and `src/shared`, one group per PR (shared; auth, profile, dashboard, messaging; leads, customers, quotations; deals, invoicing, partners; fabrication, logistics; admin)
+  - [ ] 11-12: clean-up, ADR `0003-source-layout.md`, remove the codemod
 
 ## Deferred until the live site is ready to change
 
