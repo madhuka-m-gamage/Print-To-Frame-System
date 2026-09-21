@@ -42,8 +42,8 @@ if (sentryDsn && typeof sentryDsn === 'string' && sentryDsn.trim() !== '' && sen
   }
 }
 
-import { ErrorBoundary } from './components/common/ErrorBoundary';
-import LoadingSpinner from './components/common/LoadingSpinner';
+import { ErrorBoundary } from './shared/components/ErrorBoundary';
+import LoadingSpinner from './shared/components/LoadingSpinner';
 
 const path = window.location.pathname;
 

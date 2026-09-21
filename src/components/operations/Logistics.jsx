@@ -25,14 +25,14 @@ import {
   Layers,
   Sparkles
 } from 'lucide-react';
-import { toast } from '@/utils/toast';
-import Card from '@/components/common/Card';
-import DeleteModal from '@/components/common/DeleteModal';
+import { toast } from '@/shared/utils/toast';
+import Card from '@/shared/components/Card';
+import DeleteModal from '@/shared/components/DeleteModal';
 import LogisticsCardDetails from './LogisticsCardDetails';
-import { PageHeader, FilterBar, StatusBadge, KanbanColumn, KanbanCard, ModalWrapper } from '@/components/common/ui';
-import TwoToneIcon from '@/components/common/ui/TwoToneIcon';
+import { PageHeader, FilterBar, StatusBadge, KanbanColumn, KanbanCard, ModalWrapper } from '@/shared/ui';
+import TwoToneIcon from '@/shared/ui/TwoToneIcon';
 import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateAtomicId } from '@/services/firestoreSync';
-import { stripEmojis } from '@/utils/validation';
+import { stripEmojis } from '@/shared/utils/validation';
 import { deliveryStatusForTask } from '@/utils/logisticsTask';
 import { usePermissions } from '@/context/PermissionsContext';
 import { generateText } from '@/services/gemini';

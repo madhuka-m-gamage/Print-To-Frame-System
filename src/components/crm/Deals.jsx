@@ -3,14 +3,14 @@ import {
   Plus, ArrowLeft, ArrowRight, Trash2, Calendar, User, DollarSign, 
   Check, LayoutGrid, List, Download, Truck 
 } from 'lucide-react';
-import { toast } from '@/utils/toast';
-import DeleteModal from '@/components/common/DeleteModal';
+import { toast } from '@/shared/utils/toast';
+import DeleteModal from '@/shared/components/DeleteModal';
 import LeadCardDetails from './LeadCardDetails';
-import { PageHeader, FilterBar, KanbanColumn, KanbanCard, StatusBadge } from '@/components/common/ui';
-import SortableTable from '@/components/common/ui/SortableTable';
+import { PageHeader, FilterBar, KanbanColumn, KanbanCard, StatusBadge } from '@/shared/ui';
+import SortableTable from '@/shared/ui/SortableTable';
 import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateInvoiceId, generateAtomicId } from '@/services/firestoreSync';
-import { exportToCsv } from '@/utils/csvExport';
-import { matchesEntity, getExistingFinalInvoice } from '@/utils/entityUtils';
+import { exportToCsv } from '@/shared/utils/csvExport';
+import { matchesEntity, getExistingFinalInvoice } from '@/shared/utils/entityUtils';
 import { getFinalInvoiceAmounts, calculateDealCommission } from '@/utils/dealSettlement';
 import { projectStatusForDealStage } from '@/utils/dealProjectSync';
 import { buildLogisticsTask } from '@/utils/logisticsTask';

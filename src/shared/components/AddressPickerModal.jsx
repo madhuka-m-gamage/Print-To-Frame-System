@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { MapPin, Search, X, Check, Globe } from 'lucide-react';
 import { loadGoogleMapsScript, geocodeAddress } from '@/services/googleMapsService';
-import { ModalWrapper } from './ui';
-import { toast } from '@/utils/toast';
+import { ModalWrapper } from '@/shared/ui';
+import { toast } from '@/shared/utils/toast';
 
 export default function AddressPickerModal({ isOpen, onClose, onSelect, initialAddress = '' }) {
   const [addressInput, setAddressInput] = useState(initialAddress);

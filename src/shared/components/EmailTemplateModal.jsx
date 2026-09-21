@@ -3,9 +3,9 @@ import {
   Mail, Copy, Check, ExternalLink, Sparkles, X, FileText, 
   Send, RefreshCw, Layers, User, Shield, CheckCheck, Eye
 } from 'lucide-react';
-import ModalWrapper from './detail-modal/ModalWrapper';
+import ModalWrapper from '@/shared/ui/detail-modal/ModalWrapper';
 import { EMAIL_TEMPLATES, interpolateTemplate } from '@/constants/emailTemplates';
-import { toast } from '@/utils/toast';
+import { toast } from '@/shared/utils/toast';
 
 export default function EmailTemplateModal({
   isOpen = false,

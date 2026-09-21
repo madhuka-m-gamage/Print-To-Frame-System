@@ -4,7 +4,7 @@ import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../helpers/renderWithProviders';
 import { makeLogisticsJob, makeInvoice } from '../helpers/factories';
 
-vi.mock('@/utils/toast', () => ({
+vi.mock('@/shared/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
   showToast: vi.fn(),
 }));

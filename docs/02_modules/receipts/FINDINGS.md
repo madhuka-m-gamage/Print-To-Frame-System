@@ -53,7 +53,7 @@ However, the audit revealed several architectural disconnects, security gaps, an
    - Top-level metrics compute `Total Received`, `Advance Receipts`, `Final Receipts`, and `Total Receipts` over the entire `receipts` prop array, while `filteredReceipts` handles the list view.
 4. **CSV Export Exception:**
    - `handleExportCsv` invokes `exportToCsv(filteredReceipts, exportColumns, 'Receipts_Export')`.
-   - In `src/utils/csvExport.js`, `if (!data || !data.length) throw new Error('No data available to export.')`.
+   - In `src/shared/utils/csvExport.js`, `if (!data || !data.length) throw new Error('No data available to export.')`.
    - If a filter yields zero results, clicking "Export CSV" throws an unhandled error because `handleExportCsv` lacks a guard or try/catch.
 5. **Delete Button Visibility & Permissions:**
    - The trash button (`Trash2`) is displayed unconditionally for any selected receipt.

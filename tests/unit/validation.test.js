@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validatePhone, formatPhone, normalizePhone, phonesMatch, validateEmail, stripEmojis, sanitizeTechnicalScope } from '@/utils/validation';
+import { validatePhone, formatPhone, normalizePhone, phonesMatch, validateEmail, stripEmojis, sanitizeTechnicalScope } from '@/shared/utils/validation';
 
 describe('validatePhone', () => {
   it('accepts +947 followed by eight digits, with or without spaces', () => {

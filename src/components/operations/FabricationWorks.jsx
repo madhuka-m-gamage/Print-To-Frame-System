@@ -31,16 +31,16 @@ import {
   Send,
   Sparkles
 } from 'lucide-react';
-import { toast } from '@/utils/toast';
-import Card from '@/components/common/Card';
-import DeleteModal from '@/components/common/DeleteModal';
+import { toast } from '@/shared/utils/toast';
+import Card from '@/shared/components/Card';
+import DeleteModal from '@/shared/components/DeleteModal';
 import FrameBlueprintPreview from '@/components/common/FrameBlueprintPreview';
 import FabricationCardDetails from './FabricationCardDetails';
-import { PageHeader, FilterBar, StatusBadge, KanbanColumn, KanbanCard, ModalWrapper } from '@/components/common/ui';
+import { PageHeader, FilterBar, StatusBadge, KanbanColumn, KanbanCard, ModalWrapper } from '@/shared/ui';
 import { addDocument, updateDocument, deleteDocument, COLLECTIONS, generateInvoiceId, generateAtomicId } from '@/services/firestoreSync';
-import { stripEmojis, sanitizeTechnicalScope } from '@/utils/validation';
+import { stripEmojis, sanitizeTechnicalScope } from '@/shared/utils/validation';
 import { generateText } from '@/services/gemini';
-import { getExistingFinalInvoice } from '@/utils/entityUtils';
+import { getExistingFinalInvoice } from '@/shared/utils/entityUtils';
 import { logActivity } from '@/services/auditLog';
 import { NON_BILLABLE, resolveManualJobLink } from '@/utils/fabricationLink';
 import { checklistWithGuardedQa, withDefectRecorded } from '@/utils/qaGate';

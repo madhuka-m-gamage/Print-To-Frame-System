@@ -14,7 +14,7 @@
  * maintaining its own copy.
  */
 
-import { stripEmojis } from './validation';
+import { stripEmojis } from '@/shared/utils/validation';
 
 /**
  * @param {Object} params

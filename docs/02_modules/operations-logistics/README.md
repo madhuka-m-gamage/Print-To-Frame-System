@@ -7,7 +7,7 @@
 - `src/components/operations/Logistics.jsx`: Kanban (Pending, In Transit, Completed) with Pickup and Delivery sub-tabs, add-job form, AI route suggestion.
 - `src/components/operations/LogisticsCardDetails.jsx`: job detail modal: COD calculation, WhatsApp notify, Maps link, print.
 - `src/utils/logisticsEngine.js`: `FLEET_VEHICLES`, `DRIVER_DIRECTORY` (hardcoded), `getGoogleMapsUrl`, `getWhatsAppUrl`, `formatDispatchMessage`, `calculateCODFromInvoices`.
-- `src/services/googleMapsService.js` and `src/components/common/AddressPickerModal.jsx`: address picker; **only `Customers.jsx` uses it**, Logistics does not.
+- `src/services/googleMapsService.js` and `src/shared/components/AddressPickerModal.jsx`: address picker; **only `Customers.jsx` uses it**, Logistics does not.
 - Wiring: `src/App.jsx` (lazy import, `logisticsJobs` state, subscription, nav, route), `src/services/firestoreSync.js` (`LOGISTICS: 'logistics'`), `src/services/dataDefaults.js`, `firestore.rules` (logistics block), logistics email templates in `src/constants/emailTemplates.js`.
 
 ## Firestore collections read/written
@@ -29,7 +29,7 @@ No Cloud Functions. Client-side:
 
 ## Depends on / called by
 
-Depends on `common/ui`, `Card`, `DeleteModal`, `toast`, `invoiceTemplate` (print), `validation` (`stripEmojis`), `/api/generate`. Consumed by `Dashboard.jsx` (counts Pending jobs); jobs are created from Leads, Deals and Fabrication; `entityUtils.js` documents the Lead, Deal, Project, Logistics chain.
+Depends on `shared/ui`, `Card`, `DeleteModal`, `toast`, `invoiceTemplate` (print), `validation` (`stripEmojis`), `/api/generate`. Consumed by `Dashboard.jsx` (counts Pending jobs); jobs are created from Leads, Deals and Fabrication; `entityUtils.js` documents the Lead, Deal, Project, Logistics chain.
 
 ## Summary
 

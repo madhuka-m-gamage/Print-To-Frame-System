@@ -2,7 +2,7 @@
 // (see Leads.jsx handleConvertConfirm, App.jsx handleSaveInvoice/handleGenerateReceipt,
 // Partners.jsx handleCreatePartner). Every factory takes an overrides object.
 //
-// Lineage: matchesEntity (src/utils/entityUtils.js) only recognises id, _firestoreId,
+// Lineage: matchesEntity (src/shared/utils/entityUtils.js) only recognises id, _firestoreId,
 // firestoreId, leadId, dealId, originalLeadId, convertedDealId, rootLeadId and
 // businessEntityId. jobNo, linkedJobNo, clientNIC and customerId are NOT matched by it;
 // logisticsEngine.calculateCODFromInvoices compares jobNo/linkedJobNo separately.

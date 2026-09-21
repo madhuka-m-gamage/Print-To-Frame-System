@@ -5,7 +5,7 @@ import {
   Database, HardDrive, ShieldCheck, Clock, ArrowUpRight, Layers
 } from 'lucide-react';
 import PermissionsManager from './PermissionsManager';
-import { PageHeader, FilterBar, StatusBadge, TwoToneIcon } from '@/components/common/ui';
+import { PageHeader, FilterBar, StatusBadge, TwoToneIcon } from '@/shared/ui';
 import { subscribeToCollection, COLLECTIONS } from '@/services/firestoreSync';
 
 export default function AdminPanel({ dataStore, currentUser }) {

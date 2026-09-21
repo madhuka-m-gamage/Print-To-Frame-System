@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { exportToCsv } from '@/utils/csvExport';
+import { exportToCsv } from '@/shared/utils/csvExport';
 
 let captured;
 let clicked;

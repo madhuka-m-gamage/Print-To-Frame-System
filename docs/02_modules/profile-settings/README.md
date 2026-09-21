@@ -5,7 +5,7 @@
 ## Files and folders
 
 - `src/components/common/UserProfile.jsx`: the profile page (lazy-loaded; tab `profile`).
-- `src/components/common/ui/ImageCropModal.jsx`: photo cropping (via `common/ui`).
+- `src/shared/ui/ImageCropModal.jsx`: photo cropping (via `shared/ui`).
 - `src/App.jsx`: theme state and toggle, `handleUpdateUser`, `handleSignOut`.
 - `src/constants/companyInfo.js` (`COMPANY_INFO`): a static object **not imported anywhere** under `src`.
 - Integrations that use the sign-in token but have no settings UI: `GoogleDrivePickerModal.jsx`, `driveService.js`, `contactsService.js`, `ContactSyncModal.jsx`, `getAccessToken` in `services/firebase.js`.
@@ -31,7 +31,7 @@ No Cloud Functions.
 
 ## Depends on / called by
 
-`services/firebase` (`db`, `getAccessToken`), `firestoreSync` (`COLLECTIONS`, `updateDocument`), `auditLog`, `toast`, `dateUtils`, `common/ui`, app-level `users` / `partners` state, `PermissionsContext`.
+`services/firebase` (`db`, `getAccessToken`), `firestoreSync` (`COLLECTIONS`, `updateDocument`), `auditLog`, `toast`, `dateUtils`, `shared/ui`, app-level `users` / `partners` state, `PermissionsContext`.
 
 ## Summary
 

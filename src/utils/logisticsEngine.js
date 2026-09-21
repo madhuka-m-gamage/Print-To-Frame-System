@@ -5,8 +5,8 @@
  * fleet vehicle management, and invoice COD balance calculations.
  */
 
-import { matchesEntity } from './entityUtils';
-import { toDateObj } from './dateUtils';
+import { matchesEntity } from '@/shared/utils/entityUtils';
+import { toDateObj } from '@/shared/utils/dateUtils';
 
 export const FLEET_VEHICLES = [
   { id: 'lorry_ge1234', name: 'Lorry (WP GE 1234)', type: 'Lorry', capacity: '14.5ft Bed' },

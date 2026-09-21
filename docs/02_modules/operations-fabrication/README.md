@@ -30,7 +30,7 @@ No Cloud Functions. Client-side:
 
 ## Depends on / called by
 
-`firestoreSync` (`addDocument`, `updateDocument`, `deleteDocument`, `generateInvoiceId`, `generateAtomicId`), `App.jsx` (`handleSaveInvoice`), `utils/validation`, `toast`, `common/ui`, `DeleteModal`. Consumed by Logistics (matches `linkedJobNo` to `jobNo`) and created by `Leads.jsx` conversion. `Deals.jsx` writes logistics jobs directly.
+`firestoreSync` (`addDocument`, `updateDocument`, `deleteDocument`, `generateInvoiceId`, `generateAtomicId`), `App.jsx` (`handleSaveInvoice`), `shared/utils/validation`, `toast`, `shared/ui`, `DeleteModal`. Consumed by Logistics (matches `linkedJobNo` to `jobNo`) and created by `Leads.jsx` conversion. `Deals.jsx` writes logistics jobs directly.
 
 ## Summary
 

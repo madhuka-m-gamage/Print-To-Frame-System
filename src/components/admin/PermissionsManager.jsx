@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { usePermissions, DEFAULT_PERMISSIONS } from '@/context/PermissionsContext';
-import Card from '@/components/common/Card';
+import Card from '@/shared/components/Card';
 import { 
   ShieldAlert, Save, Eye, Plus, Edit2, Trash2, Download, 
   Sparkles, Check, X, ChevronDown, Filter, Search, RotateCcw,
   Layers, CheckCircle2, Shield, AlertCircle, Sliders
 } from 'lucide-react';
-import { toast } from '@/utils/toast';
+import { toast } from '@/shared/utils/toast';
 import { SYSTEM_ROLES } from '@/constants/roles';
 
 // ── Action Definitions with metadata ──────────────────────────────────────────

@@ -49,7 +49,7 @@ vi.mock('@/context/MessagingContext', () => ({
 }));
 
 const { default: App } = await import('@/App');
-const { emitNotification } = await import('@/utils/events');
+const { emitNotification } = await import('@/shared/utils/events');
 
 const bells = () => screen.queryAllByLabelText('Notifications');
 

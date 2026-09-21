@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toDateObj, formatDate, formatDateTime } from '@/utils/dateUtils';
+import { toDateObj, formatDate, formatDateTime } from '@/shared/utils/dateUtils';
 
 describe('dateUtils', () => {
   it('handles null, undefined and empty strings', () => {

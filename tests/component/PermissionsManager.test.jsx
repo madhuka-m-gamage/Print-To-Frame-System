@@ -5,7 +5,7 @@ import { renderWithProviders } from '../helpers/renderWithProviders';
 import { DEFAULT_PERMISSIONS } from '@/context/PermissionsContext';
 
 vi.mock('@/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
-vi.mock('@/utils/toast', () => ({
+vi.mock('@/shared/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
   showToast: vi.fn(),
 }));

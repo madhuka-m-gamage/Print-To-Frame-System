@@ -32,10 +32,10 @@ import {
   DetailCustomerCard, 
   DetailModalFooter,
   StatusBadge 
-} from '@/components/common/ui';
-import TwoToneIcon from '@/components/common/ui/TwoToneIcon';
-import { toast } from '@/utils/toast';
-import { stripEmojis } from '@/utils/validation';
+} from '@/shared/ui';
+import TwoToneIcon from '@/shared/ui/TwoToneIcon';
+import { toast } from '@/shared/utils/toast';
+import { stripEmojis } from '@/shared/utils/validation';
 import { getCollectableInvoice } from '@/utils/logisticsEngine';
 import { buildInvoiceHtml, openInvoicePrintWindow } from '@/utils/invoiceTemplate';
 import {

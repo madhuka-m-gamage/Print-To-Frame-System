@@ -4,8 +4,8 @@ import {
   ExternalLink, Filter, Clock, Sparkles, User, ArrowUpRight 
 } from 'lucide-react';
 import { useMessaging } from '@/context/MessagingContext';
-import { PageHeader, FilterBar, StatusBadge, UserAvatar, TwoToneIcon } from '@/components/common/ui';
-import { formatDateTime } from '@/utils/dateUtils';
+import { PageHeader, FilterBar, StatusBadge, UserAvatar, TwoToneIcon } from '@/shared/ui';
+import { formatDateTime } from '@/shared/utils/dateUtils';
 import { getIncomingMessages } from '@/utils/messageFilters';
 
 export default function NotificationsView({ notifications = [], setNotifications, users = [], setActiveTab, currentUser }) {

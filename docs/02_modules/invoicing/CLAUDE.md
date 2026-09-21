@@ -28,7 +28,7 @@ Invoices are `invoices` documents numbered `INV-ADV-####` / `INV-FIN-####` from 
 - Always reserve the id with `generateInvoiceId` first; both automatic creators abort the stage change if that fails.
 - One Advance and one Final per lead is a UI convention, not enforced in rules or data.
 
-- Final invoice guard: deal completion and job QA pass call `getExistingFinalInvoice` (`src/utils/entityUtils.js`) and skip creating a second Final. It runs on client state, so two sessions acting at the same moment can still both create one.
+- Final invoice guard: deal completion and job QA pass call `getExistingFinalInvoice` (`src/shared/utils/entityUtils.js`) and skip creating a second Final. It runs on client state, so two sessions acting at the same moment can still both create one.
 
 - COD: `calculateCODFromInvoices` counts only the latest unpaid Final invoice. A paid Advance with no Final returns `finalInvoicePending: true` and the shortfall against the Advance's `totalValue` (or amount / 0.75), and the UI shows it as pending Final invoice creation instead of settled.
 

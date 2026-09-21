@@ -12,7 +12,7 @@ vi.mock('@/services/firestoreSync', () => ({
   generateInvoiceId: vi.fn(async () => 'INV-FIN-0001'),
   generateAtomicId: vi.fn(async (prefix) => `${prefix}-0001`),
 }));
-vi.mock('@/utils/toast', () => ({
+vi.mock('@/shared/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
   showToast: vi.fn(),
 }));

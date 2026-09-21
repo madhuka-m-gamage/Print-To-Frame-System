@@ -1,4 +1,4 @@
-import { stripEmojis } from '@/utils/validation';
+import { stripEmojis } from '@/shared/utils/validation';
 import { auth } from './firebase';
 
 /**

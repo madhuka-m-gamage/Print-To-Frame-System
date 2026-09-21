@@ -6,7 +6,7 @@
 
 - `src/components/crm/Customers.jsx`: main UI (registry, create form, detail view with related leads / invoices / projects, CSV export, AI-drafted WhatsApp message).
 - `src/components/crm/ContactSyncModal.jsx` and `src/services/contactsService.js`: one-way Google Contacts import (People API `connections`, using the user's access token). Only `Customers.jsx` uses them.
-- `src/utils/stringMatch.js`: `findCustomerDuplicates` (fuzzy match, default threshold 0.72).
+- `src/shared/utils/stringMatch.js`: `findCustomerDuplicates` (fuzzy match, default threshold 0.72).
 - `src/App.jsx`: lazy load, `customers` state, subscription, tab route, and the approval hand-off.
 - `src/services/dataDefaults.js` (`defaultCustomers = []`), `src/services/firestoreSync.js` (`COLLECTIONS.CUSTOMERS`), `firestore.rules` (customers block).
 - `api/`: no customer-specific handler; `api/admin-user.js` is touched only through `deleteUserAccount`.
@@ -32,7 +32,7 @@ No Cloud Functions. Client-side:
 
 ## Depends on / called by
 
-- Depends on: `services/mailer`, `auditLog`, `adminUsers`, `gemini`, `firebase` (`getAccessToken`), `utils/csvExport`, `AddressPickerModal`, `ImageCropModal`, `ActivityTimeline`, `PermissionsContext`.
+- Depends on: `services/mailer`, `auditLog`, `adminUsers`, `gemini`, `firebase` (`getAccessToken`), `shared/utils/csvExport`, `AddressPickerModal`, `ImageCropModal`, `ActivityTimeline`, `PermissionsContext`.
 - Used by: `Leads.jsx` (writes), `Deals.jsx` (props only), `FabricationWorks.jsx` and `Logistics.jsx` (lookups by NIC or name), `Dashboard.jsx` (count in AI prompt), `PartnerQRModal.jsx`, `LeadCardDetails.jsx`, `PermissionsContext` / `PermissionsManager` (`customers` permission key).
 
 ## Summary

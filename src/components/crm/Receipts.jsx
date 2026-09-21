@@ -3,11 +3,11 @@ import {
   Search, FileText, Printer, Trash2, X, ChevronRight, Calendar, Download, ArrowLeft, CreditCard
 } from 'lucide-react';
 import { deleteDocument, COLLECTIONS } from '@/services/firestoreSync';
-import { toast } from '@/utils/toast';
+import { toast } from '@/shared/utils/toast';
 import { logActivity } from '@/services/auditLog';
-import DeleteModal from '@/components/common/DeleteModal';
-import { PageHeader, FilterBar, StatusBadge } from '@/components/common/ui';
-import { exportToCsv } from '@/utils/csvExport';
+import DeleteModal from '@/shared/components/DeleteModal';
+import { PageHeader, FilterBar, StatusBadge } from '@/shared/ui';
+import { exportToCsv } from '@/shared/utils/csvExport';
 import { buildReceiptHtml } from '@/utils/receiptTemplate';
 import { openInvoicePrintWindow } from '@/utils/invoiceTemplate';
 

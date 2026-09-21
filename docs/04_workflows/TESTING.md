@@ -39,7 +39,7 @@ Every plan should answer these, and name the tests it will add or change:
 - Test files run sequentially (`fileParallelism: false`): integration files share one stateful emulator and parallel files clobbered each other's data.
 - Modules that import `src/services/firebase.js` call `initializeApp` at load; `vi.mock` it (and `firestoreSync`) in any test that reaches them.
 - **Characterisation tests** lock in today's behaviour, including known defects. Each must carry a comment naming the finding (`docs/02_modules/*/FINDINGS.md`) that will change it, so the later flip is a deliberate edit and not a mystery failure.
-- Factory lineage: `matchesEntity` (`src/utils/entityUtils.js`) only recognises `id`, `_firestoreId`, `firestoreId`, `leadId`, `dealId`, `originalLeadId`, `convertedDealId`, `rootLeadId`, `businessEntityId`. `jobNo`, `linkedJobNo`, `clientNIC` and `customerId` are not matched by it; the COD engine compares job numbers separately.
+- Factory lineage: `matchesEntity` (`src/shared/utils/entityUtils.js`) only recognises `id`, `_firestoreId`, `firestoreId`, `leadId`, `dealId`, `originalLeadId`, `convertedDealId`, `rootLeadId`, `businessEntityId`. `jobNo`, `linkedJobNo`, `clientNIC` and `customerId` are not matched by it; the COD engine compares job numbers separately.
 
 ## Component test mocks
 `src/services/firebase.js` calls `initializeApp` at module load. `tests/helpers/setupComponent.js` already stubs `src/services/firebase` and the `firebase/firestore` calls `PermissionsProvider` makes, for every component test. A test that renders a feature component must also mock the data and side-effect modules it reaches. Copy this block to the top of the test file:
@@ -58,7 +58,7 @@ vi.mock('../../src/services/firestoreSync', () => ({
   generateInvoiceId: vi.fn(async (type) => `INV-${type === 'Final' ? 'FIN' : 'ADV'}-0001`),
   generateAtomicId: vi.fn(async (prefix) => `${prefix}-0001`),
 }));
-vi.mock('../../src/utils/toast', () => ({
+vi.mock('@/shared/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
   showToast: vi.fn(),
 }));
@@ -120,9 +120,9 @@ Snapshot from `npm run coverage` (unit and API tests only, so the component and 
 
 | Code | Covered by | Kind | Gaps |
 |---|---|---|---|
-| `src/utils/entityUtils.js` | `tests/unit/entityUtils.test.js`, `factories.test.js` | real, including `getExistingFinalInvoice` | alias cases beyond the nine recognised fields; the guard is client-state based, so two sessions acting at once can still both miss an invoice |
+| `src/shared/utils/entityUtils.js` | `tests/unit/entityUtils.test.js`, `factories.test.js` | real, including `getExistingFinalInvoice` | alias cases beyond the nine recognised fields; the guard is client-state based, so two sessions acting at once can still both miss an invoice |
 | `src/utils/cutListEngine.js` | `tests/unit/cutListEngine.test.js` | real, including first-fit-decreasing bar packing | none known |
-| `src/utils/dateUtils.js` | `tests/unit/dateUtils.test.js` | real (about 87%) | a few branches |
+| `src/shared/utils/dateUtils.js` | `tests/unit/dateUtils.test.js` | real (about 87%) | a few branches |
 | `src/utils/logisticsEngine.js` | `tests/unit/logisticsEngine.test.js` | real, including duplicate Finals and advance-only COD | UI labels (Logistics, LogisticsCardDetails, waybill) not covered by a test |
 | `src/constants/emailTemplates.js` | `tests/unit/emailTemplates.test.js` | real | |
 | `src/context/PermissionsContext.jsx` | `tests/unit/permissions.test.js`, `tests/component/StatusBadge.test.jsx` | real | receipts and quotations rows |
@@ -133,7 +133,7 @@ Snapshot from `npm run coverage` (unit and API tests only, so the component and 
 | `src/utils/quotePricing.js`, `leadLineage.js`, `fabricationLink.js`, `dealProjectSync.js`, `invoicePrintData.js`, `qaGate.js`, `logisticsTask.js`, `authFlow.js` | `tests/unit/quotePricing.test.js`, `leadLineage.test.js`, `fabricationLink.test.js`, `dealProjectSync.test.js`, `invoicePrintData.test.js`, `qaGate.test.js`, `logisticsTask.test.js`, `authFlow.test.js` | real (the pure rules extracted in Phase 7 steps 5 and 6: referral pricing terms, lead to deal lineage, size and billing link, forward-only project sync, faithful invoice reprint, QA sign-off guard, logistics task shape, registration race and eviction) | none known |
 | `src/services/pricingEngine.js` | `tests/unit/pricingEngine.test.js` | real (tiers, cost stack) plus characterisation (discount, commission, Profit/SQ) | rows above |
 | `src/utils/invoiceTemplate.js`, `receiptTemplate.js`, `dealSettlement.js`, `invoiceSettlement.js` | `tests/unit/invoiceTemplate.test.js`, `receiptTemplate.test.js`, `dealSettlement.test.js`, `invoiceSettlement.test.js` | real (milestone maths incl. discount and tax, words, labels, deal final amounts and commission) | print output only asserted by substring |
-| `src/utils/validation.js`, `stringMatch.js`, `csvExport.js` | `tests/unit/validation.test.js`, `stringMatch.test.js`, `csvExport.test.js` | real, plus one characterisation row | `csvExport` is tested with `Blob`, `URL` and `document` stubbed; phone matching is now `phonesMatch` and tested here; the call sites in `Leads.jsx` and `Customers.jsx` are not |
+| `src/shared/utils/validation.js`, `stringMatch.js`, `csvExport.js` | `tests/unit/validation.test.js`, `stringMatch.test.js`, `csvExport.test.js` | real, plus one characterisation row | `csvExport` is tested with `Blob`, `URL` and `document` stubbed; phone matching is now `phonesMatch` and tested here; the call sites in `Leads.jsx` and `Customers.jsx` are not |
 | `src/services/firestoreSync.js` | `tests/unit/firestoreSync.test.js`, `atomicId.test.js` | real | `deriveReceiptId`, `generateSequentialId`, and `generateAtomicId` (padding, continuing a counter, the single `value` field) with firebase mocked; the subscribe and CRUD calls are untested here |
 | `src/services/firebase.js` (`getScopedAccessToken`) | `tests/unit/scopedToken.test.js` | real (per-scope cache, expiry, hint, no-token and blocked-popup errors) | `logout` clearing the cached tokens (the sessionStorage stub cannot list keys) |
 | `src/components/**`, `App.jsx` | `StatusBadge` smoke test; `Receipts.test.jsx` (CSV export), `Invoices.receipt.test.jsx` (read-only amount, notes), `Invoices.policy.test.jsx` (edit policy, delete guard, cancel), `App.listeners.test.jsx` (listeners follow the role permissions), `PermissionsManager.test.jsx` (missing-modules button); `Deals.test.jsx`, `FabricationWorks.test.jsx` (QA pass, manual job billing link, QA gate), `Partners.test.jsx` (settlements, referral eligibility), `App.signOut.test.jsx` (B5 wiring); `Login.test.jsx` (registration role), `App.eviction.test.jsx` (deactivation eviction, LOGIN audit), `FabricationCardDetails.test.jsx` (locked milestone, hidden price, locked size), `FrameBlueprintPreview.test.jsx`, `Logistics.test.jsx` (stage sync and rollback), `LogisticsCardDetails.test.jsx` (cash collection) | real, plus one characterisation (phantom payout) | `LeadCardDetails` (Convert gate, print), `Leads`, `QuotationBuilder`, `Customers` and the rest are untested; logic inside the large components is still mostly not extracted |

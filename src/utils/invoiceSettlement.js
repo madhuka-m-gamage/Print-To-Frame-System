@@ -1,4 +1,4 @@
-import { toDateObj } from './dateUtils';
+import { toDateObj } from '@/shared/utils/dateUtils';
 
 const docKey = (inv) => inv._firestoreId || inv.id;
 
