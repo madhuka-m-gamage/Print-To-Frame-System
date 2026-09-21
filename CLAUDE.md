@@ -85,7 +85,7 @@ Requires a valid Firebase ID token (`Authorization: Bearer <token>`) AND that th
 Code stays where the build expects it: **frontend = `src/`**, **backend = `api/`** (Vercel functions), there are no Cloud Functions and no `functions/` folder (see `docs/01_architecture/GCP_INVENTORY.md`). Everything written about the system lives in the structure below; put new findings, maps and notes there, not in ad hoc files. Start at `PROJECT_INDEX.md`.
 
 ```
-erp-system/
+Print-To-Frame-System/
 ├── CLAUDE.md               shared instructions (this file)
 ├── CLAUDE.local.md         personal, gitignored
 ├── PROJECT_INDEX.md        links every doc
