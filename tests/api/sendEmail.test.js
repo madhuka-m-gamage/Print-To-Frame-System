@@ -74,27 +74,79 @@ describe('api/send-email.js payload', () => {
     expect(sendMail).not.toHaveBeenCalled();
   });
 
-  it('sends a pre-rendered subject and body through the transporter', async () => {
+  // Flipped in the send-email hardening (docs/03_security/AUTHORIZATION_MAP.md finding 1): free-form
+  // subject and body used to be sent as given; now only fixed templates are accepted.
+  it('refuses a free-form subject and body and sends nothing', async () => {
     const res = await call(await load(), { body: { to: 'a@b.co', subject: 'Hello', body: '<p>Hi</p>' } });
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toEqual({ sent: true });
-    expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'a@b.co', subject: 'Hello', html: '<p>Hi</p>' }));
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toMatch(/free-form/i);
+    expect(sendMail).not.toHaveBeenCalled();
   });
 
-  it('renders a known template, HTML-escaping the plain-text body', async () => {
-    const { EMAIL_TEMPLATES } = await import('@/constants/emailTemplates.js');
-    const res = await call(await load(), { body: { to: 'a@b.co', templateId: EMAIL_TEMPLATES[0].id, data: {} } });
+  it('renders a sendable template, HTML-escaping the plain-text body', async () => {
+    const res = await call(await load(), { body: { to: 'a@b.co', templateId: 'password_reset', data: { recipientName: '<script>x</script>' } } });
     expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual({ sent: true });
     const sent = sendMail.mock.calls[0][0];
+    expect(sent.to).toBe('a@b.co');
     expect(sent.html.startsWith('<pre')).toBe(true);
     expect(sent.html).not.toMatch(/<(script|img)/i);
+  });
+
+  it('refuses a real template the app does not send through this endpoint', async () => {
+    const res = await call(await load(), { body: { to: 'a@b.co', templateId: 'commission_disbursement', data: {} } });
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toMatch(/cannot be sent/i);
+    expect(sendMail).not.toHaveBeenCalled();
+  });
+
+  it('allows each of the seven templates the app sends', async () => {
+    const ids = ['client_approval', 'client_activation_confirmed', 'partner_approval', 'partner_activation_confirmed', 'employee_invite', 'password_reset', 'registration_declined'];
+    const handler = await load();
+    for (const templateId of ids) {
+      expect((await call(handler, { body: { to: 'a@b.co', templateId, data: {} } })).statusCode).toBe(200);
+    }
+    expect(sendMail).toHaveBeenCalledTimes(ids.length);
   });
 
   it('returns 502 when the SMTP credentials are missing', async () => {
     delete process.env.SMTP_USER;
     delete process.env.SMTP_APP_PASSWORD;
-    const res = await call(await load(), { body: { to: 'a@b.co', subject: 'Hello', body: 'x' } });
+    const res = await call(await load(), { body: { to: 'a@b.co', templateId: 'password_reset', data: {} } });
     expect(res.statusCode).toBe(502);
     expect(res.body.error).toMatch(/SMTP_USER/);
+  });
+});
+
+describe('api/send-email.js who may send (AUTHORIZATION_MAP finding 1)', () => {
+  const body = { to: 'a@b.co', templateId: 'password_reset', data: {} };
+
+  it.each(['Partner', 'Business Client', 'Customer'])('refuses a %s account and sends nothing', async (role) => {
+    getDoc.mockResolvedValue(snap({ role, isApproved: true, status: 'Active' }));
+    const res = await call(await load(), { body });
+    expect(res.statusCode).toBe(403);
+    expect(res.body.error).toMatch(/staff/i);
+    expect(sendMail).not.toHaveBeenCalled();
+  });
+
+  it('refuses an account with an unknown or missing role', async () => {
+    getDoc.mockResolvedValue(snap({ isApproved: true, status: 'Active' }));
+    expect((await call(await load(), { body })).statusCode).toBe(403);
+    getDoc.mockResolvedValue(snap({ role: 'Superuser', isApproved: true, status: 'Active' }));
+    expect((await call(await load(), { body })).statusCode).toBe(403);
+    expect(sendMail).not.toHaveBeenCalled();
+  });
+
+  it.each(['Admin', 'Manager', 'Sales', 'Operations', 'Support', 'Accounts', 'Logistics'])('allows a %s account', async (role) => {
+    getDoc.mockResolvedValue(snap({ role, isApproved: true, status: 'Active' }));
+    expect((await call(await load(), { body })).statusCode).toBe(200);
+  });
+
+  it('refuses a Deactivated or Disabled staff account even when isApproved is still true', async () => {
+    for (const status of ['Deactivated', 'Disabled']) {
+      getDoc.mockResolvedValue(snap({ role: 'Admin', isApproved: true, status }));
+      expect((await call(await load(), { body })).statusCode).toBe(403);
+    }
+    expect(sendMail).not.toHaveBeenCalled();
   });
 });
