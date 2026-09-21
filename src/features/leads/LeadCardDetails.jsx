@@ -7,8 +7,8 @@ import {
   PhoneCall, Mic, Square, Radio, RotateCcw, Receipt
 } from 'lucide-react';
 import { toast } from '@/shared/utils/toast';
-import { calculateCost, determineTier } from '@/services/pricingEngine';
-import { getQuotePricingTerms, DEFAULT_REFERRAL_COMMISSION_RATE } from '@/utils/quotePricing';
+import { calculateCost, determineTier } from '@/features/quotations/pricingEngine';
+import { getQuotePricingTerms, DEFAULT_REFERRAL_COMMISSION_RATE } from '@/features/quotations/quotePricing';
 import { extractCallScope } from '@/services/gemini';
 import { validatePhone, validateEmail, formatPhone, sanitizeTechnicalScope, stripEmojis } from '@/shared/utils/validation';
 import Card from '@/shared/components/Card';
@@ -22,8 +22,8 @@ import {
   DetailModalFooter,
   StatusBadge 
 } from '@/shared/ui';
-import QuotationBuilder from './QuotationBuilder';
-import { downsampleAudio } from '@/utils/audioProcessing';
+import QuotationBuilder from '@/features/quotations/QuotationBuilder';
+import { downsampleAudio } from './audioProcessing';
 import { toDateObj } from '@/shared/utils/dateUtils';
 import { buildInvoiceHtml, openInvoicePrintWindow } from '@/utils/invoiceTemplate';
 import { resolveInvoiceForPrint } from '@/utils/invoicePrintData';

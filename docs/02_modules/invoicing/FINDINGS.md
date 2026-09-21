@@ -10,7 +10,7 @@
 
 A comprehensive architectural and trigger audit was conducted across the Invoicing module and its integration boundaries:
 - **Module Documentation**: `docs/02_modules/invoicing/README.md`, `docs/02_modules/invoicing/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
-- **Target UI Components**: `src/components/crm/Invoices.jsx`, `src/components/crm/QuotationBuilder.jsx`, `src/components/crm/LeadCardDetails.jsx`, `src/components/crm/Receipts.jsx`, `src/components/crm/Leads.jsx`, `src/components/crm/Deals.jsx`, `src/components/operations/FabricationWorks.jsx`.
+- **Target UI Components**: `src/components/crm/Invoices.jsx`, `src/features/quotations/QuotationBuilder.jsx`, `src/features/leads/LeadCardDetails.jsx`, `src/components/crm/Receipts.jsx`, `src/features/leads/Leads.jsx`, `src/components/crm/Deals.jsx`, `src/components/operations/FabricationWorks.jsx`.
 - **Templates & Formatting**: `src/utils/invoiceTemplate.js` (`buildInvoiceHtml`, `openInvoicePrintWindow`), `src/utils/receiptTemplate.js` (`buildReceiptHtml`, `amountToWords`).
 - **ID Generation & Atomic Counters**: `src/services/firestoreSync.js` (`generateInvoiceId`, `generateAtomicId`, `deriveReceiptId`), `src/services/auditLog.js` (`logActivity`).
 - **Handlers & Hand-offs**: `src/App.jsx` (`handleSaveInvoice`, `handleMarkInvoicePaid`, `handleGenerateReceipt`).

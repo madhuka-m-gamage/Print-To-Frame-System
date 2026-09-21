@@ -10,8 +10,8 @@
 
 A deep-trace audit was conducted across the Leads module implementation files:
 - **Module Docs**: `docs/02_modules/leads/README.md`, `docs/02_modules/leads/CLAUDE.md`
-- **UI Components**: `src/components/crm/Leads.jsx`, `src/components/crm/LeadCardDetails.jsx`, `src/components/crm/QuotationBuilder.jsx`
-- **Services & Utilities**: `src/services/gemini.js`, `src/services/pricingEngine.js`, `src/utils/audioProcessing.js`
+- **UI Components**: `src/features/leads/Leads.jsx`, `src/features/leads/LeadCardDetails.jsx`, `src/features/quotations/QuotationBuilder.jsx`
+- **Services & Utilities**: `src/services/gemini.js`, `src/features/quotations/pricingEngine.js`, `src/features/leads/audioProcessing.js`
 - **Backend Proxy**: `api/generate.js` (and dev server middleware in `vite.config.js`)
 - **System Integration**: `src/App.jsx`, `firestore.rules`, `src/components/crm/Partners.jsx`
 
@@ -203,15 +203,15 @@ All ambiguities were presented to the product owner and resolved as follows:
 ### 🐛 Actionable Bug Fixes (priority order)
 
 **Action G — Stage-gate "Convert to Deal" button** *(A7 — High, prevents wrong conversions)*
-- File: `src/components/crm/LeadCardDetails.jsx:L1727`
+- File: `src/features/leads/LeadCardDetails.jsx:L1727`
 - Change: Wrap the "Convert to Deal" button render condition to include `&& lead.stage === 'Received'`.
 
 **Action F — Sync `lead.value` on quote save** *(A6 — High, pipeline metric accuracy)*
-- File: `src/components/crm/QuotationBuilder.jsx:handleSave (~L120–166)`
+- File: `src/features/quotations/QuotationBuilder.jsx:handleSave (~L120–166)`
 - Change: After saving to `COLLECTIONS.QUOTATIONS`, call `updateDocument(COLLECTIONS.LEADS, leadDocId, { value: grandTotal })`.
 
 **Action E — Remove premature customer creation** *(A5 — High, data integrity)*
-- File: `src/components/crm/Leads.jsx:handleSaveLeadDetails (~L451–473)`
+- File: `src/features/leads/Leads.jsx:handleSaveLeadDetails (~L451–473)`
 - Change: Remove the customer auto-create block from `handleSaveLeadDetails`. Customer record must only be created inside `handleConvertConfirm`.
 
 **Action B — Fix partner commission eligibility gating** *(A2 — High, financial correctness)*
@@ -219,7 +219,7 @@ All ambiguities were presented to the product owner and resolved as follows:
 - Change: Add a filter so that `leads` where `convertedToDeal === true` do not trigger `'Eligible for Payout'` based on their `stage`. Eligibility must be derived from the active Deal document (found by matching `originalLeadId`) reaching `Completed` stage and full payment cleared.
 
 **Action D — Downsample all oversized audio formats** *(A4 — Medium, data loss prevention)*
-- File: `src/components/crm/LeadCardDetails.jsx:processAudioFile (~L333)`
+- File: `src/features/leads/LeadCardDetails.jsx:processAudioFile (~L333)`
 - Change: Remove the `!isAlreadyCompressed` guard on the size check so that compressed formats (MP3, M4A, AAC, OGG, WEBM) over `MAX_PAYLOAD_RAW_SIZE` (3.2MB) are also passed through `downsampleAudio` before Base64 encoding.
 
 ### 🔧 Additional Findings (non-blocking, address in follow-up)
@@ -227,8 +227,8 @@ All ambiguities were presented to the product owner and resolved as follows:
 | Action | File | Change |
 |---|---|---|
 | Remove dead `/deals` Firestore rules block | `firestore.rules:L130–135` | Delete or comment out the `match /deals/{dealId}` block. |
-| Fix dead "Convert" button in Completed column | `src/components/crm/Leads.jsx:L155–173` | Remove or correct the "Convert" button rendered for leads with `stage === 'Completed'` that already have `convertedToDeal: false`. |
-| Fix `jobNo` collision risk | `src/components/crm/Leads.jsx:handleConvertConfirm` | Replace `Date.now().slice(-4)` with a Firestore counter transaction or UUID prefix. |
+| Fix dead "Convert" button in Completed column | `src/features/leads/Leads.jsx:L155–173` | Remove or correct the "Convert" button rendered for leads with `stage === 'Completed'` that already have `convertedToDeal: false`. |
+| Fix `jobNo` collision risk | `src/features/leads/Leads.jsx:handleConvertConfirm` | Replace `Date.now().slice(-4)` with a Firestore counter transaction or UUID prefix. |
 | Add audit logging to Lead create/edit/convert | `Leads.jsx:handleAddNewLead`, `handleSaveLeadDetails`, `handleConvertConfirm` | Call `logActivity(...)` after each state-changing write. |
 | Fix model identifier | `api/generate.js:L8` | Remove `'gemini-3.6-flash'` (invalid); replace with a valid current model ID. |
 | Document `counters` collection in CLAUDE.md | `docs/02_modules/leads/CLAUDE.md` | Add `counters/invoice_advance`, `counters/invoice_final` to the "Firestore Collections Written" list. |

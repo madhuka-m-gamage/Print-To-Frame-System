@@ -12,7 +12,7 @@ import {
   ChevronRight,
   CircleCheckBig,
 } from "lucide-react";
-import { pricingTiers, calculateCost, determineTier } from "@/services/pricingEngine";
+import { pricingTiers, calculateCost, determineTier } from "./pricingEngine";
 import { PageHeader } from "@/shared/ui";
 
 const ct = (val) => {

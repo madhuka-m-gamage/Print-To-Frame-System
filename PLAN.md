@@ -21,11 +21,11 @@ Updated 2026-09-21. These are honest estimates, not measurements: they show wher
 |---|---|---|
 | Test suite (Part A setup, Part B authoring) | `[##########]` ~95% | Five layers built and in CI; B6 browser journeys parked |
 | Phase 7 fixes that do not touch the live site (steps 1 to 6, 8.1) | `[#########-]` ~90% | Done and merged into `staging`; step 7 (UX backlog) not started |
-| 8.2 Standard project structure | `[#####-----]` ~50% | 6 of 12 tasks built: README and env example, unused files removed, one docs folder per module, `@/` import alias, shared code, first feature folders (auth, profile, dashboard, messaging). Next: leads, customers, quotations |
+| 8.2 Standard project structure | `[######----]` ~58% | 7 of 12 tasks built: README and env example, unused files removed, one docs folder per module, `@/` import alias, shared code, feature folders for auth, profile, dashboard, messaging, leads, customers and quotations. Next: deals, invoicing, partners |
 | Live rollout chain (matrix 3.3, rules 3.4d and 3.5d, payouts 4.x, promote to `main`) | `[----------]` ~0% | Parked by design until the live site is ready to change |
 | Follow-up backlog | ~20 items listed | Tackled one by one after this workflow |
 
-Merged into `staging` so far: PRs #6 to #46. Open: the first-feature-folders PR for 8.2 (task 6).
+Merged into `staging` so far: PRs #6 to #46. Open, stacked in order: task 6 (#47) and task 7 of 8.2.
 
 ## Testing and remediation tracks
 
@@ -79,11 +79,12 @@ Sequencing: rules and the live `settings/permissions` matrix are coupled (3.3 be
   - [x] 1: README, `.env.example`, `.editorconfig`, `CONTRIBUTING.md`, package metadata
   - [x] 2: remove confirmed-unused files and dependencies
   - [x] 3: one docs folder per module (`docs/02_modules/<m>/README.md`)
-  - Progress: 6 of 12 tasks built (about 50%); tasks 1 to 5 are merged (#42 to #46), task 6 is an open PR
+  - Progress: 7 of 12 tasks built (about 58%); tasks 1 to 5 are merged (#42 to #46), tasks 6 and 7 are open PRs
   - [x] 4: `@/` import alias, codemod, and normalise imports (no moves)
   - [x] 5: shared code into `src/shared` (ui, components, utils)
   - [x] 6: `src/features` auth, profile, dashboard, messaging
-  - [ ] 7-10: move into `src/features/<domain>`, one group per PR (leads, customers, quotations; deals, invoicing, partners; fabrication, logistics; admin)
+  - [x] 7: `src/features` leads, customers, quotations
+  - [ ] 8-10: move into `src/features/<domain>`, one group per PR (deals, invoicing, partners; fabrication, logistics; admin)
   - [ ] 11-12: clean-up, ADR `0003-source-layout.md`, remove the codemod
 
 ## Deferred until the live site is ready to change

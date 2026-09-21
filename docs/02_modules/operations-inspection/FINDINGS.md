@@ -11,7 +11,7 @@
 A deep-trace audit was conducted across the Operations: Inspection module implementation and its integration surfaces:
 - **Module Docs**: `docs/02_modules/operations-inspection/README.md`, `docs/02_modules/operations-inspection/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`
 - **UI Components**: `src/components/operations/FabricationWorks.jsx` (QA Inspection dialog, Defect modal, Kanban board), `src/components/operations/FabricationCardDetails.jsx` (Milestone checklist, A4 ticket printout)
-- **CRM Integration**: `src/components/crm/Deals.jsx` (Deal completion invoice trigger), `src/components/crm/Leads.jsx` (Project creation on deal conversion)
+- **CRM Integration**: `src/components/crm/Deals.jsx` (Deal completion invoice trigger), `src/features/leads/Leads.jsx` (Project creation on deal conversion)
 - **Handlers & Services**: `src/App.jsx` (`handleSaveInvoice`, `auditLog`), `src/services/firestoreSync.js` (`generateInvoiceId`, `generateAtomicId`)
 - **System Integration & Security**: `firestore.rules`, `src/context/PermissionsContext.jsx`, `src/constants/roles.js`, `api/generate.js`
 

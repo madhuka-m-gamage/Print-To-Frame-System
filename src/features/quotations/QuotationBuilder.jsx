@@ -6,7 +6,7 @@ import { addDocument, updateDocument, COLLECTIONS, generateInvoiceId, generateAt
 import GoogleDrivePickerModal from '@/shared/components/GoogleDrivePickerModal';
 import { ModalWrapper } from '@/shared/ui';
 import { matchesEntity } from '@/shared/utils/entityUtils';
-import { isAcceptedQuote } from '@/utils/quotationStatus';
+import { isAcceptedQuote } from './quotationStatus';
 
 // WhatsApp renders *text* as bold and _text_ as italic client-side — this
 // converts those same markers to HTML purely for the in-app chat-bubble

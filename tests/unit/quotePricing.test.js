@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getQuotePricingTerms, DEFAULT_REFERRAL_COMMISSION_RATE } from '@/utils/quotePricing';
+import { getQuotePricingTerms, DEFAULT_REFERRAL_COMMISSION_RATE } from '@/features/quotations/quotePricing';
 
 describe('getQuotePricingTerms', () => {
   it('gives a direct lead no discount and no commission', () => {

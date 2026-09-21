@@ -16,7 +16,7 @@ vi.mock('@/shared/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
   showToast: vi.fn(),
 }));
-vi.mock('@/components/crm/LeadCardDetails', () => ({ default: () => null }));
+vi.mock('@/features/leads/LeadCardDetails', () => ({ default: () => null }));
 
 const { default: Deals } = await import('@/components/crm/Deals');
 const sync = await import('@/services/firestoreSync');

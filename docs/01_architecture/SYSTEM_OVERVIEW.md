@@ -12,15 +12,14 @@ React 18 + Vite SPA. `src/main.jsx` mounts `src/App.jsx`, which owns all top-lev
 
 | Folder | Contents |
 |---|---|
-| `src/components/crm/` | Leads, LeadCardDetails, Deals, Customers, Partners, PartnerQRModal, QuotationBuilder, Invoices, Receipts, ContactSyncModal |
+| `src/components/crm/` | Deals, Partners, PartnerQRModal, Invoices, Receipts |
 | `src/components/operations/` | FabricationWorks, FabricationCardDetails, Logistics, LogisticsCardDetails |
-| `src/components/tools/` | CostCalculator |
 | `src/components/admin/` | AdminPanel, AgentDatabase, PermissionsManager |
 | `src/components/public/` | ReferralForm, PartnerRegistration |
 | `src/components/common/` | FrameBlueprintPreview |
-| `src/features/<domain>/` | migrated feature folders (being filled in Phase 7 8.2): `auth` (Login, authFlow), `profile` (UserProfile), `dashboard` (Dashboard, NotificationsView), `messaging` (Messages, MiniChatDrawer, FloatingMessageToast, MessagingContext, messageFilters) |
+| `src/features/<domain>/` | migrated feature folders (being filled in Phase 7 8.2): `auth` (Login, authFlow), `profile` (UserProfile), `dashboard` (Dashboard, NotificationsView), `messaging` (Messages, MiniChatDrawer, FloatingMessageToast, MessagingContext, messageFilters), `leads` (Leads, LeadCardDetails, leadLineage, audioProcessing), `customers` (Customers, ContactSyncModal), `quotations` (QuotationBuilder, CostCalculator, pricingEngine, quotePricing, quotationStatus) |
 | `src/shared/` | `ui/` primitives, `components/` used by several features (DeleteModal, ErrorBoundary, pickers, EmailTemplateModal ...), `utils/` with no domain (dates, validation, csv, toast ...) |
-| `src/services/` | `firebase`, `firestoreSync` (CRUD + `COLLECTIONS` map + atomic ID/invoice numbering), `auditLog`, `gemini`, `pricingEngine`, `adminUsers`, `mailer`, `driveService`, `contactsService`, `googleMapsService`, `dataDefaults` |
+| `src/services/` | `firebase`, `firestoreSync` (CRUD + `COLLECTIONS` map + atomic ID/invoice numbering), `auditLog`, `gemini`, `adminUsers`, `mailer`, `driveService`, `contactsService`, `googleMapsService`, `dataDefaults` |
 | `src/utils/` | `cutListEngine`, `logisticsEngine`, `invoiceTemplate`, `receiptTemplate`, `stringMatch` |
 | `src/context/` | `PermissionsContext` (RBAC) |
 | `src/constants/` | `roles`, `emailTemplates`, `companyInfo` |

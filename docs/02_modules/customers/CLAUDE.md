@@ -8,7 +8,7 @@ A client registry keyed by NIC or business registration number, filled manually,
 
 ## Code
 
-- `src/components/crm/Customers.jsx`, `ContactSyncModal.jsx`, `src/services/contactsService.js`, `src/shared/utils/stringMatch.js`
+- `src/features/customers/Customers.jsx`, `ContactSyncModal.jsx`, `src/services/contactsService.js`, `src/shared/utils/stringMatch.js`
 
 ## Firestore collections it owns or writes
 
