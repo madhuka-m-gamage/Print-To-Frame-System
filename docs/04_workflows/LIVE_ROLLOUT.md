@@ -17,12 +17,29 @@ The new client code reads the matrix through `canAccess`, which returns **false 
 
 The new client is compatible with the old, looser live rules: it writes counters `L`, `D`, `PTF`, `QT` and `L-PK` (the old rule allows any counter), and it does not use the new collections yet. So rules can follow the code, not lead it.
 
-## Decisions needed before go
+## Decisions (settled 2026-09-21) and what is left for the owner
 
-1. **A quiet window** for steps 1 and 2 (they are minutes apart; roles briefly differ if step 2 runs first).
-2. **How to write the matrix (step 1):** path A, recommended, below; or path B.
-3. **What the restrictive rules (step 5) should keep or take away** per role. The live matrix differs from the defaults in 58 cells (Support, Operations and Logistics hold far more than the defaults; Customer and Business Client have no invoices, projects or logistics view). Decide role by role in [RBAC_MODEL.md](../03_security/RBAC_MODEL.md) before step 5. Step 5 may be left for later.
-4. **Whether drivers may record cash on delivery** (needs `invoices` edit and `receipts` create for the Logistics role; see the `PLAN.md` backlog). Not needed to go live.
+1. **Quiet window: not required for the matrix.** Step 1 only adds keys the old code ignores, so it can be done at any time, days before the promotion, and nothing changes for anyone. After that, step 2 is an ordinary deploy that can be rolled back instantly in Vercel. Promote outside working hours if you prefer, but nothing depends on it. A short quiet moment is only worth having for step 3 (rules).
+2. **Matrix path: A, the button on the staging preview.** The Vercel project `print-to-frame-system` has no `VITE_FIREBASE_DATABASE_ID` override, so its preview uses the `(default)` database that the app and the live rules use, and it is already what you sign in to as Admin. The Admin reviews the added cells before saving, so any role's value can be changed at that moment (see the table below).
+3. **Role changes: none needed.** The restrictive rules enforce whatever the live matrix says; they do not require any role to lose access. Leave the 58 differing cells alone. Tightening an over-broad role is a business decision that can be taken later, at any time, in Permissions Manager, without code (it is in the `PLAN.md` backlog). The only values step 1 chooses are the new `quotations` and `receipts` ones below.
+4. **Environment check: half done.** The preview project has no database override (checked read-only). **Still to do by the owner:** the live production project, the one serving `portal.print2frame.xyz`, is not visible to the tooling used here (this project has only its `vercel.app` address). In that project, open Settings, Environment Variables, and confirm there is no `VITE_FIREBASE_DATABASE_ID` (or that it is `(default)`). One minute.
+5. **Still open, not needed to go live:** whether drivers may record cash on delivery (`PLAN.md` backlog).
+
+### What step 1 writes for `quotations` and `receipts` (from `DEFAULT_PERMISSIONS`)
+
+| Role | quotations | receipts |
+|---|---|---|
+| Admin | full | full |
+| Manager | full | full, no delete |
+| Sales | full | view, create, edit |
+| Support | view | view |
+| Accounts | view | view, create, edit, export |
+| Operations | none | none |
+| Logistics | none | none |
+| Partner | none | none |
+| Customer | none | none |
+
+Business Client has no explicit entry for either and gets the same as Customer. Two roles worth a look before saving: **Operations**, which today can create and edit leads and so may use quotations from the lead card, and **Logistics**, which today has full access to invoices but would get no receipts. Both start at none because the defaults say so; give them view if their staff need it.
 
 ## Pre-flight (do all of it, in order, on the day)
 
