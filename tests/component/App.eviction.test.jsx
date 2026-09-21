@@ -35,10 +35,10 @@ vi.mock('@/services/firestoreSync', () => ({
   createDocumentIfAbsent: vi.fn(async () => {}),
 }));
 vi.mock('@/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
-vi.mock('@/components/auth/Login', () => ({ default: ({ errorMsg }) => <div>login screen {errorMsg}</div> }));
-vi.mock('@/components/tools/MiniChatDrawer', () => ({ default: () => null }));
-vi.mock('@/components/common/FloatingMessageToast', () => ({ default: () => null }));
-vi.mock('@/context/MessagingContext', () => ({
+vi.mock('@/features/auth/Login', () => ({ default: ({ errorMsg }) => <div>login screen {errorMsg}</div> }));
+vi.mock('@/features/messaging/MiniChatDrawer', () => ({ default: () => null }));
+vi.mock('@/features/messaging/FloatingMessageToast', () => ({ default: () => null }));
+vi.mock('@/features/messaging/MessagingContext', () => ({
   MessagingProvider: ({ children }) => children,
   useMessaging: () => ({ unreadCount: 0, unreadByChat: {}, conversations: [] }),
 }));

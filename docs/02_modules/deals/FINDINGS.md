@@ -12,7 +12,7 @@ A comprehensive architectural and trigger audit was conducted across the Deals m
 - **Module Documentation**: `docs/02_modules/deals/README.md`, `docs/02_modules/deals/CLAUDE.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
 - **Target UI Components**: `src/components/crm/Deals.jsx`, `src/components/crm/LeadCardDetails.jsx`, `src/components/crm/Leads.jsx`.
 - **Services & Utilities**: `src/shared/utils/entityUtils.js` (`matchesEntity`), `src/utils/logisticsEngine.js`, `src/services/pricingEngine.js`, `src/utils/invoiceTemplate.js`, `src/services/firestoreSync.js`.
-- **Integration & Consumer Surfaces**: `src/App.jsx` (`handleSaveInvoice`, `handleMarkInvoicePaid`, stage transitions), `src/components/operations/FabricationWorks.jsx`, `src/components/crm/Partners.jsx`, `src/components/dashboard/Dashboard.jsx`, `firestore.rules`.
+- **Integration & Consumer Surfaces**: `src/App.jsx` (`handleSaveInvoice`, `handleMarkInvoicePaid`, stage transitions), `src/components/operations/FabricationWorks.jsx`, `src/components/crm/Partners.jsx`, `src/features/dashboard/Dashboard.jsx`, `firestore.rules`.
 
 ### Key Discoveries:
 1. **Critical Final Invoice Hazards (Trigger 3 vs 4 vs 5b)**:
@@ -281,7 +281,7 @@ match /deals/{dealId} {
 
 ### 4.5 Dashboard Action Queue Exclusion
 
-In `src/components/dashboard/Dashboard.jsx:L127-L135`:
+In `src/features/dashboard/Dashboard.jsx:L127-L135`:
 ```javascript
 const dealsActionQueue = useMemo(() => {
   return leads
@@ -307,7 +307,7 @@ const dealsActionQueue = useMemo(() => {
 | **D-6** | **Deals / Fabrication Status Synchronization** | ✅ ACCEPTED | Implement lightweight one-way sync at known milestone crossings only — don't attempt full bidirectional sync, which would introduce circular update risk. **Rules:** (1) Deal moves to `"Fabricating"` → update linked project `status: "Ongoing"`. (2) Deal moves to `"Ready To Load"` → update linked project `status: "Ready For Inspection"`. (3) Deal moves to `"Completed"` → update linked project `status: "Completed"`. Deal stage is always the source of truth. FabricationWorks QA pass does **not** update the deal stage (the deal still requires a salesperson to move it forward). The `linkedJobNo` / `jobNo` field is the join key. | `src/components/crm/Deals.jsx` (`handleMoveForwardInner` — add `updateDocument(COLLECTIONS.PROJECTS, ...)` calls keyed by `deal.jobNo`) |
 | **D-7** | **Zero SqFt Commission Fallback** | ✅ ACCEPTED | Mirror the fallback already in `Partners.jsx:L262-L264`. In `Deals.jsx` commission block, after resolving `sqFt`: `const effectiveSqFt = sqFt > 0 ? sqFt : 0; const commissionAmount = effectiveSqFt > 0 ? effectiveSqFt * commRate : (Number(deal.value) / 850) * commRate;`. Apply same fallback when writing `partners.totalSqFt` — only add `sqFt` to `totalSqFt` when `sqFt > 0` (the estimated value shouldn't inflate the area counter). | `src/components/crm/Deals.jsx` (commission block in `handleMoveForwardInner`) |
 | **D-8** | **RBAC & Firestore Rules Alignment** | ✅ ACCEPTED | Update `firestore.rules` `/leads/{leadId}` to also accept `pipeline` permissions: `allow read: if checkPermission('leads','view') \|\| checkPermission('leads','read') \|\| checkPermission('pipeline','view') \|\| checkPermission('pipeline','read');` and similarly for create/update/delete. Retain the existing `/deals/{dealId}` block but add a comment that it matches a phantom collection and will be removed in a future cleanup pass. | `firestore.rules` (`match /leads/{leadId}` — widen read/write conditions) |
-| **D-9** | **Dashboard Hand Over Visibility** | ✅ ACCEPTED | Add `"Hand Over"` to `dealsActionQueue` filter in `Dashboard.jsx:L128`: `["Waiting", "Fabricating", "Ready To Load", "Hand Over"]`. No other changes needed; the card already renders correctly for this stage. | `src/components/dashboard/Dashboard.jsx` (`dealsActionQueue` filter array) |
+| **D-9** | **Dashboard Hand Over Visibility** | ✅ ACCEPTED | Add `"Hand Over"` to `dealsActionQueue` filter in `Dashboard.jsx:L128`: `["Waiting", "Fabricating", "Ready To Load", "Hand Over"]`. No other changes needed; the card already renders correctly for this stage. | `src/features/dashboard/Dashboard.jsx` (`dealsActionQueue` filter array) |
 | **D-10** | **Deal Deletion Cascade & Audit Logging** | ✅ ACCEPTED | Extend `handleDeleteConfirm` in `Deals.jsx`: (1) Write `DEAL_DELETED` to `auditLog` via `logActivity`. (2) Update the original lead document (`originalLeadId` pointer) to clear the lock: `{ convertedToDeal: false, convertedDealId: null }` so the lead is no longer permanently orphaned. (3) Do **not** cascade-delete invoices, receipts, or logistics — those are financial records; instead update the linked `projects` doc to `status: "Cancelled"` with a note. The Firestore write sequence: auditLog → unlock lead → cancel project → delete deal (in that order; proceed even if non-critical steps fail, log errors). | `src/components/crm/Deals.jsx` (`handleDeleteConfirm` — add audit log, lead unlock, project cancel) |
 
 ---

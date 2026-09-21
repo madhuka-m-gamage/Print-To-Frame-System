@@ -4,7 +4,7 @@
 
 ## Files and folders
 
-- `src/components/auth/Login.jsx`: login / register UI; `googleSignIn`; shows an `unauthorized-domain` hint for admins.
+- `src/features/auth/Login.jsx`: login / register UI; `googleSignIn`; shows an `unauthorized-domain` hint for admins.
 - `src/services/firebase.js`: Firebase init and config, Google provider, `initAuth`, `googleSignIn`, `getAccessToken`, `getScopedAccessToken`, `logout`, `handleFirestoreError`, `emailLogin`, `emailRegister`. Exports `db`, `auth`, `storage`.
 - `src/App.jsx`: `BOOTSTRAP_ADMIN_EMAILS` / `isSuperAdminEmail`, the auth listener and approval gate (~574-682), `handleLogin`, `handleRegister`, `approvePending`, `users` and `pendingUsers` listeners.
 - `src/main.jsx`: optional Sentry init (only if `VITE_SENTRY_DSN` is a valid http(s) value).

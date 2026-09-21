@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary
 
-The **Internal Messaging** module provides real-time, peer-to-peer 1-on-1 team communication across the Print To Frame ERP platform. The implementation centers around a root `MessagingProvider` (`src/context/MessagingContext.jsx`) that maintains continuous Firestore snapshot listeners, drives badge updates across desktop and mobile navigation, surfaces floating desktop notifications, and supports two primary UI entry points: a dedicated full-screen master-detail messenger (`src/components/tools/Messages.jsx`) and an omnipresent floating drawer (`src/components/tools/MiniChatDrawer.jsx`).
+The **Internal Messaging** module provides real-time, peer-to-peer 1-on-1 team communication across the Print To Frame ERP platform. The implementation centers around a root `MessagingProvider` (`src/features/messaging/MessagingContext.jsx`) that maintains continuous Firestore snapshot listeners, drives badge updates across desktop and mobile navigation, surfaces floating desktop notifications, and supports two primary UI entry points: a dedicated full-screen master-detail messenger (`src/features/messaging/Messages.jsx`) and an omnipresent floating drawer (`src/features/messaging/MiniChatDrawer.jsx`).
 
 ### Key Architectural Strengths
 - **Deterministic Virtual Channels:** Conversations avoid dedicated "thread" or "conversation" header documents. Instead, channels are derived dynamically on both client and database levels by sorting and joining sanitized user identifiers (`[user1, user2].sort().join('_')`), eliminating thread creation races.
@@ -33,21 +33,21 @@ The **Internal Messaging** module provides real-time, peer-to-peer 1-on-1 team c
 
 | Component / Service | File Path | Primary Responsibility | Audit Status |
 |---|---|---|---|
-| **Messaging Provider & State** | `src/context/MessagingContext.jsx` | Global message listener, unread count index, active channel state, actions (`sendDirectMessage`, `markChatAsRead`, `markAllAsRead`) | Verified with critical findings |
-| **Full Messages View** | `src/components/tools/Messages.jsx` | Master-detail chat interface, contact search, typing indicators, communication shortcuts (tel, WhatsApp, email) | Verified with critical findings |
-| **Mini-Chat Drawer** | `src/components/tools/MiniChatDrawer.jsx` | Omnipresent floating button, popover directory, quick 1-on-1 chat panel | Verified with findings |
-| **Floating Message Toast** | `src/components/common/FloatingMessageToast.jsx` | Ephemeral incoming message toaster with inline reply form and timer auto-dismiss | Verified with findings |
+| **Messaging Provider & State** | `src/features/messaging/MessagingContext.jsx` | Global message listener, unread count index, active channel state, actions (`sendDirectMessage`, `markChatAsRead`, `markAllAsRead`) | Verified with critical findings |
+| **Full Messages View** | `src/features/messaging/Messages.jsx` | Master-detail chat interface, contact search, typing indicators, communication shortcuts (tel, WhatsApp, email) | Verified with critical findings |
+| **Mini-Chat Drawer** | `src/features/messaging/MiniChatDrawer.jsx` | Omnipresent floating button, popover directory, quick 1-on-1 chat panel | Verified with findings |
+| **Floating Message Toast** | `src/features/messaging/FloatingMessageToast.jsx` | Ephemeral incoming message toaster with inline reply form and timer auto-dismiss | Verified with findings |
 | **App Navigation & Mount** | `src/App.jsx` | Root mount of `MessagingProvider`, sidebar badge (`MessagesNavLink`), mobile navigation bar, browser notification triggers | Verified with findings |
-| **Activity Feed Integration** | `src/components/dashboard/NotificationsView.jsx` | Ingests direct messages from `useMessaging()` to populate team communication activity feed | Verified with findings |
+| **Activity Feed Integration** | `src/features/dashboard/NotificationsView.jsx` | Ingests direct messages from `useMessaging()` to populate team communication activity feed | Verified with findings |
 | **Firestore Client Sync** | `src/services/firestoreSync.js` | Firestore write helpers (`addDocument`, `updateDocument`, `setDocument`) and collection constants | Verified (Root cause of rule failure) |
 | **Security Rules** | `firestore.rules` | Security and access control for `/messages/{messageId}` and `/typing_indicators/{indicatorId}` | Critical vulnerabilities identified |
-| **User Profile Settings** | `src/components/common/UserProfile.jsx` | User preferences UI including dead `audioAlertsEnabled` toggle | Verified with findings |
+| **User Profile Settings** | `src/features/profile/UserProfile.jsx` | User preferences UI including dead `audioAlertsEnabled` toggle | Verified with findings |
 
 ---
 
 ## 3. Codebase Tracing & Verification
 
-### 3.1 State & Context Lifecycle (`src/context/MessagingContext.jsx`)
+### 3.1 State & Context Lifecycle (`src/features/messaging/MessagingContext.jsx`)
 
 1. **Subscription Query & Data Model:**
    - On user login, `MessagingContext` initializes a Firestore query:
@@ -90,7 +90,7 @@ The **Internal Messaging** module provides real-time, peer-to-peer 1-on-1 team c
      ```
    - If an active conversation has 50 unread messages, opening the chat fires 50 concurrent Firestore writes instead of using a batched write (`writeBatch(db)`).
 
-### 3.2 Full Messages View (`src/components/tools/Messages.jsx`)
+### 3.2 Full Messages View (`src/features/messaging/Messages.jsx`)
 
 1. **Contact Directory & Filter Bar:**
    - Filters contacts between `all` teammates and `unread` chats.
@@ -141,7 +141,7 @@ The **Internal Messaging** module provides real-time, peer-to-peer 1-on-1 team c
 6. **Dead Prop:**
    - Component prop `onUnreadCountChange` is declared on line 14 but never called in the component.
 
-### 3.3 Quick Messenger Floating Drawer (`src/components/tools/MiniChatDrawer.jsx`)
+### 3.3 Quick Messenger Floating Drawer (`src/features/messaging/MiniChatDrawer.jsx`)
 
 1. **Floating Action Button (FAB) & Unread Badge:**
    - Anchored to the bottom-right corner (`bottom-5 right-5 z-50`).
@@ -154,7 +154,7 @@ The **Internal Messaging** module provides real-time, peer-to-peer 1-on-1 team c
    - **No Quoted Replies:** Does not support or render `replyTo` metadata.
    - **Silent Failure on Send Error:** When `sendDirectMessage` throws an exception, `handleSend` logs `console.error('Send error:', err)` without showing a toast notification, while clearing `inputText` immediately before awaiting the write. If the write fails, the user's typed message is permanently lost.
 
-### 3.4 Floating Message Toast (`src/components/common/FloatingMessageToast.jsx`)
+### 3.4 Floating Message Toast (`src/features/messaging/FloatingMessageToast.jsx`)
 
 1. **Interaction Flow:**
    - Mounts globally and animates into view when `activeToastMessage` is populated.
@@ -210,7 +210,7 @@ The **Internal Messaging** module provides real-time, peer-to-peer 1-on-1 team c
      ```
    - They do not check `canAccess(currentUser?.role, 'messages')`. As a result, roles configured with `messages: none()` (such as `Partner`) still have full access to chat via the floating drawer and incoming toasts.
 
-### 3.6 Activity Feed Integration (`src/components/dashboard/NotificationsView.jsx`)
+### 3.6 Activity Feed Integration (`src/features/dashboard/NotificationsView.jsx`)
 
 1. **Message Feed Transformation:**
    - `NotificationsView.jsx` ingests `messages` from `useMessaging()` and takes the latest 30 messages (`(messages || []).slice(-30).reverse()`).
@@ -383,17 +383,17 @@ All approved users receive the complete `users` collection. In `Messages.jsx`, t
 | # | Topic / Area | Decision Accepted | Resolution | Files to Change |
 |---|---|---|---|---|
 | **D-MSG-01** | **Firestore Security Rules — Participant Read Access** | ✅ ACCEPTED | Restrict read access on `/messages/{messageId}` to authenticated conversation participants and administrators: `allow read: if (isAuthenticated() && (request.auth.token.email in resource.data.participants \|\| isAdmin())) && checkPermission('messages', 'view');`. Restrict create to authenticated senders: `allow create: if (isAuthenticated() && request.resource.data.fromId == request.auth.token.email && request.auth.token.email in request.resource.data.participants) && checkPermission('messages', 'create');`. | `firestore.rules` (`match /messages/{messageId}`) |
-| **D-MSG-02** | **Read-Receipt Rule Fix for Recipients** | ✅ ACCEPTED | In `firestore.rules`, update the update condition to allow `affectedKeys().hasOnly(['readBy', 'updatedAt'])`. This allows non-admin recipients to persist read receipts when `firestoreSync.updateDocument` appends `updatedAt: serverTimestamp()`. In addition, refactor `markChatAsRead` and `markAllAsRead` in `MessagingContext.jsx` to use Firestore `writeBatch(db)` to commit read status updates atomically rather than issuing N separate network writes. | `firestore.rules` (`match /messages/{messageId}`), `src/context/MessagingContext.jsx` (`markChatAsRead`, `markAllAsRead`) |
+| **D-MSG-02** | **Read-Receipt Rule Fix for Recipients** | ✅ ACCEPTED | In `firestore.rules`, update the update condition to allow `affectedKeys().hasOnly(['readBy', 'updatedAt'])`. This allows non-admin recipients to persist read receipts when `firestoreSync.updateDocument` appends `updatedAt: serverTimestamp()`. In addition, refactor `markChatAsRead` and `markAllAsRead` in `MessagingContext.jsx` to use Firestore `writeBatch(db)` to commit read status updates atomically rather than issuing N separate network writes. | `firestore.rules` (`match /messages/{messageId}`), `src/features/messaging/MessagingContext.jsx` (`markChatAsRead`, `markAllAsRead`) |
 | **D-MSG-03** | **RBAC Gating on Floating Components & Mobile Nav** | ✅ ACCEPTED | Wrap `<FloatingMessageToast />` and `<MiniChatDrawer />` mounts in `src/App.jsx` with `canAccess(currentUser?.role, 'messages') && (...)`. Add the same `canAccess(currentUser?.role, 'messages')` guard to the mobile bottom navigation bar button in `src/App.jsx:1518`, rendering it conditionally or redirecting appropriately. | `src/App.jsx` |
-| **D-MSG-04** | **Typing Indicators Debounce & Channel Scoping** | ✅ ACCEPTED | (1) Add an 800ms debounce/throttle timer to `sendTypingIndicator` in `Messages.jsx` so keystrokes do not flood Firestore. (2) In `Messages.jsx:385`, verify that `typingState[activeUser.identifier] === activeChan` before rendering the `is typing...` status bar, preventing cross-channel activity leaks. | `src/components/tools/Messages.jsx` |
-| **D-MSG-05** | **Message History Scalability & Scoped Pagination** | ✅ ACCEPTED | Bound the session-level listener in `MessagingContext.jsx` to recent active messages (e.g. `where('timestamp', '>=', Date.now() - 30 * 24 * 60 * 60 * 1000)` or `limitToLast(200)`), and load older conversation history on-demand when scrolling upwards inside a specific channel in `Messages.jsx`. | `src/context/MessagingContext.jsx`, `src/components/tools/Messages.jsx` |
-| **D-MSG-06** | **Audio Chime & Background Window Notifications** | ✅ ACCEPTED | (1) Implement a lightweight synthesized Web Audio API chime on incoming messages triggered when `currentUser?.audioAlertsEnabled !== false` and the user is not focused on the incoming chat. (2) In `MessagingContext.jsx`, update the incoming notification suppressor condition to check `document.visibilityState === 'visible' && document.hasFocus()`, ensuring backgrounded tabs properly dispatch desktop browser notifications. | `src/context/MessagingContext.jsx`, `src/utils/audioAlert.js` (or inline Web Audio synthesizer) |
-| **D-MSG-07** | **Optimistic Updates & Input State Recovery** | ✅ ACCEPTED | (1) In `MessagingContext.jsx`, implement optimistic local state appending with a temporary client ID and status (`sending`, `delivered`, `failed`). (2) In `MiniChatDrawer.jsx` and `FloatingMessageToast.jsx`, preserve `inputText` until `sendDirectMessage` successfully resolves, and restore the typed text with a toast notification if the write fails. | `src/context/MessagingContext.jsx`, `src/components/tools/MiniChatDrawer.jsx`, `src/components/common/FloatingMessageToast.jsx` |
-| **D-MSG-08** | **Accurate Delivery & Read Status Icons** | ✅ ACCEPTED | Render a single check (`Check`) for sent messages, and dynamically render double check (`CheckCheck`) in primary brand color only when `msg.readBy?.map(r => r.toLowerCase()).includes(targetId.toLowerCase())`. Apply consistently across both `Messages.jsx` and `MiniChatDrawer.jsx`. | `src/components/tools/Messages.jsx`, `src/components/tools/MiniChatDrawer.jsx` |
-| **D-MSG-09** | **Quoted Reply Workflow & Schema Standardization** | ✅ ACCEPTED | (1) Add a hover/touch action button (`Reply` icon) to message bubbles in `Messages.jsx` that sets `replyTo` state. (2) Standardize the `replyTo` schema across `MessagingContext.jsx`, `Messages.jsx`, and `FloatingMessageToast.jsx` to `{ id, text, fromId, senderName }` so the quoted sender name renders consistently. | `src/components/tools/Messages.jsx`, `src/context/MessagingContext.jsx`, `src/components/common/FloatingMessageToast.jsx` |
+| **D-MSG-04** | **Typing Indicators Debounce & Channel Scoping** | ✅ ACCEPTED | (1) Add an 800ms debounce/throttle timer to `sendTypingIndicator` in `Messages.jsx` so keystrokes do not flood Firestore. (2) In `Messages.jsx:385`, verify that `typingState[activeUser.identifier] === activeChan` before rendering the `is typing...` status bar, preventing cross-channel activity leaks. | `src/features/messaging/Messages.jsx` |
+| **D-MSG-05** | **Message History Scalability & Scoped Pagination** | ✅ ACCEPTED | Bound the session-level listener in `MessagingContext.jsx` to recent active messages (e.g. `where('timestamp', '>=', Date.now() - 30 * 24 * 60 * 60 * 1000)` or `limitToLast(200)`), and load older conversation history on-demand when scrolling upwards inside a specific channel in `Messages.jsx`. | `src/features/messaging/MessagingContext.jsx`, `src/features/messaging/Messages.jsx` |
+| **D-MSG-06** | **Audio Chime & Background Window Notifications** | ✅ ACCEPTED | (1) Implement a lightweight synthesized Web Audio API chime on incoming messages triggered when `currentUser?.audioAlertsEnabled !== false` and the user is not focused on the incoming chat. (2) In `MessagingContext.jsx`, update the incoming notification suppressor condition to check `document.visibilityState === 'visible' && document.hasFocus()`, ensuring backgrounded tabs properly dispatch desktop browser notifications. | `src/features/messaging/MessagingContext.jsx`, `src/utils/audioAlert.js` (or inline Web Audio synthesizer) |
+| **D-MSG-07** | **Optimistic Updates & Input State Recovery** | ✅ ACCEPTED | (1) In `MessagingContext.jsx`, implement optimistic local state appending with a temporary client ID and status (`sending`, `delivered`, `failed`). (2) In `MiniChatDrawer.jsx` and `FloatingMessageToast.jsx`, preserve `inputText` until `sendDirectMessage` successfully resolves, and restore the typed text with a toast notification if the write fails. | `src/features/messaging/MessagingContext.jsx`, `src/features/messaging/MiniChatDrawer.jsx`, `src/features/messaging/FloatingMessageToast.jsx` |
+| **D-MSG-08** | **Accurate Delivery & Read Status Icons** | ✅ ACCEPTED | Render a single check (`Check`) for sent messages, and dynamically render double check (`CheckCheck`) in primary brand color only when `msg.readBy?.map(r => r.toLowerCase()).includes(targetId.toLowerCase())`. Apply consistently across both `Messages.jsx` and `MiniChatDrawer.jsx`. | `src/features/messaging/Messages.jsx`, `src/features/messaging/MiniChatDrawer.jsx` |
+| **D-MSG-09** | **Quoted Reply Workflow & Schema Standardization** | ✅ ACCEPTED | (1) Add a hover/touch action button (`Reply` icon) to message bubbles in `Messages.jsx` that sets `replyTo` state. (2) Standardize the `replyTo` schema across `MessagingContext.jsx`, `Messages.jsx`, and `FloatingMessageToast.jsx` to `{ id, text, fromId, senderName }` so the quoted sender name renders consistently. | `src/features/messaging/Messages.jsx`, `src/features/messaging/MessagingContext.jsx`, `src/features/messaging/FloatingMessageToast.jsx` |
 | **D-MSG-10** | **Contact Directory Privacy Scoping** | ✅ ACCEPTED | In `src/context/PermissionsContext.jsx`, change default permissions for `Customer` and `Business Client` to `messages: none()`, restricting the internal chat module strictly to staff. If client-staff messaging is required in the future, it should be mediated via dedicated ticket/inquiry threads rather than open directory chat. | `src/context/PermissionsContext.jsx` |
 | **D-MSG-11** | **Broadcast / Announcement Architectural Boundary** | ✅ ACCEPTED | Reaffirm that the `messages` collection is strictly reserved for 1-on-1 direct staff communication. Multi-recipient broadcasts or company-wide announcements will be architected as a separate future feature (e.g. `/announcements` collection or dedicated feed) to preserve deterministic virtual channel semantics. | None (architectural boundary affirmed) |
-| **D-MSG-12** | **Activity Feed Self-Notification Filter & Code Cleanup** | ✅ ACCEPTED | (1) In `NotificationsView.jsx`, filter out the user's own sent messages (`msg.fromId !== currentUser?.identifier`) from the notification activity feed. (2) Remove dead prop `onUnreadCountChange` from `Messages.jsx`. (3) Correct marketing string on empty state in `Messages.jsx` from "encrypted" to "real-time synchronized direct messages". | `src/components/dashboard/NotificationsView.jsx`, `src/components/tools/Messages.jsx` |
+| **D-MSG-12** | **Activity Feed Self-Notification Filter & Code Cleanup** | ✅ ACCEPTED | (1) In `NotificationsView.jsx`, filter out the user's own sent messages (`msg.fromId !== currentUser?.identifier`) from the notification activity feed. (2) Remove dead prop `onUnreadCountChange` from `Messages.jsx`. (3) Correct marketing string on empty state in `Messages.jsx` from "encrypted" to "real-time synchronized direct messages". | `src/features/dashboard/NotificationsView.jsx`, `src/features/messaging/Messages.jsx` |
 
 ---
 

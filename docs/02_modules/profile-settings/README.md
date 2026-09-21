@@ -4,7 +4,7 @@
 
 ## Files and folders
 
-- `src/components/common/UserProfile.jsx`: the profile page (lazy-loaded; tab `profile`).
+- `src/features/profile/UserProfile.jsx`: the profile page (lazy-loaded; tab `profile`).
 - `src/shared/ui/ImageCropModal.jsx`: photo cropping (via `shared/ui`).
 - `src/App.jsx`: theme state and toggle, `handleUpdateUser`, `handleSignOut`.
 - `src/constants/companyInfo.js` (`COMPANY_INFO`): a static object **not imported anywhere** under `src`.

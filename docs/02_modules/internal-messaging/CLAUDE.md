@@ -8,7 +8,7 @@ Full map: [README.md](README.md). Audit findings & open questions: [FINDINGS.md]
 
 ## Code
 
-- `src/context/MessagingContext.jsx`, `src/components/tools/Messages.jsx`, `MiniChatDrawer.jsx`, `src/components/common/FloatingMessageToast.jsx`
+- `src/features/messaging/MessagingContext.jsx`, `src/features/messaging/Messages.jsx`, `MiniChatDrawer.jsx`, `src/features/messaging/FloatingMessageToast.jsx`
 
 ## Firestore collections it owns or writes
 

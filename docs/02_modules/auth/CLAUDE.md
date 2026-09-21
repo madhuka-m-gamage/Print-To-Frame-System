@@ -8,7 +8,7 @@ Firebase Auth via Google popup or email / password; an approval gate against `us
 
 ## Code
 
-- `src/components/auth/Login.jsx`, `src/services/firebase.js`, auth gate in `src/App.jsx`, `api/_lib/firebaseAdmin.js`, `api/*.js`
+- `src/features/auth/Login.jsx`, `src/services/firebase.js`, auth gate in `src/App.jsx`, `api/_lib/firebaseAdmin.js`, `api/*.js`
 
 ## Firestore collections it owns or writes
 

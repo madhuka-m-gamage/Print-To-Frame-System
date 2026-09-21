@@ -4,12 +4,12 @@
 
 ## Files and folders
 
-- `src/context/MessagingContext.jsx`: `MessagingProvider` (wraps the app), `useMessaging`, `getChannelId`.
-- `src/components/tools/Messages.jsx`: full-page chat (lazy-loaded; tab `messages`).
-- `src/components/tools/MiniChatDrawer.jsx`: floating chat drawer.
-- `src/components/common/FloatingMessageToast.jsx`: incoming-message toast with quick reply.
+- `src/features/messaging/MessagingContext.jsx`: `MessagingProvider` (wraps the app), `useMessaging`, `getChannelId`.
+- `src/features/messaging/Messages.jsx`: full-page chat (lazy-loaded; tab `messages`).
+- `src/features/messaging/MiniChatDrawer.jsx`: floating chat drawer.
+- `src/features/messaging/FloatingMessageToast.jsx`: incoming-message toast with quick reply.
 - `src/App.jsx`: `MessagesNavLink` (sidebar badge from `totalUnreadCount`), mobile nav buttons, provider mount.
-- `src/components/dashboard/NotificationsView.jsx`: shows messages as notification items.
+- `src/features/dashboard/NotificationsView.jsx`: shows messages as notification items.
 - `src/services/firestoreSync.js`: `COLLECTIONS.MESSAGES`, `TYPING_INDICATORS`. `PermissionsManager.jsx` / `PermissionsContext.jsx`: `messages` permission. `firestore.rules` (messages and typing_indicators blocks).
 
 ## Firestore collections read/written

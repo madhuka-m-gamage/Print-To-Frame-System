@@ -4,11 +4,11 @@
 
 ## Files and folders
 
-- `src/components/dashboard/NotificationsView.jsx`: the feed UI (lazy-loaded in `App.jsx`). Filters ALL / SYSTEM / MESSAGES plus a search box.
+- `src/features/dashboard/NotificationsView.jsx`: the feed UI (lazy-loaded in `App.jsx`). Filters ALL / SYSTEM / MESSAGES plus a search box.
 - `src/shared/utils/events.js`: `emitNotification` and `subscribeToNotifications`, built on a module-level `EventTarget`.
 - `src/shared/utils/toast.js`: wraps Sonner toasts **and also calls `emitNotification`**; 23 files import it.
 - `src/App.jsx`: notification state (`notificationsList`, `unreadNotificationsCount`), browser `Notification` helpers (`triggerBrowserNotification`, permission requested at startup), sidebar and header bell badges, `notifications` in the restricted-role tab list.
-- `src/context/MessagingContext.jsx`: supplies direct-message items to the feed.
+- `src/features/messaging/MessagingContext.jsx`: supplies direct-message items to the feed.
 - `src/context/PermissionsContext.jsx` and `PermissionsManager.jsx`: `notifications` permission is full for every role.
 
 ## Firestore collections read/written

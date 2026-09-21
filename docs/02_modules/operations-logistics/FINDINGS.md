@@ -12,7 +12,7 @@ A systematic deep-trace audit was conducted across the Operations: Logistics mod
 - **Module Documentation**: `docs/02_modules/operations-logistics/CLAUDE.md`, `docs/02_modules/operations-logistics/README.md`, `docs/01_architecture/CROSS_MODULE_TRIGGERS.md`.
 - **Target UI Components**: `src/components/operations/Logistics.jsx`, `src/components/operations/LogisticsCardDetails.jsx`.
 - **Engines & Utilities**: `src/utils/logisticsEngine.js` (`FLEET_VEHICLES`, `DRIVER_DIRECTORY`, `calculateCODFromInvoices`, `formatDispatchMessage`, `getGoogleMapsUrl`, `getWhatsAppUrl`).
-- **Integration & Dispatch Surfaces**: `src/App.jsx` (`logisticsJobs` subscription & state handlers, RBAC routing), `src/components/operations/FabricationWorks.jsx` (`handleDispatchToLogistics`), `src/components/crm/Deals.jsx` (`handleCreateDeliveryJob`), `src/components/crm/Leads.jsx` (`handleCreateLogisticsJob`), `src/components/crm/LeadCardDetails.jsx`, `src/components/dashboard/Dashboard.jsx`, and `firestore.rules`.
+- **Integration & Dispatch Surfaces**: `src/App.jsx` (`logisticsJobs` subscription & state handlers, RBAC routing), `src/components/operations/FabricationWorks.jsx` (`handleDispatchToLogistics`), `src/components/crm/Deals.jsx` (`handleCreateDeliveryJob`), `src/components/crm/Leads.jsx` (`handleCreateLogisticsJob`), `src/components/crm/LeadCardDetails.jsx`, `src/features/dashboard/Dashboard.jsx`, and `firestore.rules`.
 - **Backend Services**: `api/generate.js` (AI proxy endpoint).
 
 ### Key Audit Discoveries:

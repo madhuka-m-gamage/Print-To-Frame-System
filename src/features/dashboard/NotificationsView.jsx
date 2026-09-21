@@ -3,10 +3,10 @@ import {
   Bell, CheckCircle2, AlertCircle, Info, Trash2, MessageSquare, 
   ExternalLink, Filter, Clock, Sparkles, User, ArrowUpRight 
 } from 'lucide-react';
-import { useMessaging } from '@/context/MessagingContext';
+import { useMessaging } from '@/features/messaging/MessagingContext';
 import { PageHeader, FilterBar, StatusBadge, UserAvatar, TwoToneIcon } from '@/shared/ui';
 import { formatDateTime } from '@/shared/utils/dateUtils';
-import { getIncomingMessages } from '@/utils/messageFilters';
+import { getIncomingMessages } from '@/features/messaging/messageFilters';
 
 export default function NotificationsView({ notifications = [], setNotifications, users = [], setActiveTab, currentUser }) {
   const [filterType, setFilterType] = useState('ALL'); // 'ALL' | 'SYSTEM' | 'MESSAGES'

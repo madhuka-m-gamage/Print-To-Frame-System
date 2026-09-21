@@ -8,7 +8,7 @@ One self-service profile page plus a theme toggle. There is no separate settings
 
 ## Code
 
-- `src/components/common/UserProfile.jsx`, theme toggle and `handleUpdateUser` in `src/App.jsx`
+- `src/features/profile/UserProfile.jsx`, theme toggle and `handleUpdateUser` in `src/App.jsx`
 
 ## Firestore collections it owns or writes
 
