@@ -21,6 +21,7 @@ vi.mock('@/features/leads/LeadCardDetails', () => ({ default: () => null }));
 const { default: Deals } = await import('@/features/deals/Deals');
 const sync = await import('@/services/firestoreSync');
 const { generateInvoiceId } = sync;
+const { toast } = await import('@/shared/utils/toast');
 
 const admin = { role: 'Admin', name: 'Admin', identifier: 'admin@example.com' };
 
@@ -58,6 +59,35 @@ describe('Deals completion wiring', () => {
     expect(generateInvoiceId).not.toHaveBeenCalled();
     expect(onSaveInvoice).not.toHaveBeenCalled();
     expect(sync.updateDocument).toHaveBeenCalledWith('leads', expect.anything(), expect.objectContaining({ stage: 'Completed' }));
+  });
+
+  // MON-1: a failed Final-invoice save must not complete the deal.
+  it('does not complete the deal or accrue commission when the Final invoice save fails', async () => {
+    const setPartners = vi.fn();
+    const onSaveInvoice = vi.fn(async () => false);
+    renderDeals({
+      dealOverrides: { agentId: 'P-1', totalSqFt: 10 },
+      partners: [makePartner({ partnerId: 'P-1', name: 'Lanka Art Studio', commissionRate: 53.5, pending: 0, totalSqFt: 0 })],
+      setPartners,
+      onSaveInvoice,
+    });
+    fireEvent.click(screen.getByRole('button', { name: /for Kasun Silva/i }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/invoice/i)));
+    expect(onSaveInvoice).toHaveBeenCalledTimes(1);
+    expect(sync.updateDocument).not.toHaveBeenCalledWith('leads', expect.anything(), expect.objectContaining({ stage: 'Completed' }));
+    expect(sync.updateDocument).not.toHaveBeenCalledWith('partners', expect.anything(), expect.anything());
+    expect(setPartners).not.toHaveBeenCalled();
+  });
+
+  it('waits for the Final invoice save before marking the deal Completed', async () => {
+    let resolveSave;
+    const onSaveInvoice = vi.fn(() => new Promise((resolve) => { resolveSave = resolve; }));
+    renderDeals({ onSaveInvoice });
+    fireEvent.click(screen.getByRole('button', { name: /for Kasun Silva/i }));
+    await waitFor(() => expect(onSaveInvoice).toHaveBeenCalledTimes(1));
+    expect(sync.updateDocument).not.toHaveBeenCalledWith('leads', expect.anything(), expect.objectContaining({ stage: 'Completed' }));
+    resolveSave(true);
+    await waitFor(() => expect(sync.updateDocument).toHaveBeenCalledWith('leads', expect.anything(), expect.objectContaining({ stage: 'Completed' })));
   });
 
   it('still creates the Final invoice when the only existing one is cancelled', async () => {

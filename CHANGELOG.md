@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- MON-1: completing a deal now waits for its Final invoice to save. `handleMoveForwardInner` in `src/features/deals/Deals.jsx` awaits `onSaveInvoice` before the `setLeads` update; if it returns `false`, the deal stays in Hand Over, no commission accrues and an error toast says why (same rule as the Fabrication QA pass). Tests: unit 227, API 52, component 65 (2 new in `Deals.test.jsx`), rules 60.
+
 - Milestone 1 docs pass: PLAN.md is the Milestone 2 tracker, HANDOFF_REPORT.md is the Milestone 1 handoff; git workflow, root instructions, README, index, module maps, TESTING, DEPLOY_PROCESS and backlog brought up to date. Docs only.
 
 ## v1.0.0 — Milestone 1: audit to remediation (2026-09-27)
