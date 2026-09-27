@@ -27,3 +27,4 @@ Computes price from sq ft via a five-tier engine, then staff draft versioned quo
 - `quotations` rules allow any authenticated user to read and write; there is no `quotations` permission module.
 
 - `calculateCost(tier, sqFt, discountPct = 0, commissionRate = 0)`: no hidden discount or commission. Referral leads pass the partner's rate and 15%; direct leads pass neither. A quotation becomes `Invoiced` once its Advance invoice exists; use `isAcceptedQuote` (`src/features/quotations/quotationStatus.js`) wherever a quote must count as accepted.
+- Drive attachments come from Google Picker (`pickDriveFiles`, `drive.file` scope) and the button shows only for the super admin (DEC-8). Saved quotes keep `attachedFiles` as `{ id, name, mimeType, webViewLink }`; everyone still sees and can remove attached files.

@@ -29,7 +29,7 @@ No Cloud Functions. Client-side:
 
 ## Depends on / called by
 
-Leads (`LeadCardDetails` owns the sq-ft inputs and `applyPricingToLead`, which writes `value`, `totalSqFt`, `pricingMetadata` into the lead form), Deals (consumes quotations), Invoices, `gemini` service, `GoogleDrivePickerModal`, `PermissionsContext` (`canAccess(role, 'calculator')`).
+Leads (`LeadCardDetails` owns the sq-ft inputs and `applyPricingToLead`, which writes `value`, `totalSqFt`, `pricingMetadata` into the lead form), Deals (consumes quotations), Invoices, `gemini` service, `driveService` (Google Picker), `PermissionsContext` (`canAccess(role, 'calculator')`).
 
 ## Summary
 

@@ -8,7 +8,7 @@
 - `src/shared/ui/ImageCropModal.jsx`: photo cropping (via `shared/ui`).
 - `src/App.jsx`: theme state and toggle, `handleUpdateUser`, `handleSignOut`.
 - `src/constants/companyInfo.js` (`COMPANY_INFO`): a static object **not imported anywhere** under `src`.
-- Integrations that use the sign-in token but have no settings UI: `GoogleDrivePickerModal.jsx`, `driveService.js`, `contactsService.js`, `ContactSyncModal.jsx`, `getAccessToken` in `services/firebase.js`.
+- Integrations that use the sign-in token but have no settings UI: `driveService.js` (Google Picker), `contactsService.js`, `ContactSyncModal.jsx`, `getAccessToken` in `services/firebase.js`.
 - Related: `PermissionsContext.jsx`, `roles.js`. **There is no dedicated settings screen** and no dashboard-preferences UI.
 
 ## Firestore collections read/written

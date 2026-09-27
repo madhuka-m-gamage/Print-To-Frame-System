@@ -22,6 +22,6 @@ A client registry keyed by NIC or business registration number, filled manually,
 ## Before you edit
 
 - Only delete is audit-logged from this file.
-- Google Contacts sync calls the People API with the sign-in token, but `firebase.js` requests no Contacts scope ([auth.md](../auth/README.md)).
+- Google Contacts sync (People API, `contacts.readonly` requested on demand) is offered to the super admin only (DEC-8, `canUseGoogleWorkspace`); the Sync Contacts button is hidden for everyone else.
 
 - Phone matching uses `normalizePhone` / `phonesMatch` (`src/shared/utils/validation.js`) in lead-to-customer matching, customer stats and the contact import; never compare stored phones with `===`.
