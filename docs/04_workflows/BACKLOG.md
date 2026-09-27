@@ -86,7 +86,7 @@ Every item implicitly includes these.
 | LIVE-3 | One canonical repository and one deploy path | rollout | M | **yes** | yes | DEC-6 |
 | LIVE-4 | Give the tooling access to the live Vercel project | rollout | S | Vercel | owner | none |
 
-**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2 and SEC-1 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
+**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1 and SEC-2 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
 
 ---
 
@@ -269,6 +269,7 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 
 ### SEC-2: Restrict `api/generate.js`
 - Any approved account, including Partner and Customer, can call the AI endpoint and spend the Gemini quota. Apply the same staff-role gate as `send-email` (`SYSTEM_ROLES` minus `ROLE_CATEGORIES.EXTERNAL`) and add API tests for each external role.
+- **Done 2026-09-27:** `STAFF_ROLES` in `api/generate.js` (same expression as `api/send-email.js`) is checked after the token and approved/active checks; any other role gets a 403 and Gemini is not called. Tests: `tests/api/generate.test.js` (Partner, Business Client, Customer, unknown and missing role refused; Admin, Manager, Sales let through).
 
 ### SEC-3: Make the dev proxy safe
 - `vite.config.js` re-implements `/api/admin-user` for `npm run dev` **without** token or role checks, and the dev server binds to `0.0.0.0` (`package.json` scripts pass `--host 0.0.0.0`). Bind to localhost by default and make the proxy call the real handler or apply the same checks.

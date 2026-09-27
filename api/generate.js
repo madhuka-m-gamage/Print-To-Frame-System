@@ -1,5 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import { getAdminAuth, getAdminFirestore } from './_lib/firebaseAdmin.js';
+import { SYSTEM_ROLES, ROLE_CATEGORIES } from '../src/constants/roles.js';
 
 // Confirmed model identifiers from @google/genai v1.52.0 SDK type definitions
 // All support audio inlineData multimodal content. Ordered by performance preference.
@@ -14,6 +15,10 @@ const CANDIDATE_MODELS = [
 // Vercel Serverless max body ≈ 4.5MB. Base64 inflates binary by ~33%.
 // So raw audio files larger than ~3.3MB will exceed the limit.
 const MAX_AUDIO_BASE64_LENGTH = 4_500_000;
+
+// Same staff-only rule as send-email: external roles (Partner, Business Client, Customer)
+// must not spend the Gemini quota.
+const STAFF_ROLES = SYSTEM_ROLES.filter((role) => !ROLE_CATEGORIES.EXTERNAL.includes(role));
 
 // Only these origins may call this endpoint from a browser. This used to be '*' with
 // no auth check at all, which let anyone on the internet spend this project's Gemini
@@ -80,6 +85,9 @@ export default async function handler(req, res) {
       && (userData.isApproved === true || userData.status === 'Active' || userData.status === undefined);
     if (!isApproved) {
       return res.status(403).json({ error: 'Your account is pending approval or has been deactivated.' });
+    }
+    if (!STAFF_ROLES.includes(userData.role)) {
+      return res.status(403).json({ error: 'Only staff accounts can use the AI assistant.' });
     }
 
     const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';

@@ -17,7 +17,7 @@ Leads are `leads` documents worked as a Kanban / table. Users record or upload a
 
 ## Triggers and side effects
 
-- Call analysis: `extractCallScope` -> `/api/generate` (token + approved-user checked). Fills form state only after the user clicks apply; nothing persisted until save.
+- Call analysis: `extractCallScope` -> `/api/generate` (token, approved-user and staff-role checked). Fills form state only after the user clicks apply; nothing persisted until save.
 - Conversion (`handleConvertConfirm`): several separate writes, not one transaction; see [deals.md](../deals/README.md).
 
 ## Before you edit
