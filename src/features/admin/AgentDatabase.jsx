@@ -417,7 +417,17 @@ export default function AgentDatabase({
     }
   };
 
+  // The email goes first: /api/send-email only mails an address it finds in a record,
+  // and onReject deletes the pendingUsers document.
   const handleExecuteRejection = async (user) => {
+    try {
+      await sendTemplatedEmail(user.identifier, 'registration_declined', {
+        recipientName: user.name,
+        senderName: currentUser?.name,
+      });
+    } catch (mailErr) {
+      console.error('Failed to send decline notification:', mailErr);
+    }
     const fromApplication = user._source === 'partner_application';
     if (fromApplication) {
       if (user._appDocId) {
@@ -428,14 +438,6 @@ export default function AgentDatabase({
       if (onReject) await onReject(user.identifier);
     }
     if (reviewingApplicant?.identifier === user.identifier) setReviewingApplicant(null);
-    try {
-      await sendTemplatedEmail(user.identifier, 'registration_declined', {
-        recipientName: user.name,
-        senderName: currentUser?.name,
-      });
-    } catch (mailErr) {
-      console.error('Failed to send decline notification:', mailErr);
-    }
     toast.info("Registration request dismissed");
   };
 

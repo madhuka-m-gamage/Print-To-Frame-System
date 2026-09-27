@@ -44,6 +44,21 @@ const SENDABLE_TEMPLATES = new Set([
   'registration_declined',
 ]);
 
+// A staff session may only mail someone the ERP already holds a record for.
+// users and pendingUsers are keyed by the lower-cased email; the others store it in `email`.
+async function isKnownRecipient(db, to) {
+  const addresses = [...new Set([to, to.toLowerCase()])];
+  for (const name of ['users', 'pendingUsers']) {
+    for (const id of addresses) {
+      if ((await db.collection(name).doc(id).get()).exists) return true;
+    }
+  }
+  for (const name of ['customers', 'partners', 'partner_applications']) {
+    if (!(await db.collection(name).where('email', 'in', addresses).limit(1).get()).empty) return true;
+  }
+  return false;
+}
+
 export default async function handler(req, res) {
   const origin = req.headers.origin;
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
@@ -113,6 +128,9 @@ export default async function handler(req, res) {
     }
     if (!SENDABLE_TEMPLATES.has(templateId)) {
       return res.status(400).json({ error: `Template "${templateId}" cannot be sent through this endpoint` });
+    }
+    if (!(await isKnownRecipient(getAdminFirestore(), to))) {
+      return res.status(403).json({ error: 'The recipient does not match any user, customer, partner or application record.' });
     }
     const subject = interpolateTemplate(template.subject, data || {});
     // Templates are authored as plain text with line breaks; render that as HTML
