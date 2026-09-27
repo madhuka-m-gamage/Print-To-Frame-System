@@ -86,7 +86,7 @@ Every item implicitly includes these.
 | LIVE-3 | One canonical repository and one deploy path | rollout | M | **yes** | yes | DEC-6 |
 | LIVE-4 | Give the tooling access to the live Vercel project | rollout | S | Vercel | owner | none |
 
-**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
+**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1 and MON-3 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
 
 ---
 
@@ -159,6 +159,7 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 
 ### MON-3: Two remaining single-id lookups
 - `src/features/leads/Leads.jsx` finds a logistics job with `j.leadId === lead.id`; `src/features/invoicing/Invoices.jsx` prints `Lead: <leadId>`. Change both to use `getLineageIds`. Add a unit or component test where the id is the Deal id or the original lead id.
+- **Done:** `logisticsJobForLineage` and `lineageIdsForLeadId` in `src/features/leads/leadLineage.js`, used by `Leads.jsx` and `Invoices.jsx` (which now gets `leads` from `App.jsx`). Tests: `tests/unit/leadLineage.test.js`, `tests/component/Leads.lineage.test.jsx`, `tests/component/Invoices.lineage.test.jsx`.
 
 ### MON-4: Server-side guard against duplicate invoices
 - **Why:** the Advance and Final guards (`getExistingFinalInvoice` in `src/shared/utils/entityUtils.js`, the `isConvertingAdvance` flags) use client state, so two sessions acting at the same moment can create two.

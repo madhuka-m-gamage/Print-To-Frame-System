@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- MON-3: the last two single-id lead lookups now follow the whole lead/deal lineage. The Leads board finds a lead's logistics job with `logisticsJobForLineage`, so a job keyed by the converted deal id (or the original lead id) shows as Requested / Picked Up instead of offering a second pickup. The invoice detail reference prints the whole lineage (`Lead: D-… / L-…`) through `lineageIdsForLeadId`, preferring the deal record; `Invoices` now receives `leads` from `App.jsx`. Both helpers live in `src/features/leads/leadLineage.js`. Tests: unit 229, API 52, component 67 (new `Leads.lineage.test.jsx`, `Invoices.lineage.test.jsx`), rules 60.
+
 - MON-1: completing a deal now waits for its Final invoice to save. `handleMoveForwardInner` in `src/features/deals/Deals.jsx` awaits `onSaveInvoice` before the `setLeads` update; if it returns `false`, the deal stays in Hand Over, no commission accrues and an error toast says why (same rule as the Fabrication QA pass). Tests: unit 227, API 52, component 65 (2 new in `Deals.test.jsx`), rules 60.
 
 - Milestone 1 docs pass: PLAN.md is the Milestone 2 tracker, HANDOFF_REPORT.md is the Milestone 1 handoff; git workflow, root instructions, README, index, module maps, TESTING, DEPLOY_PROCESS and backlog brought up to date. Docs only.

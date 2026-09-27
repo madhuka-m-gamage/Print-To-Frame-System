@@ -11,8 +11,9 @@ import { PageHeader, FilterBar, StatusBadge, ModalWrapper } from '@/shared/ui';
 import { exportToCsv } from '@/shared/utils/csvExport';
 import { buildInvoiceHtml, openInvoicePrintWindow } from './invoiceTemplate';
 import { buildReceiptHtml } from './receiptTemplate';
+import { lineageIdsForLeadId } from '@/features/leads/leadLineage';
 
-export default function Invoices({ invoices = [], setInvoices, onMarkPaid, currentUser, receipts = [], onGenerateReceipt }) {
+export default function Invoices({ invoices = [], leads = [], setInvoices, onMarkPaid, currentUser, receipts = [], onGenerateReceipt }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
   const [selectedInvoice, setSelectedInvoice] = useState(null);
@@ -474,7 +475,7 @@ export default function Invoices({ invoices = [], setInvoices, onMarkPaid, curre
                   <span>Reference:</span>
                   <span className="font-bold text-on-surface">
                     {(selectedInvoice.linkedJobNo || selectedInvoice.jobNo) ? `Job #${selectedInvoice.linkedJobNo || selectedInvoice.jobNo}` : ''}
-                    {selectedInvoice.leadId ? ` (Lead: ${selectedInvoice.leadId})` : ((selectedInvoice.linkedJobNo || selectedInvoice.jobNo) ? '' : 'Direct')}
+                    {selectedInvoice.leadId ? ` (Lead: ${lineageIdsForLeadId(selectedInvoice.leadId, leads).join(' / ')})` : ((selectedInvoice.linkedJobNo || selectedInvoice.jobNo) ? '' : 'Direct')}
                   </span>
                 </div>
 
