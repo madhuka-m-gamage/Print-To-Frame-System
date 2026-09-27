@@ -64,3 +64,67 @@ Two hardcoded owner emails are treated as a self-healing super-admin: forced bac
 - It grants less in others: Customer and Business Client have no view of `invoices`, `projects` or `logistics`, where the defaults give read.
 
 Applying the defaults wholesale would change 58 role and module cells, most of them removals of access that roles hold today. The safe first step is additive only (the two missing modules, via the Permissions Manager button); the removals are a business decision to make role by role before the restrictive rules ship.
+
+### Cell-by-cell review table (DEC-7, live read 2026-09-27)
+
+Owner decision 2026-09-27: review these cells one by one before anything changes. Every cell where the live `settings/permissions` document differs from `DEFAULT_PERMISSIONS` (57 cells; the 2026-09-20 read counted 58). Letters are the granted actions: V view, C create, E edit, D delete, X export; `·` is not granted; `(missing)` means the live document has no entry for that module. The fresh environment will be seeded from the defaults, so marking a cell "keep live" means changing the default in `src/context/PermissionsContext.jsx` (and the matching rules tests).
+
+| Role | Module | Live | Default | Owner: keep live / use default |
+|---|---|---|---|---|
+| Admin | quotations | (missing) | VCEDX |  |
+| Admin | receipts | (missing) | VCEDX |  |
+| Manager | quotations | (missing) | VCEDX |  |
+| Manager | receipts | (missing) | VCE·X |  |
+| Manager | admin | VCEDX | ····· |  |
+| Sales | quotations | (missing) | VCEDX |  |
+| Sales | dashboard | V···· | VCEDX |  |
+| Sales | receipts | (missing) | VCE·· |  |
+| Operations | quotations | (missing) | ····· |  |
+| Operations | leads | VCE·X | ····· |  |
+| Operations | pipeline | VCE·X | ····· |  |
+| Operations | customers | VCE·X | V···· |  |
+| Operations | partners | VCE·· | ····· |  |
+| Operations | invoices | VCE·· | VC··· |  |
+| Operations | receipts | (missing) | ····· |  |
+| Operations | projects | VCE·X | VCED· |  |
+| Operations | logistics | VCE·X | VCED· |  |
+| Operations | agents | VCE·X | ····· |  |
+| Support | quotations | (missing) | V···· |  |
+| Support | dashboard | VCE·· | V···· |  |
+| Support | leads | VCE·· | V···· |  |
+| Support | pipeline | VCE·· | V···· |  |
+| Support | customers | VCE·· | V···· |  |
+| Support | partners | VCE·· | V···· |  |
+| Support | invoices | VCE·· | V···· |  |
+| Support | receipts | (missing) | V···· |  |
+| Support | projects | VCE·· | V···· |  |
+| Support | logistics | VCE·· | V···· |  |
+| Support | agents | VCE·· | ····· |  |
+| Support | calculator | VCE·· | ····· |  |
+| Accounts | quotations | (missing) | V···· |  |
+| Accounts | partners | VCE·X | V···· |  |
+| Accounts | receipts | (missing) | VCE·X |  |
+| Accounts | logistics | V···· | ····· |  |
+| Logistics | quotations | (missing) | ····· |  |
+| Logistics | partners | VCE·· | ····· |  |
+| Logistics | invoices | VCEDX | V···· |  |
+| Logistics | receipts | (missing) | ····· |  |
+| Logistics | logistics | VCEDX | VCED· |  |
+| Logistics | calculator | VCEDX | ····· |  |
+| Partner | quotations | (missing) | ····· |  |
+| Partner | dashboard | V···· | VCEDX |  |
+| Partner | messages | VCEDX | ····· |  |
+| Partner | partners | V···· | V·E·· |  |
+| Partner | receipts | (missing) | ····· |  |
+| Customer | quotations | (missing) | ····· |  |
+| Customer | messages | VCEDX | ····· |  |
+| Customer | invoices | ····· | V···· |  |
+| Customer | receipts | (missing) | ····· |  |
+| Customer | projects | ····· | V···· |  |
+| Customer | logistics | ····· | V···· |  |
+| Business Client | quotations | (missing) | ····· |  |
+| Business Client | messages | VCEDX | ····· |  |
+| Business Client | invoices | ····· | V···· |  |
+| Business Client | receipts | (missing) | ····· |  |
+| Business Client | projects | ····· | V···· |  |
+| Business Client | logistics | ····· | V···· |  |

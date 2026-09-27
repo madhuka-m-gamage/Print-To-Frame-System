@@ -95,34 +95,43 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 - **Why:** a referral lead with no partner rate is quoted at **LKR 30.00 per sq ft** (`DEFAULT_REFERRAL_COMMISSION_RATE` in `src/features/quotations/quotePricing.js`, decided by the owner and flagged with `pricingMetadata.commissionRateDefaulted`), but other places still fall back to **LKR 53.50**: the new-partner default and payout maths in `src/features/partners/Partners.jsx`, the payment-cleared handler in `src/App.jsx`, and the deal commission fallback in `src/features/deals/dealSettlement.js`.
 - **Ask the owner:** which single number, and is it per sq ft for every case?
 - **Then:** find every use with `grep -rn "53.5" src`, replace with one exported constant, update the tests that pin 53.5 (`tests/component/Deals.test.jsx`, `tests/unit/dealSettlement.test.js`), and note it in `docs/02_modules/partners/CLAUDE.md`.
+- **Decided (owner, 2026-09-27):** one default of **LKR 38.00 per sq ft** for every case, replacing both 30.00 (quotes) and 53.50 (Partners, payment-cleared handler, deal settlement). Implement as its own change: one exported constant, update the pinned tests.
 
 ### DEC-2: May drivers record cash on delivery
 - **Why:** step 6.5b added "Record cash collection" on the delivery card, shown only to roles that can edit invoices and create receipts (Admin and Manager today). The Logistics role has read-only invoices and no receipts in `DEFAULT_PERMISSIONS`, and the live matrix gives Logistics full `invoices` but no `receipts` module.
 - **Options:** (a) drivers record it, which needs Logistics `receipts: create` in the matrix and later rules; (b) a dispatcher (Manager or Accounts) records it for them (no change).
 - **Live:** option (a) writes the live matrix (LIVE-1) and depends on the rules deploy.
+- **Decided (owner, 2026-09-27):** option (b), a dispatcher (Manager or Accounts) records it. No code, matrix or rules change.
 
 ### DEC-3: Enable Firebase Storage, or drop uploads
 - **Why:** the live project has **no active Storage rules** (read-only check, 2026-09-21), so uploads are expected to fail: public partner registration documents (`src/features/partners/PartnerRegistration.jsx`, falls back to a placeholder name), the Partners screen document upload (`src/features/partners/Partners.jsx`), and fabrication blueprints (`src/features/fabrication/FabricationCardDetails.jsx`, keeps files under 500KB inline and rejects larger ones). The bucket `print-to-frame-erp.firebasestorage.app` exists.
 - **Options:** enable Storage with narrow rules (signed-in write to `blueprints/` and `partners/`; the anonymous registration form needs its own design), or remove the upload features.
 - **Live:** yes (Storage rules are deployed by hand).
+- **Decided (owner, 2026-09-27):** enable Storage with narrow rules (signed-in write to `blueprints/` and `partners/`); the anonymous registration upload gets its own design. Storage rules are written and tested in the repo; deploying them waits for the fresh environment setup or explicit sign-off.
 
 ### DEC-4: Cancelled projects: block a Final invoice and a delivery job
 - **Recommended: yes.** A deleted deal marks its project `Cancelled` (step 6.4a). Block QA-pass Final invoice creation and delivery-job creation for a Cancelled project, with a clear message.
+- **Decided (owner, 2026-09-27):** yes, block both with a clear message. Client code only.
 
 ### DEC-5: Old manual fabrication jobs that still carry a value
 - New manual jobs carry no value (billed through a deal or marked non-billable). Older ones may have `value > 0` and still get a 25% Final invoice at QA pass. **Ask:** leave them, clear the value, or link them to a deal? To count them, query `projects` for `origin != 'manual'` with `value > 0` and no `dealId`.
+- **Decided (owner, 2026-09-27):** no migration. The live data is test data only; the owner plans a fresh environment setup (new Firebase/GCP data store, Vercel), so old jobs are discarded rather than cleaned. The code path for new manual jobs is already correct.
 
 ### DEC-6: Which repository is canonical
 - Three places exist: the original personal repository `madhukagamage6/Print-To-Frame-ERP-System` (own history, last commit 2026-09-15, what production deploys from), this repository, and an old local folder. The owner has said this repository is the correct one. **Ask:** approve LIVE-3 (reconnect the live Vercel project here) and archive the others.
+- **Decided (owner, 2026-09-27):** this repository (`madhuka-m-gamage/Print-To-Frame-System`) is canonical. LIVE-3 is approved; the reconnect itself still runs step by step with sign-off, and the other repositories get archived after it.
 
 ### DEC-7: Role breadth and the two new modules
 - The live matrix differs from the defaults in 58 cells (see `docs/03_security/RBAC_MODEL.md`): Support has edit on most modules including `agents`; Logistics has full `invoices`; Operations edits `leads`, `pipeline` and `agents`; Manager has `admin`. **Ask:** is any of that more than the business intends? Changing it needs no code: an Admin edits cells in Permissions Manager. Also decide whether Operations and Logistics need `quotations` or `receipts` view (the migration defaults give them none).
+- **Decided (owner, 2026-09-27):** review the live-vs-default table cell by cell before changing anything. The 57-cell table (live read 2026-09-27) is in `docs/03_security/RBAC_MODEL.md`. Because the fresh environment will be seeded from `DEFAULT_PERMISSIONS`, the review effectively decides the defaults; still open until the owner marks each cell.
 
 ### DEC-8: Google Drive and Contacts access
 - Drive uses the restricted `drive.readonly` scope; Contacts uses `contacts.readonly`. Staff click through Google's "unverified app" warning. **Options:** use Google Picker with the narrow `drive.file` scope (no verification needed; a code change in `src/services/driveService.js` and `src/shared/components/GoogleDrivePickerModal.jsx`), and/or submit the OAuth app for verification.
+- **Decided (owner, 2026-09-27):** switch Drive to Google Picker with the narrow `drive.file` scope, and offer Drive and Contacts connection only to the super admin (developer) accounts for now; other roles do not connect Drive or Contacts. Code change in this repository only; the old live deployment is not touched.
 
 ### DEC-9: Add a LICENSE
 - The repository has none. Decide the licence (or that it is proprietary) and add `LICENSE`.
+- **Decided (owner, 2026-09-27):** proprietary, all rights reserved. `LICENSE` added.
 
 ---
 
