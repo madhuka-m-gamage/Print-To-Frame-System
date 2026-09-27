@@ -24,7 +24,7 @@ Updated 2026-09-27. These are honest estimates, not measurements: they show wher
 | 8.2 Standard project structure | `[##########]` ~100% | 12 of 12 tasks built (the last PR is open): README and env example, unused files removed, one docs folder per module, `@/` import alias, shared code, feature folders for auth, profile, dashboard, messaging, leads, customers, quotations, deals, invoicing, partners, fabrication, logistics and admin (all of `src/components` is gone). Clean-up, ADR `0003-source-layout.md` and removal of the temporary codemod are in the last PR |
 | Project folder move (`erp-system` up to `Print-To-Frame-System`) | `[##########]` 100% | Done 2026-09-21, verified from the new root |
 | Live rollout chain (matrix 3.3, rules 3.4d and 3.5d, move production to this repository) | `[##--------]` ~20% | Prepared, not applied. Moved to the follow-up backlog by the owner on 2026-09-21; runbook `docs/04_workflows/LIVE_ROLLOUT.md` |
-| Follow-up backlog | `[#---------]` ~10% | About 45 items in `docs/04_workflows/BACKLOG.md`. Owner decisions DEC-1 to DEC-9 answered and implemented in the repo 2026-09-27 (Storage rules and the live matrix not yet applied live) |
+| Follow-up backlog | `[#---------]` ~10% | About 45 items in `docs/04_workflows/BACKLOG.md`. Owner decisions DEC-1 to DEC-9 answered and implemented in the repo 2026-09-27 (Storage rules deployed live 2026-09-27; the live matrix reset to defaults is still pending) |
 
 Merged into `staging` so far: PRs #6 to #51. Open: the final 8.2 PR (clean-up, ADR, removal of the codemod).
 
