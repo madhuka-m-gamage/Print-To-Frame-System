@@ -32,7 +32,7 @@ No Cloud Functions exist (see [GCP_INVENTORY.md](../../01_architecture/GCP_INVEN
 
 ## Depends on / called by
 
-Customers, Deals, Projects/Fabrication, Logistics, Quotations, Invoices, Receipts, Partners (commission), `PermissionsContext` (`canAccess 'leads'`), `shared/ui`, `firestoreSync`, `auditLog`, `GoogleDrivePickerModal`.
+Customers, Deals, Projects/Fabrication, Logistics, Quotations, Invoices, Receipts, Partners (commission), `PermissionsContext` (`canAccess 'leads'`), `shared/ui`, `firestoreSync`, `auditLog`, `driveService` (Google Picker, through the quotation builder).
 
 ## Summary
 

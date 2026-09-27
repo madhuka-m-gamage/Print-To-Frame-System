@@ -4,7 +4,8 @@ const signInWithPopup = vi.fn();
 const addScope = vi.fn();
 const setCustomParameters = vi.fn();
 const credentialFromResult = vi.fn();
-const auth = { currentUser: { email: 'a@b.co' } };
+const SUPER_ADMIN = 'madhukagamage6@gmail.com';
+const auth = { currentUser: { email: SUPER_ADMIN } };
 
 vi.mock('firebase/app', () => ({ initializeApp: vi.fn() }));
 vi.mock('firebase/firestore', () => ({
@@ -34,7 +35,7 @@ vi.stubGlobal('sessionStorage', {
 
 const { getScopedAccessToken } = await import('@/services/firebase');
 
-const DRIVE = 'https://www.googleapis.com/auth/drive.readonly';
+const DRIVE = 'https://www.googleapis.com/auth/drive.file';
 
 describe('getScopedAccessToken', () => {
   beforeEach(() => {
@@ -42,12 +43,19 @@ describe('getScopedAccessToken', () => {
     Object.keys(store).forEach((k) => delete store[k]);
     signInWithPopup.mockResolvedValue({});
     credentialFromResult.mockReturnValue({ accessToken: 'tok-1' });
+    auth.currentUser = { email: SUPER_ADMIN };
+  });
+
+  it('refuses anyone but the super admin before opening a Google popup (DEC-8)', async () => {
+    auth.currentUser = { email: 'sales@example.com' };
+    await expect(getScopedAccessToken(DRIVE)).rejects.toThrow('Google Drive and Contacts are available to the super admin only.');
+    expect(signInWithPopup).not.toHaveBeenCalled();
   });
 
   it('asks Google for the one scope, hinting the signed-in email, and caches the token', async () => {
     expect(await getScopedAccessToken(DRIVE)).toBe('tok-1');
     expect(addScope).toHaveBeenCalledWith(DRIVE);
-    expect(setCustomParameters).toHaveBeenCalledWith({ login_hint: 'a@b.co' });
+    expect(setCustomParameters).toHaveBeenCalledWith({ login_hint: SUPER_ADMIN });
 
     expect(await getScopedAccessToken(DRIVE)).toBe('tok-1');
     expect(signInWithPopup).toHaveBeenCalledTimes(1);

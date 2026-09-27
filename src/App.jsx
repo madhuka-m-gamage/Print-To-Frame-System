@@ -75,6 +75,7 @@ import { logActivity } from "./services/auditLog";
 import { ErrorBoundary } from "./shared/components/ErrorBoundary";
 import LoadingSpinner from "./shared/components/LoadingSpinner";
 import { findPartnerForLead, getLeadPartnerId } from "@/features/partners/partnerLink";
+import { isSuperAdminEmail } from '@/features/auth/superAdmin';
 
 
 export function oT() {
@@ -89,14 +90,6 @@ export function uT(t, e = {}) {
   if (Notification.permission === "granted") {
     new Notification(t, e);
   }
-}
-
-// Self-Healing Super Admin Guard: these two emails always self-heal back to
-// role: 'Admin' / status: 'Active' on login, mirrored in firestore.rules'
-// isBootstrapSuperAdmin(). Do not remove — this is intentional, see CLAUDE.md.
-const BOOTSTRAP_ADMIN_EMAILS = ["madhukagamage6@gmail.com", "madhukagamage@gmail.com"];
-function isSuperAdminEmail(email) {
-  return BOOTSTRAP_ADMIN_EMAILS.includes(email);
 }
 
 export let triggerBrowserNotification = (t, e) => {

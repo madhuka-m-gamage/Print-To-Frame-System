@@ -18,6 +18,7 @@ import { usePermissions } from '@/context/PermissionsContext';
 import { sendTemplatedEmail } from '@/services/mailer';
 import { deleteUserAccount } from '@/features/admin/adminUsers';
 import { logActivity } from '@/services/auditLog';
+import { canUseGoogleWorkspace } from '@/features/auth/superAdmin';
 import { normalizePhone, phonesMatch } from '@/shared/utils/validation';
 
 export default function Customers({ customers = [], setCustomers, users = [], setUsers, dataStore, currentUser, prefillClient, onClientPrefillConsumed }) {
@@ -428,14 +429,16 @@ export default function Customers({ customers = [], setCustomers, users = [], se
         ]}
         actions={
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowContactSync(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-surface-container border border-outline-variant hover:border-primary/40 text-on-surface rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 flex-shrink-0"
-              title="Sync Google Contacts & WhatsApp"
-            >
-              <Users size={15} className="text-primary" />
-              <span className="hidden sm:inline">Sync Contacts</span>
-            </button>
+            {canUseGoogleWorkspace(currentUser) && (
+              <button
+                onClick={() => setShowContactSync(true)}
+                className="flex items-center gap-1.5 px-3.5 py-2.5 bg-surface-container border border-outline-variant hover:border-primary/40 text-on-surface rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 flex-shrink-0"
+                title="Sync Google Contacts & WhatsApp"
+              >
+                <Users size={15} className="text-primary" />
+                <span className="hidden sm:inline">Sync Contacts</span>
+              </button>
+            )}
             {canAccess(currentUser?.role, 'customers', 'export') && (
               <button
                 onClick={handleExportCsv}

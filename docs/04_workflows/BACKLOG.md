@@ -127,7 +127,7 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 
 ### DEC-8: Google Drive and Contacts access
 - Drive uses the restricted `drive.readonly` scope; Contacts uses `contacts.readonly`. Staff click through Google's "unverified app" warning. **Options:** use Google Picker with the narrow `drive.file` scope (no verification needed; a code change in `src/services/driveService.js` and `src/shared/components/GoogleDrivePickerModal.jsx`), and/or submit the OAuth app for verification.
-- **Decided (owner, 2026-09-27):** switch Drive to Google Picker with the narrow `drive.file` scope, and offer Drive and Contacts connection only to the super admin (developer) accounts for now; other roles do not connect Drive or Contacts. Code change in this repository only; the old live deployment is not touched.
+- **Decided (owner, 2026-09-27):** switch Drive to Google Picker with the narrow `drive.file` scope, and offer Drive and Contacts connection only to the super admin (developer) accounts for now; other roles do not connect Drive or Contacts. Code change in this repository only; the old live deployment is not touched. **Done 2026-09-27:** `src/features/auth/superAdmin.js` gates both (token request and buttons); Drive uses Google Picker with `drive.file`; the old file-listing modal is removed. Owner console step before it works on a deployment: enable the **Google Picker API** in the Firebase project's Google Cloud console and make sure the browser API key is allowed to call it.
 
 ### DEC-9: Add a LICENSE
 - The repository has none. Decide the licence (or that it is proprietary) and add `LICENSE`.

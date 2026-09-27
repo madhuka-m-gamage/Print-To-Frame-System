@@ -3,7 +3,8 @@ import { Plus, Trash2, Sparkles, FileText, Copy, ChevronRight, Check, X, Layers,
 import { toast } from '@/shared/utils/toast';
 import { generateStructuredQuotation } from '@/services/gemini';
 import { addDocument, updateDocument, COLLECTIONS, generateInvoiceId, generateAtomicId } from '@/services/firestoreSync';
-import GoogleDrivePickerModal from '@/shared/components/GoogleDrivePickerModal';
+import { pickDriveFiles } from '@/services/driveService';
+import { canUseGoogleWorkspace } from '@/features/auth/superAdmin';
 import { ModalWrapper } from '@/shared/ui';
 import { matchesEntity } from '@/shared/utils/entityUtils';
 import { isAcceptedQuote } from './quotationStatus';
@@ -68,7 +69,6 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
   const [notes, setNotes] = useState(latestQuote?.notes || '');
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showDriveModal, setShowDriveModal] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState(latestQuote?.attachedFiles || []);
   const [showWhatsAppPreview, setShowWhatsAppPreview] = useState(false);
   const [isConvertingAdvance, setIsConvertingAdvance] = useState(false);
@@ -94,6 +94,18 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
     setLineItems(prev => prev.map(i =>
       i.id === id ? { ...i, [field]: ['description', 'unit'].includes(field) ? val : Number(val) || 0 } : i
     ));
+
+  const handleAttachFromDrive = async () => {
+    try {
+      const picked = await pickDriveFiles();
+      const added = picked.filter(file => !attachedFiles.some(f => f.id === file.id));
+      if (added.length === 0) return;
+      setAttachedFiles(prev => [...prev, ...added]);
+      toast.success(`Attached ${added.length === 1 ? `"${added[0].name}"` : `${added.length} files`} from Google Drive`);
+    } catch (err) {
+      toast.error(err.message || 'Could not open Google Drive.');
+    }
+  };
 
   const handleGenerate = async () => {
     const scope = lead.jobScope || lead.scope || '';
@@ -676,14 +688,16 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
 
         {/* Google Drive Attachments */}
         <div className="pt-2">
-          <button
-            type="button"
-            onClick={() => setShowDriveModal(true)}
-            className="w-full py-2 bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all"
-          >
-            <HardDrive size={14} className="text-primary" />
-            <span>{attachedFiles.length > 0 ? `${attachedFiles.length} Google Drive File(s) Attached` : 'Attach Google Drive Art File / Proof'}</span>
-          </button>
+          {canUseGoogleWorkspace(currentUser) && (
+            <button
+              type="button"
+              onClick={handleAttachFromDrive}
+              className="w-full py-2 bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all"
+            >
+              <HardDrive size={14} className="text-primary" />
+              <span>{attachedFiles.length > 0 ? `${attachedFiles.length} Google Drive File(s) Attached` : 'Attach Google Drive Art File / Proof'}</span>
+            </button>
+          )}
           {attachedFiles.length > 0 && (
             <div className="mt-2 space-y-1">
               {attachedFiles.map(file => (
@@ -698,17 +712,6 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
           )}
         </div>
       </div>
-
-      <GoogleDrivePickerModal
-        isOpen={showDriveModal}
-        onClose={() => setShowDriveModal(false)}
-        onSelectFile={(file) => {
-          if (!attachedFiles.some(f => f.id === file.id)) {
-            setAttachedFiles(prev => [...prev, file]);
-            toast.success(`Attached "${file.name}" from Google Drive`);
-          }
-        }}
-      />
 
       {/* WhatsApp Text Quote — mobile chat-bubble preview + copy/share */}
       <ModalWrapper
