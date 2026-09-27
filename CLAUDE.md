@@ -67,7 +67,7 @@ New users self-provision into `pendingUsers` (or `users` directly for the bootst
 
 ### AI proxy (`api/generate.js`)
 
-Requires a valid Firebase ID token (`Authorization: Bearer <token>`) AND that the caller's `users/{email}` doc is approved/active — mirrors the client-side gate in `App.jsx`. It tries a list of Gemini models in order (`CANDIDATE_MODELS`) and falls through on 404/503/429, but stops immediately on a 400. CORS is restricted to `ALLOWED_ORIGINS` (no wildcard). When editing this file, preserve both checks — this endpoint burns metered Gemini quota if left open.
+Requires a valid Firebase ID token (`Authorization: Bearer <token>`) AND that the caller's `users/{email}` doc is approved/active — mirrors the client-side gate in `App.jsx` — AND a staff role (same `STAFF_ROLES` rule as `send-email`; Partner, Business Client and Customer are refused). It tries a list of Gemini models in order (`CANDIDATE_MODELS`) and falls through on 404/503/429, but stops immediately on a 400. CORS is restricted to `ALLOWED_ORIGINS` (no wildcard). When editing this file, preserve these checks — this endpoint burns metered Gemini quota if left open.
 
 ### UI conventions
 
