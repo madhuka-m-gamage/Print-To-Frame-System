@@ -49,6 +49,13 @@ describe('Deals completion wiring', () => {
     expect(invoice).toMatchObject({ id: 'INV-FIN-0001', type: 'Final', status: 'Unpaid', dealId: 'D-1', amount: 25000, totalValue: 100000 });
   });
 
+  it('stamps the Final invoice with the original lead id and the deal id (MON-2)', async () => {
+    const { onSaveInvoice } = renderDeals({ dealOverrides: { originalLeadId: 'L-1' } });
+    fireEvent.click(screen.getByRole('button', { name: /for Kasun Silva/i }));
+    await waitFor(() => expect(onSaveInvoice).toHaveBeenCalledTimes(1));
+    expect(onSaveInvoice.mock.calls[0][0]).toMatchObject({ leadId: 'L-1', dealId: 'D-1' });
+  });
+
   // Flipped in Phase 7 2.1 (invoicing D-1): a deal that already has a Final invoice
   // completes without creating a second one.
   it('does not create another Final invoice when the deal already has one, and still completes', async () => {

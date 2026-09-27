@@ -15,7 +15,7 @@ import { sanitizeTechnicalScope, stripEmojis, phonesMatch } from '@/shared/utils
 import { exportToCsv } from '@/shared/utils/csvExport';
 import { logActivity } from '@/services/auditLog';
 import { matchesEntity } from '@/shared/utils/entityUtils';
-import { logisticsJobForLineage } from './leadLineage';
+import { logisticsJobForLineage, invoicesForLineage } from './leadLineage';
 
 const STAGES = ["Intake", "Processing", "75% Invoice Submitted", "Received", "Completed"];
 
@@ -497,6 +497,9 @@ export default function Leads({
         stageEnteredAt: now
       });
       await addDocument(COLLECTIONS.LEADS, newDeal, dealId);
+      await Promise.all(invoicesForLineage(originalLead, invoices).map(inv =>
+        updateDocument(COLLECTIONS.INVOICES, inv._firestoreId || inv.id, { dealId })
+      ));
       logActivity(currentUser?.identifier, currentUser?.name, 'LEAD_CONVERTED', 'Leads', `Lead ${originalLead.id} converted to deal ${dealId} (${jobNo})`);
     } catch (err) {
       console.error("Convert Deal Firestore error:", err);

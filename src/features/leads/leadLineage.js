@@ -18,3 +18,13 @@ export const lineageIdsForLeadId = (leadId, leads = []) => {
   const record = related.find((l) => l.isDeal) || related[0];
   return record ? getLineageIds(record) : [leadId];
 };
+
+export const invoiceLineageFields = (record) =>
+  record?.isDeal
+    ? { leadId: record.originalLeadId || record.id, dealId: record.id }
+    : { leadId: record?.id || record?._firestoreId, dealId: record?.convertedDealId || '' };
+
+const findById = (leads, id) => (id ? leads.find((l) => l.id === id || l._firestoreId === id) : null);
+
+export const leadForInvoice = (invoice, leads = []) =>
+  findById(leads, invoice?.dealId) || findById(leads, invoice?.leadId) || null;
