@@ -25,13 +25,15 @@ The previous `tests/e2e.test.js` (a Puppeteer script for a Windows/local Chrome 
 
 ### Branching & deployment workflow
 
-This repo deploys via Vercel from two branches, and there are two skills under `.agents/skills/` that automate the flow — prefer invoking them over ad hoc git commands when the user asks to "push to staging" or "deploy live":
+This repo deploys via Vercel from two branches; the user-level `staging-deploy` skill can run a promotion when the user asks to "push to staging" or "deploy live". Full workflow: `docs/04_workflows/GIT_WORKFLOW.md`.
 
 - `staging` branch → Vercel **preview** deployment (day-to-day work happens here).
-- `main` branch → Vercel **production** deployment (`portal.print2frame.xyz`).
-- Promotion is a straight merge: `staging` → `main`, then push, then switch back to `staging`. Never commit directly to `main`.
+- `main` branch → Vercel project `print-to-frame-system`. The live `portal.print2frame.xyz` still deploys the old repository `madhukagamage6/Print-To-Frame-ERP-System` until backlog item LIVE-3 moves it here.
+- Work happens on one `claude/<topic>` branch per item, merged into `staging` by PR. Promotion is a PR `staging` → `main` merged with a merge commit (never squash). Never commit directly to `main`.
 
 **Critical gotcha:** editing `firestore.rules` and pushing to `staging`/`main` only updates the *file in git* — it does **not** touch the live Firestore rules engine. Vercel deploys the SPA and `api/*.js` functions; it has no relationship to Firestore rules at all. Any change to `firestore.rules` must be separately deployed with `firebase deploy --only firestore:rules --project print-to-frame-erp` (already-authenticated as `madhukagamage6@gmail.com` in this environment). A rules edit that's merged and deployed to production but never `firebase deploy`'d will silently keep enforcing the old ruleset — this exact gap caused a live admin lockout on `portal.print2frame.xyz` (rules had been edited across several commits earlier in the session, deployed via Vercel, but never pushed to Firebase itself).
+
+`storage.rules` works the same way: it goes live only with `firebase deploy --only storage --project print-to-frame-erp` (deployed 2026-09-27; a `--non-interactive` deploy skips the prompt that grants the Storage service agent `roles/firebaserules.firestoreServiceAgent`, which the rules need to read `users`).
 
 **Also verify Firebase client config against `firebase apps:sdkconfig`, not the committed `firebase-applet-config.json` fallback** — that file drifted (a deleted app's `appId`, a blank `measurementId`) and gave wrong values when used to diagnose a production issue. Re-fetch it with `firebase apps:list --project print-to-frame-erp` + `firebase apps:sdkconfig WEB <appId> --project print-to-frame-erp` whenever config values matter, since the committed file is not guaranteed current. The live app's `authDomain` (`print-to-frame-erp.firebaseapp.com`) also needs the actual serving domain(s) — `portal.print2frame.xyz`, `www.print2frame.xyz` — added under Firebase Console → Authentication → Settings → **Authorized domains**, or Google sign-in fails with `auth/invalid-continue-uri` or `auth/unauthorized-domain`; this isn't tracked in any file, so it can't be verified from the repo.
 
@@ -59,7 +61,7 @@ Permissions are enforced in **three** places that all need to agree when changin
 2. `firestore.rules` — `checkPermission(module, action)` re-derives the same view/create/edit/delete/export (and legacy read/write) logic server-side, reading the *same* `settings/permissions` document, so client-side gating is never trusted alone. `settings/permissions` itself is writable only by Admins.
 3. `src/constants/roles.js` — `SYSTEM_ROLES`, `PUBLIC_REGISTRATION_ROLES`, and `ROLE_METADATA` (labels/badges/categories used in UI, e.g. `AgentDatabase.jsx`, `AdminPanel.jsx`).
 
-There are two hardcoded "bootstrap super admin" emails (see `App.jsx`'s "Self-Healing Super Admin Guard" and the matching `isBootstrapSuperAdmin()` in `firestore.rules`) that always self-heal back to role `Admin` / `status: Active` on login — this is intentional and mirrored on both client and rules, don't "fix" it away.
+There are two hardcoded "bootstrap super admin" emails (`BOOTSTRAP_ADMIN_EMAILS` / `isSuperAdminEmail` in `src/features/auth/superAdmin.js`, mirrored by `isBootstrapSuperAdmin()` in `firestore.rules` and `isSuperAdmin()` in `storage.rules`) that always self-heal back to role `Admin` / `status: Active` on login — this is intentional and mirrored on both client and rules, don't "fix" it away.
 
 New users self-provision into `pendingUsers` (or `users` directly for the bootstrap admin emails) on first sign-in; an Admin approves via `AgentDatabase.jsx`, which, for a `Partner` or `Business Client`, hands off to the manual Register Partner / Register Client form (pre-filled) instead of auto-creating a bare `partners` or `customers` record. `role`, `isApproved`, and `status` are user-profile fields that must never be client-settable outside these narrow approve/self-heal paths — see the security comments at the top of the `users` match block in `firestore.rules` before touching that collection's rules.
 

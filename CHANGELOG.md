@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Milestone 1 docs pass: PLAN.md is the Milestone 2 tracker, HANDOFF_REPORT.md is the Milestone 1 handoff; git workflow, root instructions, README, index, module maps, TESTING, DEPLOY_PROCESS and backlog brought up to date. Docs only.
+
+## v1.0.0 — Milestone 1: audit to remediation (2026-09-27)
+
+Investigation of all 16 modules, a five-layer test suite in CI, Phase 7 remediation and the source restructure, the owner decisions DEC-1..9, and Storage rules live. Details below; the story is in docs/HANDOFF_REPORT.md.
+
 - Live, 2026-09-27, with the owner's sign-off: created the default Storage bucket (`asia-south1`, production mode; owner), deployed `storage.rules` with `firebase deploy --only storage --project print-to-frame-erp`, and granted the Storage service agent `roles/firebaserules.firestoreServiceAgent` so the rules can read `users`. The Google Picker and Cloud Storage for Firebase APIs are enabled (owner). Still open: allow the Picker API on the browser API key.
 
 - DEC-7 decided (docs only): use `DEFAULT_PERMISSIONS` for every cell where the live matrix differs (57). No code change; the live `settings/permissions` document is replaced with the fresh setup or through LIVE-1.

@@ -42,6 +42,7 @@ The rules call `firestore.get()` on the caller's `users` document, so the Storag
 
 ## Firebase console settings not tracked in the repo
 
+- State on 2026-09-27 (owner): the Google Picker API and Cloud Storage for Firebase API are enabled; the browser key "Browser key (auto created by Firebase)" allows the Picker API and has no website restriction yet (backlog SEC-10); the default bucket `print-to-frame-erp.firebasestorage.app` is in `asia-south1`; the Storage service agent has `roles/firebaserules.firestoreServiceAgent`.
 - Authentication > Settings > **Authorized domains** must include the serving domains (`portal.print2frame.xyz`, `www.print2frame.xyz`, and the auth domain `auth.print2frame.xyz` used by the config), or Google sign-in fails with `auth/unauthorized-domain` / `auth/invalid-continue-uri`.
 - Verify client config with `firebase apps:sdkconfig`, not the committed `firebase-applet-config.json`, which has drifted before.
 

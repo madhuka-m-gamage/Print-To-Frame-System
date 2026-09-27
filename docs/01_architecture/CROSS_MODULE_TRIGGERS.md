@@ -78,7 +78,7 @@ Link fields: invoice `quotationId`; lead / deal / job ids (`leadId`, `dealId`, `
 | Step | Trigger | Function | Effect |
 |---|---|---|---|
 | 6a | Client submits the public referral form | `ReferralForm.jsx` | Lead `source: 'Referral'`, stage Intake, tagged with the partner id and rate |
-| 6b | Deal reaches Hand Over | `Deals.jsx` | `partners.pending += totalSqFt * commissionRate` (default 53.5 LKR / sq ft) |
+| 6b | Deal moves from Hand Over to Completed | `Deals.jsx` | `partners.pending += totalSqFt * commissionRate` (default `DEFAULT_REFERRAL_COMMISSION_RATE`, LKR 38.00 / sq ft) |
 | 6c | Advance and Final both Paid | `handleMarkInvoicePaid` | `referralStatus: 'Eligible for Payout'`; one-time `commission` notification via `emitNotification` (session-only, seen only by the user who marked it paid) |
 | 6d | Admin clicks "Disburse Payout" | `Partners.jsx` | **Toast only.** No write to `payoutStatus` or `partner_payouts`; `pending` is never reduced |
 
