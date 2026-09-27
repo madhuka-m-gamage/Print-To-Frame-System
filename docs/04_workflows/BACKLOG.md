@@ -60,6 +60,7 @@ Every item implicitly includes these.
 | FEA-8 | Profile and user-management items | ux | S | no | no | none |
 | FEA-9 | Employees HR model | feature | L | rules | no | none |
 | FEA-10 | Task-assignment fields across modules | feature | L | rules | no | FEA-9 |
+| FEA-11 | Staff screen to open partner-application BR/NIC files | feature | S | no | no | none |
 | SEC-1 | Check the recipient in `api/send-email.js` | security | S | api | no | none |
 | SEC-2 | Restrict `api/generate.js` to staff roles | security | S | api | no | none |
 | SEC-3 | Make the dev proxy safe | security | S | no | no | none |
@@ -69,9 +70,11 @@ Every item implicitly includes these.
 | SEC-7 | Partner limited to its own record | security | M | rules | no | LIVE-1 |
 | SEC-8 | Partner-scoped reads on leads and invoices (partners D-9) | security | M | rules | no | SEC-7 |
 | SEC-9 | Effective-access test (which rule wins) | security | M | no | no | none |
+| SEC-10 | Restrict the browser API key to the app's domains | security | S | GCP console | owner | LIVE-3 |
 | TST-1 | Component tests for the lead card | tests | M | no | no | none |
 | TST-2 | End-to-end journeys (money, RBAC) | tests | L | no | no | none |
 | TST-3 | Tests for Leads, QuotationBuilder, Customers; refresh the coverage map | tests | M | no | no | none |
+| TST-4 | Manual check: Picker attach and staff uploads on a deployment | tests | S | deployment | owner | none |
 | ENG-1 | Split the very large files | health | L | no | no | TST-1, TST-3 |
 | ENG-2 | Add Prettier | health | S | no | no | ENG-1 |
 | ENG-3 | Repository hygiene | health | S | no | partly | DEC-9 |
@@ -83,7 +86,7 @@ Every item implicitly includes these.
 | LIVE-3 | One canonical repository and one deploy path | rollout | M | **yes** | yes | DEC-6 |
 | LIVE-4 | Give the tooling access to the live Vercel project | rollout | S | Vercel | owner | none |
 
-**Suggested order when there is no other guidance:** decisions the owner can answer in a sentence (DEC-1, DEC-4, DEC-5, DEC-8) then the small money fixes (MON-1, MON-3, MON-2), the security items that need no live change (SEC-1, SEC-2, SEC-3, SEC-9), the lead-card tests (TST-1), then features (FEA-3, FEA-1, FEA-2, FEA-5). Do the live items (LIVE-x, SEC-6 to SEC-8, FEA-4) together in one sitting with the owner, because each needs a deploy by hand.
+**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
 
 ---
 
@@ -246,6 +249,11 @@ Source: `docs/02_modules/notifications/FINDINGS.md`. NOTIF-01 (sign-out leak) is
 - **Accepted design:** real user references: `assignedSalesId` on leads and deals, `assignedFabricatorId` on projects, `inspectorId` on QA, `assignedDriverId` on logistics, each pointing at an active `users` record.
 - **Build order:** shared helper and picker, then one module per pull request (leads, fabrication, inspection, logistics), each with tests. The QA inspector is already the signed-in user (step 6.4c); reconcile. Depends on FEA-9 only if HR data feeds the picker.
 
+### FEA-11: Staff screen to open partner-application BR/NIC files
+- **Why:** since DEC-3 the public registration form stores `brCertPath` and `nicCopyPath` (Storage paths under `partners/applications/`) on the `partner_applications` document, because a signed-out visitor cannot read the file back. Nothing in the app opens them yet.
+- **Where:** `src/features/admin/AgentDatabase.jsx` (application review). Resolve each path with `getDownloadURL(ref(storage, path))` on click; `storage.rules` already lets staff read `partners/applications/**`.
+- **Test:** a component test that shows "Open BR copy" / "Open NIC copy" for an application with paths, and nothing when the paths are empty.
+
 ---
 
 ## Security
@@ -279,6 +287,10 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 ### SEC-9: Effective-access test
 - An emulator test that loads a permission matrix and prints, for every role, collection and operation, whether the **deployed** rules (`git show origin/main:firestore.rules`) and the **new** rules allow it. Use the live matrix (copy it from the console into a JSON file kept outside the repository) to settle "which rule actually wins" with data. Start from `tests/helpers/emulator.js` (`PERMISSIONS_FIXTURE`) and `tests/integration/rulesAccess.test.js`.
 
+### SEC-10: Restrict the browser API key to the app's domains
+- **Why:** the Firebase browser key ("Browser key (auto created by Firebase)" in project `print-to-frame-erp`) has API restrictions but no website restrictions, so any site can use it for the APIs it allows (checked read-only 2026-09-27).
+- **Owner steps:** Google Cloud console → APIs & Services → Credentials → that key → Application restrictions: Websites → add the production domain(s), the Vercel preview domain pattern and `localhost` origins. Do it once LIVE-3 settles the production domain, then check sign-in and the Drive Picker still work.
+
 ---
 
 ## Tests
@@ -292,6 +304,9 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 ### TST-3: More coverage
 - No component tests yet for `Leads`, `QuotationBuilder`, `Customers`. Add wiring tests where money moves (quote to invoice). Then run `npm run coverage` and refresh the coverage map and register in `docs/04_workflows/TESTING.md`.
 
+### TST-4: Manual check of Picker attach and staff uploads on a deployment
+- On this repository's Vercel deployment (not the old portal): as the super admin, attach a Drive file to a quotation through the Picker; as an Operations user, upload a blueprint on a fabrication card; as an Admin, upload a partner document; submit a public partner registration with a BR copy. Each should succeed; as a Partner, the vault upload should be refused. Record the result in `CHANGELOG.md`.
+
 ---
 
 ## Engineering health
@@ -303,7 +318,7 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 - Its own pull request, done after ENG-1 so the formatting churn does not bury real changes. Add `prettier` and a `format` script; the repo already has `.editorconfig` (2 spaces, LF).
 
 ### ENG-3: Repository hygiene
-- `public/portal-login-template.html` and `public/web and erp design theme.md` (unused? verify with a search first); the `@google/genai` dependency (the browser calls the AI through the server proxy, so it may be used only by `vite.config.js`; verify); about 90 stale `claude/*` branches on the remote (list with `git branch -r`, delete only merged ones with the owner's OK); a pull request template under `.github/`; `LICENSE` (DEC-9).
+- `public/portal-login-template.html` and `public/web and erp design theme.md` (unused? verify with a search first); the `@google/genai` dependency (the browser calls the AI through the server proxy, so it may be used only by `vite.config.js`; verify); about 90 stale `claude/*` branches on the remote (list with `git branch -r`, delete only merged ones with the owner's OK); a pull request template under `.github/`; `LICENSE` (DEC-9). **Milestone 1:** `LICENSE` done (DEC-9); merged `claude/*` branches cleaned.
 
 ### ENG-4: Remove the two unused Firestore databases from `firebase.json`
 - The owner confirmed (2026-09-21) that `ai-studio-printtoframeerp-...` and `ai-studio-printtoframe-...` are unused. Removing their entries makes a rules deploy touch `(default)` only. The databases themselves can be deleted later, separately, with the owner's go. Do this before the rules deploy in LIVE-1.
@@ -312,7 +327,7 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 - `package.json` has `push:staging` (`git add .` then commit and push) and `deploy:live` (merge and push `main`). They commit everything blindly and skip review. Replace them with the documented steps in `docs/04_workflows/DEPLOY_PROCESS.md`, or remove them, with the owner's OK.
 
 ### ENG-6: Documentation that no longer matches reality
-- Root `CLAUDE.md`, "Branching & deployment workflow": it says `main` is production and mentions two skills under `.agents/skills/`. Today production deploys from the original repository, and `.agents/skills/` is not in this repository. Correct it (see LIVE-3). Also re-check `docs/04_workflows/DEPLOY_PROCESS.md` and `GIT_WORKFLOW.md` once the deploy path is settled.
+- Root `CLAUDE.md`, "Branching & deployment workflow": it says `main` is production and mentions two skills under `.agents/skills/`. Today production deploys from the original repository, and `.agents/skills/` is not in this repository. Correct it (see LIVE-3). Also re-check `docs/04_workflows/DEPLOY_PROCESS.md` and `GIT_WORKFLOW.md` once the deploy path is settled. **Partly done in Milestone 1** (PLAN, handoff, git workflow, root `CLAUDE.md`, README, index, module maps); re-check again after LIVE-3.
 
 ---
 
