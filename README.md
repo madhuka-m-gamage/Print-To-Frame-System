@@ -24,7 +24,7 @@ npm run seed:emulator        # in a second terminal
 npm run dev:emulated
 ```
 
-The emulator setup covers Firestore and Auth only. File uploads (partner documents, fabrication blueprints) need a real Storage bucket. Seeded logins are listed in [docs/04_workflows/TESTING.md](docs/04_workflows/TESTING.md).
+The emulator setup covers Firestore, Auth and Storage (`npm run test:rules` starts all three); the dev server's `dev:emulated` uses Firestore and Auth, so file uploads in the browser need a real Storage bucket. Seeded logins are listed in [docs/04_workflows/TESTING.md](docs/04_workflows/TESTING.md).
 
 Server-side features (AI drafting, email, creating or resetting Firebase Auth users) need real credentials: `GEMINI_API_KEY`, `SMTP_USER` and `SMTP_APP_PASSWORD`, and `FIREBASE_SERVICE_ACCOUNT_JSON`. Never commit them. In production they are Vercel environment variables.
 

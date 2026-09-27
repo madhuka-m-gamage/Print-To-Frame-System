@@ -8,13 +8,14 @@ One-stop map of every document in this repo. Update this file whenever a doc is 
 - Backend: `api/` (Vercel serverless functions)
 - Cloud Functions: none (no `functions/` folder)
 - Firestore rules: `firestore.rules`
+- Storage rules: `storage.rules`
 
 ## Root
 
 - [CLAUDE.md](CLAUDE.md): shared instructions for Claude Code
 - `CLAUDE.local.md`: personal, gitignored
 - [CHANGELOG.md](CHANGELOG.md): change history
-- [PLAN.md](PLAN.md): current investigation progress
+- [PLAN.md](PLAN.md): progress tracker and roadmap
 
 ## Architecture
 
@@ -55,8 +56,8 @@ Map, then per-module Claude instructions.
 - [GIT_WORKFLOW.md](docs/04_workflows/GIT_WORKFLOW.md)
 - [DEPLOY_PROCESS.md](docs/04_workflows/DEPLOY_PROCESS.md)
 - [TESTING.md](docs/04_workflows/TESTING.md)
-- [POST_MERGE_VERIFICATION_REPORT.md](docs/POST_MERGE_VERIFICATION_REPORT.md): 16-module post-merge verification report
-- [HANDOFF_REPORT.md](docs/HANDOFF_REPORT.md): Antigravity to Claude Code handoff report
+- [POST_MERGE_VERIFICATION_REPORT.md](docs/POST_MERGE_VERIFICATION_REPORT.md): historical: Antigravity 16-module review verification
+- [HANDOFF_REPORT.md](docs/HANDOFF_REPORT.md): Milestone 1 handoff (journey, live vs repo, how we work, what's left)
 
 ## Decisions
 
