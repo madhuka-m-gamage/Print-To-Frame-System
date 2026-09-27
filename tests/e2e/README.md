@@ -15,7 +15,7 @@ The run fails up front unless `GCLOUD_PROJECT` starts with `demo-` and the emula
 - Chromium: `npx playwright install chromium` (about 150 MB download, once).
 
 ## Seeded accounts
-Password `Passw0rd!test`: `admin@example.com` (Admin), `partner@example.com` (Partner), `deactivated@example.com` (Sales, Deactivated). See `docs/04_workflows/TESTING.md`.
+Password `Passw0rd!test`: `admin@example.com` (Admin), `partner@example.com` (Partner), `deactivated@example.com` (Sales, Deactivated), `sales@example.com`, `manager@example.com`, `customer@example.com`. The money journey uses deal `D-200001`; its invoices are cleared on each seed. See `docs/04_workflows/TESTING.md`.
 
 ## Debug
 `npx playwright test --ui` opens the UI mode; `--headed` shows the browser; `--debug` steps through a test. Traces and failure screenshots land in `test-results/`.
