@@ -86,7 +86,7 @@ Every item implicitly includes these.
 | LIVE-3 | One canonical repository and one deploy path | rollout | M | **yes** | yes | DEC-6 |
 | LIVE-4 | Give the tooling access to the live Vercel project | rollout | S | Vercel | owner | none |
 
-**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
+**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
 
 ---
 
@@ -143,11 +143,12 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 ### MON-1: Deal completion must wait for its Final invoice
 - **Why:** in `src/features/deals/Deals.jsx`, `handleMoveForwardInner` completes a deal and calls `onSaveInvoice(...)` without waiting for it, inside a `setLeads` updater. `handleSaveInvoice` (`src/App.jsx`) now returns `true` or `false`, and Fabrication's QA pass already aborts on `false`. A failed save still completes the deal and loses the Final invoice.
 - **Files:** `src/features/deals/Deals.jsx`, `tests/component/Deals.test.jsx`.
-- [ ] **Step 1: Write the failing test** in `tests/component/Deals.test.jsx` (see the existing "creates a 25% Final invoice when a deal in Hand Over is moved to Completed" for the setup): render with `onSaveInvoice = vi.fn(async () => false)`, click Move forward on a Hand Over deal, expect the deal is **not** written as `Completed` (`updateDocument` not called with `stage: 'Completed'`) and `toast.error` mentions the invoice.
-- [ ] **Step 2: Run it and see it fail:** `npx vitest run --config vitest.component.config.js tests/component/Deals.test.jsx`.
-- [ ] **Step 3: Implement.** Move the invoice save out of the synchronous `setLeads` updater: compute the completion inputs first, `const saved = await onSaveInvoice(...)`, and only if `saved !== false` update the lead and accrue commission. Keep the existing reserved-id and `getExistingFinalInvoice` guards.
-- [ ] **Step 4: Run the whole component suite and the gate.** Existing tests that pass `onSaveInvoice = vi.fn()` (returns `undefined`) must still pass, so treat only an explicit `false` as failure, like Fabrication does.
-- [ ] **Step 5: Update `docs/02_modules/deals/CLAUDE.md` and `CHANGELOG.md`; commit.**
+- [x] **Step 1: Write the failing test** in `tests/component/Deals.test.jsx` (see the existing "creates a 25% Final invoice when a deal in Hand Over is moved to Completed" for the setup): render with `onSaveInvoice = vi.fn(async () => false)`, click Move forward on a Hand Over deal, expect the deal is **not** written as `Completed` (`updateDocument` not called with `stage: 'Completed'`) and `toast.error` mentions the invoice.
+- [x] **Step 2: Run it and see it fail:** `npx vitest run --config vitest.component.config.js tests/component/Deals.test.jsx`.
+- [x] **Step 3: Implement.** Move the invoice save out of the synchronous `setLeads` updater: compute the completion inputs first, `const saved = await onSaveInvoice(...)`, and only if `saved !== false` update the lead and accrue commission. Keep the existing reserved-id and `getExistingFinalInvoice` guards.
+- [x] **Step 4: Run the whole component suite and the gate.** Existing tests that pass `onSaveInvoice = vi.fn()` (returns `undefined`) must still pass, so treat only an explicit `false` as failure, like Fabrication does.
+- [x] **Step 5: Update `docs/02_modules/deals/CLAUDE.md` and `CHANGELOG.md`; commit.**
+- **Done 2026-09-27:** the Final invoice is built from the deal before the `setLeads` update and awaited; a `false` result aborts the move with an error toast. Tests in `tests/component/Deals.test.jsx`.
 
 ### MON-2: Stamp `leadId` and `dealId` on every invoice
 - **Why:** a Deal is the same lead continuing (`originalLeadId` links back). The Advance invoice is keyed by the lead id (created before conversion) and the Final by the Deal id. Lookups work through `getLineageIds` / `invoicesForLineage` (`src/features/leads/leadLineage.js`), but the stored data is uneven.

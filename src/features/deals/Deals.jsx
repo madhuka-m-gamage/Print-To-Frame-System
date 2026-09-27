@@ -297,8 +297,8 @@ export default function Deals({
     const nextStage = DEALS_STAGES[currentIndex + 1];
     const willComplete = nextStage === "Completed";
 
-    // Firestore's atomic ID generator is async, so it must be resolved
-    // BEFORE entering the synchronous setLeads updater below. Completing a
+    // Firestore's atomic ID generator and the invoice save are async, so both
+    // must be resolved BEFORE entering the synchronous setLeads updater below. Completing a
     // deal without its Final invoice would silently lose both the invoice
     // AND the commission it triggers (they used to be gated together only
     // by a boolean that a caught error could bypass) — so if the number
@@ -314,6 +314,38 @@ export default function Deals({
         finalInvId = await generateInvoiceId('Final');
       } catch (err) {
         toast.error('Could not generate the Final invoice number, so this deal was NOT marked Completed. Please try again: ' + err.message);
+        return;
+      }
+
+      const { quote: linkedQuote, totalValue, finalAmount, advancePaid } = getFinalInvoiceAmounts(dealBeingMoved, quotations);
+      const invoiceSaved = await onSaveInvoice({
+        id: finalInvId,
+        leadId: dealBeingMoved.id,
+        dealId: dealBeingMoved.id,
+        partnerId: dealBeingMoved.partnerId || dealBeingMoved.agentId || '',
+        originalLeadId: dealBeingMoved.originalLeadId || '',
+        linkedJobNo: dealBeingMoved.jobNo || dealBeingMoved.linkedJobNo || '',
+        jobNo: dealBeingMoved.jobNo || dealBeingMoved.linkedJobNo || '',
+        quotationId: linkedQuote?._firestoreId || linkedQuote?.id || '',
+        customerName: dealBeingMoved.name || 'Direct Customer',
+        company: dealBeingMoved.company || '',
+        phone: dealBeingMoved.phone || '',
+        date: new Date().toISOString().split('T')[0],
+        amount: finalAmount,
+        totalValue,
+        advancePaid,
+        balanceDue: finalAmount,
+        type: 'Final',
+        status: 'Unpaid',
+        aiDraft: dealBeingMoved.jobScope || `Final Settlement (25%) for project.`,
+        dueDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+        lineItems: linkedQuote?.lineItems || [
+          { description: dealBeingMoved.jobScope || "Custom steel framing final balance settlement", qty: 1, unit: "job", unitPrice: totalValue, taxPct: 0, discountPct: 0 }
+        ]
+      });
+      // Never complete the deal (or accrue its commission) if its Final invoice was not saved.
+      if (invoiceSaved === false) {
+        toast.error('The Final invoice could not be saved, so this deal was NOT marked Completed. Please try again.');
         return;
       }
     }
@@ -354,35 +386,6 @@ export default function Deals({
       };
 
       if (liveNextStage === "Completed") {
-        if (onSaveInvoice && finalInvId) {
-          const { quote: linkedQuote, totalValue, finalAmount, advancePaid } = amounts;
-          onSaveInvoice({
-            id: finalInvId,
-            leadId: deal.id,
-            dealId: deal.id,
-            partnerId: deal.partnerId || deal.agentId || '',
-            originalLeadId: deal.originalLeadId || '',
-            linkedJobNo: deal.jobNo || deal.linkedJobNo || '',
-            jobNo: deal.jobNo || deal.linkedJobNo || '',
-            quotationId: linkedQuote?._firestoreId || linkedQuote?.id || '',
-            customerName: deal.name || 'Direct Customer',
-            company: deal.company || '',
-            phone: deal.phone || '',
-            date: new Date().toISOString().split('T')[0],
-            amount: finalAmount,
-            totalValue,
-            advancePaid,
-            balanceDue: finalAmount,
-            type: 'Final',
-            status: 'Unpaid',
-            aiDraft: deal.jobScope || `Final Settlement (25%) for project.`,
-            dueDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
-            lineItems: linkedQuote?.lineItems || [
-              { description: deal.jobScope || "Custom steel framing final balance settlement", qty: 1, unit: "job", unitPrice: totalValue, taxPct: 0, discountPct: 0 }
-            ]
-          });
-        }
-
         const dealPartnerId = getLeadPartnerId(deal);
         if (dealPartnerId && partners.length && setPartners && !deal.commissionAccrued) {
           const agent = findPartnerForLead(deal, partners);
