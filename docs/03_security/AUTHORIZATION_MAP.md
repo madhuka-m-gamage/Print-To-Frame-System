@@ -20,7 +20,7 @@ Read from the code on 2026-09-21 (staging at the time, live rules equal to `main
 | 6 | `api/admin-user.js`, `api/generate.js`, `api/send-email.js` | Admin SDK actions with the service-account credential | See "Server endpoints" |
 | 7 | Vite dev proxy in `vite.config.js` | Re-implements the three endpoints for `npm run dev` | Development only, not part of the production build; see "Findings" |
 
-Not present (checked): custom auth claims, Cloud Functions, any other server code, any other Admin SDK use. Firebase Storage has no active rules in the live project, and the two extra `ai-studio-...` Firestore databases are unused.
+Not present (checked): custom auth claims, Cloud Functions, any other server code, any other Admin SDK use. Firebase Storage has no active rules in the live project (repo rules in `storage.rules`, DEC-3, not deployed yet), and the two extra `ai-studio-...` Firestore databases are unused.
 
 ## Server endpoints (Admin SDK, bypass the rules)
 

@@ -100,3 +100,12 @@ export async function asRole(testEnv, role, email) {
   });
   return testEnv.authenticatedContext(email, { email });
 }
+
+// Storage rules read the caller's users document through Firestore, so both are loaded.
+export function setupStorageRulesEnv() {
+  return initializeTestEnvironment({
+    projectId: PROJECT_ID,
+    firestore: { rules: readFileSync('firestore.rules', 'utf8'), host: 'localhost', port: 8080 },
+    storage: { rules: readFileSync('storage.rules', 'utf8'), host: 'localhost', port: 9199 },
+  });
+}
