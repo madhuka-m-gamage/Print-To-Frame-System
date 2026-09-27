@@ -24,7 +24,7 @@ Updated 2026-09-27. These are honest estimates, not measurements: they show wher
 | 8.2 Standard project structure | `[##########]` ~100% | 12 of 12 tasks built (the last PR is open): README and env example, unused files removed, one docs folder per module, `@/` import alias, shared code, feature folders for auth, profile, dashboard, messaging, leads, customers, quotations, deals, invoicing, partners, fabrication, logistics and admin (all of `src/components` is gone). Clean-up, ADR `0003-source-layout.md` and removal of the temporary codemod are in the last PR |
 | Project folder move (`erp-system` up to `Print-To-Frame-System`) | `[##########]` 100% | Done 2026-09-21, verified from the new root |
 | Live rollout chain (matrix 3.3, rules 3.4d and 3.5d, move production to this repository) | `[##--------]` ~20% | Prepared, not applied. Moved to the follow-up backlog by the owner on 2026-09-21; runbook `docs/04_workflows/LIVE_ROLLOUT.md` |
-| Follow-up backlog | `[#---------]` ~10% | About 45 items in `docs/04_workflows/BACKLOG.md`. Owner decisions DEC-1 to DEC-9 answered 2026-09-27 (DEC-7 cell review still open); implementation items next |
+| Follow-up backlog | `[#---------]` ~10% | About 45 items in `docs/04_workflows/BACKLOG.md`. Owner decisions DEC-1 to DEC-9 answered and implemented in the repo 2026-09-27 (Storage rules deployed live 2026-09-27; the live matrix reset to defaults is still pending) |
 
 Merged into `staging` so far: PRs #6 to #51. Open: the final 8.2 PR (clean-up, ADR, removal of the codemod).
 
@@ -102,7 +102,7 @@ Owner decision 2026-09-20 ([docs/05_decisions/0002-deferred-until-live-rollout.m
 
 ## Follow-up backlog (tackle one by one after the Phase 7 workflow)
 
-Owner decisions 2026-09-27 (DEC-1 to DEC-9, full text in `docs/04_workflows/BACKLOG.md` and ADR 0004): one default partner commission of LKR 38.00 per sq ft everywhere; a dispatcher records cash on delivery (no matrix change); enable Firebase Storage with narrow rules; block the Final invoice and the delivery job for Cancelled projects; no migration of old data, because live data is test-only and a fresh environment (Firebase/GCP, Vercel) will be set up; this repository is canonical and LIVE-3 is approved; review the 57-cell live-vs-default permission table before changing roles; Drive moves to Google Picker with `drive.file`, and Drive and Contacts connection is offered only to the super admin accounts for now; the code is proprietary (`LICENSE` added). `staging` was promoted to `main` on 2026-09-27 (PR #60).
+Owner decisions 2026-09-27 (DEC-1 to DEC-9, full text in `docs/04_workflows/BACKLOG.md` and ADR 0004): one default partner commission of LKR 38.00 per sq ft everywhere; a dispatcher records cash on delivery (no matrix change); enable Firebase Storage with narrow rules; block the Final invoice and the delivery job for Cancelled projects; no migration of old data, because live data is test-only and a fresh environment (Firebase/GCP, Vercel) will be set up; this repository is canonical and LIVE-3 is approved; use the default permissions for all 57 differing cells (DEC-7); Drive moves to Google Picker with `drive.file`, and Drive and Contacts connection is offered only to the super admin accounts for now; the code is proprietary (`LICENSE` added). `staging` was promoted to `main` on 2026-09-27 (PR #60).
 
 Owner decision 2026-09-21: side findings are parked here, not folded into the step in progress, and handed back as one list when the workflow finishes. Add a line for anything worth fixing that is outside the current step.
 

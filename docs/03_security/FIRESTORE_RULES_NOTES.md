@@ -59,7 +59,7 @@
 - `/leads`: read with `leads` or `pipeline`; create and update check `pipeline` when the document is a deal (`isDeal`), else `leads`; delete follows `leads` delete. Invoices, receipts, projects and logistics deletes follow their own `delete` permission.
 - Not done: limiting the Partner role to its own `partners` document (the Partners screen still lists the whole collection), and field limits on what a partner may edit about themselves.
 
-## Storage rules (`storage.rules`, DEC-3; not deployed)
+## Storage rules (`storage.rules`, DEC-3; deployed 2026-09-27)
 
 Default deny. Staff means the super admin, or an approved, active account whose role is not Partner, Customer or Business Client (read from `users/{email}` with `firestore.get()`, the same way `isActiveUser()` works here). Files are images or PDFs only and never overwritten.
 - `blueprints/{jobNo}/{file}`: staff read and add, under 10MB.
