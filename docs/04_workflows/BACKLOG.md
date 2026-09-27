@@ -71,7 +71,7 @@ Every item implicitly includes these.
 | SEC-8 | Partner-scoped reads on leads and invoices (partners D-9) | security | M | rules | no | SEC-7 |
 | SEC-9 | Effective-access test (which rule wins) | security | M | no | no | none |
 | SEC-10 | Restrict the browser API key to the app's domains | security | S | GCP console | owner | LIVE-3 |
-| TST-1 | Component tests for the lead card | tests | M | no | no | none |
+| TST-1 | Component tests for the lead card (done) | tests | M | no | no | none |
 | TST-2 | End-to-end journeys (money, RBAC) | tests | L | no | no | none |
 | TST-3 | Tests for Leads, QuotationBuilder, Customers; refresh the coverage map | tests | M | no | no | none |
 | TST-4 | Manual check: Picker attach and staff uploads on a deployment | tests | S | deployment | owner | none |
@@ -86,7 +86,7 @@ Every item implicitly includes these.
 | LIVE-3 | One canonical repository and one deploy path | rollout | M | **yes** | yes | DEC-6 |
 | LIVE-4 | Give the tooling access to the live Vercel project | rollout | S | Vercel | owner | none |
 
-**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3 and SEC-9 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
+**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9 and TST-1 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
 
 ---
 
@@ -304,6 +304,7 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 
 ### TST-1: Component tests for the lead card
 - `src/features/leads/LeadCardDetails.jsx` (about 1,776 lines) has none. Cover: the Convert button shows only at the `Received` stage; choosing an agent fills `partnerId`, names and the partner's rate and changes the quote's commission (`partnerFieldsFor`, `pricingLeadView`); invoice reprint uses the saved invoice as issued (`resolveInvoiceForPrint`); oversized audio is downsampled, not rejected. The lead card is heavy to render: mock `@/services/firestoreSync`, `@/services/gemini` and `@/shared/utils/toast`, as `tests/component/FabricationCardDetails.test.jsx` does.
+- **Done 2026-09-27:** `tests/component/LeadCardDetails.test.jsx`, 6 tests: Convert to Deal shows only at `Received` (not at other stages or once converted); choosing an agent saves `agentId`, `partnerId`, both names and the partner's rate, and switching agents changes the quoted rate per sq ft; the Advance reprint passes the saved invoice's id, amount, total and customer name (not the renamed lead); with no invoice saved the Final print is `DRAFT-FINAL` at 25%; a 4 MB WAV goes through `downsampleAudio` and is accepted, a small MP3 is sent as-is. No bug found.
 
 ### TST-2: End-to-end journeys (B6)
 - **Money journey:** quotation to Advance invoice to Final invoice, exactly one `INV-FIN`. **RBAC journey:** Admin, Sales, Partner and Customer each see only their navigation; the seeded deactivated user cannot sign in. Needs `tests/fixtures/seed.mjs` extended with Sales, Customer and Manager users. Specs go in `tests/e2e/`, run with `npm run test:e2e` (Playwright against the emulators; see `tests/e2e/README.md`). Should exist before the restrictive rules are deployed.
