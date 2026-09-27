@@ -62,6 +62,24 @@ describe('FabricationWorks QA pass wiring', () => {
   });
 });
 
+describe('FabricationWorks Cancelled project guard (DEC-4)', () => {
+  it('refuses the QA pass and the Final invoice when the project was cancelled while the gate was open', async () => {
+    const project = makeProject({ jobNo: 'PTF-2001', title: 'Gallery Canvas', status: 'Ready For Inspection', value: 100000 });
+    const setProjects = vi.fn();
+    const onSaveInvoice = vi.fn();
+    const ui = (projects) => <FabricationWorks projects={projects} setProjects={setProjects} customers={[]} partners={[]} currentUser={admin} onSaveInvoice={onSaveInvoice} />;
+    const { rerender } = renderWithProviders(ui([project]), { role: 'Admin' });
+    fireEvent.click(screen.getByTitle('Run QA Inspection Gate'));
+    const approve = await screen.findByRole('button', { name: /Approve & Complete/i });
+    rerender(ui([{ ...project, status: 'Cancelled', cancelledReason: 'Deal D-0001 deleted' }]));
+    fireEvent.click(approve);
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('PTF-2001 is Cancelled (Deal D-0001 deleted), so no Final invoice can be created for it.'));
+    expect(generateInvoiceId).not.toHaveBeenCalled();
+    expect(onSaveInvoice).not.toHaveBeenCalled();
+    expect(setProjects).not.toHaveBeenCalled();
+  });
+});
+
 describe('FabricationWorks Completed-stage lock', () => {
   it('offers a backward move from Ongoing but not from Completed', () => {
     const ongoing = renderFabricationWith('Ongoing');

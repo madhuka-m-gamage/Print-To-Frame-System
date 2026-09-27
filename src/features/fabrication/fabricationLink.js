@@ -40,3 +40,12 @@ export function resolveManualJobLink(link, deals = []) {
     },
   };
 }
+
+const BLOCKED_ACTION = { finalInvoice: 'no Final invoice', delivery: 'no delivery job' };
+
+// A deleted deal cancels its project; a Cancelled project is never invoiced or delivered.
+export function cancelledProjectBlock(project, action) {
+  if (project?.status !== 'Cancelled') return null;
+  const reason = project.cancelledReason ? ` (${project.cancelledReason})` : '';
+  return `${project.jobNo} is Cancelled${reason}, so ${BLOCKED_ACTION[action]} can be created for it.`;
+}
