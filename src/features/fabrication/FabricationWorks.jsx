@@ -42,7 +42,7 @@ import { stripEmojis, sanitizeTechnicalScope } from '@/shared/utils/validation';
 import { generateText } from '@/services/gemini';
 import { getExistingFinalInvoice } from '@/shared/utils/entityUtils';
 import { logActivity } from '@/services/auditLog';
-import { NON_BILLABLE, resolveManualJobLink } from './fabricationLink';
+import { NON_BILLABLE, resolveManualJobLink, cancelledProjectBlock } from './fabricationLink';
 import { checklistWithGuardedQa, withDefectRecorded } from './qaGate';
 import { buildLogisticsTask } from '@/features/logistics/logisticsTask';
 import { STEEL_PROFILES, calculateCutList, mmToFtIn } from './cutListEngine';
@@ -543,6 +543,11 @@ export default function FabricationWorks({
 
   // Dispatch Completed Job to Logistics Delivery
   const handleDispatchToLogistics = async (job) => {
+    const cancelled = cancelledProjectBlock(projects.find(p => p.jobNo === job.jobNo) || job, 'delivery');
+    if (cancelled) {
+      toast.error(cancelled);
+      return;
+    }
     let deliveryId;
     try {
       deliveryId = await generateAtomicId('L-DL');
@@ -681,6 +686,11 @@ export default function FabricationWorks({
     // that didn't pass all four.
     if (!qaForm.squareness || !qaForm.welds || !qaForm.coating || !qaForm.canvasTension) {
       toast.error('All 4 QA checks must pass before approving — use "Fail & Send to Revision" instead.');
+      return;
+    }
+    const cancelled = cancelledProjectBlock(projects.find(p => p.jobNo === inspectingJob.jobNo) || inspectingJob, 'finalInvoice');
+    if (cancelled) {
+      toast.error(cancelled);
       return;
     }
     setIsApprovingQA(true);

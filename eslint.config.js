@@ -55,6 +55,11 @@ export default [
       }],
     },
   },
+  // Loaded by api/send-email.js in plain Node, where the @/ alias does not resolve.
+  {
+    files: ['src/constants/emailTemplates.js'],
+    rules: { 'no-restricted-imports': 'off' },
+  },
   {
     files: ['tests/unit/**/*.{js,jsx}', 'tests/component/**/*.{js,jsx}', 'tests/api/**/*.{js,jsx}', 'tests/integration/**/*.{js,jsx}', 'tests/helpers/**/*.{js,jsx}'],
     rules: {

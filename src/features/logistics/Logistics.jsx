@@ -36,6 +36,7 @@ import { stripEmojis } from '@/shared/utils/validation';
 import { deliveryStatusForTask } from './logisticsTask';
 import { usePermissions } from '@/context/PermissionsContext';
 import { generateText } from '@/services/gemini';
+import { cancelledProjectBlock } from '@/features/fabrication/fabricationLink';
 import { 
   getGoogleMapsUrl, 
   getWhatsAppUrl, 
@@ -473,6 +474,13 @@ export default function Logistics({
       toast.error("Please enter a destination or pickup address.");
       return;
     }
+    if (activeSubTab === "delivery" && form.linkedJobNo) {
+      const cancelled = cancelledProjectBlock(projects.find(p => p.jobNo === form.linkedJobNo), 'delivery');
+      if (cancelled) {
+        toast.error(cancelled);
+        return;
+      }
+    }
     const jobPrefix = activeSubTab === "pickup" ? "L-PK" : "L-DL";
     let jobId;
     try {
@@ -834,7 +842,7 @@ export default function Logistics({
                   className="w-full p-2.5 bg-surface-container border border-primary/30 rounded-xl text-xs font-semibold text-on-surface focus:ring-2 focus:ring-primary/50"
                 >
                   <option value="">-- Choose Work Order to Deliver --</option>
-                  {projects.map((p) => (
+                  {projects.filter((p) => p.status !== 'Cancelled').map((p) => (
                     <option key={p.jobNo} value={p.jobNo}>
                       {p.jobNo} — {p.customerName || 'Client'} ({p.title || p.scope?.slice(0, 30) || 'Frame'})
                     </option>

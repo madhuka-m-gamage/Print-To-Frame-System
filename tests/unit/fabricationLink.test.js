@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { dimensionsFromLead, resolveManualJobLink, NON_BILLABLE } from '@/features/fabrication/fabricationLink';
+import { dimensionsFromLead, resolveManualJobLink, NON_BILLABLE, cancelledProjectBlock } from '@/features/fabrication/fabricationLink';
 
 const deal = {
   id: 'D-0001', originalLeadId: 'L-0001', name: 'Client', phone: '+94711111111', company: 'Co', email: 'Client@Example.com',
@@ -42,5 +42,23 @@ describe('resolveManualJobLink', () => {
   it('leaves the size open when the linked deal has none', () => {
     const r = resolveManualJobLink('D-0002', [{ id: 'D-0002', name: 'X' }]);
     expect(r.fields.dimensionsLocked).toBeUndefined();
+  });
+});
+
+describe('cancelledProjectBlock (DEC-4)', () => {
+  const cancelled = { jobNo: 'PTF-0001', status: 'Cancelled', cancelledReason: 'Deal D-0001 deleted' };
+
+  it('explains why a Cancelled project cannot get a Final invoice or a delivery job', () => {
+    expect(cancelledProjectBlock(cancelled, 'finalInvoice')).toBe('PTF-0001 is Cancelled (Deal D-0001 deleted), so no Final invoice can be created for it.');
+    expect(cancelledProjectBlock(cancelled, 'delivery')).toBe('PTF-0001 is Cancelled (Deal D-0001 deleted), so no delivery job can be created for it.');
+  });
+
+  it('works without a recorded reason', () => {
+    expect(cancelledProjectBlock({ jobNo: 'PTF-0002', status: 'Cancelled' }, 'delivery')).toBe('PTF-0002 is Cancelled, so no delivery job can be created for it.');
+  });
+
+  it('allows any other project, or none', () => {
+    expect(cancelledProjectBlock({ jobNo: 'PTF-0003', status: 'Completed' }, 'delivery')).toBeNull();
+    expect(cancelledProjectBlock(undefined, 'finalInvoice')).toBeNull();
   });
 });

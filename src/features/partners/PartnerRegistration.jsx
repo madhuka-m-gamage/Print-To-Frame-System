@@ -9,6 +9,7 @@ import {
   Upload, Check, AlertCircle, FileText, Sparkles, Handshake, 
   ArrowRight, ShieldCheck, CheckCircle2 
 } from 'lucide-react';
+import { DEFAULT_REFERRAL_COMMISSION_RATE } from '@/features/quotations/quotePricing';
 
 const SPECIALTIES = [
   'Custom Steel Box Iron Framing',
@@ -157,7 +158,7 @@ export default function PartnerRegistration() {
         },
         notes: formData.notes,
         status: 'Pending',
-        defaultCommissionRate: 53.5, // 53.50 LKR per SqFt
+        defaultCommissionRate: DEFAULT_REFERRAL_COMMISSION_RATE,
         submittedAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };

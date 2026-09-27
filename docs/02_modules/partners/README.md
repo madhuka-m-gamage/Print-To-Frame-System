@@ -16,7 +16,7 @@
 ## Firestore collections read/written
 
 - `partners`: written by `Partners.jsx` (add, update, delete), `Deals.jsx` (commission accrual) and `App.jsx` (photo and contact fields).
-- `partner_applications`: created by `PartnerRegistration.jsx` (`status: 'Pending'`, `defaultCommissionRate: 53.5`); `AgentDatabase.jsx` sets Approved or Rejected.
+- `partner_applications`: created by `PartnerRegistration.jsx` (`status: 'Pending'`, `defaultCommissionRate: DEFAULT_REFERRAL_COMMISSION_RATE`, LKR 38.00); `AgentDatabase.jsx` sets Approved or Rejected.
 - `referral_claims`: created in `Partners.jsx` (`Pending Verification`), verified to `Verified & Linked`.
 - `partner_payouts`: only the constant exists in `firestoreSync.js`. **No reads or writes anywhere in `src`.**
 - Other modules: `leads` (created by `ReferralForm.jsx`; `referralStatus` / `invoicePaid` written by `App.jsx`), `users` (deleted when a partner is removed; written on approval), Firebase Auth (created / deleted via `api/admin-user.js`).

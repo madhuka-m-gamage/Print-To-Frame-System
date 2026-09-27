@@ -63,3 +63,4 @@ Map, then per-module Claude instructions.
 - [0001-why-quotation-engine-is-custom.md](docs/05_decisions/0001-why-quotation-engine-is-custom.md)
 - [0002-deferred-until-live-rollout.md](docs/05_decisions/0002-deferred-until-live-rollout.md)
 - [0003-source-layout.md](docs/05_decisions/0003-source-layout.md): `src/features`, `src/shared` and the `@/` import alias
+- [0004-owner-decisions-backlog.md](docs/05_decisions/0004-owner-decisions-backlog.md): answers to backlog decisions DEC-1 to DEC-9

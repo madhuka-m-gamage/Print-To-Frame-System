@@ -18,6 +18,7 @@ Partner / referral network: public application, admin approval, QR referral link
 ## Triggers and side effects
 
 - A lead or deal links to its partner by `partnerId` or `agentId` (`'Direct'` means none); always resolve it with `getLeadPartnerId` / `findPartnerForLead` (`src/features/partners/partnerLink.js`), never a single field. Choosing an agent on the lead card writes `agentId`, `partnerId`, both names and the partner's rate, and quoting uses the partner's current rate (`pricingLeadView`). The public referral form no longer invents a 53.5 rate.
+- The default partner commission is `DEFAULT_REFERRAL_COMMISSION_RATE` (LKR 38.00 per sq ft, `src/features/quotations/quotePricing.js`, owner decision DEC-1): new partners, applications, the ledger, payment-cleared and deal-completion fallbacks, and email previews all use it.
 - Commission accrues when the deal is Completed (`Deals.jsx`); eligibility at full payment (`App.jsx`, and the Partners screen through `invoicesForLineage`).
 - **"Disburse Payout" is a toast only**; nothing is written and `pending` is never reduced.
 

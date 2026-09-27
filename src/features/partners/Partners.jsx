@@ -28,6 +28,7 @@ import { sendTemplatedEmail } from '@/services/mailer';
 import { deleteUserAccount, resetUserPassword } from '@/features/admin/adminUsers';
 import { logActivity } from '@/services/auditLog';
 import { invoicesForLineage } from '@/features/leads/leadLineage';
+import { DEFAULT_REFERRAL_COMMISSION_RATE, sqFtFromPricing } from '@/features/quotations/quotePricing';
 
 export default function Partners({ 
   partners = [], 
@@ -97,7 +98,6 @@ export default function Partners({
     };
   }, []);
 
-  // New Partner Form State (Default commission: 53.50 LKR per sq ft)
   const [newPartner, setNewPartner] = useState({
     name: '',
     partnerId: '',
@@ -106,7 +106,7 @@ export default function Partners({
     phone: '',
     email: '',
     address: 'Colombo, Sri Lanka',
-    commissionRate: 53.5, // LKR per SqFt
+    commissionRate: DEFAULT_REFERRAL_COMMISSION_RATE,
     brNumber: '',
     bankName: '',
     accountNumber: '',
@@ -206,7 +206,7 @@ export default function Partners({
     return {
       name: currentUser?.name || currentUser?.company || 'Partner Studio',
       partnerId: currentUser?.partnerId || (currentUser?.identifier ? 'P-' + String(currentUser.identifier).slice(0, 4).toUpperCase() : 'P-1001'),
-      commissionRate: 53.5,
+      commissionRate: DEFAULT_REFERRAL_COMMISSION_RATE,
       type: 'Art & Framing Studio',
       phone: currentUser?.contactNumber || currentUser?.phone || '',
       email: currentUser?.email || currentUser?.identifier || '',
@@ -230,7 +230,6 @@ export default function Partners({
     }
   }, [isPartnerUser, currentPartner, partners, selectedPartner]);
 
-  // Helper to calculate partner referral stats with SqFt rate (53.5 LKR/SqFt)
   const getPartnerReferrals = useCallback((partner) => {
     if (!partner) return [];
     const pid = String(partner.partnerId || partner.id || '').toLowerCase();
@@ -252,16 +251,16 @@ export default function Partners({
       const totalPaid = leadInvoices.filter(i => i.status === 'Paid').reduce((s, i) => s + Number(i.amount || 0), 0);
       
       const dealVal = Number(lead.value || totalInvoiced || 0);
-      const totalSqFt = Number(lead.totalSqFt || lead.sqFt || (lead.pricingMetadata?.costSalesAmount ? (lead.pricingMetadata.costSalesAmount / 53.5) : 0));
+      const totalSqFt = Number(lead.totalSqFt || lead.sqFt || sqFtFromPricing(lead.pricingMetadata));
       
       // Commission is always calculated from the partner's CURRENT live rate,
       // never the lead's referral-time snapshot (lead.commissionRate) or the
       // quote-time pricingMetadata.costSalesAmount (baked from pricingEngine's
       // fixed internal cost rate) — either would pay out a stale rate if the
       // partner's rate changed since the lead was referred/quoted.
-      let commRate = Number(partner.commissionRate) > 0 ? Number(partner.commissionRate) : 53.5;
+      let commRate = Number(partner.commissionRate) > 0 ? Number(partner.commissionRate) : DEFAULT_REFERRAL_COMMISSION_RATE;
       if (commRate > 0 && commRate <= 1) {
-        commRate = 53.5;
+        commRate = DEFAULT_REFERRAL_COMMISSION_RATE;
       }
 
       let commAmount = 0;
@@ -403,7 +402,7 @@ export default function Partners({
     const partnerPayload = {
       ...newPartner,
       partnerId,
-      commissionRate: Number(newPartner.commissionRate) || 53.5,
+      commissionRate: Number(newPartner.commissionRate) || DEFAULT_REFERRAL_COMMISSION_RATE,
       createdAt: new Date().toISOString(),
     };
 
@@ -421,7 +420,7 @@ export default function Partners({
         phone: '',
         email: '',
         address: 'Colombo, Sri Lanka',
-        commissionRate: 53.5,
+        commissionRate: DEFAULT_REFERRAL_COMMISSION_RATE,
         brNumber: '',
         bankName: '',
         accountNumber: '',
@@ -479,7 +478,7 @@ export default function Partners({
     try {
       const payload = {
         ...editFormData,
-        commissionRate: Number(editFormData.commissionRate) || 53.5,
+        commissionRate: Number(editFormData.commissionRate) || DEFAULT_REFERRAL_COMMISSION_RATE,
       };
       const docId = selectedPartner._firestoreId || selectedPartner.id || selectedPartner.partnerId;
       await updateDocument(COLLECTIONS.PARTNERS, docId, payload);
@@ -903,7 +902,7 @@ export default function Partners({
                   filteredPartners.map(partner => {
                     const isSelected = (selectedPartner?.partnerId === partner.partnerId) || (selectedPartner?.id === partner.id);
                     const partnerLeads = getPartnerReferrals(partner);
-                    const partnerCommRate = Number(partner.commissionRate) > 1 ? Number(partner.commissionRate) : 53.5;
+                    const partnerCommRate = Number(partner.commissionRate) > 1 ? Number(partner.commissionRate) : DEFAULT_REFERRAL_COMMISSION_RATE;
                     const avatarPhoto = getPartnerAvatar(partner);
 
                     return (
@@ -1019,7 +1018,7 @@ export default function Partners({
                             {selectedPartner.status || 'Active'}
                           </span>
                           <span className="font-mono text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
-                            LKR {Number(selectedPartner.commissionRate > 1 ? selectedPartner.commissionRate : 53.5).toFixed(2)}/SqFt
+                            LKR {Number(selectedPartner.commissionRate > 1 ? selectedPartner.commissionRate : DEFAULT_REFERRAL_COMMISSION_RATE).toFixed(2)}/SqFt
                           </span>
                         </div>
 
@@ -1072,7 +1071,7 @@ export default function Partners({
                             setEditFormData({
                               ...selectedPartner,
                               photoURL: getPartnerAvatar(selectedPartner),
-                              commissionRate: Number(selectedPartner.commissionRate > 1 ? selectedPartner.commissionRate : 53.5)
+                              commissionRate: Number(selectedPartner.commissionRate > 1 ? selectedPartner.commissionRate : DEFAULT_REFERRAL_COMMISSION_RATE)
                             });
                             setShowEditModal(true);
                           }}
@@ -1198,7 +1197,7 @@ export default function Partners({
                                         LKR {lead.calculatedCommAmount > 0 ? lead.calculatedCommAmount.toLocaleString(undefined, { minimumFractionDigits: 2 }) : '0.00'}
                                       </div>
                                       <div className="text-[9px] text-on-surface-variant font-mono">
-                                        (LKR {Number(lead.calculatedCommRate || 53.5).toFixed(2)}/SqFt{lead.calculatedSqFt > 0 ? ` · ${lead.calculatedSqFt} SqFt` : ''})
+                                        (LKR {Number(lead.calculatedCommRate || DEFAULT_REFERRAL_COMMISSION_RATE).toFixed(2)}/SqFt{lead.calculatedSqFt > 0 ? ` · ${lead.calculatedSqFt} SqFt` : ''})
                                       </div>
                                     </td>
                                     <td className="py-3 px-4">
@@ -1233,7 +1232,7 @@ export default function Partners({
                                   <td colSpan={6} className="py-12 text-center text-on-surface-variant text-xs">
                                     <Layers size={36} className="mx-auto mb-2 opacity-25" />
                                     <p className="font-bold text-on-surface">No referrals linked yet</p>
-                                    <p className="text-[11px] text-on-surface-variant mt-1">Share your dedicated QR flyer or referral link with clients to start earning LKR 53.50/SqFt commissions!</p>
+                                    <p className="text-[11px] text-on-surface-variant mt-1">Share your dedicated QR flyer or referral link with clients to start earning LKR {DEFAULT_REFERRAL_COMMISSION_RATE.toFixed(2)}/SqFt commissions!</p>
                                   </td>
                                 </tr>
                               )}
@@ -1256,7 +1255,7 @@ export default function Partners({
                           {
                             key: 'frameworkAgreement',
                             title: 'Signed Partner Framework Agreement',
-                            desc: 'Bilateral referral terms, commission schedule (LKR 53.50/SqFt), and monthly settlements.',
+                            desc: `Bilateral referral terms, commission schedule (LKR ${DEFAULT_REFERRAL_COMMISSION_RATE.toFixed(2)}/SqFt), and monthly settlements.`,
                             doc: selectedPartner?.documents?.frameworkAgreement,
                           },
                           {
@@ -1350,7 +1349,7 @@ export default function Partners({
                               setEditFormData({ 
                                 ...selectedPartner, 
                                 photoURL: getPartnerAvatar(selectedPartner),
-                                commissionRate: Number(selectedPartner.commissionRate > 1 ? selectedPartner.commissionRate : 53.5)
+                                commissionRate: Number(selectedPartner.commissionRate > 1 ? selectedPartner.commissionRate : DEFAULT_REFERRAL_COMMISSION_RATE)
                               });
                               setShowEditModal(true);
                             }}
@@ -1544,7 +1543,7 @@ export default function Partners({
                   min="0"
                   max="1000"
                   value={newPartner.commissionRate}
-                  onChange={(e) => setNewPartner(p => ({ ...p, commissionRate: Number(e.target.value) || 53.5 }))}
+                  onChange={(e) => setNewPartner(p => ({ ...p, commissionRate: Number(e.target.value) || DEFAULT_REFERRAL_COMMISSION_RATE }))}
                   className="w-full p-2.5 bg-surface-container-low border border-outline-variant/60 rounded-xl text-on-surface font-mono font-bold"
                 />
               </div>
@@ -1633,8 +1632,8 @@ export default function Partners({
                     step="0.5"
                     min="0"
                     max="1000"
-                    value={editFormData.commissionRate || 53.5}
-                    onChange={(e) => setEditFormData(p => ({ ...p, commissionRate: Number(e.target.value) || 53.5 }))}
+                    value={editFormData.commissionRate || DEFAULT_REFERRAL_COMMISSION_RATE}
+                    onChange={(e) => setEditFormData(p => ({ ...p, commissionRate: Number(e.target.value) || DEFAULT_REFERRAL_COMMISSION_RATE }))}
                     className="w-full p-2.5 bg-surface-container-low border border-outline-variant/60 rounded-xl text-on-surface font-mono font-bold"
                   />
                 </div>

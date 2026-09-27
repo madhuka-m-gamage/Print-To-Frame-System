@@ -10,6 +10,7 @@ import { getAuth, connectAuthEmulator, signInWithPopup, GoogleAuthProvider, onAu
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 
 import fallbackConfig from '../../firebase-applet-config.json';
+import { assertGoogleWorkspaceAllowed } from '@/features/auth/superAdmin';
 
 const firebaseConfig = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || fallbackConfig.projectId,
@@ -26,6 +27,8 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+export const googleApiConfig = { apiKey: firebaseConfig.apiKey, projectNumber: firebaseConfig.messagingSenderId };
 
 const getDatabaseInstance = () => {
   const dbId = firebaseConfig.firestoreDatabaseId;
@@ -119,6 +122,7 @@ const readScopedToken = (scope) => {
 };
 
 export const getScopedAccessToken = async (scope) => {
+  assertGoogleWorkspaceAllowed(auth.currentUser?.email);
   const cached = readScopedToken(scope);
   if (cached) return cached;
 

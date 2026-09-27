@@ -35,6 +35,7 @@ import { toast } from "./shared/utils/toast";
 import { isFullyPaid } from "./features/invoicing/invoiceSettlement";
 import { newUserAction, shouldEvict } from "./features/auth/authFlow";
 import { UserAvatar } from "./shared/ui";
+import { DEFAULT_REFERRAL_COMMISSION_RATE, sqFtFromPricing } from '@/features/quotations/quotePricing';
 
 // Components
 const Dashboard = React.lazy(() => import("./features/dashboard/Dashboard"));
@@ -74,6 +75,7 @@ import { logActivity } from "./services/auditLog";
 import { ErrorBoundary } from "./shared/components/ErrorBoundary";
 import LoadingSpinner from "./shared/components/LoadingSpinner";
 import { findPartnerForLead, getLeadPartnerId } from "@/features/partners/partnerLink";
+import { isSuperAdminEmail } from '@/features/auth/superAdmin';
 
 
 export function oT() {
@@ -88,14 +90,6 @@ export function uT(t, e = {}) {
   if (Notification.permission === "granted") {
     new Notification(t, e);
   }
-}
-
-// Self-Healing Super Admin Guard: these two emails always self-heal back to
-// role: 'Admin' / status: 'Active' on login, mirrored in firestore.rules'
-// isBootstrapSuperAdmin(). Do not remove — this is intentional, see CLAUDE.md.
-const BOOTSTRAP_ADMIN_EMAILS = ["madhukagamage6@gmail.com", "madhukagamage@gmail.com"];
-function isSuperAdminEmail(email) {
-  return BOOTSTRAP_ADMIN_EMAILS.includes(email);
 }
 
 export let triggerBrowserNotification = (t, e) => {
@@ -538,7 +532,7 @@ function App() {
         // once the deal is genuinely fully settled, guarded by alreadyEligible
         // so re-marking (or a race between two writes) can't double-fire it.
         if (isFullyPaidNow && isPartnerReferral && !alreadyEligible) {
-          const sqFt = Number(targetLead.totalSqFt || targetLead.sqFt || (targetLead.pricingMetadata?.costSalesAmount ? (targetLead.pricingMetadata.costSalesAmount / 53.5) : 0));
+          const sqFt = Number(targetLead.totalSqFt || targetLead.sqFt || sqFtFromPricing(targetLead.pricingMetadata));
           // Commission is always calculated from the partner's CURRENT live
           // rate, never the lead's referral-time snapshot or the quote-time
           // pricingMetadata.costSalesAmount (baked from a fixed internal cost
@@ -546,8 +540,8 @@ function App() {
           // changed since the lead was referred/quoted.
           const referredPartner = findPartnerForLead(targetLead, partners) ||
             partners.find(p => targetLead.partnerName && p.name === targetLead.partnerName);
-          let commRate = Number(referredPartner?.commissionRate) > 0 ? Number(referredPartner.commissionRate) : 53.5;
-          if (commRate > 0 && commRate <= 1) commRate = 53.5;
+          let commRate = Number(referredPartner?.commissionRate) > 0 ? Number(referredPartner.commissionRate) : DEFAULT_REFERRAL_COMMISSION_RATE;
+          if (commRate > 0 && commRate <= 1) commRate = DEFAULT_REFERRAL_COMMISSION_RATE;
           const dealVal = Number(targetLead.value || 0);
           const commAmount = sqFt > 0 ? sqFt * commRate : (dealVal / 850) * commRate;
 

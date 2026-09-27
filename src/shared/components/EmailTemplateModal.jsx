@@ -6,6 +6,7 @@ import {
 import ModalWrapper from '@/shared/ui/detail-modal/ModalWrapper';
 import { EMAIL_TEMPLATES, interpolateTemplate } from '@/constants/emailTemplates';
 import { toast } from '@/shared/utils/toast';
+import { DEFAULT_REFERRAL_COMMISSION_RATE } from '@/features/quotations/quotePricing';
 
 export default function EmailTemplateModal({
   isOpen = false,
@@ -74,10 +75,9 @@ export default function EmailTemplateModal({
       advanceAmount: Number((recipient?.value || 240000) * 0.75).toLocaleString(undefined, { minimumFractionDigits: 2 }),
       balanceAmount: Number((recipient?.value || 240000) * 0.25).toLocaleString(undefined, { minimumFractionDigits: 2 }),
       // Uses this specific partner's real negotiated rate when composing for
-      // one (Partners.jsx's Email button passes the actual partner record) —
-      // previously hardcoded to 53.5 regardless of who the email was for.
-      commissionRate: Number(recipient?.commissionRate || 53.5).toFixed(2),
-      commissionAmount: Number((recipient?.totalSqFt || 120) * Number(recipient?.commissionRate || 53.5)).toLocaleString(undefined, { minimumFractionDigits: 2 }),
+      // one (Partners.jsx's Email button passes the actual partner record).
+      commissionRate: Number(recipient?.commissionRate || DEFAULT_REFERRAL_COMMISSION_RATE).toFixed(2),
+      commissionAmount: Number((recipient?.totalSqFt || 120) * Number(recipient?.commissionRate || DEFAULT_REFERRAL_COMMISSION_RATE)).toLocaleString(undefined, { minimumFractionDigits: 2 }),
       invoiceId: 'INV-' + String(Date.now()).slice(-6),
       jobNo: 'JOB-' + String(Date.now()).slice(-6),
       dueDate: 'Within 7 Days',
