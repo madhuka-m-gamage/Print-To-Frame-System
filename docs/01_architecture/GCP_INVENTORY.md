@@ -32,7 +32,7 @@ While not GCP Cloud Functions, three serverless HTTPS endpoints are hosted on Ve
 | `admin-user` | `api/admin-user.js` | HTTPS POST | Server-side Firebase Auth user management (create, reset password, delete). Requires Admin authentication. |
 | `generate` | `api/generate.js` | HTTPS POST | Gemini AI proxy endpoint with failover candidates and origin restrictions. |
 | `send-email` | `api/send-email.js` | HTTPS POST | Transactional email dispatcher using SMTP / Resend. |
-| Dev Proxy | `vite.config.js` (`apiProxyPlugin`) | Local Vite middleware | Local development emulation of the `api/*.js` routes. |
+| Dev Proxy | `vite.config.js` (`apiProxyPlugin`) | Local Vite middleware | Runs the real `api/*.js` handlers under `npm run dev` (bound to `127.0.0.1`). |
 
 A comprehensive search across `api/` and `src/` for trigger hooks (`onDocumentCreated`, `onDocumentUpdated`, `onDocumentWritten`, `onCall`, `onRequest`, `onSchedule`, `functions.firestore`, `pubsub`) confirms that no Cloud Function triggers exist anywhere in the code.
 

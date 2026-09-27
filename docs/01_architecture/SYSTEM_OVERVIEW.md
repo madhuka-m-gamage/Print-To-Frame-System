@@ -31,7 +31,7 @@ Three Vercel serverless functions plus one helper. Same origin as the SPA (`verc
 - `api/send-email.js`: email sending (nodemailer)
 - `api/_lib/firebaseAdmin.js`: Admin SDK init from `FIREBASE_SERVICE_ACCOUNT_JSON`
 
-`vite.config.js` re-implements these endpoints as dev middleware, so `npm run dev` works without Vercel.
+`vite.config.js` (`apiProxyPlugin`) serves these same handlers as dev middleware on `127.0.0.1:3000`, so `npm run dev` works without Vercel and applies the production checks.
 
 ## Cloud Functions
 
@@ -39,7 +39,7 @@ None, and there is no `functions/` folder (the empty placeholder was removed in 
 
 ## Shared code
 
-No shared package. Frontend-only helpers sit in `src/utils/` and `src/services/`. The dev proxy in `vite.config.js` imports both `src/constants/emailTemplates.js` and `api/_lib/firebaseAdmin.js`, the only frontend/backend crossover. `firestore.rules` is the security layer shared by all clients.
+No shared package. Frontend-only helpers sit in `src/utils/` and `src/services/`. The dev proxy in `vite.config.js` imports the `api/*.js` handlers, and `api/generate.js` and `api/send-email.js` import `src/constants/`; those are the only frontend/backend crossovers. `firestore.rules` is the security layer shared by all clients.
 
 ## Organisation (by layer vs by module)
 

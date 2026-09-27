@@ -86,7 +86,7 @@ Every item implicitly includes these.
 | LIVE-3 | One canonical repository and one deploy path | rollout | M | **yes** | yes | DEC-6 |
 | LIVE-4 | Give the tooling access to the live Vercel project | rollout | S | Vercel | owner | none |
 
-**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1 and SEC-2 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
+**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2 and SEC-3 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
 
 ---
 
@@ -273,6 +273,7 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 
 ### SEC-3: Make the dev proxy safe
 - `vite.config.js` re-implements `/api/admin-user` for `npm run dev` **without** token or role checks, and the dev server binds to `0.0.0.0` (`package.json` scripts pass `--host 0.0.0.0`). Bind to localhost by default and make the proxy call the real handler or apply the same checks.
+- **Done 2026-09-27:** `apiProxyPlugin` in `vite.config.js` maps `/api/admin-user`, `/api/generate` and `/api/send-email` to the real handlers in `api/`, parsing the JSON body (400 if malformed) and adding `res.status` / `res.json`; the dev-only `/api/generate-invoice` alias is dropped. `server.host` is `127.0.0.1` and `allowedHosts: true` is removed; `dev`, `dev:emulated` and `preview` no longer pass `--host 0.0.0.0`. Tests: `tests/api/devProxy.test.js` (binding and scripts; admin-user without token 401 and as Sales 403 with no account created, as Admin 200; generate as Partner 403 with no Gemini call; send-email without token 401; malformed JSON 400; other paths passed to Vite).
 
 ### SEC-4: Console-only checks (owner)
 - Firebase Console: Project settings, Users and permissions: who has access to `print-to-frame-erp`. IAM: what role the service account whose key is stored in Vercel holds. Vercel: who can edit environment variables. Record the outcome in `AUTHORIZATION_MAP.md`.
