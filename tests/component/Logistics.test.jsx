@@ -62,3 +62,18 @@ describe('Logistics stage moves (Phase 7 6.5)', () => {
     expect(sync.updateDocument.mock.calls[0][0]).toBe('logistics');
   });
 });
+
+describe('Logistics Cancelled project guard (DEC-4)', () => {
+  it('does not offer a Cancelled work order for a new delivery', () => {
+    const live = makeProject({ jobNo: 'PTF-0001', status: 'Completed', customerName: 'Live Client' });
+    const cancelled = makeProject({ jobNo: 'PTF-0002', status: 'Cancelled', customerName: 'Gone Client' });
+    renderWithProviders(
+      <Logistics jobs={[]} setJobs={vi.fn()} currentUser={admin} customers={[]} projects={[live, cancelled]} setProjects={vi.fn()} invoices={[]} partners={[]} />,
+      { role: 'Admin' }
+    );
+    fireEvent.click(screen.getAllByRole('button', { name: /Add|New|Schedule/i })[0]);
+    const options = screen.getAllByRole('option').map((o) => o.value);
+    expect(options).toContain('PTF-0001');
+    expect(options).not.toContain('PTF-0002');
+  });
+});

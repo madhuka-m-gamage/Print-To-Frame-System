@@ -27,3 +27,4 @@ Kanban of pickup and delivery jobs (Pending, In Transit, Completed) with COD fro
 
 - Create every logistics task with `buildLogisticsTask`; it guarantees `customerPhone`, `linkedJobNo`, entity ids, `priority` and `createdAt`. Delivery stage moves write `deliveryStatus` to the linked project (`deliveryStatusForTask`). Stage handlers restore the previous card on a failed write.
 - "Record cash collection" (`handleCollectCod`) only offers the primary unpaid invoice (`getCollectableInvoice`) and only to roles with invoices edit and receipts create. It marks the invoice paid via `handleMarkInvoicePaid`, then issues the receipt.
+- The new-delivery form does not list `Cancelled` work orders, and adding a delivery linked to one is refused (`cancelledProjectBlock` in `src/features/fabrication/fabricationLink.js`, DEC-4). Fabrication's dispatch button applies the same check.

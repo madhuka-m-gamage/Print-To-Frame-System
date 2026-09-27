@@ -111,7 +111,7 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 
 ### DEC-4: Cancelled projects: block a Final invoice and a delivery job
 - **Recommended: yes.** A deleted deal marks its project `Cancelled` (step 6.4a). Block QA-pass Final invoice creation and delivery-job creation for a Cancelled project, with a clear message.
-- **Decided (owner, 2026-09-27):** yes, block both with a clear message. Client code only.
+- **Decided (owner, 2026-09-27):** yes, block both with a clear message. Client code only. **Done 2026-09-27:** `cancelledProjectBlock` guards the QA pass, Fabrication dispatch and the Logistics new-delivery form.
 
 ### DEC-5: Old manual fabrication jobs that still carry a value
 - New manual jobs carry no value (billed through a deal or marked non-billable). Older ones may have `value > 0` and still get a 25% Final invoice at QA pass. **Ask:** leave them, clear the value, or link them to a deal? To count them, query `projects` for `origin != 'manual'` with `value > 0` and no `dealId`.
