@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- DEC-1 implemented: one default partner commission, LKR 38.00 per sq ft (`DEFAULT_REFERRAL_COMMISSION_RATE` in `src/features/quotations/quotePricing.js`), replacing LKR 30.00 in quoting and LKR 53.50 in Partners (new partner, ledger, payout, edit form, texts), the payment-cleared handler (`App.jsx`), deal settlement, partner applications and email previews. Area recovered from a saved quote's commission now divides by the rate that quote was priced at (`sqFtFromPricing`), not a fixed 53.5. `emailTemplates.js` imports it relatively because `api/send-email.js` loads it in plain Node (lint exception added). Existing partner records keep their stored rate. Tests: unit 216, API 52, component 59, rules 49.
+
 - Owner decisions DEC-1 to DEC-9 recorded (docs only, 2026-09-27): commission default LKR 38.00 per sq ft; dispatcher records cash on delivery; enable Storage with narrow rules; block the Final invoice and delivery job for Cancelled projects; no old-data migration (live data is test-only, a fresh environment is planned); this repository is canonical; Drive via Google Picker with `drive.file`, Drive and Contacts for super admins only; proprietary `LICENSE` added (`package.json` `"license": "UNLICENSED"`). The DEC-7 cell-by-cell live-vs-default permission table (57 cells, live read 2026-09-27) is in `docs/03_security/RBAC_MODEL.md`. See ADR `0004-owner-decisions-backlog.md`.
 - `staging` promoted to `main` (PR #60): folder move label and the follow-up backlog plan. No rules change.
 

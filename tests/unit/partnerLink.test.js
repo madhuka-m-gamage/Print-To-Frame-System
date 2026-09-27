@@ -48,7 +48,7 @@ describe('pricingLeadView with getQuotePricingTerms', () => {
 
   it('defaults and flags the rate when the linked partner has none', () => {
     const terms = getQuotePricingTerms(pricingLeadView({ source: 'Referral', agentId: 'P-2' }, { source: 'Referral', agentId: 'P-2' }, [noRate]));
-    expect(terms).toMatchObject({ commissionRate: 30, commissionDefaulted: true });
+    expect(terms).toMatchObject({ commissionRate: 38, commissionDefaulted: true });
   });
 
   it('picks up an agent chosen on the card before the lead is saved', () => {

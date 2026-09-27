@@ -1,3 +1,4 @@
+import { DEFAULT_REFERRAL_COMMISSION_RATE } from '@/features/quotations/quotePricing';
 import { matchesEntity } from '@/shared/utils/entityUtils';
 import { isAcceptedQuote } from '@/features/quotations/quotationStatus';
 
@@ -33,7 +34,7 @@ export function calculateDealCommission(deal, agent) {
   const sqFt = Number(deal.totalSqFt) || 0;
   const effectiveSqFt = sqFt > 0 ? sqFt : 0;
   // Always the partner's current live rate, never a snapshot on the deal.
-  const commRate = Number(agent?.commissionRate) > 0 ? Number(agent.commissionRate) : 53.5;
+  const commRate = Number(agent?.commissionRate) > 0 ? Number(agent.commissionRate) : DEFAULT_REFERRAL_COMMISSION_RATE;
   const commissionAmount = effectiveSqFt > 0
     ? effectiveSqFt * commRate
     : (Number(deal.value) / 850) * commRate || 0;

@@ -44,9 +44,9 @@ describe('calculateDealCommission', () => {
     expect(calculateDealCommission({ totalSqFt: 10, value: 999 }, { commissionRate: 60 })).toEqual({ commissionAmount: 600, sqFtToAdd: 10 });
   });
 
-  it('defaults the rate to 53.5 when the partner has none', () => {
-    expect(calculateDealCommission({ totalSqFt: 10 }, {}).commissionAmount).toBeCloseTo(535);
-    expect(calculateDealCommission({ totalSqFt: 10 }, undefined).commissionAmount).toBeCloseTo(535);
+  it('defaults the rate to LKR 38.00 (DEC-1) when the partner has none', () => {
+    expect(calculateDealCommission({ totalSqFt: 10 }, {}).commissionAmount).toBeCloseTo(380);
+    expect(calculateDealCommission({ totalSqFt: 10 }, undefined).commissionAmount).toBeCloseTo(380);
   });
 
   it('estimates from value at 850 per sq ft when there is no area, adding no square footage', () => {
