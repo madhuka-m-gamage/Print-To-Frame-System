@@ -1,113 +1,60 @@
-# Antigravity to Claude Code: Handoff Report
+# Milestone 1 handoff: audit to remediation
 
-> **Date:** 2026-09-20  
-> **Source Environment:** Google Antigravity IDE  
-> **Target Environment:** Claude Code (`claude.ai/code`)  
-> **Branch:** `antigravity/dev`  
-> **Base Branch:** `origin/staging`  
-> **Related Documents:**  
-> - [PLAN.md](../PLAN.md) — Main progress tracker at project root  
-> - [PROJECT_INDEX.md](../PROJECT_INDEX.md) — Full repository document index  
-> - [POST_MERGE_VERIFICATION_REPORT.md](POST_MERGE_VERIFICATION_REPORT.md) — 16-module verification results  
+> **Date:** 2026-09-27 · **Tag:** `v1.0.0` · **Branches:** `main` = `staging`
+> **Read with:** [PLAN.md](../PLAN.md) (tracker and roadmap), [BACKLOG.md](04_workflows/BACKLOG.md) (every open item in detail), [CHANGELOG.md](../CHANGELOG.md) (what changed and when)
 
----
+## What this project is
 
-## 1. Executive Summary & Context
+Print To Frame ERP is a single-page React + Vite ERP/CRM for a Sri Lankan custom-framing business: leads → deals → fabrication → logistics → invoicing, plus a partner referral network. Firebase (Auth, Firestore, Storage) is the only backend, and a few Vercel functions in `api/` handle email, AI and admin user actions.
 
-This handoff report summarizes the architecture, security, and correctness review of the **Print To Frame ERP** completed in Antigravity.
+## The journey
 
-During this session:
-1. **Parallel 16-Module Deep Review:** 16 isolated git worktrees (`review-*`) conducted deep-dive audits of every module against `docs/01_architecture/SYSTEM_OVERVIEW.md`, `CROSS_MODULE_TRIGGERS.md`, `GCP_INVENTORY.md`, and `docs/03_security/RBAC_MODEL.md`.
-2. **Standardized Deliverables:** Each module generated a comprehensive `docs/02_modules/<module>/FINDINGS.md` capturing code flaws, trigger disconnections, UI race conditions, security vulnerabilities, and accepted architectural decisions.
-3. **Safe Integration & Merge:** All 16 review branches were merged into `antigravity/dev`.
-4. **Zero-Regression Verification:** A 5-point post-merge verification verified zero conflict markers, 100% link integrity, zero changes to application source code (`src/` and `api/`), and complete cleanup of temporary worktrees.
+| When | What | PRs |
+|---|---|---|
+| 2026-09-20 | Investigation phases 1–6: architecture, GCP inventory, 16 module maps and per-module `CLAUDE.md`, cross-module triggers, security and workflow docs. The 16-module review was done in Google Antigravity; its original handoff is in git history before this commit | #1–#3 |
+| 2026-09-20 | Test suite: unit, API, component, Firestore rules on the emulator, Playwright smoke, GitHub Actions CI | #4, #5 |
+| 2026-09-20/21 | Phase 7 remediation (security wins, duplicate Final guard, Completed locks, COD, pricing, receipts, RBAC prerequisites, admin API, Google scopes, user lifecycle, leads, atomic ids, customers, deals/fabrication/inspection, referral lineage) and 8.2 source restructure into `src/features`, `src/shared` | #6–#57 |
+| 2026-09-21 | Project folder moved up to the repo root | #58 |
+| 2026-09-25 | Follow-up backlog written as one shared work list | #59 |
+| 2026-09-27 | Owner decisions DEC-1..9 answered and implemented; Storage bucket created and rules deployed live; promotions to `main` | #60–#71 |
 
----
+## Live vs repo
 
-## 2. Current Repository & Git State
+| Area | Live today | In this repo |
+|---|---|---|
+| Site code | `portal.print2frame.xyz` still deploys the **old** repo `madhukagamage6/Print-To-Frame-ERP-System` | `main` deploys to Vercel project `print-to-frame-system`; production moves here with LIVE-3 |
+| Firestore rules | Old ruleset | 3.4 (additive) and 3.5 (restrictive) written and tested, **not deployed** |
+| Storage rules | `storage.rules` live since 2026-09-27 (bucket `asia-south1`) | Same file |
+| Permission matrix | Live `settings/permissions` differs from defaults in 57 cells | DEC-7: use `DEFAULT_PERMISSIONS`; applied when the fresh environment is set up (LIVE-2) |
+| Google APIs | Picker and Cloud Storage for Firebase APIs enabled; the browser key allows Picker | Drive via Google Picker (`drive.file`), Drive and Contacts for the super admin only |
 
-- **Active Branch:** `antigravity/dev`
-- **Working Tree:** Clean (0 uncommitted changes, 0 untracked files).
-- **Branch History:** Contains all merge commits from the 16 module review branches plus verification documentation.
-- **Diff vs `origin/staging`:** Exactly 34 documentation files changed (+5,978 insertions, -33 deletions). Zero lines of application source code were altered.
-- **Registered Worktrees (`git worktree list`):**
-  1. `/home/madhuka/Antigravity IDE Projects/P1` (`antigravity/dev`) — primary repository root.
-  2. `/home/madhuka/Antigravity IDE Projects/P1/.worktrees/architecture-mapping` (`architecture-mapping`) — active branch tracking live GCP inventory audits. All 16 temporary review worktrees have been cleanly pruned and removed.
+Live data is test data only; the owner plans a fresh Firebase/Vercel environment (DEC-5).
 
-### Merging to Staging (Instructions for Claude Code)
-When ready to integrate these documentation findings into `staging`:
-```bash
-git checkout staging
-git merge antigravity/dev --ff-only   # Or standard git merge antigravity/dev
-git push origin staging
-```
+## How we work
 
----
+One item per fresh session: branch `claude/<topic>` from `staging` → tests first (seen failing) → change → `npm run lint`, `npm run test:all`, `npm run build` (+ `npm run test:e2e` when visible) → docs, module `CLAUDE.md` and `CHANGELOG.md` in the same PR → PR into `staging` → promote to `main` by PR with a merge commit when the owner says so.
 
-## 3. The 16 Module Audit Reports (`docs/02_modules/*/FINDINGS.md`)
+- A question only the owner can answer becomes a `DEC-n` item in `BACKLOG.md`; the answer is recorded there, in `PLAN.md`, `CHANGELOG.md` and an ADR in [docs/05_decisions/](05_decisions/).
+- Live changes (rules deploys, `settings/permissions`, Vercel or Firebase configuration, deleting data) need the owner's explicit go each time; an earlier approval never carries over.
+- A fresh session per item keeps the conversation small: everything a new session needs is in `PLAN.md`, `BACKLOG.md`, `CLAUDE.md` and the module docs.
+- Details: [GIT_WORKFLOW.md](04_workflows/GIT_WORKFLOW.md), [TESTING.md](04_workflows/TESTING.md), [DEPLOY_PROCESS.md](04_workflows/DEPLOY_PROCESS.md), [LIVE_ROLLOUT.md](04_workflows/LIVE_ROLLOUT.md).
 
-All 16 findings documents are complete, fully cross-linked in [`PROJECT_INDEX.md`](../PROJECT_INDEX.md) and peer `CLAUDE.md` files:
+## Gotchas
 
-| Module | Findings Document | Size / Lines | Key Focus Areas & Findings |
-| :--- | :--- | :---: | :--- |
-| **Auth** | [`auth/FINDINGS.md`](02_modules/auth/FINDINGS.md) | 299 lines (21.7 KB) | Google OAuth scope mismatch (identity vs Drive/Contacts), registration race conditions, deactivated user revocation |
-| **Cost Calculator & Quotation** | [`cost-calculator-quotation/FINDINGS.md`](02_modules/cost-calculator-quotation/FINDINGS.md) | 354 lines (28.1 KB) | Pricing engine float precision, frame wastage math, automatic final invoice trigger hazards |
-| **Customers** | [`customers/FINDINGS.md`](02_modules/customers/FINDINGS.md) | 441 lines (36.0 KB) | Customer balance recalculation, lead-to-customer deduplication, contact sync race conditions |
-| **Deals** | [`deals/FINDINGS.md`](02_modules/deals/FINDINGS.md) | 328 lines (27.4 KB) | Pipeline stage state machine transitions, duplicate final invoice emission on deal completion |
-| **Employees** | [`employees/FINDINGS.md`](02_modules/employees/FINDINGS.md) | 354 lines (26.0 KB) | Role assignment vs Firestore permissions sync, salary/commission audit log tracking |
-| **Internal Messaging** | [`internal-messaging/FINDINGS.md`](02_modules/internal-messaging/FINDINGS.md) | 415 lines (33.4 KB) | Ephemeral unread state, self-messaging pollution in notifications, open Firestore read rules |
-| **Invoicing** | [`invoicing/FINDINGS.md`](02_modules/invoicing/FINDINGS.md) | 428 lines (32.8 KB) | Duplicate final invoice (`INV-FIN`) race condition across 3 modules, COD balance sync in logistics |
-| **Leads** | [`leads/FINDINGS.md`](02_modules/leads/FINDINGS.md) | 234 lines (20.0 KB) | Lead conversion pipeline, customer creation idempotency, dead event listener cleanup |
-| **Notifications** | [`notifications/FINDINGS.md`](02_modules/notifications/FINDINGS.md) | 432 lines (39.9 KB) | Cross-session notification leakage on logout, alert flood from `toast.*` proxy, unread counter desync |
-| **Operations: Fabrication** | [`operations-fabrication/FINDINGS.md`](02_modules/operations-fabrication/FINDINGS.md) | 386 lines (31.5 KB) | Cut list dimension calculation, QA pass trigger duplicating invoice generation, materials tracking |
-| **Operations: Inspection** | [`operations-inspection/FINDINGS.md`](02_modules/operations-inspection/FINDINGS.md) | 293 lines (27.4 KB) | Quality inspection checklist state persistence, rework routing, logistics handoff verification |
-| **Operations: Logistics** | [`operations-logistics/FINDINGS.md`](02_modules/operations-logistics/FINDINGS.md) | 416 lines (37.4 KB) | Driver COD collection discrepancies, final invoice balance calculation, dispatch status locks |
-| **Partners** | [`partners/FINDINGS.md`](02_modules/partners/FINDINGS.md) | 499 lines (41.4 KB) | Phantom payout disbursement (toast only, no DB write), referral commission eligibility logic |
-| **Profile & Settings** | [`profile-settings/FINDINGS.md`](02_modules/profile-settings/FINDINGS.md) | 277 lines (28.9 KB) | Permission matrix cache invalidation, company info sync, UI theme/state persistence |
-| **Receipts** | [`receipts/FINDINGS.md`](02_modules/receipts/FINDINGS.md) | 228 lines (17.3 KB) | Payment receipt generation, invoice allocation calculation, PDF render print styles |
-| **User Management & RBAC** | [`user-management-rbac/FINDINGS.md`](02_modules/user-management-rbac/FINDINGS.md) | 463 lines (46.5 KB) | Role escalation guards, `/settings/permissions` bootstrap fallback, disabled user session kill |
+- **Squash promotion:** a squash merge of `staging` into `main` makes the next promotion conflict. If the squash tree equals a `staging` commit, run `git merge -s ours origin/main` on a branch and PR it into `staging` (done in #68). Promote with merge commits.
+- **Storage deploy:** `firebase deploy --only storage --non-interactive` skips the prompt that lets Storage rules read Firestore; the Storage service agent needs `roles/firebaserules.firestoreServiceAgent` (granted 2026-09-27).
+- **Slow Google downloads:** `storage.googleapis.com` is slow from this network (about 130 KB/s); the emulator jars are cached in `~/.cache/firebase/emulators`.
+- **Shared template file:** `src/constants/emailTemplates.js` is also loaded by `api/send-email.js` in plain Node, so it imports `quotePricing.js` by relative path (lint exception in `eslint.config.js`).
+- **Rules are never deployed by pushing:** `firestore.rules` and `storage.rules` go live only through `firebase deploy ... --project print-to-frame-erp`.
 
----
+## What's left
 
-## 4. Priority Issues for Claude Code to Act On Next
+- **Wave A, repo only, no live impact:** MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, TST-1, TST-3, FEA-3, FEA-8, FEA-6, FEA-11, ENG-4, ENG-5
+- **Wave B, code + rules built and tested here, live with the next rules deploy:** MON-4, MON-5, MON-7, FEA-1, FEA-2, FEA-4, FEA-5, FEA-7, FEA-9, FEA-10, SEC-6, SEC-7, SEC-8
+- **Wave C, before restrictive rules go live:** TST-2 (money and RBAC browser journeys)
+- **Wave D, environment and go-live (owner sittings):** LIVE-2 fresh environment (seed `DEFAULT_PERMISSIONS`, deploy Firestore + Storage rules), LIVE-3 move production here and archive the old repos, LIVE-1, LIVE-4, SEC-4, SEC-5, SEC-10, TST-4
+- **Wave E, code health after tests exist:** ENG-1, ENG-2, ENG-6
 
-When resuming implementation in Claude Code, the findings are categorized into three urgent remediation groups:
+## Start here next session
 
-### Priority 1: High-Severity Logic & Data Integrity Defects
-1. **Duplicate Final Invoice Hazard (`INV-FIN`):**
-   - *Problem:* `Deals.jsx` (on deal completion), `FabricationWorks.jsx` (on QA pass), and `QuotationBuilder.jsx` ("25% Final Settlement") can all generate duplicate final invoices for the same order without checking if one already exists.
-   - *Consequence:* Doubles the driver's COD collection balance in `logisticsEngine.js` and creates conflicting financial records.
-   - *Remediation Plan:* Implement an idempotent invoice creator function `getOrCreateFinalInvoice(dealId)` guarded by Firestore transaction or explicit existence check.
-2. **Phantom Partner Payout Disbursement:**
-   - *Problem:* In `Partners.jsx`, clicking "Disburse Payout" triggers a success toast notification but performs **no database write** to deduct balances or log payout history.
-   - *Remediation Plan:* Create a `partner_payouts` collection and execute a Firestore batch/transaction updating partner available balance and appending payout records.
-
-### Priority 2: Security & Firestore Rules Gaps
-1. **Missing Firestore Security Rules:**
-   - The collections `referral_claims` and `partner_payouts` have no explicit rules in `firestore.rules`.
-   - `quotations` allow unvalidated client writes; `messages` allow broad cross-user read operations.
-   - *Remediation Plan:* Update `firestore.rules` and validate against `npm run test:rules` (local Firebase emulator suite).
-2. **Google OAuth Scope Disparity:**
-   - Sign-in in `src/services/firebase.js` requests only identity scopes (`profile`, `email`, `openid`), yet code in Google Drive and Contacts sync calls APIs requiring elevated scopes.
-   - *Remediation Plan:* Implement incremental on-demand authorization (`signInWithPopup` with specific Google Auth Providers) when the user activates Drive/Contacts features, rather than front-loading or failing silently.
-
-### Priority 3: UI State & Session Leaks
-1. **Notification Session Leaks:**
-   - `handleSignOut` in `src/App.jsx` fails to reset `notificationsList` and `unreadNotificationsCount`, exposing prior session notifications and commission amounts on shared terminals.
-   - *Remediation Plan:* Reset notification state on sign out and filter out outgoing user messages from the notification dropdown.
-
----
-
-## 5. Verification Checklist Completed Before Handoff
-
-- [x] All 16 `FINDINGS.md` files exist and contain non-empty findings.
-- [x] Link integrity verified across `PROJECT_INDEX.md` and all 16 `CLAUDE.md` files.
-- [x] Conflict search executed across entire repository (0 conflict markers).
-- [x] Regression diff check against `origin/staging` confirms zero modifications to `src/` or `api/`.
-- [x] All 16 `review-*` worktrees removed; git worktree list verified clean.
-- [x] Detailed audit report written to `docs/POST_MERGE_VERIFICATION_REPORT.md`.
-- [x] Root `PLAN.md` updated and synchronized.
-
----
-
-*Handoff complete. Ready for Claude Code to proceed with Phase 7 remediation.*
+Read [PLAN.md](../PLAN.md), take the first unchecked Wave A item (MON-1: deal completion must wait for its Final invoice), and open its entry in [BACKLOG.md](04_workflows/BACKLOG.md).
