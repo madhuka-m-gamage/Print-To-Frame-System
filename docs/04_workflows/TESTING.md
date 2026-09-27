@@ -142,7 +142,7 @@ Snapshot from `npm run coverage` (unit and API tests only, so the component and 
 | `src/services/firestoreSync.js` | `tests/unit/firestoreSync.test.js`, `atomicId.test.js` | real | `deriveReceiptId`, `generateSequentialId`, and `generateAtomicId` (padding, continuing a counter, the single `value` field) with firebase mocked; the subscribe and CRUD calls are untested here |
 | `src/services/firebase.js` (`getScopedAccessToken`) | `tests/unit/scopedToken.test.js` | real (per-scope cache, expiry, hint, no-token and blocked-popup errors) | `logout` clearing the cached tokens (the sessionStorage stub cannot list keys) |
 | `src/features/**`, `src/shared/**`, `App.jsx` | `StatusBadge` smoke test; `Receipts.test.jsx` (CSV export), `Invoices.receipt.test.jsx` (read-only amount, notes), `Invoices.policy.test.jsx` (edit policy, delete guard, cancel), `App.listeners.test.jsx` (listeners follow the role permissions), `PermissionsManager.test.jsx` (missing-modules button); `Deals.test.jsx` (completion waits for the Final invoice, which carries `leadId` and `dealId`), `Leads.lineage.test.jsx` and `Invoices.lineage.test.jsx` (logistics job and invoice reference follow the lead/deal lineage; conversion stamps `dealId` on the lead's invoices), `FabricationWorks.test.jsx` (QA pass, manual job billing link, QA gate), `Partners.test.jsx` (settlements, referral eligibility), `AgentDatabase.test.jsx` (decline email sent before the pending registration is deleted), `App.signOut.test.jsx` (B5 wiring); `Login.test.jsx` (registration role), `App.eviction.test.jsx` (deactivation eviction, LOGIN audit), `FabricationCardDetails.test.jsx` (locked milestone, hidden price, locked size), `FrameBlueprintPreview.test.jsx`, `Logistics.test.jsx` (stage sync and rollback), `LogisticsCardDetails.test.jsx` (cash collection), `LeadCardDetails.test.jsx` (Convert only at Received, agent fills partner fields and rate, saved-invoice reprint and draft print, oversized audio downsampled) | real, plus one characterisation (phantom payout) | the rest of `LeadCardDetails` (AI call analysis, receipts, logistics dispatch), the rest of `Leads`, `QuotationBuilder`, `Customers` and the rest are untested; logic inside the large components is still mostly not extracted |
-| Browser journeys | `tests/e2e/smoke.spec.js` (sign-in) | real | quotation to invoice, deal completion, RBAC (B6) |
+| Browser journeys | `tests/e2e/smoke.spec.js` (sign-in), `money.spec.js` (quotation to Advance to one Final), `rbac.spec.js` (navigation per role, deactivated sign-in) | real, one characterisation | deal completion journey |
 
 ## Characterisation register
 Tests that deliberately lock in a known defect, with the finding that will change them. Add a row whenever you write one.
@@ -158,6 +158,7 @@ Tests that deliberately lock in a known defect, with the finding that will chang
 | ~~rulesAccess.test.js lets any signed-in user read a conversation they are not in and forge a sender~~ | flipped in Phase 7 3.5: participants only, and sending as yourself | messaging D-MSG-01, D-MSG-02 |
 | ~~rulesAccess.test.js lets a Customer read another user's profile~~ | flipped in Phase 7 3.5: Admin, self, or agents/messages view | rbac finding 12 |
 | ~~`rulesAccess.test.js` lets a Customer write any counter to any value~~ | flipped in Phase 7 3.4: known prefixes only and at most one step ahead |
+| `rbac.spec.js` "the deactivated user still signs in (known defect)" | a user with `status: 'Deactivated'` and `isApproved: true` passes App.jsx's login check and reaches the Dashboard | TST-2 finding (login check to honour `status`) |
 | `rulesAccess.test.js` "still lets a signed-in user lower a counter" | the counters rule has no lower bound (it would reject legitimate writes under transaction contention) | numbering moved server-side (not planned yet) |
 | ~~`rulesAccess.test.js` denies partner_payouts and referral_claims to everyone~~ | flipped in Phase 7 3.4: new match blocks | partners D-6 |
 | ~~rulesAccess.test.js lets a Deactivated user with a permitted role still create a lead~~ | flipped in Phase 7 3.5: Deactivated and Disabled are denied everywhere | rbac finding 1 |
@@ -187,7 +188,7 @@ Part A (setup) is done: all five layers and CI exist. Part B status:
 - **Done:** B1 money-path unit tests, B2 supporting unit tests, B3 API handler cases, B4 rules cases, B5 component wiring cases.
 - **Phase 7 status:** steps 1 to 6 are done and merged (the rules work 3.3 to 3.5 is written and tested but not deployed).
 - **Milestone 1 (2026-09-27):** the Storage rules layer was added (`storageRules.test.js`), and the DEC-1 and DEC-8 flips are in the register above.
-- **Open:** B6 E2E journeys are backlog item TST-2 (Wave C, before restrictive rules go live); more component coverage is TST-3 (TST-1 done).
+- **Done:** B6 E2E journeys (TST-2: `money.spec.js`, `rbac.spec.js`). **Open:** more component coverage is TST-3 (TST-1 done).
 Progress is tracked in `PLAN.md`.
 
 ## Gotchas
