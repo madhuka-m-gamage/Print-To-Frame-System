@@ -110,13 +110,13 @@ npm run dev:emulated                                                            
 - Seeded accounts (password `Passw0rd!test`): `admin@example.com` (Admin), `partner@example.com` (Partner), `deactivated@example.com` (Sales, status Deactivated). Also seeded: `settings/permissions`, one partner, one customer, a converted lead `L-100001` with an Accepted quotation `QT-100001`, deal `D-100001` and project `PTF-1001`.
 - `seed:emulator` refuses to run unless `FIRESTORE_EMULATOR_HOST` is a local host and `GCLOUD_PROJECT` starts with `demo-`. It is idempotent.
 - `firebase emulators:start` does not load `firestore.rules` from `firebase.json` (firestore is declared as an array of databases), so it would run allow-all. The seed script therefore uploads `firestore.rules` to the running emulator.
-- The Storage client is pointed at `127.0.0.1:9199` (Firebase's default Storage emulator port; it is not configured in `firebase.json`). No Storage emulator is started, so uploads fail in emulated runs instead of reaching production.
+- The Storage emulator is configured in `firebase.json` (port 9199) and started by `npm run test:rules`; `dev:emulated` and Playwright start Firestore and Auth only, so uploads in the browser journeys still fail instead of reaching production.
 
 ## Node version
 `.nvmrc` pins Node 22 and CI reads it (`node-version-file`). Some test dependencies need a recent Node: `jsdom` 29 needs 20.19 or later, and crashes on older 20.x. `package.json` deliberately has no `engines` field, because Vercel picks its build runtime from it and this change is about tests only.
 
 ## Coverage map
-Snapshot from `npm run coverage` (unit and API tests only, so the component and rules layers are not counted; 242 tests, overall about 12.6% of `src` and `api` statements, almost all in `utils`; refreshed after Phase 7 step 5, on 2026-09-21). "Real" means the tests assert intended behaviour; "characterisation" means they record current behaviour, defects included. Refresh this table when tests land.
+Snapshot from `npm run coverage` (unit and API tests only, so the component and rules layers are not counted; 279 tests, overall about 13.1% of `src` and `api` statements, almost all in pure helpers; refreshed at Milestone 1, 2026-09-27). Suite totals at Milestone 1: unit 227, API 52, component 63, rules 60 (+2 todo), e2e 2. "Real" means the tests assert intended behaviour; "characterisation" means they record current behaviour, defects included. Refresh this table when tests land.
 
 | Code | Covered by | Kind | Gaps |
 |---|---|---|---|
@@ -130,6 +130,7 @@ Snapshot from `npm run coverage` (unit and API tests only, so the component and 
 | `api/admin-user.js` | `tests/api/adminUser.test.js` (405, missing token, CORS), `adminUserAuth.test.js` (invalid token, pending, deactivated, Manager rules, payload checks), `tests/integration/adminUser.test.js` (Admin SDK calls) | real | create, reset and delete are covered only by the emulator file |
 | `api/generate.js`, `api/send-email.js` | `tests/api/generate.test.js`, `sendEmail.test.js` | real | generate: auth gate, origin echo, oversize audio, model fallback (400 stops; 404, 503, 429 fall through); send-email: auth gate, staff-only senders (Partner, Business Client, Customer, unknown role and Deactivated refused), the seven allowed templates, free-form and other templates refused, template render with HTML escaping, missing SMTP env. The hardcoded origin list is asserted only through generate |
 | `firestore.rules` | `tests/integration/firestoreRules.test.js` (`users`, catch-all), `invoiceNumbering.test.js` (`counters`), `rulesAccess.test.js` (leads, invoices, partners, users, messages, quotations, counters, payouts and claims, settings, audit log, public forms) | real, including the Phase 7 3.4 and 3.5 rules; a few characterisation rows remain (see the register); 2 `it.todo` entries name follow-ups | `deals`, `customers`, `receipts`, `projects`, `logistics`, `pricing`, `typing_indicators` blocks not exercised directly |
+| `storage.rules` | `tests/integration/storageRules.test.js` (11 cases: blueprints, partner vault, public registration uploads, default deny) | real, on the Storage emulator with Firestore for the staff check | only the three upload paths; nothing reads application files yet (FEA-11) |
 | `src/features/partners/partnerLink.js` | `tests/unit/partnerLink.test.js`, plus two cases in `tests/component/Deals.test.jsx` | real (partner resolution by `partnerId` or `agentId`, the "Direct" placeholder, the partner rate flowing into quoting) | the lead card's agent dropdown itself is untested (no `LeadCardDetails` component tests yet) |
 | `src/features/quotations/quotePricing.js`, `leadLineage.js`, `fabricationLink.js`, `dealProjectSync.js`, `invoicePrintData.js`, `qaGate.js`, `logisticsTask.js`, `authFlow.js`, `src/features/auth/superAdmin.js`, `src/services/driveService.js` | `tests/unit/superAdmin.test.js`, `driveService.test.js`, `tests/unit/quotePricing.test.js`, `leadLineage.test.js`, `fabricationLink.test.js`, `dealProjectSync.test.js`, `invoicePrintData.test.js`, `qaGate.test.js`, `logisticsTask.test.js`, `authFlow.test.js` | real (the pure rules extracted in Phase 7 steps 5 and 6: referral pricing terms and the LKR 38.00 default commission, area from a saved quote, lead to deal lineage, size and billing link, the Cancelled-project guard, forward-only project sync, faithful invoice reprint, QA sign-off guard, logistics task shape, registration race and eviction, the super-admin-only Drive and Contacts gate, Picker attachment shape) | the Picker itself loads Google's script and is not run in tests |
 | `src/features/quotations/pricingEngine.js` | `tests/unit/pricingEngine.test.js` | real (tiers, cost stack) plus characterisation (discount, commission, Profit/SQ) | rows above |
@@ -172,14 +173,18 @@ Tests that deliberately lock in a known defect, with the finding that will chang
 | ~~`adminUserAuth.test.js` lets a Deactivated caller with isApproved true through~~ | flipped in Phase 7 3.6: a Deactivated or Disabled caller gets 403 | user-management-rbac finding 1 |
 | ~~`adminUserAuth.test.js` rejects a Manager caller today~~ | flipped in Phase 7 3.6: Managers may call it, but not on Admin accounts or to grant Admin | employees D4 |
 | ~~`logisticsEngine.test.js` reports nothing to collect for an advance-only job~~ | flipped in Phase 7 2.3: the 25% balance is reported as pending Final invoice creation | logistics D-4 |
+| ~~`dealSettlement.test.js` defaults a partner with no rate to 53.5 per sq ft~~ | flipped at Milestone 1: the default is `DEFAULT_REFERRAL_COMMISSION_RATE`, LKR 38.00 | owner decision DEC-1 |
+| ~~`quotePricing.test.js` quotes a referral with no partner rate at LKR 30.00~~ | flipped at Milestone 1: LKR 38.00, the same single default | owner decision DEC-1 |
+| ~~`scopedToken.test.js` grants a Drive or Contacts token to any signed-in user~~ | flipped at Milestone 1: the super admin only, refused before any popup; Drive uses `drive.file` | owner decision DEC-8 |
 
 Planned entries (later Part B): open `quotations`, `messages`, `users` and `counters` rules (B4).
 
 ## Roadmap
 Part A (setup) is done: all five layers and CI exist. Part B status:
 - **Done:** B1 money-path unit tests, B2 supporting unit tests, B3 API handler cases, B4 rules cases, B5 component wiring cases.
-- **Phase 7 status:** steps 1 to 6 are done and merged into `staging` (2, 3.2, 3.6, 5 and 6 fully; the rules work 3.3 to 3.5 is written and tested but not deployed). No new characterisation tests were added after step 6.
-- **Open:** B6 E2E journeys (money journey after Phase 7 step 2, RBAC journey after 3.5d); parked, see `docs/05_decisions/0002-deferred-until-live-rollout.md`.
+- **Phase 7 status:** steps 1 to 6 are done and merged (the rules work 3.3 to 3.5 is written and tested but not deployed).
+- **Milestone 1 (2026-09-27):** the Storage rules layer was added (`storageRules.test.js`), and the DEC-1 and DEC-8 flips are in the register above.
+- **Open:** B6 E2E journeys are backlog item TST-2 (Wave C, before restrictive rules go live); more component coverage is TST-1 and TST-3 (Wave A).
 Progress is tracked in `PLAN.md`.
 
 ## Gotchas
