@@ -67,7 +67,7 @@ Applying the defaults wholesale would change 58 role and module cells, most of t
 
 ### Cell-by-cell review table (DEC-7, live read 2026-09-27)
 
-Owner decision 2026-09-27: review these cells one by one before anything changes. Every cell where the live `settings/permissions` document differs from `DEFAULT_PERMISSIONS` (57 cells; the 2026-09-20 read counted 58). Letters are the granted actions: V view, C create, E edit, D delete, X export; `·` is not granted; `(missing)` means the live document has no entry for that module. The fresh environment will be seeded from the defaults, so marking a cell "keep live" means changing the default in `src/context/PermissionsContext.jsx` (and the matching rules tests).
+Owner decision 2026-09-27: review these cells one by one before anything changes. **Outcome (owner, 2026-09-27): use the default for all 57 cells**, so the Owner column is not filled; the live document will be replaced by `DEFAULT_PERMISSIONS`. Every cell where the live `settings/permissions` document differs from `DEFAULT_PERMISSIONS` (57 cells; the 2026-09-20 read counted 58). Letters are the granted actions: V view, C create, E edit, D delete, X export; `·` is not granted; `(missing)` means the live document has no entry for that module. The fresh environment will be seeded from the defaults, so marking a cell "keep live" means changing the default in `src/context/PermissionsContext.jsx` (and the matching rules tests).
 
 | Role | Module | Live | Default | Owner: keep live / use default |
 |---|---|---|---|---|
