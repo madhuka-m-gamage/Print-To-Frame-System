@@ -86,7 +86,7 @@ Every item implicitly includes these.
 | LIVE-3 | One canonical repository and one deploy path | rollout | M | **yes** | yes | DEC-6 |
 | LIVE-4 | Give the tooling access to the live Vercel project | rollout | S | Vercel | owner | none |
 
-**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3 and MON-2 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
+**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2 and SEC-1 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
 
 ---
 
@@ -265,6 +265,7 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 
 ### SEC-1: Check the recipient in `api/send-email.js`
 - Staff-only and seven-template-only were done on 2026-09-21. **Open:** a staff session can still send those templates to any address. Restrict the recipient to known records (`users`, `pendingUsers`, `customers`, `partners`, `partner_applications`). **Care:** some approval flows email an address before its record exists (`client_approval`, `partner_approval`, `registration_declined`), so test each caller in `Customers.jsx`, `Partners.jsx` and `AgentDatabase.jsx` before enforcing. Tests in `tests/api/sendEmail.test.js`.
+- **Done 2026-09-27:** `isKnownRecipient` in `api/send-email.js` looks the address up (as given and lower-cased) as a `users` / `pendingUsers` document id and as the `email` field of `customers`, `partners` and `partner_applications`; no match is a 403. Traced callers: `client_approval` / `client_activation_confirmed` (`Customers.jsx`) and `partner_approval` / `partner_activation_confirmed` (`Partners.jsx`) send after their record is added; `employee_invite` and `password_reset` (`AgentDatabase.jsx`, `Partners.jsx`) go to an existing `users` document; `registration_declined` (`AgentDatabase.jsx`) now sends before `onReject` deletes the `pendingUsers` document, and a rejected partner application keeps its document. Limit: a partner application whose `email` was typed in mixed case is looked up by the lower-cased identifier and will not match, so its decline email is refused (logged, not shown). Tests: `tests/api/sendEmail.test.js`, `tests/component/AgentDatabase.test.jsx`.
 
 ### SEC-2: Restrict `api/generate.js`
 - Any approved account, including Partner and Customer, can call the AI endpoint and spend the Gemini quota. Apply the same staff-role gate as `send-email` (`SYSTEM_ROLES` minus `ROLE_CATEGORIES.EXTERNAL`) and add API tests for each external role.
