@@ -195,3 +195,4 @@ Progress is tracked in `PLAN.md`.
 - **`DEFAULT_PERMISSIONS` is not the live matrix:** rules and the app read the `settings/permissions` document. `PERMISSIONS_FIXTURE` in `tests/helpers/emulator.js` is an independent copy for rules tests; keep it in sync by hand.
 - **Seeded logins** (password `Passw0rd!test`): `admin@example.com`, `partner@example.com`, `deactivated@example.com`. Emulator only; never reuse these anywhere real.
 - **Parallel files:** integration files share one stateful emulator, so files run sequentially.
+- **Intermittent failure:** `tests/integration/adminUser.test.js` "resetPassword ... signs in with only the new one" failed once on 2026-09-27 and passed on an immediate rerun with no code change. Cause not investigated (likely Auth emulator timing); rerun once before debugging, and investigate if it fails twice.
