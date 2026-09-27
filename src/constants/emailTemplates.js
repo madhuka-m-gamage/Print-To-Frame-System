@@ -3,6 +3,7 @@
  * Used by Administrators, Sales Reps, and Operators to dispatch onboarding credentials,
  * quotations, work order updates, commission statements, and invoices.
  */
+import { DEFAULT_REFERRAL_COMMISSION_RATE } from '../features/quotations/quotePricing.js';
 
 export const EMAIL_TEMPLATES = [
   // ── CRM & SALES TEMPLATES ──────────────────────────────────────────────────
@@ -596,9 +597,9 @@ export const interpolateTemplate = (templateString, data = {}) => {
       case 'balanceAmount':
         return '60,000.00';
       case 'commissionAmount':
-        return '6,420.00';
+        return (120 * DEFAULT_REFERRAL_COMMISSION_RATE).toLocaleString(undefined, { minimumFractionDigits: 2 });
       case 'commissionRate':
-        return '53.50';
+        return DEFAULT_REFERRAL_COMMISSION_RATE.toFixed(2);
       case 'invoiceId':
         return 'INV-' + String(Date.now()).slice(-6);
       case 'jobNo':
