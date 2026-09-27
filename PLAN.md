@@ -17,9 +17,9 @@ Keep the x0.25 invoice print scaling; lead stage advance stays manual; Managers 
 One item per fresh session: branch `claude/<topic>` from `staging` → tests first (seen failing) → change → `npm run lint`, `npm run test:all`, `npm run build` (+ `npm run test:e2e` when visible) → docs, module `CLAUDE.md` and `CHANGELOG.md` in the same PR → PR into `staging` → promote to `main` by PR with a merge commit when the owner says so. Live actions (rules deploys, `settings/permissions`, Vercel/Firebase config) only with the owner's go at that moment. Full detail: [GIT_WORKFLOW.md](docs/04_workflows/GIT_WORKFLOW.md), [TESTING.md](docs/04_workflows/TESTING.md).
 
 ## Roadmap to Milestone 2
-- [ ] **Wave A, repo only, no live impact:** ~~MON-1~~, ~~MON-3~~, ~~MON-2~~, ~~SEC-1~~, ~~SEC-2~~, ~~SEC-3~~, ~~SEC-9~~, TST-1, TST-3, FEA-3, FEA-8, FEA-6, FEA-11, ENG-4, ENG-5
+- [ ] **Wave A, repo only, no live impact:** ~~MON-1~~, ~~MON-3~~, ~~MON-2~~, ~~SEC-1~~, ~~SEC-2~~, ~~SEC-3~~, ~~SEC-9~~, ~~TST-1~~, TST-3, FEA-3, FEA-8, FEA-6, FEA-11, ENG-4, ENG-5
 - [ ] **Wave B, code + rules built and tested here, live with the next rules deploy:** MON-4, MON-5, MON-7, FEA-1, FEA-2, FEA-4, FEA-5, FEA-7, FEA-9, FEA-10, SEC-6, SEC-7, SEC-8
-- [ ] **Wave C, before restrictive rules go live:** TST-2 (money and RBAC browser journeys)
+- [x] **Wave C, before restrictive rules go live:** ~~TST-2~~ (money and RBAC browser journeys)
 - [ ] **Wave D, environment and go-live (owner sittings):** LIVE-2 fresh environment (seed `DEFAULT_PERMISSIONS`, deploy Firestore + Storage rules), LIVE-3 move production here and archive the old repos, LIVE-1, LIVE-4, SEC-4, SEC-5, SEC-10, TST-4
 - [ ] **Wave E, code health after tests exist:** ENG-1, ENG-2, ENG-6
 
@@ -27,5 +27,6 @@ One item per fresh session: branch `claude/<topic>` from `staging` → tests fir
 | Track | Progress | Notes |
 |---|---|---|
 | Milestone 1 | `[##########]` 100% | Tagged `v1.0.0` |
-| Wave A | `[#####-----]` 7/15 | MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9 done; next up: TST-1 |
-| Waves B–E | `[----------]` 0% | Wave D needs the owner |
+| Wave A | `[#####-----]` 8/15 | MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, TST-1 done; next up: TST-3 |
+| Waves B, D, E | `[----------]` 0% | Wave D needs the owner |
+| Wave C | `[##########]` 1/1 | TST-2 done |
