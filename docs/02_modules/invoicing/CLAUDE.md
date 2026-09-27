@@ -27,6 +27,7 @@ Invoices are `invoices` documents numbered `INV-ADV-####` / `INV-FIN-####` from 
 - The 75 / 25 percentages are hardcoded in `QuotationBuilder.jsx`, `Deals.jsx` and `FabricationWorks.jsx`; the edit form lets `amount` change freely.
 - Always reserve the id with `generateInvoiceId` first; both automatic creators abort the stage change if that fails.
 - One Advance and one Final per lead is a UI convention, not enforced in rules or data.
+- An invoice's `leadId` may be the original lead id or the Deal id. The detail view's reference prints the whole lineage via `lineageIdsForLeadId` (`src/features/leads/leadLineage.js`), so `Invoices` takes the `leads` prop from `App.jsx`.
 
 - Final invoice guard: deal completion and job QA pass call `getExistingFinalInvoice` (`src/shared/utils/entityUtils.js`) and skip creating a second Final. It runs on client state, so two sessions acting at the same moment can still both create one.
 

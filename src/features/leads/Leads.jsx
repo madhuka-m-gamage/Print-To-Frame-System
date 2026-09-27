@@ -15,6 +15,7 @@ import { sanitizeTechnicalScope, stripEmojis, phonesMatch } from '@/shared/utils
 import { exportToCsv } from '@/shared/utils/csvExport';
 import { logActivity } from '@/services/auditLog';
 import { matchesEntity } from '@/shared/utils/entityUtils';
+import { logisticsJobForLineage } from './leadLineage';
 
 const STAGES = ["Intake", "Processing", "75% Invoice Submitted", "Received", "Completed"];
 
@@ -120,7 +121,7 @@ function LeadColumn({
         const customActions = (
           <>
             {stage === "75% Invoice Submitted" && (() => {
-              const job = logisticsJobs ? logisticsJobs.find(j => j.leadId === lead.id) : null;
+              const job = logisticsJobForLineage(lead, logisticsJobs);
               if (job && job.status === "Completed") {
                 return (
                   <div className="flex items-center space-x-1 px-2 py-1 rounded-lg bg-secondary/10 text-secondary border border-secondary/20" title="Pickup Completed">

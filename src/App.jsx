@@ -1375,6 +1375,7 @@ function App() {
           {activeTab === "invoices" && canAccess(currentUser?.role, 'invoices') && (
             <Invoices
               invoices={invoices}
+              leads={leads}
               setInvoices={setInvoices}
               onMarkPaid={handleMarkInvoicePaid}
               currentUser={currentUser}
