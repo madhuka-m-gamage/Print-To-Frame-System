@@ -1,0 +1,64 @@
+rules_version = '2';
+
+// Firebase Storage rules (owner decision DEC-3). Deployed by hand with
+// `firebase deploy --only storage --project <project>`; pushing to git changes nothing live.
+// Tested in tests/integration/storageRules.test.js.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Mirrors isBootstrapSuperAdmin() in firestore.rules and src/features/auth/superAdmin.js.
+    function isSuperAdmin() {
+      return signedIn()
+        && request.auth.token.email in ['madhukagamage6@gmail.com', 'madhukagamage@gmail.com'];
+    }
+
+    function userPath() {
+      return /databases/(default)/documents/users/$(request.auth.token.email);
+    }
+
+    // An approved, active internal account, read the same way firestore.rules' isActiveUser()
+    // does. External roles (partners and clients) are not staff.
+    function isStaff() {
+      return isSuperAdmin() || (
+        signedIn()
+        && firestore.exists(userPath())
+        && !(firestore.get(userPath()).data.get('status', '') in ['Deactivated', 'Disabled'])
+        && (firestore.get(userPath()).data.get('isApproved', false) == true
+            || firestore.get(userPath()).data.get('status', '') == 'Active')
+        && !(firestore.get(userPath()).data.get('role', '') in ['Partner', 'Customer', 'Business Client'])
+      );
+    }
+
+    function isNewDocument(maxBytes) {
+      return resource == null
+        && request.resource.size < maxBytes
+        && (request.resource.contentType.matches('image/.*')
+            || request.resource.contentType == 'application/pdf');
+    }
+
+    // Fabrication blueprints (FabricationCardDetails.jsx).
+    match /blueprints/{jobNo}/{fileName} {
+      allow read: if isStaff();
+      allow create: if isStaff() && isNewDocument(10 * 1024 * 1024);
+    }
+
+    // Public partner registration (PartnerRegistration.jsx, signed out): a visitor may add a BR
+    // or NIC copy under an application id, once, but never read anything back. Staff review it.
+    match /partners/applications/{appId}/{fileName} {
+      allow read: if isStaff();
+      allow create: if appId.matches('APP-[0-9]+')
+        && fileName.matches('(br|nic)_.+')
+        && isNewDocument(5 * 1024 * 1024);
+    }
+
+    // Partner document vault (Partners.jsx).
+    match /partners/{partnerId}/{fileName} {
+      allow read: if isStaff();
+      allow create: if isStaff() && isNewDocument(10 * 1024 * 1024);
+    }
+  }
+}

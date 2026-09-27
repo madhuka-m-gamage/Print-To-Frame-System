@@ -30,6 +30,16 @@ firebase deploy --only firestore:rules --project print-to-frame-erp
 
 Names only (values live in Vercel and a local `.env`, never in git): `GEMINI_API_KEY`, `APP_URL`, `FIREBASE_SERVICE_ACCOUNT_JSON` (server), `VITE_FIREBASE_*` (API_KEY, AUTH_DOMAIN, PROJECT_ID, STORAGE_BUCKET, MESSAGING_SENDER_ID, APP_ID, MEASUREMENT_ID, DATABASE_ID, OAUTH_CLIENT_ID), `VITE_SENTRY_DSN`, `VITE_GOOGLE_MAPS_API_KEY`. `FIREBASE_SERVICE_ACCOUNT_JSON` is required even in local dev for the admin-user endpoint.
 
+## Storage rules deployment
+
+`storage.rules` (owner decision DEC-3) is also deployed by hand, never by pushing:
+
+```bash
+firebase deploy --only storage --project print-to-frame-erp
+```
+
+The rules call `firestore.get()` on the caller's `users` document, so the first deploy asks to grant the Storage service agent read access to Firestore; accept it. Not deployed yet: waiting for the owner's sign-off or the fresh environment setup.
+
 ## Firebase console settings not tracked in the repo
 
 - Authentication > Settings > **Authorized domains** must include the serving domains (`portal.print2frame.xyz`, `www.print2frame.xyz`, and the auth domain `auth.print2frame.xyz` used by the config), or Google sign-in fails with `auth/unauthorized-domain` / `auth/invalid-continue-uri`.

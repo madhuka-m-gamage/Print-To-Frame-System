@@ -59,13 +59,22 @@
 - `/leads`: read with `leads` or `pipeline`; create and update check `pipeline` when the document is a deal (`isDeal`), else `leads`; delete follows `leads` delete. Invoices, receipts, projects and logistics deletes follow their own `delete` permission.
 - Not done: limiting the Partner role to its own `partners` document (the Partners screen still lists the whole collection), and field limits on what a partner may edit about themselves.
 
+## Storage rules (`storage.rules`, DEC-3; not deployed)
+
+Default deny. Staff means the super admin, or an approved, active account whose role is not Partner, Customer or Business Client (read from `users/{email}` with `firestore.get()`, the same way `isActiveUser()` works here). Files are images or PDFs only and never overwritten.
+- `blueprints/{jobNo}/{file}`: staff read and add, under 10MB.
+- `partners/{partnerId}/{file}` (document vault): staff read and add, under 10MB.
+- `partners/applications/{appId}/{file}` (public registration, signed out): anyone may add a `br_` or `nic_` file under an `APP-<digits>` id, under 5MB, once; only staff read. The form stores the path (`brCertPath`, `nicCopyPath`), not a download link, because the visitor cannot read the file back. Residual risk: a signed-out visitor can still add files of up to 5MB each under new ids; nothing is readable to them.
+
+Tested in `tests/integration/storageRules.test.js` (Storage emulator on port 9199).
+
 ## Deployment (rules are not deployed by Vercel)
 
 Editing `firestore.rules` and pushing to `staging` or `main` only changes the file in git. Rules go live only with `firebase deploy --only firestore:rules --project print-to-frame-erp`. `firebase.json` maps the same file to three databases; confirm which one the app uses (`VITE_FIREBASE_DATABASE_ID`, default `(default)`). A rules edit that is merged but never deployed silently keeps the old ruleset; this caused a live admin lockout once (see [CLAUDE.md](../../CLAUDE.md)).
 
 ## Tests
 
-`npm run test:rules` runs `tests/integration/*` against a local Firestore + Auth emulator (needs Java; project id `demo-print2frame-test`). `firestoreRules.test.js` covers role-escalation prevention. `rulesAccess.test.js` (B4) covers permission-gated writes, owner reads, the audit log and the public forms, and records each gap listed in the observations above as a characterisation test, with `it.todo` entries for the target rules. Note the Partner matrix grants full `partners` access, so a partner can read other partners today.
+`npm run test:rules` runs `tests/integration/*` against local Firestore, Auth and Storage emulators (needs Java; project id `demo-print2frame-test`). `firestoreRules.test.js` covers role-escalation prevention. `rulesAccess.test.js` (B4) covers permission-gated writes, owner reads, the audit log and the public forms, and records each gap listed in the observations above as a characterisation test, with `it.todo` entries for the target rules. Note the Partner matrix grants full `partners` access, so a partner can read other partners today.
 
 ## Open questions
 

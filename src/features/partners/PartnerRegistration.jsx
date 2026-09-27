@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { db, storage } from '@/services/firebase';
 import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes } from 'firebase/storage';
 import { COLLECTIONS } from '@/services/firestoreSync';
 import { validatePhone, validateEmail, formatPhone } from '@/shared/utils/validation';
 import { 
@@ -82,15 +82,16 @@ export default function PartnerRegistration() {
     }
   };
 
+  // A signed-out visitor may add these files but never read them back (storage.rules), so the
+  // application keeps the storage path; staff open it from there.
   const uploadFileToStorage = async (file, path) => {
-    if (!file || !storage) return null;
+    if (!file || !storage) return '';
     try {
-      const storageRef = ref(storage, path);
-      const snapshot = await uploadBytes(storageRef, file);
-      return await getDownloadURL(snapshot.ref);
+      await uploadBytes(ref(storage, path), file);
+      return path;
     } catch (err) {
-      console.warn("Storage upload fallback:", err);
-      return `local_${file.name}_${Date.now()}`;
+      console.warn('Partner document upload failed:', err);
+      return '';
     }
   };
 
@@ -124,14 +125,14 @@ export default function PartnerRegistration() {
     try {
       const appId = `APP-${String(Date.now()).slice(-6)}`;
       
-      let brCertUrl = '';
-      let nicCopyUrl = '';
+      let brCertPath = '';
+      let nicCopyPath = '';
 
       if (files.brCert) {
-        brCertUrl = await uploadFileToStorage(files.brCert, `partners/applications/${appId}/br_${files.brCert.name}`);
+        brCertPath = await uploadFileToStorage(files.brCert, `partners/applications/${appId}/br_${files.brCert.name}`);
       }
       if (files.nicCopy) {
-        nicCopyUrl = await uploadFileToStorage(files.nicCopy, `partners/applications/${appId}/nic_${files.nicCopy.name}`);
+        nicCopyPath = await uploadFileToStorage(files.nicCopy, `partners/applications/${appId}/nic_${files.nicCopy.name}`);
       }
 
       const applicationData = {
@@ -153,8 +154,8 @@ export default function PartnerRegistration() {
           accountName: formData.accountName,
         },
         documents: {
-          brCertUrl: brCertUrl || '',
-          nicCopyUrl: nicCopyUrl || '',
+          brCertPath,
+          nicCopyPath,
         },
         notes: formData.notes,
         status: 'Pending',
