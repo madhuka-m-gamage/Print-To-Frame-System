@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Print To Frame ERP/CRM: leads to deals, fabrication, logistics and invoicing",
   "private": true,
+  "license": "UNLICENSED",
   "engines": {
     "node": ">=22"
   },
