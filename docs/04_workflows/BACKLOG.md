@@ -86,7 +86,7 @@ Every item implicitly includes these.
 | LIVE-3 | One canonical repository and one deploy path | rollout | M | **yes** | yes | DEC-6 |
 | LIVE-4 | Give the tooling access to the live Vercel project | rollout | S | Vercel | owner | none |
 
-**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1 and MON-3 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
+**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3 and MON-2 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
 
 ---
 
@@ -153,9 +153,10 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 ### MON-2: Stamp `leadId` and `dealId` on every invoice
 - **Why:** a Deal is the same lead continuing (`originalLeadId` links back). The Advance invoice is keyed by the lead id (created before conversion) and the Final by the Deal id. Lookups work through `getLineageIds` / `invoicesForLineage` (`src/features/leads/leadLineage.js`), but the stored data is uneven.
 - **Files:** `src/features/leads/Leads.jsx` (`handleConvertConfirm`), `src/features/quotations/QuotationBuilder.jsx` (invoice creation), `src/features/deals/Deals.jsx`, `src/features/fabrication/FabricationWorks.jsx` (QA-pass invoice).
-- [ ] Test first (unit or component): after converting a lead, its existing invoices gain `dealId`; a new Final invoice carries both `leadId` (original) and `dealId`.
-- [ ] Implement: on conversion, `updateDocument` the lead's invoices with `dealId`; new invoices set both fields from the lineage. Keep reads on `invoicesForLineage`.
-- [ ] Decide with the owner whether to backfill old invoices (a one-off script or an Admin action); do not write live data without the owner's go.
+- [x] Test first (unit or component): after converting a lead, its existing invoices gain `dealId`; a new Final invoice carries both `leadId` (original) and `dealId`.
+- [x] Implement: on conversion, `updateDocument` the lead's invoices with `dealId`; new invoices set both fields from the lineage. Keep reads on `invoicesForLineage`.
+- [x] Backfill of old invoices: not needed. Live data is test-only and a fresh environment is planned (DEC-5), so no live data is written.
+- **Done 2026-09-27:** `invoiceLineageFields` and `leadForInvoice` in `src/features/leads/leadLineage.js`. `Leads.jsx` stamps `dealId` on the lead's invoices at conversion; `QuotationBuilder.jsx` and `Deals.jsx` stamp both ids on new invoices (`FabricationWorks.jsx` already did, from the job). `handleMarkInvoicePaid` in `App.jsx` updates the Deal when the invoice carries `dealId`, so referral eligibility still follows the Deal. Tests: `tests/unit/leadLineage.test.js`, `tests/component/Deals.test.jsx`, `tests/component/Leads.lineage.test.jsx`.
 
 ### MON-3: Two remaining single-id lookups
 - `src/features/leads/Leads.jsx` finds a logistics job with `j.leadId === lead.id`; `src/features/invoicing/Invoices.jsx` prints `Lead: <leadId>`. Change both to use `getLineageIds`. Add a unit or component test where the id is the Deal id or the original lead id.

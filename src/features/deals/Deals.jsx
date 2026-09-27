@@ -16,6 +16,7 @@ import { projectStatusForDealStage } from './dealProjectSync';
 import { buildLogisticsTask } from '@/features/logistics/logisticsTask';
 import { logActivity } from '@/services/auditLog';
 import { findPartnerForLead, getLeadPartnerId } from '@/features/partners/partnerLink';
+import { invoiceLineageFields } from '@/features/leads/leadLineage';
 
 const DEALS_STAGES = ["Waiting", "Fabricating", "Ready To Load", "Hand Over", "Completed"];
 
@@ -320,8 +321,7 @@ export default function Deals({
       const { quote: linkedQuote, totalValue, finalAmount, advancePaid } = getFinalInvoiceAmounts(dealBeingMoved, quotations);
       const invoiceSaved = await onSaveInvoice({
         id: finalInvId,
-        leadId: dealBeingMoved.id,
-        dealId: dealBeingMoved.id,
+        ...invoiceLineageFields(dealBeingMoved),
         partnerId: dealBeingMoved.partnerId || dealBeingMoved.agentId || '',
         originalLeadId: dealBeingMoved.originalLeadId || '',
         linkedJobNo: dealBeingMoved.jobNo || dealBeingMoved.linkedJobNo || '',

@@ -13,7 +13,7 @@ Computes price from sq ft via a five-tier engine, then staff draft versioned quo
 
 ## Firestore collections it owns or writes
 
-- Owns `quotations` (ids `QT-xxxxxx`, versions via `parentQuoteId`). Writes `invoices` and `auditLog` through `handleSaveInvoice`.
+- Owns `quotations` (ids `QT-xxxxxx`, versions via `parentQuoteId`). Writes `invoices` and `auditLog` through `handleSaveInvoice`; Advance and Final invoices take `leadId` and `dealId` from `invoiceLineageFields` (`src/features/leads/leadLineage.js`).
 
 ## Triggers and side effects
 

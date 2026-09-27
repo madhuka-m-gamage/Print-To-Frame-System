@@ -76,6 +76,7 @@ import { ErrorBoundary } from "./shared/components/ErrorBoundary";
 import LoadingSpinner from "./shared/components/LoadingSpinner";
 import { findPartnerForLead, getLeadPartnerId } from "@/features/partners/partnerLink";
 import { isSuperAdminEmail } from '@/features/auth/superAdmin';
+import { leadForInvoice } from '@/features/leads/leadLineage';
 
 
 export function oT() {
@@ -480,7 +481,8 @@ function App() {
       ));
       await updateDocument(COLLECTIONS.INVOICES, invDocId, { status: 'Paid' });
 
-      const targetLead = leads.find(l => l.id === leadId || l._firestoreId === leadId);
+      // Commission eligibility follows the Deal, so an invoice stamped with a dealId settles against the Deal.
+      const targetLead = leadForInvoice({ ...targetInvoice, leadId }, leads);
 
       // 2. Full settlement requires BOTH an Advance and a Final invoice to
       // exist and both to be paid — not just "every invoice that happens to
@@ -490,7 +492,7 @@ function App() {
       // one carries the post-conversion deal id (or vice versa) — match
       // siblings against either, same convention used for quotations/
       // logistics jobs tied to a converted deal.
-      const relatedIds = new Set([leadId, targetLead?.originalLeadId, targetLead?.convertedDealId].filter(Boolean));
+      const relatedIds = new Set([leadId, targetLead?.id, targetLead?.originalLeadId, targetLead?.convertedDealId].filter(Boolean));
       const siblingInvoices = invoices.filter(inv => relatedIds.has(inv.leadId));
       // A lead/deal can end up with more than one Advance (or Final) invoice
       // on file (repeated testing, re-quoting, nothing enforces uniqueness) —
@@ -515,7 +517,7 @@ function App() {
           ...(isFullyPaidNow && isPartnerReferral && !alreadyEligible ? { referralStatus: 'Eligible for Payout' } : {}),
         };
 
-        setLeads(prev => prev.map(lead => (lead.id === leadId || lead._firestoreId === leadId) ? { ...lead, ...updatedLeadPayload } : lead));
+        setLeads(prev => prev.map(lead => lead.id === targetLead.id ? { ...lead, ...updatedLeadPayload } : lead));
         await updateDocument(COLLECTIONS.LEADS, leadDocId, updatedLeadPayload);
 
         // A lead and the deal it converted into are separate documents; when

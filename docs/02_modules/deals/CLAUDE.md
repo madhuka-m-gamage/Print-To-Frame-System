@@ -17,7 +17,7 @@ Deals is the post-sale Kanban (Waiting, Fabricating, Ready To Load, Hand Over, C
 
 ## Triggers and side effects
 
-- Hand Over to Completed: reserves a Final invoice id (aborts if it fails), awaits the 25% Final invoice save (aborts if `onSaveInvoice` returns `false`), then completes the deal and accrues the partner commission once (`calculateDealCommission`, `commissionAccrued`).
+- Hand Over to Completed: reserves a Final invoice id (aborts if it fails), awaits the 25% Final invoice save, stamped `leadId` = original lead and `dealId` = the deal via `invoiceLineageFields` (aborts if `onSaveInvoice` returns `false`), then completes the deal and accrues the partner commission once (`calculateDealCommission`, `commissionAccrued`).
 - Stage moves do not sync the fabrication project.
 
 ## Before you edit
