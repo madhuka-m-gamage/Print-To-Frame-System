@@ -9,7 +9,7 @@ Print To Frame ERP is a single-page React ERP/CRM for a Sri Lankan custom-framin
 ## Commands
 
 ```bash
-npm run dev          # Vite dev server on 0.0.0.0:3000 (also proxies POST /api/generate locally, see vite.config.js)
+npm run dev          # Vite dev server on 127.0.0.1:3000 (runs the real api/*.js handlers locally, see vite.config.js)
 npm run build         # production build to dist/
 npm run preview       # preview the production build on port 3000
 npm run lint          # eslint .
