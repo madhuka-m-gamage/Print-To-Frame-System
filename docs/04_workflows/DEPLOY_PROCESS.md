@@ -38,7 +38,7 @@ Names only (values live in Vercel and a local `.env`, never in git): `GEMINI_API
 firebase deploy --only storage --project print-to-frame-erp
 ```
 
-The rules call `firestore.get()` on the caller's `users` document, so the first deploy asks to grant the Storage service agent read access to Firestore; accept it. Not deployed yet: waiting for the owner's sign-off or the fresh environment setup.
+The rules call `firestore.get()` on the caller's `users` document, so the Storage service agent needs `roles/firebaserules.firestoreServiceAgent`. An interactive deploy asks to grant it; a `--non-interactive` deploy skips the prompt silently, so check it with `gcloud projects get-iam-policy`. Status: deployed to `print-to-frame-erp` on 2026-09-27 (default bucket `print-to-frame-erp.firebasestorage.app`, `asia-south1`, created in production mode), and the Storage service agent was granted `roles/firebaserules.firestoreServiceAgent` so the rules can read `users`.
 
 ## Firebase console settings not tracked in the repo
 

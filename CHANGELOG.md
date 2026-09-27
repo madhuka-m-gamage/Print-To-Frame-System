@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Live, 2026-09-27, with the owner's sign-off: created the default Storage bucket (`asia-south1`, production mode; owner), deployed `storage.rules` with `firebase deploy --only storage --project print-to-frame-erp`, and granted the Storage service agent `roles/firebaserules.firestoreServiceAgent` so the rules can read `users`. The Google Picker and Cloud Storage for Firebase APIs are enabled (owner). Still open: allow the Picker API on the browser API key.
+
 - DEC-7 decided (docs only): use `DEFAULT_PERMISSIONS` for every cell where the live matrix differs (57). No code change; the live `settings/permissions` document is replaced with the fresh setup or through LIVE-1.
 
 - DEC-3 in the repo (not deployed): `storage.rules`, default deny. Staff (super admin, or an approved active non-external account, read through `firestore.get`) read and add blueprints and partner documents; the signed-out partner registration form may add `br_`/`nic_` files under an `APP-` id, under 5MB, add-only, and never read them. Images or PDFs only, no overwrites. `firebase.json` gains the storage rules entry and the Storage emulator (port 9199), and `npm run test:rules` starts it. The registration form now stores `brCertPath` / `nicCopyPath` instead of a download link (it cannot read the file back), and no longer invents a `local_...` placeholder when the upload fails. Deploy with `firebase deploy --only storage` on sign-off. Tests: unit 227, API 52, component 63, rules 60 (11 new Storage), e2e 2.
