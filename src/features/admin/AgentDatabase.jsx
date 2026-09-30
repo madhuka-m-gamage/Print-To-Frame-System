@@ -710,13 +710,7 @@ export default function AgentDatabase({
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${ROLE_METADATA[selectedAgent.role]?.badge || 'bg-surface-container text-on-surface-variant'}`}>
                         {selectedAgent.role}
                       </span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
-                        selectedAgent.status === 'Deactivated' 
-                          ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' 
-                          : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                      }`}>
-                        {selectedAgent.status || 'Active'}
-                      </span>
+                      <StatusBadge status={selectedAgent.status || 'Active'} />
                     </div>
 
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-on-surface-variant mt-1">
@@ -749,11 +743,7 @@ export default function AgentDatabase({
                     </a>
                   )}
                   <button
-                    onClick={() => setEmailModalConfig({
-                      isOpen: true,
-                      recipient: selectedAgent,
-                      initialTemplateId: selectedAgent.role === 'Business Client' ? 'client_approval' : 'employee_invite',
-                    })}
+                    onClick={() => setEmailModalConfig({ isOpen: true, recipient: selectedAgent })}
                     className="px-3 py-1.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface rounded-xl text-xs font-bold border border-outline-variant flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <Mail size={12} /> Email

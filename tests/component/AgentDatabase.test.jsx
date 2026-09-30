@@ -47,3 +47,33 @@ describe('AgentDatabase decline', () => {
     expect(calls).toEqual(['email:registration_declined:applicant@example.com', 'delete:applicant@example.com']);
   });
 });
+
+const renderMembers = (users) => renderWithProviders(
+  <AgentDatabase users={users} setUsers={vi.fn()} pendingUsers={[]} setPendingUsers={vi.fn()} currentUser={admin} />,
+  { role: 'Admin' }
+);
+
+describe('AgentDatabase member status and email defaults (employees D8)', () => {
+  it('shows the member status with StatusBadge: Active as success, Deactivated as danger', () => {
+    const { container, unmount } = renderMembers([{ identifier: 'sales@example.com', name: 'Active Sales', role: 'Sales', status: 'Active' }]);
+    expect(container.querySelector('.text-status-success-on')).toHaveTextContent('Active');
+    unmount();
+
+    const view = renderMembers([{ identifier: 'gone@example.com', name: 'Gone Sales', role: 'Sales', status: 'Deactivated' }]);
+    expect(view.container.querySelector('.text-status-danger-on')).toHaveTextContent('Deactivated');
+  });
+
+  // The composer's own role default applies: a Customer gets quote_submission, not employee_invite.
+  it('does not open the staff onboarding template for a retail Customer', async () => {
+    renderMembers([{ identifier: 'customer@example.com', name: 'Retail Buyer', role: 'Customer', status: 'Active' }]);
+    fireEvent.click(screen.getByRole('button', { name: 'Email' }));
+    expect(await screen.findByDisplayValue(/^Quotation for Steel Framing/)).toBeInTheDocument();
+    expect(screen.queryByDisplayValue(/Welcome to the Print To Frame Team/)).not.toBeInTheDocument();
+  });
+
+  it('still opens the staff onboarding template for a staff member', async () => {
+    renderMembers([{ identifier: 'sales@example.com', name: 'Active Sales', role: 'Sales', status: 'Active' }]);
+    fireEvent.click(screen.getByRole('button', { name: 'Email' }));
+    expect(await screen.findByDisplayValue(/Welcome to the Print To Frame Team/)).toBeInTheDocument();
+  });
+});
