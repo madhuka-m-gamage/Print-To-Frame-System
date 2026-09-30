@@ -17,7 +17,7 @@ const DEFAULT_STYLE = {
 
 const STATUS_STYLES = [
   {
-    match: ['completed', 'delivered', 'canvas in', 'received', 'paid', 'approved'],
+    match: ['completed', 'delivered', 'canvas in', 'received', 'paid', 'approved', 'active'],
     colorClasses: 'bg-status-success/10 text-status-success-on border-status-success/30',
     dotClass: 'bg-status-success-on',
     Icon: Check,
@@ -41,7 +41,7 @@ const STATUS_STYLES = [
     Icon: Clock,
   },
   {
-    match: ['revision', 'blocked', 'cancelled', 'error'],
+    match: ['revision', 'blocked', 'cancelled', 'error', 'deactivated'],
     colorClasses: 'bg-status-danger/10 text-status-danger-on border-status-danger/30',
     dotClass: 'bg-status-danger-on',
     Icon: AlertCircle,

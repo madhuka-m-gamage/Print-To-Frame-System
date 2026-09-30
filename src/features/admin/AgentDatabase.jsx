@@ -15,7 +15,7 @@ import {
   ImageCropModal 
 } from '@/shared/ui';
 import EmailTemplateModal from '@/shared/components/EmailTemplateModal';
-import { SYSTEM_ROLES, ROLE_METADATA, getRoleCategory } from '@/constants/roles';
+import { SYSTEM_ROLES, ROLE_METADATA, ROLE_CATEGORIES, getRoleCategory } from '@/constants/roles';
 import { formatPhone } from '@/shared/utils/validation';
 import { usePermissions } from '@/context/PermissionsContext';
 import { logActivity } from '@/services/auditLog';
@@ -406,6 +406,22 @@ export default function AgentDatabase({
         await updateDocument(COLLECTIONS.PARTNER_APPLICATIONS, _appDocId, { status: 'Approved' });
       }
 
+      // After onApprove: /api/send-email only mails an address it finds in a record.
+      // A partner application has no password of its own yet, so it gets the invite that carries one.
+      if (!ROLE_CATEGORIES.EXTERNAL.includes(finalRole)) {
+        try {
+          await sendTemplatedEmail(targetUser.identifier, fromApplication ? 'employee_invite' : 'employee_approved', {
+            recipientName: targetUser.name,
+            assignedRole: finalRole,
+            loginEmail: targetUser.identifier,
+            tempPassword: fromApplication ? reviewPassword : undefined,
+            senderName: currentUser?.name,
+          });
+        } catch (mailErr) {
+          toast.error(`${targetUser.name} was approved, but the approval email failed to send: ${mailErr.message}`);
+        }
+      }
+
       setReviewingApplicant(null);
       setReviewPassword('');
       toast.success(`Approved ${targetUser.name} as ${finalRole}`);
@@ -710,13 +726,7 @@ export default function AgentDatabase({
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${ROLE_METADATA[selectedAgent.role]?.badge || 'bg-surface-container text-on-surface-variant'}`}>
                         {selectedAgent.role}
                       </span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
-                        selectedAgent.status === 'Deactivated' 
-                          ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' 
-                          : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                      }`}>
-                        {selectedAgent.status || 'Active'}
-                      </span>
+                      <StatusBadge status={selectedAgent.status || 'Active'} />
                     </div>
 
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-on-surface-variant mt-1">
@@ -749,11 +759,7 @@ export default function AgentDatabase({
                     </a>
                   )}
                   <button
-                    onClick={() => setEmailModalConfig({
-                      isOpen: true,
-                      recipient: selectedAgent,
-                      initialTemplateId: selectedAgent.role === 'Business Client' ? 'client_approval' : 'employee_invite',
-                    })}
+                    onClick={() => setEmailModalConfig({ isOpen: true, recipient: selectedAgent })}
                     className="px-3 py-1.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface rounded-xl text-xs font-bold border border-outline-variant flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <Mail size={12} /> Email

@@ -17,7 +17,7 @@ One self-service profile page plus a theme toggle. There is no separate settings
 ## Triggers and side effects
 
 - Photos are cropped to base64 and stored inline in `photoURL` (no Storage).
-- Two sync paths (UserProfile and `handleUpdateUser`) differ: only the first updates `customers`.
+- A Partner's `partners` record is written only by `handleUpdateUser` in `App.jsx` (name, contact person, phone, photo, and address and company when set); `UserProfile.jsx` updates `customers` itself for Customer and Business Client (FEA-8, decision 2).
 
 ## Before you edit
 

@@ -40,6 +40,7 @@ const SENDABLE_TEMPLATES = new Set([
   'partner_approval',
   'partner_activation_confirmed',
   'employee_invite',
+  'employee_approved',
   'password_reset',
   'registration_declined',
 ]);

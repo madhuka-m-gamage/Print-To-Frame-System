@@ -116,8 +116,8 @@ describe('api/send-email.js payload', () => {
     expect(sendMail).not.toHaveBeenCalled();
   });
 
-  it('allows each of the seven templates the app sends', async () => {
-    const ids = ['client_approval', 'client_activation_confirmed', 'partner_approval', 'partner_activation_confirmed', 'employee_invite', 'password_reset', 'registration_declined'];
+  it('allows each of the eight templates the app sends', async () => {
+    const ids = ['client_approval', 'client_activation_confirmed', 'partner_approval', 'partner_activation_confirmed', 'employee_invite', 'employee_approved', 'password_reset', 'registration_declined'];
     const handler = await load();
     for (const templateId of ids) {
       expect((await call(handler, { body: { to: 'a@b.co', templateId, data: {} } })).statusCode).toBe(200);
@@ -187,6 +187,7 @@ describe('api/send-email.js recipient check (BACKLOG SEC-1)', () => {
     ['partner_approval', 'partners', 'Partners.jsx after the partner record is added'],
     ['partner_activation_confirmed', 'partners', 'Partners.jsx after the partner record is added'],
     ['employee_invite', 'users', 'AgentDatabase.jsx after users/{email} is written'],
+    ['employee_approved', 'users', 'AgentDatabase.jsx after approvePending writes users/{email}'],
     ['password_reset', 'users', 'AgentDatabase.jsx and Partners.jsx for an existing user'],
     ['registration_declined', 'pendingUsers', 'AgentDatabase.jsx before the pendingUsers doc is deleted'],
     ['registration_declined', 'partner_applications', 'AgentDatabase.jsx for a rejected partner application'],
