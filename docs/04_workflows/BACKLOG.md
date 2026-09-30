@@ -60,7 +60,7 @@ Every item implicitly includes these.
 | FEA-8 | Profile and user-management items (done) | ux | S | no | no | none |
 | FEA-9 | Employees HR model | feature | L | rules | no | none |
 | FEA-10 | Task-assignment fields across modules | feature | L | rules | no | FEA-9 |
-| FEA-11 | Staff screen to open partner-application BR/NIC files | feature | S | no | no | none |
+| FEA-11 | Staff screen to open partner-application BR/NIC files (done) | feature | S | no | no | none |
 | SEC-1 | Check the recipient in `api/send-email.js` | security | S | api | no | none |
 | SEC-2 | Restrict `api/generate.js` to staff roles | security | S | api | no | none |
 | SEC-3 | Make the dev proxy safe | security | S | no | no | none |
@@ -87,7 +87,7 @@ Every item implicitly includes these.
 | LIVE-3 | One canonical repository and one deploy path | rollout | M | **yes** | yes | DEC-6 |
 | LIVE-4 | Give the tooling access to the live Vercel project | rollout | S | Vercel | owner | none |
 
-**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, SEC-11, TST-1, TST-2, FEA-6, FEA-3, ENG-4 and FEA-8 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
+**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, SEC-11, TST-1, TST-2, FEA-6, FEA-3, ENG-4, FEA-8 and FEA-11 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
 
 ---
 
@@ -261,6 +261,7 @@ Source: `docs/02_modules/notifications/FINDINGS.md`. NOTIF-01 (sign-out leak) is
 - **Why:** since DEC-3 the public registration form stores `brCertPath` and `nicCopyPath` (Storage paths under `partners/applications/`) on the `partner_applications` document, because a signed-out visitor cannot read the file back. Nothing in the app opens them yet.
 - **Where:** `src/features/admin/AgentDatabase.jsx` (application review). Resolve each path with `getDownloadURL(ref(storage, path))` on click; `storage.rules` already lets staff read `partners/applications/**`.
 - **Test:** a component test that shows "Open BR copy" / "Open NIC copy" for an application with paths, and nothing when the paths are empty.
+- **Done:** `AgentDatabase.jsx` adds `brCertPath` / `nicCopyPath` to the normalised application item and renders a Documents row in the review modal with an "Open BR copy" and an "Open NIC copy" button, each only when its path is set; `openApplicationFile` resolves `getDownloadURL(ref(storage, path))`, opens it with `window.open(url, '_blank', 'noopener,noreferrer')` and toasts "Could not open the BR copy." / "...NIC copy." on error. The paths are destructured out before `onApprove`, so they are not written to `users/{email}`. Tests in `tests/component/AgentDatabase.test.jsx` (5: both open in a new tab, only the uploaded one shows, none when empty, error toast and nothing opened, paths not copied to the approved user). Not covered: a real Storage read of an application file (the rules test covers the staff read of `partners/applications/**`).
 
 ---
 

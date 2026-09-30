@@ -7,7 +7,8 @@ import {
 } from 'lucide-react';
 import DeleteModal from '@/shared/components/DeleteModal';
 import { doc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
-import { db } from '@/services/firebase';
+import { ref, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '@/services/firebase';
 import { toast } from '@/shared/utils/toast';
 import { subscribeToCollection, addDocument, updateDocument, COLLECTIONS } from '@/services/firestoreSync';
 import { 
@@ -116,6 +117,8 @@ export default function AgentDatabase({
         mobile: app.phone || app.contactNumber || '',
         company: app.studioName || app.name || '',
         specialty: app.specialty || '',
+        brCertPath: app.brCertPath || '',
+        nicCopyPath: app.nicCopyPath || '',
         _source: 'partner_application',
         _appDocId: app._firestoreId || app.id,
       }));
@@ -370,6 +373,16 @@ export default function AgentDatabase({
   // until the next render, so it was always approving with whatever role
   // selectedReviewRole happened to already hold, not the one just "set".
   //
+  // The application stores Storage paths, not links: a signed-out applicant could not read the file back.
+  const openApplicationFile = async (path, label) => {
+    try {
+      window.open(await getDownloadURL(ref(storage, path)), '_blank', 'noopener,noreferrer');
+    } catch (err) {
+      console.error(`Could not open the ${label}:`, err);
+      toast.error(`Could not open the ${label}.`);
+    }
+  };
+
   // A `partner_application` item has no Firebase Auth account yet — unlike a
   // self-registered pendingUser, which already created one at signup — so
   // approving it here has to create that account first, using a password the
@@ -393,7 +406,7 @@ export default function AgentDatabase({
 
       // Strip the internal bookkeeping fields before this becomes part of the
       // stored users/{email} document — onApprove spreads regData as-is.
-      const { _source, _appDocId, ...regData } = targetUser;
+      const { _source, _appDocId, brCertPath, nicCopyPath, ...regData } = targetUser;
       if (onApprove) {
         // The welcome/activation email fires from Partners.jsx/Customers.jsx once
         // the admin completes the handed-off Register Partner/Client form, not
@@ -1151,6 +1164,31 @@ export default function AgentDatabase({
                 <div className="flex justify-between">
                   <span className="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">Specialty</span>
                   <span className="text-on-surface">{reviewingApplicant.specialty}</span>
+                </div>
+              )}
+              {(reviewingApplicant.brCertPath || reviewingApplicant.nicCopyPath) && (
+                <div className="flex justify-between items-center">
+                  <span className="text-on-surface-variant font-bold uppercase tracking-wider text-[10px]">Documents</span>
+                  <div className="flex gap-2">
+                    {reviewingApplicant.brCertPath && (
+                      <button
+                        type="button"
+                        onClick={() => openApplicationFile(reviewingApplicant.brCertPath, 'BR copy')}
+                        className="px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-on-primary text-[10px] font-bold rounded-lg transition-colors"
+                      >
+                        Open BR copy
+                      </button>
+                    )}
+                    {reviewingApplicant.nicCopyPath && (
+                      <button
+                        type="button"
+                        onClick={() => openApplicationFile(reviewingApplicant.nicCopyPath, 'NIC copy')}
+                        className="px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-on-primary text-[10px] font-bold rounded-lg transition-colors"
+                      >
+                        Open NIC copy
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

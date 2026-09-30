@@ -18,6 +18,7 @@ Registration queue, admin approval, role and status management, password reset, 
 ## Triggers and side effects
 
 - `approvePending` batch-writes `users` and deletes `pendingUsers`. It does **not** create partners / customers; it pre-fills their registration form. For a staff role, `handleExecuteApproval` then sends `employee_approved` (`employee_invite` with the set password for a partner application) (FEA-8).
+- The application review modal in `AgentDatabase.jsx` shows **Open BR copy** / **Open NIC copy** for a partner application's `brCertPath` / `nicCopyPath` (none when empty); a click resolves `getDownloadURL(ref(storage, path))` and opens a new tab, with an error toast on failure (FEA-11). Both paths are dropped before `onApprove` writes the `users` record.
 - The member header shows the status with `StatusBadge` (Active, Deactivated); the member Email button leaves the template to `EmailTemplateModal`'s role default.
 - `api/admin-user.js` needs an Admin caller; delete removes the Auth account only.
 - Deactivate / Reactivate (`handleToggleStatus` in `AgentDatabase.jsx`) writes only `status`; `isApproved` stays true. The app still refuses the account: `canSignIn` in `src/features/auth/authFlow.js` at login and `shouldEvict` on the user's own-document listener mid-session (SEC-11). Server side, the step 3.5 `isActiveUser()` rule refuses it everywhere except reading its own `users` document.
