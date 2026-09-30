@@ -20,7 +20,7 @@ vi.mock('@/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
 vi.mock('@/features/fabrication/FabricationCardDetails', () => ({ default: () => null }));
 vi.mock('@/features/fabrication/FrameBlueprintPreview', () => ({ default: () => null }));
 
-const { generateInvoiceId, generateAtomicId } = await import('@/services/firestoreSync');
+const { generateInvoiceId, generateAtomicId, updateDocument } = await import('@/services/firestoreSync');
 const { toast } = await import('@/shared/utils/toast');
 const { logActivity } = await import('@/services/auditLog');
 const { default: FabricationWorks } = await import('@/features/fabrication/FabricationWorks');
@@ -170,5 +170,94 @@ describe('FabricationWorks QA gate (Phase 7 6.4c)', () => {
     await passQa();
     await waitFor(() => expect(onSaveInvoice).toHaveBeenCalled());
     expect(onSaveInvoice.mock.calls[0][0]).toMatchObject({ phone: '+94711111111', company: 'Job Co' });
+  });
+});
+
+describe('FabricationWorks board statuses (FEA-3)', () => {
+  const renderJobs = (jobs, props = {}) => {
+    const setProjects = vi.fn();
+    renderWithProviders(
+      <FabricationWorks projects={jobs} setProjects={setProjects} customers={[]} partners={[]} currentUser={admin} onSaveInvoice={vi.fn()} {...props} />,
+      { role: 'Admin' }
+    );
+    return { setProjects };
+  };
+  const job = (status, extra = {}) => makeProject({ jobNo: 'PTF-3001', title: 'Gallery Canvas', status, ...extra });
+
+  it('shows a job with an unrecognised status under Other instead of hiding it', () => {
+    renderJobs([job('Weird')]);
+    expect(screen.getByRole('heading', { name: 'Other' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Inspect Gallery Canvas/ })).toBeInTheDocument();
+  });
+
+  it('shows a Cancelled job read-only with its reason and no stage moves', () => {
+    renderJobs([job('Cancelled', { cancelledReason: 'Deal D-0001 deleted' })]);
+    expect(screen.getByRole('heading', { name: 'Cancelled' })).toBeInTheDocument();
+    expect(screen.getByText(/Deal D-0001 deleted/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /backward/i })).toBeNull();
+    expect(screen.queryByTitle('Advance Stage')).toBeNull();
+    expect(screen.queryByTitle('Put on Hold')).toBeNull();
+    expect(screen.queryByTitle('Run QA Inspection Gate')).toBeNull();
+    expect(screen.queryByTitle('Dispatch to Logistics Delivery')).toBeNull();
+  });
+
+  it('asks for a reason and stores holdFromStatus when a job is put on hold', async () => {
+    const { setProjects } = renderJobs([job('Ongoing')]);
+    fireEvent.click(screen.getByTitle('Put on Hold'));
+    fireEvent.click(await screen.findByRole('button', { name: /Confirm Hold/i }));
+    expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/reason/i));
+    expect(updateDocument).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByPlaceholderText(/why is this job on hold/i), { target: { value: 'Waiting for canvas' } });
+    fireEvent.click(screen.getByRole('button', { name: /Confirm Hold/i }));
+    await waitFor(() => expect(updateDocument).toHaveBeenCalledTimes(1));
+    expect(updateDocument.mock.calls[0][2]).toMatchObject({ status: 'On Hold', holdFromStatus: 'Ongoing', holdReason: 'Waiting for canvas' });
+    expect(setProjects.mock.calls[0][0][0]).toMatchObject({ status: 'On Hold', holdFromStatus: 'Ongoing' });
+    expect(logActivity).toHaveBeenCalledWith('admin@example.com', 'Admin', 'JOB_HELD', 'Fabrication', expect.stringContaining('PTF-3001'));
+  });
+
+  it('resumes an On Hold job into the stage it came from', async () => {
+    const { setProjects } = renderJobs([job('On Hold', { holdFromStatus: 'Revision', holdReason: 'Waiting for canvas' })]);
+    expect(screen.getByText(/Waiting for canvas/)).toBeInTheDocument();
+    expect(screen.queryByTitle('Advance Stage')).toBeNull();
+    fireEvent.click(screen.getByTitle('Resume job'));
+    await waitFor(() => expect(updateDocument).toHaveBeenCalledTimes(1));
+    expect(updateDocument.mock.calls[0][2]).toMatchObject({ status: 'Revision', holdFromStatus: null, holdReason: null });
+    expect(setProjects.mock.calls[0][0][0]).toMatchObject({ status: 'Revision' });
+  });
+
+  it('resumes to Pending when the previous stage was not recorded', async () => {
+    renderJobs([job('On Hold')]);
+    fireEvent.click(screen.getByTitle('Resume job'));
+    await waitFor(() => expect(updateDocument).toHaveBeenCalledTimes(1));
+    expect(updateDocument.mock.calls[0][2]).toMatchObject({ status: 'Pending' });
+  });
+
+  it('offers Archive for Completed and Cancelled jobs but not for an Ongoing one', () => {
+    const ongoing = renderFabricationWith('Ongoing');
+    expect(screen.queryByTitle('Archive job')).toBeNull();
+    ongoing.unmount();
+    const completed = renderFabricationWith('Completed');
+    expect(screen.getByTitle('Archive job')).toBeInTheDocument();
+    completed.unmount();
+    renderFabricationWith('Cancelled');
+    expect(screen.getByTitle('Archive job')).toBeInTheDocument();
+  });
+
+  it('archives a Completed job, keeping its status', async () => {
+    const { setProjects } = renderJobs([job('Completed')]);
+    fireEvent.click(screen.getByTitle('Archive job'));
+    await waitFor(() => expect(updateDocument).toHaveBeenCalledTimes(1));
+    expect(updateDocument.mock.calls[0][2]).toEqual({ archived: true });
+    expect(setProjects.mock.calls[0][0][0]).toMatchObject({ status: 'Completed', archived: true });
+  });
+
+  it('hides archived jobs until Show archived is ticked, and can unarchive them', async () => {
+    renderJobs([job('Completed', { archived: true })]);
+    expect(screen.queryByRole('button', { name: /Inspect Gallery Canvas/ })).toBeNull();
+    fireEvent.click(screen.getByLabelText(/Show archived/i));
+    expect(screen.getByRole('button', { name: /Inspect Gallery Canvas/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByTitle('Unarchive job'));
+    await waitFor(() => expect(updateDocument).toHaveBeenCalledTimes(1));
+    expect(updateDocument.mock.calls[0][2]).toMatchObject({ archived: false });
   });
 });

@@ -52,7 +52,7 @@ Every item implicitly includes these.
 | MON-7 | List and alert defaulted-commission leads | money | M | rules | no | FEA-2 |
 | FEA-1 | Real partner payout (step 4.1) | feature | M | rules | no | LIVE-1 (to work live) |
 | FEA-2 | Persistent notifications and claim resolution (step 4.3) | feature | L | rules | no | none |
-| FEA-3 | Fabrication board statuses: Cancelled, On Hold, Archived, Other | feature | M | no | DEC-4 | none |
+| FEA-3 | Fabrication board statuses: Cancelled, On Hold, Archived, Other (done) | feature | M | no | DEC-4 | none |
 | FEA-4 | Fleet and driver directory in Firestore | feature | M | rules | no | LIVE-1 |
 | FEA-5 | Inspection: revision alert and "Email client: QA passed" | feature | M | api | no | FEA-2 |
 | FEA-6 | Messaging polish (D-MSG items) (done) | ux | L | no | no | none |
@@ -87,7 +87,7 @@ Every item implicitly includes these.
 | LIVE-3 | One canonical repository and one deploy path | rollout | M | **yes** | yes | DEC-6 |
 | LIVE-4 | Give the tooling access to the live Vercel project | rollout | S | Vercel | owner | none |
 
-**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, SEC-11, TST-1, TST-2 and FEA-6 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
+**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, SEC-11, TST-1, TST-2, FEA-6 and FEA-3 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
 
 ---
 
@@ -209,7 +209,8 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 ### FEA-3: Fabrication board statuses
 - **Why:** `STAGES` in `src/features/fabrication/FabricationWorks.jsx` has five columns (Pending, Ongoing, Ready For Inspection, Revision, Completed). A project with any other status disappears from the board; deleting a deal already sets `Cancelled` (step 6.4a).
 - **Build:** a muted read-only **Cancelled** column showing `cancelledReason`; an **On Hold** status with a Hold button (asks for a reason, stores `holdFromStatus`) and a Resume button that returns the job to its previous stage; **Archived** as a "Show archived" filter, allowed only for Completed and Cancelled jobs; an **Other** bucket so an unrecognised status never hides a job. `projectStatusForDealStage` (`src/features/deals/dealProjectSync.js`) already ignores these statuses. Apply DEC-4 (block Final invoice and delivery job for Cancelled) if the owner agrees.
-- [ ] Tests first in `tests/component/FabricationWorks.test.jsx`: a job with status `Weird` still renders (in "Other"); Hold stores `holdFromStatus`; Resume restores it; Archive is refused for an Ongoing job.
+- [x] Tests first in `tests/component/FabricationWorks.test.jsx`: a job with status `Weird` still renders (in "Other"); Hold stores `holdFromStatus`; Resume restores it; Archive is refused for an Ongoing job.
+- **Done 2026-10-01:** files `src/features/fabrication/FabricationWorks.jsx`, `src/features/fabrication/fabricationLink.js` (`archiveBlock`); tests in `tests/component/FabricationWorks.test.jsx` (8 new), `tests/unit/fabricationLink.test.js` (archive guard) and `tests/unit/dealProjectSync.test.js` (Cancelled, On Hold, Archived and unknown statuses are ignored). DEC-4 is kept. Archive is an `archived: true` flag (status stays Completed or Cancelled, so the Cancelled guard still applies); "Archive refused for Ongoing" is proved twice: the button is not offered, and `archiveBlock` (unit tested) refuses it in `handleArchiveJob`. No rules change: the `projects` block in `firestore.rules` gates on create/edit permission and does not restrict fields.
 
 ### FEA-4: Fleet and driver directory in Firestore (logistics D-7, employees D2)
 - **Why:** `FLEET_VEHICLES` and `DRIVER_DIRECTORY` are hardcoded in `src/features/logistics/logisticsEngine.js` and used by `LogisticsCardDetails.jsx`.
