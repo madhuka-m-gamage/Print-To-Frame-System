@@ -74,7 +74,7 @@ Every item implicitly includes these.
 | SEC-11 | Deactivated users can still sign in (done) | security | S | no | no | none |
 | TST-1 | Component tests for the lead card (done) | tests | M | no | no | none |
 | TST-2 | End-to-end journeys (money, RBAC) (done) | tests | L | no | no | none |
-| TST-3 | Tests for Leads, QuotationBuilder, Customers; refresh the coverage map | tests | M | no | no | none |
+| TST-3 | Tests for Leads, QuotationBuilder, Customers; refresh the coverage map (done) | tests | M | no | no | none |
 | TST-4 | Manual check: Picker attach and staff uploads on a deployment | tests | S | deployment | owner | none |
 | ENG-1 | Split the very large files | health | L | no | no | TST-1, TST-3 |
 | ENG-2 | Add Prettier | health | S | no | no | ENG-1 |
@@ -87,7 +87,7 @@ Every item implicitly includes these.
 | LIVE-3 | One canonical repository and one deploy path | rollout | M | **yes** | yes | DEC-6 |
 | LIVE-4 | Give the tooling access to the live Vercel project | rollout | S | Vercel | owner | none |
 
-**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, SEC-11, TST-1, TST-2, FEA-6, FEA-3, ENG-4, FEA-8 and FEA-11 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
+**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, SEC-11, TST-1, TST-2, FEA-6, FEA-3, ENG-4, FEA-8, FEA-11 and TST-3 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
 
 ---
 
@@ -325,6 +325,8 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 
 ### TST-3: More coverage
 - No component tests yet for `Leads`, `QuotationBuilder`, `Customers`. Add wiring tests where money moves (quote to invoice). Then run `npm run coverage` and refresh the coverage map and register in `docs/04_workflows/TESTING.md`.
+- **Done:** `tests/component/QuotationBuilder.test.jsx` (13 tests: discount then tax per line and the 75 / 25 split; save creates `QT` quote v1 through `generateAtomicId` and syncs the lead value; update in place; clone to the next version; the Advance invoice at 75% with the id from `generateInvoiceId('Advance')`, both lineage ids, `quotationId`, and the quote marked Invoiced; the Final at 25% with `advancePaid` 75% for a deal; no invoice button for Draft, Sent or Rejected; Final on a plain lead only once the Advance is Paid; static confirmation once an invoice exists; nothing saved when the number cannot be allocated; one invoice per double click), `tests/component/Leads.test.jsx` (13 tests: pipeline value excludes deals; `onSaveInvoice` wired through the lead card to the Advance and Final invoices; stage advance writes the stage and no invoice; the conversion modal's quoted value and 75%; `D` and `PTF` ids from `generateAtomicId`, deal, lead and project writes; an existing job number kept; nothing written when an id fails; a converted lead not converted twice; customer order count by phone spelling, or an `AUTO-` customer; `dealId` stamped on the lead's invoices) and 6 new tests in `tests/component/Customers.test.jsx` (billing panel lists the lineage's invoices with amounts and no one else's; NIC and exact-name matching; empty state; register saves one order under the NIC and refuses a duplicate; deleting a Business Client removes its `users` document and login, an Individual only the customer). Coverage map and register refreshed in `TESTING.md`.
+- **Finding (not fixed, characterised):** `QuotationBuilder` splits the grand total with plain `* 0.75` and `* 0.25` and stores the result unrounded, so a total of LKR 33,333.33 gives an Advance `amount` of 24,999.9975; the screen rounds to cents for display only. Locked by "stores unrounded amounts when the total does not divide into whole cents" in `QuotationBuilder.test.jsx`. A fix (round the split to cents and make the Final the remainder so the two add to the total) touches invoice numbers, so it is an owner call; it would flip that test.
 
 ### TST-4: Manual check of Picker attach and staff uploads on a deployment
 - On this repository's Vercel deployment (not the old portal): as the super admin, attach a Drive file to a quotation through the Picker; as an Operations user, upload a blueprint on a fabrication card; as an Admin, upload a partner document; submit a public partner registration with a BR copy. Each should succeed; as a Partner, the vault upload should be refused. Record the result in `CHANGELOG.md`.
