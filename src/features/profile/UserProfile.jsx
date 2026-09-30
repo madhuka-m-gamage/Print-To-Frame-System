@@ -4,7 +4,7 @@ import {
   Camera, Check, Save, LogOut, Bell, Sparkles, Briefcase, 
   Layers, Hammer, Palette, Clock, Award, ShieldCheck, 
   Smartphone, AlertCircle, RefreshCw, ExternalLink,
-  Map, MessageSquare, Calculator
+  MessageSquare, Calculator
 } from 'lucide-react';
 import { doc, updateDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/services/firebase';
@@ -687,15 +687,7 @@ export default function UserProfile({ currentUser, onUpdateUser, onSignOut, setA
                   {/* Quick Shortcut Navigation */}
                   <div className="p-4 bg-surface-container-low rounded-2xl border border-outline space-y-3">
                     <h4 className="text-xs font-bold text-on-surface uppercase tracking-wider">Operational Jump Links</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab && setActiveTab('roadmap')}
-                        className="p-3 bg-surface-container rounded-xl border border-outline hover:border-primary text-left text-xs font-bold text-on-surface transition-colors"
-                      >
-                        <Map size={14} className="text-primary mb-1.5" />
-                        Execution Plan
-                      </button>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                       <button
                         type="button"
                         onClick={() => setActiveTab && setActiveTab('projects')}
