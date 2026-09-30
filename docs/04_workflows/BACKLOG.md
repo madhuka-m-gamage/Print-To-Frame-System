@@ -79,7 +79,7 @@ Every item implicitly includes these.
 | ENG-1 | Split the very large files | health | L | no | no | TST-1, TST-3 |
 | ENG-2 | Add Prettier | health | S | no | no | ENG-1 |
 | ENG-3 | Repository hygiene | health | S | no | partly | DEC-9 |
-| ENG-4 | Remove the two unused Firestore databases from `firebase.json` | health | S | deploy target | no | none |
+| ENG-4 | Remove the two unused Firestore databases from `firebase.json` (done) | health | S | deploy target | no | none |
 | ENG-5 | Unsafe release scripts in `package.json` | health | S | no | no | none |
 | ENG-6 | Documentation that no longer matches reality | health | S | no | no | none |
 | LIVE-1 | Live rollout: matrix, code, rules | rollout | M | **yes** | **yes** | DEC-6 |
@@ -87,7 +87,7 @@ Every item implicitly includes these.
 | LIVE-3 | One canonical repository and one deploy path | rollout | M | **yes** | yes | DEC-6 |
 | LIVE-4 | Give the tooling access to the live Vercel project | rollout | S | Vercel | owner | none |
 
-**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, SEC-11, TST-1, TST-2, FEA-6 and FEA-3 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
+**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, SEC-11, TST-1, TST-2, FEA-6, FEA-3 and ENG-4 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
 
 ---
 
@@ -342,6 +342,7 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 
 ### ENG-4: Remove the two unused Firestore databases from `firebase.json`
 - The owner confirmed (2026-09-21) that `ai-studio-printtoframeerp-...` and `ai-studio-printtoframe-...` are unused. Removing their entries makes a rules deploy touch `(default)` only. The databases themselves can be deleted later, separately, with the owner's go. Do this before the rules deploy in LIVE-1.
+- **Done:** `firebase.json` `firestore` now holds the `(default)` entry only (emulators, hosting and storage untouched); `tests/unit/firebaseJson.test.js` (2 tests) fails if another database or an emulator is dropped. The `claude/rules-3-4d-deploy` branch still carries the old three-database file. Docs updated: `GCP_INVENTORY.md`, `DEPLOY_PROCESS.md`, `LIVE_ROLLOUT.md`, `FIRESTORE_RULES_NOTES.md`, ADR 0002.
 
 ### ENG-5: Unsafe release scripts
 - `package.json` has `push:staging` (`git add .` then commit and push) and `deploy:live` (merge and push `main`). They commit everything blindly and skip review. Replace them with the documented steps in `docs/04_workflows/DEPLOY_PROCESS.md`, or remove them, with the owner's OK.

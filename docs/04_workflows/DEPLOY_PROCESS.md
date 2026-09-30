@@ -24,7 +24,7 @@ Pushing `firestore.rules` does **not** change live rules. Deploy separately:
 firebase deploy --only firestore:rules --project print-to-frame-erp
 ```
 
-`firebase` is installed and authenticated as the project owner in this environment. Confirm which of the three databases in `firebase.json` the app targets before deploying.
+`firebase` is installed and authenticated as the project owner in this environment. `firebase.json` lists the `(default)` database only (the two unused `ai-studio-...` entries were removed under ENG-4), so a rules deploy touches nothing else.
 
 ## Environment variables
 
