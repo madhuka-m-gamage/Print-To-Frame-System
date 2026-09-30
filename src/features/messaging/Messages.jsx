@@ -12,6 +12,8 @@ import { PageHeader, FilterBar, StatusBadge, UserAvatar } from "@/shared/ui";
 import EmailTemplateModal from "@/shared/components/EmailTemplateModal";
 import { useMessaging, getChannelId } from "./MessagingContext";
 
+const TYPING_THROTTLE_MS = 800;
+
 export default function Messages({ users = [], currentUser }) {
   const { 
     messages, 
@@ -31,6 +33,7 @@ export default function Messages({ users = [], currentUser }) {
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
   const chatContainerRef = useRef(null);
+  const lastTypingSentRef = useRef({ channelId: null, isTyping: false, at: 0 });
 
   // Sync active contact with global messaging context
   useEffect(() => {
@@ -71,6 +74,11 @@ export default function Messages({ users = [], currentUser }) {
     const myId = String(currentUser.identifier).trim().toLowerCase();
     const targetId = String(activeUser.identifier).trim().toLowerCase();
     const activeChan = getChannelId(myId, targetId);
+    const now = Date.now();
+    const last = lastTypingSentRef.current;
+    if (last.channelId === activeChan && last.isTyping === isTyping &&
+        (!isTyping || now - last.at < TYPING_THROTTLE_MS)) return;
+    lastTypingSentRef.current = { channelId: activeChan, isTyping, at: now };
     try {
       setDocument(COLLECTIONS.TYPING_INDICATORS, myId, {
         fromId: myId,
@@ -383,7 +391,7 @@ export default function Messages({ users = [], currentUser }) {
               </div>
 
               {/* Typing indicator */}
-              {typingState[activeUser.identifier] && (
+              {typingState[String(activeUser.identifier).trim().toLowerCase()] === getChannelId(currentUser?.identifier, activeUser.identifier) && (
                 <div role="status" aria-live="polite" className="px-5 py-1 text-[10px] text-primary font-bold italic animate-pulse">
                   {activeUser.name} is typing...
                 </div>
