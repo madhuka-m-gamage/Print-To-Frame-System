@@ -97,6 +97,43 @@ describe('Messages delivery ticks (D-MSG-08)', () => {
   });
 });
 
+describe('Messages quoted reply (D-MSG-09)', () => {
+  const hers = {
+    _firestoreId: 'msg_1_ab', channelId: 'alice@example.com_bob@example.com', participants: ['alice@example.com', 'bob@example.com'],
+    fromId: 'alice@example.com', toId: 'bob@example.com', senderName: 'Alice', text: 'Is the frame ready?', timestamp: 1, readBy: [],
+  };
+
+  it('replies to a message: Reply sets the quote, Send passes the message, the quote clears', async () => {
+    ctx.messages = [hers];
+    render(<Messages users={users} currentUser={me} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Reply to message' }));
+    expect(screen.getByText(/Replying to/).textContent).toMatch(/Replying to Alice: Is the frame ready\?/);
+
+    fireEvent.change(input(), { target: { value: 'Yes' } });
+    await act(async () => { fireEvent.submit(input().closest('form')); });
+    expect(ctx.sendDirectMessage).toHaveBeenCalledWith({ toId: 'alice@example.com', text: 'Yes', replyTo: hers });
+    expect(screen.queryByRole('button', { name: 'Cancel reply' })).not.toBeInTheDocument();
+  });
+
+  it('can cancel a reply before sending', () => {
+    ctx.messages = [hers];
+    render(<Messages users={users} currentUser={me} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Reply to message' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel reply' }));
+    expect(screen.queryByText(/Replying to/)).not.toBeInTheDocument();
+  });
+
+  it('shows the quoted sender, falling back to the sender id for older replies without a name', () => {
+    ctx.messages = [
+      { ...hers, _firestoreId: 'm2', fromId: 'bob@example.com', toId: 'alice@example.com', text: 'Yes', replyTo: { id: 'msg_1_ab', text: 'Is the frame ready?', fromId: 'alice@example.com', senderName: 'Alice' } },
+      { ...hers, _firestoreId: 'm3', fromId: 'bob@example.com', toId: 'alice@example.com', text: 'Again', replyTo: { id: 'msg_1_ab', text: 'Old quote', fromId: 'alice@example.com' } },
+    ];
+    render(<Messages users={users} currentUser={me} />);
+    expect(screen.getByText('Alice', { selector: 'strong' })).toBeInTheDocument();
+    expect(screen.getByText('alice@example.com', { selector: 'strong' })).toBeInTheDocument();
+  });
+});
+
 describe('Messages send failure (D-MSG-07)', () => {
   it('puts the text back in the input and shows an error toast', async () => {
     const { toast } = await import('@/shared/utils/toast');

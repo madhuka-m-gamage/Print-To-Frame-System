@@ -1,5 +1,21 @@
 import { describe, it, expect } from 'vitest';
-import { getIncomingMessages, isReadByRecipient } from '@/features/messaging/messageFilters';
+import { getIncomingMessages, isReadByRecipient, buildReplyTo } from '@/features/messaging/messageFilters';
+
+describe('buildReplyTo (D-MSG-09)', () => {
+  it('stores one shape { id, text, fromId, senderName } from a listened message', () => {
+    expect(buildReplyTo({ _firestoreId: 'msg_1_ab', id: 'x', text: 'Frame is ready', fromId: 'alice@example.com', senderName: 'Alice', readBy: [] }))
+      .toEqual({ id: 'msg_1_ab', text: 'Frame is ready', fromId: 'alice@example.com', senderName: 'Alice' });
+  });
+
+  it('takes the name from a toast sender profile, then falls back to the sender id, never undefined', () => {
+    expect(buildReplyTo({ id: 'm2', text: 'Hi', fromId: 'alice@example.com', sender: { name: 'Alice A' } }).senderName).toBe('Alice A');
+    expect(buildReplyTo({ id: 'm3', fromId: 'alice@example.com' })).toEqual({ id: 'm3', text: '', fromId: 'alice@example.com', senderName: 'alice@example.com' });
+  });
+
+  it('is null when there is nothing to reply to', () => {
+    expect(buildReplyTo(null)).toBeNull();
+  });
+});
 
 describe('isReadByRecipient (D-MSG-08)', () => {
   it('is true only when the recipient is in readBy, ignoring case and whitespace', () => {

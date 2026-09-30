@@ -124,6 +124,18 @@ describe('MessagingProvider optimistic sends (D-MSG-07)', () => {
   });
 });
 
+describe('MessagingProvider reply schema (D-MSG-09)', () => {
+  it('stores replyTo as { id, text, fromId, senderName } whatever the caller passes', async () => {
+    renderProvider();
+    await act(async () => {
+      await api.sendDirectMessage({ toId: 'alice@example.com', text: 'Thanks', replyTo: { ...incoming(), _firestoreId: 'msg_9_zz', sender: alice } });
+    });
+    expect(addDocument).toHaveBeenCalledWith('messages', expect.objectContaining({
+      replyTo: { id: 'msg_9_zz', text: 'Frame is ready', fromId: 'alice@example.com', senderName: 'Alice' },
+    }), expect.any(String));
+  });
+});
+
 describe('MessagingProvider incoming alerts (D-MSG-06)', () => {
   beforeEach(() => {
     visibility = 'visible';

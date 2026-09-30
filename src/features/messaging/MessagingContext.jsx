@@ -4,6 +4,7 @@ import { collection, query, where, onSnapshot, documentId } from 'firebase/fires
 import { addDocument, updateDocument, COLLECTIONS } from '@/services/firestoreSync';
 import { triggerBrowserNotification } from '@/App';
 import { playMessageChime } from './audioAlert';
+import { buildReplyTo } from './messageFilters';
 
 const MessagingContext = createContext(null);
 
@@ -164,11 +165,7 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
       text: text.trim(),
       timestamp: Date.now(),
       readBy: [myId],
-      replyTo: replyTo ? {
-        id: replyTo._firestoreId || replyTo.id,
-        text: replyTo.text,
-        fromId: replyTo.fromId
-      } : null
+      replyTo: buildReplyTo(replyTo)
     };
 
     const docId = `msg_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
