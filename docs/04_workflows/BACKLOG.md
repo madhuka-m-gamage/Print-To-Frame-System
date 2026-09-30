@@ -55,7 +55,7 @@ Every item implicitly includes these.
 | FEA-3 | Fabrication board statuses: Cancelled, On Hold, Archived, Other | feature | M | no | DEC-4 | none |
 | FEA-4 | Fleet and driver directory in Firestore | feature | M | rules | no | LIVE-1 |
 | FEA-5 | Inspection: revision alert and "Email client: QA passed" | feature | M | api | no | FEA-2 |
-| FEA-6 | Messaging polish (D-MSG items) | ux | L | no | no | none |
+| FEA-6 | Messaging polish (D-MSG items) (done) | ux | L | no | no | none |
 | FEA-7 | Notification persistence and toast decoupling | ux | M | rules | no | FEA-2 |
 | FEA-8 | Profile and user-management items | ux | S | no | no | none |
 | FEA-9 | Employees HR model | feature | L | rules | no | none |
@@ -87,7 +87,7 @@ Every item implicitly includes these.
 | LIVE-3 | One canonical repository and one deploy path | rollout | M | **yes** | yes | DEC-6 |
 | LIVE-4 | Give the tooling access to the live Vercel project | rollout | S | Vercel | owner | none |
 
-**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, SEC-11, TST-1 and TST-2 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
+**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, SEC-11, TST-1, TST-2 and FEA-6 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
 
 ---
 
@@ -230,6 +230,8 @@ Source: `docs/02_modules/internal-messaging/FINDINGS.md`, section "Resolved Deci
 - D-MSG-11 document that broadcast announcements are a future milestone
 - D-MSG-12 hide your own sent messages from `NotificationsView.jsx`; remove the dead `onUnreadCountChange` prop
 - Rule: one small commit per decision; component test at the cheapest layer for each.
+- **Done:** D-MSG-03 was **not** done: `src/App.jsx` mounted `FloatingMessageToast`, `MiniChatDrawer` and the mobile dock's Messages button for every role; all three now need `canAccess(role, 'messages')`. D-MSG-04 (`Messages.jsx`: one typing write per 800 ms, indicator only for the open channel), D-MSG-05 (`MessagingContext.jsx`: listener bounded to 30 days by `documentId() >= msg_<since>`, `loadOlderMessages` and a "Load older messages" button in `Messages.jsx`; no index or rules change), D-MSG-06 (`audioAlert.js` chime unless `audioAlertsEnabled === false`; alerts also fire when the chat is open but the page is hidden or unfocused), D-MSG-07 (optimistic `status: 'sending'` until acknowledged; the drawer and full view restore the text and toast on failure, the toast keeps its reply text), D-MSG-08 (`MessageStatus.jsx`, `isReadByRecipient`), D-MSG-09 (Reply button and cancel in `Messages.jsx`; `buildReplyTo` stores `{ id, text, fromId, senderName }`), D-MSG-11 (boundary in `docs/02_modules/internal-messaging/CLAUDE.md`), D-MSG-12 (already done in Phase 7 step 1; wiring test added). Tests: `tests/component/App.messagingGate.test.jsx`, `Messages.test.jsx`, `MessagingContext.test.jsx`, `MiniChatDrawer.test.jsx`, `FloatingMessageToast.test.jsx`, `NotificationsView.test.jsx`, `tests/unit/messageFilters.test.js`.
+- **Left for later:** the `writeBatch` half of D-MSG-02 (`markChatAsRead` and `markAllAsRead` still send one write per message; client only, not in the FEA-6 list). **Wave B (rules):** `typing_indicators` is readable and writable by any signed-in user (`allow read, write: if isAuthenticated()`), so the D-MSG-04 channel check is client-side only and any user can overwrite another's indicator; limit writes to the user's own document and reads to channel participants. **Unverified:** the D-MSG-05 query (`array-contains` plus a `__name__` range) should be served by the automatic single-field index, but the emulator does not enforce indexes; check it once against a real project.
 
 ### FEA-7: Notification persistence and toast decoupling
 Source: `docs/02_modules/notifications/FINDINGS.md`. NOTIF-01 (sign-out leak) is done; NOTIF-04 is FEA-2.
