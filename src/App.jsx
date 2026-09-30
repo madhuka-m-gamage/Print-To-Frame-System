@@ -33,7 +33,7 @@ import { doc, getDoc, setDoc, collection, getDocs, deleteDoc, onSnapshot } from 
 import { subscribeToCollection, addDocument, updateDocument, batchWrite, COLLECTIONS, generateInvoiceId, deriveReceiptId, createDocumentIfAbsent } from "./services/firestoreSync";
 import { toast } from "./shared/utils/toast";
 import { isFullyPaid } from "./features/invoicing/invoiceSettlement";
-import { newUserAction, shouldEvict } from "./features/auth/authFlow";
+import { newUserAction, shouldEvict, canSignIn } from "./features/auth/authFlow";
 import { UserAvatar } from "./shared/ui";
 import { DEFAULT_REFERRAL_COMMISSION_RATE, sqFtFromPricing } from '@/features/quotations/quotePricing';
 
@@ -665,7 +665,7 @@ function App() {
               setDoc(doc(db, COLLECTIONS.USERS, emailKey), { role: 'Admin', status: 'Active', isApproved: true }, { merge: true }).catch(console.warn);
             }
 
-            if (userData.isApproved || userData.status === 'Active' || userData.status === undefined || isSuperAdmin) {
+            if (canSignIn(userData, isSuperAdmin)) {
               setCurrentUser({ ...userData, role: isSuperAdmin ? 'Admin' : userData.role, isApproved: true, status: 'Active' });
               logActivity(emailKey, userData.name || user.displayName || emailKey, 'LOGIN', 'Auth', 'User session authenticated.');
             } else {
@@ -742,6 +742,7 @@ function App() {
 
   useEffect(() => {
     let unsubUsers;
+    let unsubSelf;
     let unsubPending;
 
     if (currentUser?.isApproved) {
@@ -781,18 +782,17 @@ function App() {
       if (canListUsers) {
         unsubUsers = onSnapshot(collection(db, COLLECTIONS.USERS), (snapshot) => {
           const u = [];
-          snapshot.forEach(doc => {
-            const data = doc.data();
-            u.push(data);
-            syncSelf(data);
-          });
+          snapshot.forEach(doc => u.push(doc.data()));
           setUsers(u);
         });
-      } else if (currentUser.identifier) {
-        unsubUsers = onSnapshot(doc(db, COLLECTIONS.USERS, String(currentUser.identifier).trim().toLowerCase()), (snapshot) => {
+      }
+      // Own document on its own listener: the rules refuse the collection listener once the caller
+      // is Deactivated, so that listener never delivers the record that should evict them.
+      if (currentUser.identifier) {
+        unsubSelf = onSnapshot(doc(db, COLLECTIONS.USERS, String(currentUser.identifier).trim().toLowerCase()), (snapshot) => {
           if (!snapshot.exists()) return;
           const data = snapshot.data();
-          setUsers([data]);
+          if (!canListUsers) setUsers([data]);
           syncSelf(data);
         });
       }
@@ -809,6 +809,7 @@ function App() {
 
     return () => {
       if (unsubUsers) unsubUsers();
+      if (unsubSelf) unsubSelf();
       if (unsubPending) unsubPending();
     };
   // canAccess is rebuilt on every render; `permissions` is the state it reads.

@@ -1,9 +1,10 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import { PermissionsProvider, DEFAULT_PERMISSIONS } from '@/context/PermissionsContext';
 
-const authState = { callback: null, ownRecord: null };
+const ACTIVE_CUSTOMER = { identifier: 'user@example.com', name: 'User', role: 'Customer', isApproved: true, status: 'Active' };
+const authState = { callback: null, ownRecord: null, loginRecord: ACTIVE_CUSTOMER, denyUsersList: false };
 
 vi.mock('@/services/firebase', () => ({
   db: {}, auth: { currentUser: null }, storage: {},
@@ -14,12 +15,15 @@ vi.mock('@/services/firebase', () => ({
 vi.mock('firebase/firestore', () => ({
   doc: vi.fn((_db, ...parts) => ({ path: parts.join('/') })),
   collection: vi.fn((_db, name) => ({ path: name })),
-  getDoc: vi.fn(async () => ({ exists: () => true, data: () => ({ identifier: 'user@example.com', name: 'User', role: 'Customer', isApproved: true, status: 'Active' }) })),
+  getDoc: vi.fn(async () => ({ exists: () => true, data: () => ({ ...authState.loginRecord }) })),
   getDocs: vi.fn(async () => ({ docs: [], forEach: () => {} })),
   setDoc: vi.fn(async () => {}),
   deleteDoc: vi.fn(async () => {}),
-  onSnapshot: vi.fn((ref, onNext) => {
-    if (ref.path === 'users/user@example.com') {
+  onSnapshot: vi.fn((ref, onNext, onError) => {
+    if (ref.path === 'users' && authState.denyUsersList) {
+      // firestore.rules refuse a users list query to a Deactivated caller (isActiveUser).
+      onError?.(Object.assign(new Error('Missing or insufficient permissions.'), { code: 'permission-denied' }));
+    } else if (ref.path === 'users/user@example.com') {
       if (authState.ownRecord) onNext({ exists: () => true, data: () => authState.ownRecord });
     } else {
       onNext({ exists: () => true, data: () => DEFAULT_PERMISSIONS, docs: [], forEach: () => {}, size: 0 });
@@ -56,6 +60,8 @@ const signIn = async () => {
 beforeEach(() => {
   authState.callback = null;
   authState.ownRecord = null;
+  authState.loginRecord = ACTIVE_CUSTOMER;
+  authState.denyUsersList = false;
   logout.mockClear();
   logActivity.mockClear();
   localStorage.clear();
@@ -73,5 +79,25 @@ describe('Session eviction on deactivation (Phase 7 5.3, DP-04)', () => {
     await signIn();
     await waitFor(() => expect(logActivity).toHaveBeenCalledWith('user@example.com', 'User', 'LOGIN', 'Auth', expect.any(String)));
     expect(logout).not.toHaveBeenCalled();
+  });
+
+  // SEC-11: the users list listener is refused to a Deactivated caller, so a staff user
+  // (who lists the whole collection) never received their own Deactivated record through it.
+  it('signs a staff user out when their own record turns Deactivated, even if the users list is refused', async () => {
+    authState.loginRecord = { ...ACTIVE_CUSTOMER, role: 'Sales' };
+    authState.denyUsersList = true;
+    authState.ownRecord = { ...ACTIVE_CUSTOMER, role: 'Sales', status: 'Deactivated' };
+    await signIn();
+    await waitFor(() => expect(logout).toHaveBeenCalled());
+  });
+});
+
+describe('Login gate (SEC-11)', () => {
+  it('refuses a Deactivated account whose isApproved is still true, without a LOGIN entry', async () => {
+    authState.loginRecord = { ...ACTIVE_CUSTOMER, role: 'Sales', status: 'Deactivated' };
+    await signIn();
+    await waitFor(() => expect(logout).toHaveBeenCalled());
+    expect(await screen.findByText(/disabled or deactivated/)).toBeTruthy();
+    expect(logActivity).not.toHaveBeenCalledWith('user@example.com', expect.anything(), 'LOGIN', 'Auth', expect.any(String));
   });
 });

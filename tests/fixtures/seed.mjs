@@ -30,6 +30,8 @@ export const SEED_USERS = {
   sales: 'sales@example.com',
   manager: 'manager@example.com',
   customer: 'customer@example.com',
+  // Active on every seed; rbac.spec.js deactivates it mid-session.
+  evicted: 'evicted@example.com',
 };
 
 initializeApp({ projectId });
@@ -70,6 +72,7 @@ await ensureAuthUser(SEED_USERS.deactivated, 'Seed Deactivated');
 await ensureAuthUser(SEED_USERS.sales, 'Seed Sales');
 await ensureAuthUser(SEED_USERS.manager, 'Seed Manager');
 await ensureAuthUser(SEED_USERS.customer, 'Seed Customer');
+await ensureAuthUser(SEED_USERS.evicted, 'Seed Evicted');
 
 await db.doc(`users/${SEED_USERS.admin}`).set(userDoc(SEED_USERS.admin, 'Seed Admin', 'Admin'));
 await db.doc(`users/${SEED_USERS.partner}`).set(
@@ -82,6 +85,7 @@ await db.doc(`users/${SEED_USERS.deactivated}`).set(
 await db.doc(`users/${SEED_USERS.sales}`).set(userDoc(SEED_USERS.sales, 'Seed Sales', 'Sales'));
 await db.doc(`users/${SEED_USERS.manager}`).set(userDoc(SEED_USERS.manager, 'Seed Manager', 'Manager'));
 await db.doc(`users/${SEED_USERS.customer}`).set(userDoc(SEED_USERS.customer, 'Seed Customer', 'Customer'));
+await db.doc(`users/${SEED_USERS.evicted}`).set(userDoc(SEED_USERS.evicted, 'Seed Evicted', 'Sales'));
 
 await db.doc('partners/P-1001').set({
   id: 'P-1001', partnerId: 'P-1001', name: 'Seed Art Studio', type: 'Art & Framing Studio',

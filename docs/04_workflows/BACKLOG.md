@@ -71,6 +71,7 @@ Every item implicitly includes these.
 | SEC-8 | Partner-scoped reads on leads and invoices (partners D-9) | security | M | rules | no | SEC-7 |
 | SEC-9 | Effective-access test (which rule wins) | security | M | no | no | none |
 | SEC-10 | Restrict the browser API key to the app's domains | security | S | GCP console | owner | LIVE-3 |
+| SEC-11 | Deactivated users can still sign in (done) | security | S | no | no | none |
 | TST-1 | Component tests for the lead card (done) | tests | M | no | no | none |
 | TST-2 | End-to-end journeys (money, RBAC) (done) | tests | L | no | no | none |
 | TST-3 | Tests for Leads, QuotationBuilder, Customers; refresh the coverage map | tests | M | no | no | none |
@@ -86,7 +87,7 @@ Every item implicitly includes these.
 | LIVE-3 | One canonical repository and one deploy path | rollout | M | **yes** | yes | DEC-6 |
 | LIVE-4 | Give the tooling access to the live Vercel project | rollout | S | Vercel | owner | none |
 
-**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, TST-1 and TST-2 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
+**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, SEC-11, TST-1 and TST-2 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
 
 ---
 
@@ -298,6 +299,12 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 - **Why:** the Firebase browser key ("Browser key (auto created by Firebase)" in project `print-to-frame-erp`) has API restrictions but no website restrictions, so any site can use it for the APIs it allows (checked read-only 2026-09-27).
 - **Owner steps:** Google Cloud console → APIs & Services → Credentials → that key → Application restrictions: Websites → add the production domain(s), the Vercel preview domain pattern and `localhost` origins. Do it once LIVE-3 settles the production domain, then check sign-in and the Drive Picker still work.
 
+### SEC-11: Deactivated users can still sign in
+- **Why (TST-2 finding):** `handleToggleStatus` in `src/features/admin/AgentDatabase.jsx` sets only `status: 'Deactivated'` and leaves `isApproved: true`. The login check in `src/App.jsx` admitted `userData.isApproved || userData.status === 'Active' || userData.status === undefined`, so a deactivated user reached the Dashboard. The live eviction (`shouldEvict` in `syncSelf`) did not sign them out either.
+- **Files:** `src/features/auth/authFlow.js`, `src/App.jsx`; tests in `tests/unit/authFlow.test.js`, `tests/component/App.eviction.test.jsx`, `tests/integration/rulesAccess.test.js`, `tests/e2e/rbac.spec.js`, seed in `tests/fixtures/seed.mjs`.
+- **Done 2026-10-01:** the login check is `canSignIn(record, isBootstrapAdmin)` in `authFlow.js`: a bootstrap super admin always passes (the self-heal is unchanged); otherwise a record that `shouldEvict` would evict (Deactivated or Disabled status, or `isApproved === false`) is refused, and the rest keep the old rule (`isApproved`, `status === 'Active'`, or no status). **Why eviction failed:** every role that holds `agents` or `messages` view (all staff roles) fed `syncSelf` only from the `users` collection listener, and `firestore.rules` refuse that list query to a caller who is not `isActiveUser()`. A Deactivated user therefore never received their own record through it, whether they signed in already deactivated (TST-2) or were deactivated mid-session (reproduced in `rbac.spec.js` before the fix). Customers and Partners used their own-document listener and were evicted. `App.jsx` now always listens to the user's own document (which the rules let the user read in any status) and runs `syncSelf` from it; the collection listener only fills the user list. Tests: `canSignIn` unit cases (Deactivated with `isApproved` true refused, Active passes, pending refused, bootstrap admin passes); component cases for the login gate and for a staff user whose list listener is refused; a rules case (a Deactivated user reads their own document but cannot list `users`); `rbac.spec.js` now expects the deactivated user to see the sign-in form and adds a mid-session deactivation journey (seed user `evicted@example.com`).
+- **Rules:** no change needed. `isActiveUser()` already refuses Deactivated and Disabled accounts everywhere except reading their own `users` document, which the login check and eviction need. That rule is part of the step 3.5 set, written and tested but not deployed; server-side refusal on the live project arrives with the LIVE-1 rules deploy.
+
 ---
 
 ## Tests
@@ -309,7 +316,7 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 ### TST-2: End-to-end journeys (B6)
 - **Money journey:** quotation to Advance invoice to Final invoice, exactly one `INV-FIN`. **RBAC journey:** Admin, Sales, Partner and Customer each see only their navigation; the seeded deactivated user cannot sign in. Needs `tests/fixtures/seed.mjs` extended with Sales, Customer and Manager users. Specs go in `tests/e2e/`, run with `npm run test:e2e` (Playwright against the emulators; see `tests/e2e/README.md`). Should exist before the restrictive rules are deployed.
 - **Done:** `tests/e2e/money.spec.js` (1 test: quotation to Advance to Final, exactly one `INV-FIN`), `tests/e2e/rbac.spec.js` (6 tests: Admin, Manager, Sales, Partner, Customer navigation, deactivated user), seed extended with Sales, Manager, Customer and a money-journey deal.
-- **Finding (not fixed, tests only):** a deactivated user can still sign in. `AgentDatabase.jsx` `handleToggleStatus` sets only `status: 'Deactivated'` and leaves `isApproved: true`; the login check in `App.jsx` admits `userData.isApproved || userData.status === 'Active' || ...`, so the user reaches the Dashboard. The live eviction (`shouldEvict` in `syncSelf`) did not sign the user out within the test either (cause not verified). `rbac.spec.js` records the current behaviour; flip it when the login check honours `status`.
+- **Finding (not fixed, tests only):** a deactivated user can still sign in. `AgentDatabase.jsx` `handleToggleStatus` sets only `status: 'Deactivated'` and leaves `isApproved: true`; the login check in `App.jsx` admits `userData.isApproved || userData.status === 'Active' || ...`, so the user reaches the Dashboard. The live eviction (`shouldEvict` in `syncSelf`) did not sign the user out within the test either (cause not verified). `rbac.spec.js` records the current behaviour; flip it when the login check honours `status`. **Fixed by SEC-11** (login check and eviction; the test is flipped).
 
 ### TST-3: More coverage
 - No component tests yet for `Leads`, `QuotationBuilder`, `Customers`. Add wiring tests where money moves (quote to invoice). Then run `npm run coverage` and refresh the coverage map and register in `docs/04_workflows/TESTING.md`.
@@ -349,7 +356,7 @@ These change the live project. Nothing here has been applied. Each step needs th
 - Fully written in [LIVE_ROLLOUT.md](LIVE_ROLLOUT.md): pre-flight, verification and rollback for each step. Summary for a non-technical reader:
   1. **Permission matrix.** The table of which role can do what lives in one Firestore document. The live copy has no `quotations` or `receipts` rows, and the new code hides any screen whose row is missing. An Admin fixes this with one button (Permissions Manager, on the staging preview, which uses the live database) and Save. This is invisible to the old code, so it goes first, any time.
   2. **Code.** The live site runs the old code because it deploys from the original repository. Either reconnect the live Vercel project to this repository (LIVE-3, recommended) or copy the code into the original repository.
-  3. **Rules.** Firestore security rules are deployed by hand, not by pushing. Deploy the additive set first (branch `claude/rules-3-4d-deploy`, commit `1776444`: the 3.4 rules plus the `L` and `D` counter prefixes; **not** the bare 3.4 commit, which would reject new lead and deal ids), check each role, and only later the stricter set from `staging`.
+  3. **Rules.** Firestore security rules are deployed by hand, not by pushing. Deploy the additive set first (branch `claude/rules-3-4d-deploy`, commit `1776444`: the 3.4 rules plus the `L` and `D` counter prefixes; **not** the bare 3.4 commit, which would reject new lead and deal ids), check each role, and only later the stricter set from `staging`. The stricter set's `isActiveUser()` is the server-side half of SEC-11 (Deactivated and Disabled accounts refused everywhere but their own `users` document); after deploying it, check that a deactivated staff account is refused at sign-in and signed out mid-session.
 - **Owner actions:** a backup of the matrix, a smoke test on the preview, the go for each step, and the Vercel reconnect. Until this is done, the live site keeps working as it is, but the security fixes on `staging` (send-email hardening, stricter rules) do not take effect.
 
 ### LIVE-2: Separate staging and production environments (Part 1)
