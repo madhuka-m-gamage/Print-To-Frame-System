@@ -28,7 +28,7 @@ Not present (checked): custom auth claims, Cloud Functions, any other server cod
 |---|---|---|
 | `api/admin-user.js` | signed in, approved, role Admin or Manager (a Manager cannot touch Admin accounts) | create, reset the password of, or delete Firebase Auth accounts |
 | `api/generate.js` | signed in and approved, with a **staff role** (Partner, Business Client, Customer and any role outside `SYSTEM_ROLES` are refused, SEC-2, 2026-09-27) | send a prompt to Gemini (spends the quota) |
-| `api/send-email.js` | signed in, approved and not Deactivated or Disabled, with a **staff role** (Partner, Business Client and Customer are refused) | send one of seven fixed templates (`client_approval`, `client_activation_confirmed`, `partner_approval`, `partner_activation_confirmed`, `employee_invite`, `password_reset`, `registration_declined`) to an address held in `users`, `pendingUsers`, `customers`, `partners` or `partner_applications` (SEC-1, 2026-09-27). Free-form subject and body are not accepted. Fixed in the send-email hardening of 2026-09-21 |
+| `api/send-email.js` | signed in, approved and not Deactivated or Disabled, with a **staff role** (Partner, Business Client and Customer are refused) | send one of eight fixed templates (`client_approval`, `client_activation_confirmed`, `partner_approval`, `partner_activation_confirmed`, `employee_invite`, `employee_approved` (FEA-8), `password_reset`, `registration_declined`) to an address held in `users`, `pendingUsers`, `customers`, `partners` or `partner_applications` (SEC-1, 2026-09-27). Free-form subject and body are not accepted. Fixed in the send-email hardening of 2026-09-21 |
 
 ## Findings
 

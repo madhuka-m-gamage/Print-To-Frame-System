@@ -57,7 +57,7 @@ Every item implicitly includes these.
 | FEA-5 | Inspection: revision alert and "Email client: QA passed" | feature | M | api | no | FEA-2 |
 | FEA-6 | Messaging polish (D-MSG items) (done) | ux | L | no | no | none |
 | FEA-7 | Notification persistence and toast decoupling | ux | M | rules | no | FEA-2 |
-| FEA-8 | Profile and user-management items | ux | S | no | no | none |
+| FEA-8 | Profile and user-management items (done) | ux | S | no | no | none |
 | FEA-9 | Employees HR model | feature | L | rules | no | none |
 | FEA-10 | Task-assignment fields across modules | feature | L | rules | no | FEA-9 |
 | FEA-11 | Staff screen to open partner-application BR/NIC files | feature | S | no | no | none |
@@ -87,7 +87,7 @@ Every item implicitly includes these.
 | LIVE-3 | One canonical repository and one deploy path | rollout | M | **yes** | yes | DEC-6 |
 | LIVE-4 | Give the tooling access to the live Vercel project | rollout | S | Vercel | owner | none |
 
-**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, SEC-11, TST-1, TST-2, FEA-6, FEA-3 and ENG-4 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
+**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, SEC-11, TST-1, TST-2, FEA-6, FEA-3, ENG-4 and FEA-8 done. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
 
 ---
 
@@ -218,7 +218,7 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 
 ### FEA-5: Inspection follow-ups
 - **Revision alert (inspection #5):** notify the deal's sales owner when a linked job goes to Revision (defect category and notes). Needs FEA-2's stored notifications.
-- **"Email client: QA passed" (inspection #8):** a button that previews and sends the `fabrication_ready_inspection` template (exists in `src/constants/emailTemplates.js`, never used) through `/api/send-email`. **`api/send-email.js` only allows seven templates** (`SENDABLE_TEMPLATES`); add this one there deliberately and add an API test. Staff roles only.
+- **"Email client: QA passed" (inspection #8):** a button that previews and sends the `fabrication_ready_inspection` template (exists in `src/constants/emailTemplates.js`, never used) through `/api/send-email`. **`api/send-email.js` only allows eight templates** (`SENDABLE_TEMPLATES`); add this one there deliberately and add an API test. Staff roles only.
 
 ### FEA-6: Messaging polish (internal-messaging)
 Source: `docs/02_modules/internal-messaging/FINDINGS.md`, section "Resolved Decisions" and its checklist. D-MSG-01, 02 and 10 were addressed by the stricter rules and default matrix (written, not deployed); verify D-MSG-03 against `src/App.jsx` before starting.
@@ -247,6 +247,7 @@ Source: `docs/02_modules/notifications/FINDINGS.md`. NOTIF-01 (sign-out leak) is
 - Employees D7: remove the dead "Execution Plan" (`roadmap`) button in `src/features/profile/UserProfile.jsx`.
 - Employees D8: add `active` and `deactivated` to `src/shared/ui/StatusBadge.jsx`, use it in `AgentDatabase.jsx`, fix the `Customer` email default around `AgentDatabase.jsx:L752`.
 - Employees D6: send an approval email to staff when an applicant is approved (`employee_invite` is already an allowed template; check whether an `employee_approved` template exists before adding one, and add it to `SENDABLE_TEMPLATES` if so).
+- **Done:** profile save: `UserProfile.jsx` no longer writes `partners`; `handleUpdateUser` in `src/App.jsx` is the one path and now also mirrors `location` to `address` and `company` (the Customer branch in `UserProfile.jsx` is untouched). D7: the Execution Plan button and its `Map` icon import are removed. D8: `StatusBadge.jsx` matches `active` (success) and `deactivated` (danger); `AgentDatabase.jsx` renders the member status with it; the Email button passes no `initialTemplateId`, so `EmailTemplateModal`'s role default applies (Partner `partner_approval`, Business Client `client_approval`, staff `employee_invite`, anything else `quote_submission`). D6: no `employee_approved` template existed; it is added to `src/constants/emailTemplates.js` (no password) and to `SENDABLE_TEMPLATES` in `api/send-email.js`. `handleExecuteApproval` in `AgentDatabase.jsx` sends it for a role outside `ROLE_CATEGORIES.EXTERNAL` after `onApprove` writes `users/{email}` (the recipient the SEC-1 check looks up); a partner application approved into a staff role gets `employee_invite` with the admin-set password instead. A failed send shows an error toast and does not undo the approval. Tests: `tests/component/App.profileSync.test.jsx`, `UserProfile.test.jsx`, `AgentDatabase.test.jsx` (status badge, email default, three approval-email cases), `tests/unit/emailTemplates.test.js`, `tests/api/sendEmail.test.js`.
 
 ### FEA-9: Employees HR model (employees D1)
 - **Accepted design:** extend internal staff documents in `users` with an embedded `hrProfile` (official `employeeId`, department, NIC, join date, emergency contact, compensation). Read `docs/02_modules/employees/FINDINGS.md` section 6 first.
