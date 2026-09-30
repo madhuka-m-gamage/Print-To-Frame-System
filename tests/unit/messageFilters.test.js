@@ -1,5 +1,18 @@
 import { describe, it, expect } from 'vitest';
-import { getIncomingMessages } from '@/features/messaging/messageFilters';
+import { getIncomingMessages, isReadByRecipient } from '@/features/messaging/messageFilters';
+
+describe('isReadByRecipient (D-MSG-08)', () => {
+  it('is true only when the recipient is in readBy, ignoring case and whitespace', () => {
+    expect(isReadByRecipient({ toId: 'Alice@Example.com', readBy: ['bob@example.com', ' alice@example.com'] })).toBe(true);
+    expect(isReadByRecipient({ toId: 'alice@example.com', readBy: ['bob@example.com'] })).toBe(false);
+  });
+
+  it('is false for a message with no recipient or no readBy', () => {
+    expect(isReadByRecipient({ readBy: ['bob@example.com'] })).toBe(false);
+    expect(isReadByRecipient({ toId: 'alice@example.com' })).toBe(false);
+    expect(isReadByRecipient(null)).toBe(false);
+  });
+});
 
 describe('getIncomingMessages', () => {
   const msgs = [

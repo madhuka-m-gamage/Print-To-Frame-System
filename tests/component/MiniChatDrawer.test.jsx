@@ -39,6 +39,21 @@ beforeEach(() => {
 const type = (text) => fireEvent.change(screen.getByPlaceholderText('Type message...'), { target: { value: text } });
 const send = () => fireEvent.submit(screen.getByPlaceholderText('Type message...').closest('form'));
 
+describe('MiniChatDrawer delivery ticks (D-MSG-08)', () => {
+  it('shows a clock while sending, one tick when sent, two ticks once the recipient has read it', () => {
+    const base = { channelId: 'alice@example.com_bob@example.com', fromId: 'bob@example.com', toId: 'alice@example.com', timestamp: 1 };
+    ctx.messages = [
+      { ...base, _firestoreId: 'm1', text: 'read one', readBy: ['bob@example.com', 'alice@example.com'] },
+      { ...base, _firestoreId: 'm2', text: 'unread one', readBy: ['bob@example.com'] },
+      { ...base, _firestoreId: 'm3', text: 'in flight', readBy: ['bob@example.com'], status: 'sending' },
+    ];
+    render(<MiniChatDrawer currentUser={me} />);
+    expect(screen.getAllByRole('img', { name: 'Read' })).toHaveLength(1);
+    expect(screen.getAllByRole('img', { name: 'Sent' })).toHaveLength(1);
+    expect(screen.getAllByRole('img', { name: 'Sending' })).toHaveLength(1);
+  });
+});
+
 describe('MiniChatDrawer send (D-MSG-07)', () => {
   it('restores the typed text and shows an error toast when the send fails', async () => {
     ctx.sendDirectMessage = vi.fn(async () => { throw new Error('offline'); });

@@ -83,6 +83,20 @@ describe('Messages typing indicator (D-MSG-04)', () => {
   });
 });
 
+describe('Messages delivery ticks (D-MSG-08)', () => {
+  it('shows one tick for a sent message and two once Alice has read it; none on her messages', () => {
+    const base = { channelId: 'alice@example.com_bob@example.com', participants: ['alice@example.com', 'bob@example.com'], timestamp: 1 };
+    ctx.messages = [
+      { ...base, _firestoreId: 'm1', fromId: 'bob@example.com', toId: 'alice@example.com', text: 'read', readBy: ['bob@example.com', 'alice@example.com'] },
+      { ...base, _firestoreId: 'm2', fromId: 'bob@example.com', toId: 'alice@example.com', text: 'unread', readBy: ['bob@example.com'] },
+      { ...base, _firestoreId: 'm3', fromId: 'alice@example.com', toId: 'bob@example.com', text: 'hers', readBy: ['alice@example.com', 'bob@example.com'] },
+    ];
+    render(<Messages users={users} currentUser={me} />);
+    expect(screen.getAllByRole('img', { name: 'Read' })).toHaveLength(1);
+    expect(screen.getAllByRole('img', { name: 'Sent' })).toHaveLength(1);
+  });
+});
+
 describe('Messages send failure (D-MSG-07)', () => {
   it('puts the text back in the input and shows an error toast', async () => {
     const { toast } = await import('@/shared/utils/toast');

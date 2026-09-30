@@ -11,6 +11,7 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { PageHeader, FilterBar, StatusBadge, UserAvatar } from "@/shared/ui";
 import EmailTemplateModal from "@/shared/components/EmailTemplateModal";
 import { useMessaging, getChannelId } from "./MessagingContext";
+import MessageStatus from "./MessageStatus";
 
 const TYPING_THROTTLE_MS = 800;
 
@@ -393,7 +394,7 @@ export default function Messages({ users = [], currentUser }) {
 
                         <div className="flex items-center gap-1.5 text-[9px] text-on-surface-variant font-mono mt-1 px-1">
                           <span>{new Date(Number(msg.timestamp) || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                          {isMe && <CheckCheck size={11} className="text-primary" aria-hidden="true" />}
+                          {isMe && <MessageStatus msg={msg} size={11} />}
                         </div>
                       </div>
                     );

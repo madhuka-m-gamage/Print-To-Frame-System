@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   X, Send, MessageSquare, ArrowLeft, ExternalLink, 
   Search, Users, MessageCircle, ChevronRight, Minimize2, 
-  Sparkles, CheckCheck
+  Sparkles
 } from 'lucide-react';
 import { useMessaging, getChannelId } from './MessagingContext';
+import MessageStatus from './MessageStatus';
 import { UserAvatar } from '@/shared/ui';
 import { toast } from '@/shared/utils/toast';
 
@@ -202,7 +203,7 @@ export default function MiniChatDrawer({ currentUser, setActiveTab }) {
                         </div>
                         <span className="text-[8px] font-mono text-on-surface-variant/60 mt-0.5 px-1 flex items-center gap-1">
                           {new Date(Number(msg.timestamp) || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          {isMe && <CheckCheck size={10} className="text-primary opacity-80" />}
+                          {isMe && <MessageStatus msg={msg} size={10} />}
                         </span>
                       </div>
                     );
