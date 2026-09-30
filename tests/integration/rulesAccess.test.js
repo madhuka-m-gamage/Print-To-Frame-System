@@ -1,6 +1,6 @@
 import { beforeAll, afterAll, beforeEach, describe, it } from 'vitest';
 import { assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import {
   setupRulesEnv,
   clearAll,
@@ -236,6 +236,17 @@ describe('known gaps in today\'s rules (characterisation)', () => {
     await assertFails(setDoc(doc(authedFirestore(testEnv, 'off@example.com'), 'leads', 'L-b'), { name: 'x' }));
     await assertFails(setDoc(doc(authedFirestore(testEnv, 'pending@example.com'), 'leads', 'L-d'), { name: 'x' }));
     await assertSucceeds(setDoc(doc(authedFirestore(testEnv, 'legacy@example.com'), 'leads', 'L-c'), { name: 'x' }));
+  });
+
+  // SEC-11: why App.jsx keeps a listener on the user's own document. A Deactivated staff user may
+  // still read their own record, but the users list query is refused, so it cannot carry eviction.
+  it('lets a Deactivated user read their own users document but not list the collection', async () => {
+    await seedUser(testEnv, 'gone@example.com', { role: 'Sales', isApproved: true, status: 'Deactivated' });
+    const db = authedFirestore(testEnv, 'gone@example.com');
+    await assertSucceeds(getDoc(doc(db, 'users', 'gone@example.com')));
+    await assertFails(getDocs(collection(db, 'users')));
+    await seedUser(testEnv, 'here@example.com', { role: 'Sales', isApproved: true, status: 'Active' });
+    await assertSucceeds(getDocs(collection(authedFirestore(testEnv, 'here@example.com'), 'users')));
   });
 
   it('denies a Deactivated Admin, but never the bootstrap owner', async () => {

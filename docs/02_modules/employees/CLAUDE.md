@@ -18,6 +18,7 @@ There is no separate Employees feature; employee-like data is the `users` collec
 ## Triggers and side effects
 
 - Enrolling creates an Auth account (`api/admin-user.js`), the `users` doc, an `ENROLL` audit entry and an `employee_invite` email.
+- Approving a registration into a staff role (outside `ROLE_CATEGORIES.EXTERNAL`) sends `employee_approved` after `users/{email}` is written; a partner application approved into a staff role gets `employee_invite` with the password the admin set (FEA-8, D6).
 
 ## Before you edit
 

@@ -9,7 +9,7 @@ Print To Frame ERP is a single-page React ERP/CRM for a Sri Lankan custom-framin
 ## Commands
 
 ```bash
-npm run dev          # Vite dev server on 0.0.0.0:3000 (also proxies POST /api/generate locally, see vite.config.js)
+npm run dev          # Vite dev server on 127.0.0.1:3000 (runs the real api/*.js handlers locally, see vite.config.js)
 npm run build         # production build to dist/
 npm run preview       # preview the production build on port 3000
 npm run lint          # eslint .
@@ -67,7 +67,7 @@ New users self-provision into `pendingUsers` (or `users` directly for the bootst
 
 ### AI proxy (`api/generate.js`)
 
-Requires a valid Firebase ID token (`Authorization: Bearer <token>`) AND that the caller's `users/{email}` doc is approved/active — mirrors the client-side gate in `App.jsx`. It tries a list of Gemini models in order (`CANDIDATE_MODELS`) and falls through on 404/503/429, but stops immediately on a 400. CORS is restricted to `ALLOWED_ORIGINS` (no wildcard). When editing this file, preserve both checks — this endpoint burns metered Gemini quota if left open.
+Requires a valid Firebase ID token (`Authorization: Bearer <token>`) AND that the caller's `users/{email}` doc is approved/active — mirrors the client-side gate in `App.jsx` — AND a staff role (same `STAFF_ROLES` rule as `send-email`; Partner, Business Client and Customer are refused). It tries a list of Gemini models in order (`CANDIDATE_MODELS`) and falls through on 404/503/429, but stops immediately on a 400. CORS is restricted to `ALLOWED_ORIGINS` (no wildcard). When editing this file, preserve these checks — this endpoint burns metered Gemini quota if left open.
 
 ### UI conventions
 

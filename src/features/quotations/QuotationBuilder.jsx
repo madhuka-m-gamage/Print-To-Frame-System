@@ -8,6 +8,7 @@ import { canUseGoogleWorkspace } from '@/features/auth/superAdmin';
 import { ModalWrapper } from '@/shared/ui';
 import { matchesEntity } from '@/shared/utils/entityUtils';
 import { isAcceptedQuote } from './quotationStatus';
+import { invoiceLineageFields } from '@/features/leads/leadLineage';
 
 // WhatsApp renders *text* as bold and _text_ as italic client-side — this
 // converts those same markers to HTML purely for the in-app chat-bubble
@@ -258,7 +259,7 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
       const invoiceDate = new Date().toISOString().split('T')[0];
       onSaveInvoice({
         id: invId,
-        leadId: lead.id || lead._firestoreId,
+        ...invoiceLineageFields(lead),
         partnerId: lead.partnerId || lead.agentId || '',
         linkedJobNo: lead.jobNo || lead.linkedJobNo || '',
         jobNo: lead.jobNo || lead.linkedJobNo || '',
@@ -314,7 +315,7 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
       const invoiceDate = new Date().toISOString().split('T')[0];
       onSaveInvoice({
         id: invId,
-        leadId: lead.id || lead._firestoreId,
+        ...invoiceLineageFields(lead),
         partnerId: lead.partnerId || lead.agentId || '',
         linkedJobNo: lead.jobNo || lead.linkedJobNo || '',
         jobNo: lead.jobNo || lead.linkedJobNo || '',

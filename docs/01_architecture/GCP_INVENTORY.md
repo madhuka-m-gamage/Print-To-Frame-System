@@ -16,7 +16,7 @@ There are **zero Cloud Functions, Eventarc triggers, Scheduler jobs, or Pub/Sub 
 
 | Target | Status / Details |
 |---|---|
-| `firebase.json` | **Present**. Configures Hosting (`dist`), Firestore rules for 3 databases (`(default)`, `ai-studio-printtoframeerp-66900443-b6c9-4743-892c-f50b58bf8595`, and `ai-studio-printtoframe-66900443-b6c9-4743-892c-f50b58bf8595`), and Local Emulators (Auth `9099`, Firestore `8080`, UI `4000`). **No `functions` stanza exists**. |
+| `firebase.json` | **Present**. Configures Hosting (`dist`), Firestore rules for the `(default)` database only (the two unused `ai-studio-...` databases were removed from the file under ENG-4; they still exist in GCP, nothing was deleted there), and Local Emulators (Auth `9099`, Firestore `8080`, UI `4000`). **No `functions` stanza exists**. |
 | `.firebaserc` | **Not Present**. Project mapping is handled via runtime configs (`firebase-applet-config.json`) and CLI flags. |
 | `functions/` folder | **Not present**. It was an empty placeholder (only `.gitkeep`) and was removed in Phase 7 8.2. |
 | Functions in the repo | **0 functions**. No background functions, HTTP callables, or event triggers exist. |
@@ -32,7 +32,7 @@ While not GCP Cloud Functions, three serverless HTTPS endpoints are hosted on Ve
 | `admin-user` | `api/admin-user.js` | HTTPS POST | Server-side Firebase Auth user management (create, reset password, delete). Requires Admin authentication. |
 | `generate` | `api/generate.js` | HTTPS POST | Gemini AI proxy endpoint with failover candidates and origin restrictions. |
 | `send-email` | `api/send-email.js` | HTTPS POST | Transactional email dispatcher using SMTP / Resend. |
-| Dev Proxy | `vite.config.js` (`apiProxyPlugin`) | Local Vite middleware | Local development emulation of the `api/*.js` routes. |
+| Dev Proxy | `vite.config.js` (`apiProxyPlugin`) | Local Vite middleware | Runs the real `api/*.js` handlers under `npm run dev` (bound to `127.0.0.1`). |
 
 A comprehensive search across `api/` and `src/` for trigger hooks (`onDocumentCreated`, `onDocumentUpdated`, `onDocumentWritten`, `onCall`, `onRequest`, `onSchedule`, `functions.firestore`, `pubsub`) confirms that no Cloud Function triggers exist anywhere in the code.
 

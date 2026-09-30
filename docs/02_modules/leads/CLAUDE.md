@@ -17,7 +17,7 @@ Leads are `leads` documents worked as a Kanban / table. Users record or upload a
 
 ## Triggers and side effects
 
-- Call analysis: `extractCallScope` -> `/api/generate` (token + approved-user checked). Fills form state only after the user clicks apply; nothing persisted until save.
+- Call analysis: `extractCallScope` -> `/api/generate` (token, approved-user and staff-role checked). Fills form state only after the user clicks apply; nothing persisted until save.
 - Conversion (`handleConvertConfirm`): several separate writes, not one transaction; see [deals.md](../deals/README.md).
 
 ## Before you edit
@@ -27,5 +27,5 @@ Leads are `leads` documents worked as a Kanban / table. Users record or upload a
 - Keep client `canAccess('leads')` and the `leads` rules block in sync.
 - Stage moves are manual by design (an Advance invoice does not advance the stage). "Convert to Deal" is offered only at `Received`. Customers are created only on conversion, never on save. Saving a quotation sets `lead.value` to its grand total. Compressed call recordings over 3.2MB are downsampled, never rejected.
 - Partner referral rows come from Deals, never from a converted lead stub (`convertedToDeal`). New deals get a `jobNo` checked against existing leads. Lead create, update and convert are audit logged.
-- Lead and Deal are one lineage: a Deal links back through `originalLeadId` (and the lead forward through `convertedDealId`). Invoices key on `leadId` and may carry either id; receipts key on `invoiceId`. Match through `getLineageIds` / `invoicesForLineage` / `logisticsJobForLineage` (`src/features/leads/leadLineage.js`), never a single-id compare.
+- Lead and Deal are one lineage: a Deal links back through `originalLeadId` (and the lead forward through `convertedDealId`). Invoices key on `leadId` and may carry either id; receipts key on `invoiceId`. Match through `getLineageIds` / `invoicesForLineage` / `logisticsJobForLineage` (`src/features/leads/leadLineage.js`), never a single-id compare. Conversion writes the new `dealId` onto the lead's existing invoices; new invoices take `leadId` (original lead) and `dealId` from `invoiceLineageFields`. Invoices from before this change may lack `dealId` (no backfill; live data is test-only).
 - Ids for leads (`L`), deals (`D`), job numbers (`PTF`) and delivery jobs (`L-DL`) come from `generateAtomicId` (counters), never from `Date.now()`. Add any new prefix to `isKnownCounter` in `firestore.rules` too.

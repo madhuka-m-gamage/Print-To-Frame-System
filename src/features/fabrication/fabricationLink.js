@@ -49,3 +49,11 @@ export function cancelledProjectBlock(project, action) {
   const reason = project.cancelledReason ? ` (${project.cancelledReason})` : '';
   return `${project.jobNo} is Cancelled${reason}, so ${BLOCKED_ACTION[action]} can be created for it.`;
 }
+
+const ARCHIVABLE = ['Completed', 'Cancelled'];
+
+export function archiveBlock(project) {
+  const status = project?.status || 'Pending';
+  if (ARCHIVABLE.includes(status)) return null;
+  return `${project?.jobNo} is ${status}, so it cannot be archived. Only Completed and Cancelled jobs can be.`;
+}

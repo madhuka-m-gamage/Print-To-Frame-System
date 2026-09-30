@@ -23,6 +23,11 @@ describe('projectStatusForDealStage', () => {
     expect(projectStatusForDealStage('Waiting', 'Pending')).toBeNull();
     expect(projectStatusForDealStage('Hand Over', 'Ongoing')).toBeNull();
     expect(projectStatusForDealStage('Fabricating', 'Cancelled')).toBeNull();
+    expect(projectStatusForDealStage('Completed', 'Cancelled')).toBeNull();
+    expect(projectStatusForDealStage('Fabricating', 'On Hold')).toBeNull();
+    expect(projectStatusForDealStage('Completed', 'On Hold')).toBeNull();
+    expect(projectStatusForDealStage('Completed', 'Archived')).toBeNull();
+    expect(projectStatusForDealStage('Fabricating', 'Weird')).toBeNull();
     expect(projectStatusForDealStage('Fabricating', undefined)).toBeNull();
   });
 });

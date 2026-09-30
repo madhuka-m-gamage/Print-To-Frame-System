@@ -33,7 +33,7 @@ import { doc, getDoc, setDoc, collection, getDocs, deleteDoc, onSnapshot } from 
 import { subscribeToCollection, addDocument, updateDocument, batchWrite, COLLECTIONS, generateInvoiceId, deriveReceiptId, createDocumentIfAbsent } from "./services/firestoreSync";
 import { toast } from "./shared/utils/toast";
 import { isFullyPaid } from "./features/invoicing/invoiceSettlement";
-import { newUserAction, shouldEvict } from "./features/auth/authFlow";
+import { newUserAction, shouldEvict, canSignIn } from "./features/auth/authFlow";
 import { UserAvatar } from "./shared/ui";
 import { DEFAULT_REFERRAL_COMMISSION_RATE, sqFtFromPricing } from '@/features/quotations/quotePricing';
 
@@ -76,6 +76,7 @@ import { ErrorBoundary } from "./shared/components/ErrorBoundary";
 import LoadingSpinner from "./shared/components/LoadingSpinner";
 import { findPartnerForLead, getLeadPartnerId } from "@/features/partners/partnerLink";
 import { isSuperAdminEmail } from '@/features/auth/superAdmin';
+import { leadForInvoice } from '@/features/leads/leadLineage';
 
 
 export function oT() {
@@ -480,7 +481,8 @@ function App() {
       ));
       await updateDocument(COLLECTIONS.INVOICES, invDocId, { status: 'Paid' });
 
-      const targetLead = leads.find(l => l.id === leadId || l._firestoreId === leadId);
+      // Commission eligibility follows the Deal, so an invoice stamped with a dealId settles against the Deal.
+      const targetLead = leadForInvoice({ ...targetInvoice, leadId }, leads);
 
       // 2. Full settlement requires BOTH an Advance and a Final invoice to
       // exist and both to be paid — not just "every invoice that happens to
@@ -490,7 +492,7 @@ function App() {
       // one carries the post-conversion deal id (or vice versa) — match
       // siblings against either, same convention used for quotations/
       // logistics jobs tied to a converted deal.
-      const relatedIds = new Set([leadId, targetLead?.originalLeadId, targetLead?.convertedDealId].filter(Boolean));
+      const relatedIds = new Set([leadId, targetLead?.id, targetLead?.originalLeadId, targetLead?.convertedDealId].filter(Boolean));
       const siblingInvoices = invoices.filter(inv => relatedIds.has(inv.leadId));
       // A lead/deal can end up with more than one Advance (or Final) invoice
       // on file (repeated testing, re-quoting, nothing enforces uniqueness) —
@@ -515,7 +517,7 @@ function App() {
           ...(isFullyPaidNow && isPartnerReferral && !alreadyEligible ? { referralStatus: 'Eligible for Payout' } : {}),
         };
 
-        setLeads(prev => prev.map(lead => (lead.id === leadId || lead._firestoreId === leadId) ? { ...lead, ...updatedLeadPayload } : lead));
+        setLeads(prev => prev.map(lead => lead.id === targetLead.id ? { ...lead, ...updatedLeadPayload } : lead));
         await updateDocument(COLLECTIONS.LEADS, leadDocId, updatedLeadPayload);
 
         // A lead and the deal it converted into are separate documents; when
@@ -663,7 +665,7 @@ function App() {
               setDoc(doc(db, COLLECTIONS.USERS, emailKey), { role: 'Admin', status: 'Active', isApproved: true }, { merge: true }).catch(console.warn);
             }
 
-            if (userData.isApproved || userData.status === 'Active' || userData.status === undefined || isSuperAdmin) {
+            if (canSignIn(userData, isSuperAdmin)) {
               setCurrentUser({ ...userData, role: isSuperAdmin ? 'Admin' : userData.role, isApproved: true, status: 'Active' });
               logActivity(emailKey, userData.name || user.displayName || emailKey, 'LOGIN', 'Auth', 'User session authenticated.');
             } else {
@@ -740,6 +742,7 @@ function App() {
 
   useEffect(() => {
     let unsubUsers;
+    let unsubSelf;
     let unsubPending;
 
     if (currentUser?.isApproved) {
@@ -779,18 +782,17 @@ function App() {
       if (canListUsers) {
         unsubUsers = onSnapshot(collection(db, COLLECTIONS.USERS), (snapshot) => {
           const u = [];
-          snapshot.forEach(doc => {
-            const data = doc.data();
-            u.push(data);
-            syncSelf(data);
-          });
+          snapshot.forEach(doc => u.push(doc.data()));
           setUsers(u);
         });
-      } else if (currentUser.identifier) {
-        unsubUsers = onSnapshot(doc(db, COLLECTIONS.USERS, String(currentUser.identifier).trim().toLowerCase()), (snapshot) => {
+      }
+      // Own document on its own listener: the rules refuse the collection listener once the caller
+      // is Deactivated, so that listener never delivers the record that should evict them.
+      if (currentUser.identifier) {
+        unsubSelf = onSnapshot(doc(db, COLLECTIONS.USERS, String(currentUser.identifier).trim().toLowerCase()), (snapshot) => {
           if (!snapshot.exists()) return;
           const data = snapshot.data();
-          setUsers([data]);
+          if (!canListUsers) setUsers([data]);
           syncSelf(data);
         });
       }
@@ -807,6 +809,7 @@ function App() {
 
     return () => {
       if (unsubUsers) unsubUsers();
+      if (unsubSelf) unsubSelf();
       if (unsubPending) unsubPending();
     };
   // canAccess is rebuilt on every render; `permissions` is the state it reads.
@@ -989,6 +992,8 @@ function App() {
           photoURL: updatedUser.photoURL || pMatch.photoURL || '',
           contactPerson: updatedUser.name || pMatch.contactPerson,
         };
+        if (updatedUser.location) pUpdates.address = updatedUser.location;
+        if (updatedUser.company) pUpdates.company = updatedUser.company;
         updateDocument(COLLECTIONS.PARTNERS, pDocId, pUpdates).catch(console.warn);
         setPartners(prev => prev.map(p => (p.id === pDocId || p.partnerId === pMatch.partnerId) ? { ...p, ...pUpdates } : p));
       }
@@ -1287,8 +1292,12 @@ function App() {
       </div>
 
       <Toaster position="bottom-right" richColors duration={3000} />
-      <FloatingMessageToast setActiveTab={setActiveTab} />
-      <MiniChatDrawer currentUser={currentUser} setActiveTab={setActiveTab} />
+      {canAccess(currentUser?.role, 'messages') && (
+        <>
+          <FloatingMessageToast setActiveTab={setActiveTab} />
+          <MiniChatDrawer currentUser={currentUser} setActiveTab={setActiveTab} />
+        </>
+      )}
 
       {/* Main Content Area */}
       <main
@@ -1608,15 +1617,17 @@ function App() {
               <span className="text-[10px] font-bold">Ops</span>
             </button>
 
-            <button
-              onClick={() => { setActiveTab('messages'); setMobileMenuOpen(false); }}
-              className={`flex-1 py-1 flex flex-col items-center justify-center gap-0.5 rounded-xl transition-all cursor-pointer ${
-                activeTab === 'messages' ? 'text-primary font-black' : 'text-on-surface-variant hover:text-on-surface'
-              }`}
-            >
-              <MessageSquare size={18} />
-              <span className="text-[10px] font-bold">Messages</span>
-            </button>
+            {canAccess(currentUser?.role, 'messages') && (
+              <button
+                onClick={() => { setActiveTab('messages'); setMobileMenuOpen(false); }}
+                className={`flex-1 py-1 flex flex-col items-center justify-center gap-0.5 rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'messages' ? 'text-primary font-black' : 'text-on-surface-variant hover:text-on-surface'
+                }`}
+              >
+                <MessageSquare size={18} />
+                <span className="text-[10px] font-bold">Messages</span>
+              </button>
+            )}
 
             <button
               onClick={() => setMobileMenuOpen(true)}

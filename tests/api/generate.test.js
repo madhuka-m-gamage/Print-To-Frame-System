@@ -56,6 +56,21 @@ describe('api/generate.js gate', () => {
     expect((await call()).statusCode).toBe(403);
   });
 
+  it.each([['Partner'], ['Business Client'], ['Customer'], ['Unknown'], [undefined]])(
+    'rejects an approved %s account with 403 and never calls Gemini',
+    async (role) => {
+      getDoc.mockResolvedValue(snap({ role, isApproved: true, status: 'Active' }));
+      expect((await call()).statusCode).toBe(403);
+      expect(generateContent).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([['Admin'], ['Manager'], ['Sales']])('lets an approved %s account through', async (role) => {
+    getDoc.mockResolvedValue(snap({ role, isApproved: true, status: 'Active' }));
+    generateContent.mockResolvedValueOnce({ text: 'ok' });
+    expect((await call()).statusCode).toBe(200);
+  });
+
   it('answers OPTIONS with 200 and rejects other methods with 405', async () => {
     expect((await call({ method: 'OPTIONS' })).statusCode).toBe(200);
     expect((await call({ method: 'GET' })).statusCode).toBe(405);

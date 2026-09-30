@@ -17,8 +17,12 @@ Registration queue, admin approval, role and status management, password reset, 
 
 ## Triggers and side effects
 
-- `approvePending` batch-writes `users` and deletes `pendingUsers`. It does **not** create partners / customers; it pre-fills their registration form.
+- `approvePending` batch-writes `users` and deletes `pendingUsers`. It does **not** create partners / customers; it pre-fills their registration form. For a staff role, `handleExecuteApproval` then sends `employee_approved` (`employee_invite` with the set password for a partner application) (FEA-8).
+- The application review modal in `AgentDatabase.jsx` shows **Open BR copy** / **Open NIC copy** for a partner application's `brCertPath` / `nicCopyPath` (none when empty); a click resolves `getDownloadURL(ref(storage, path))` and opens a new tab, with an error toast on failure (FEA-11). Both paths are dropped before `onApprove` writes the `users` record.
+- The member header shows the status with `StatusBadge` (Active, Deactivated); the member Email button leaves the template to `EmailTemplateModal`'s role default.
 - `api/admin-user.js` needs an Admin caller; delete removes the Auth account only.
+- Deactivate / Reactivate (`handleToggleStatus` in `AgentDatabase.jsx`) writes only `status`; `isApproved` stays true. The app still refuses the account: `canSignIn` in `src/features/auth/authFlow.js` at login and `shouldEvict` on the user's own-document listener mid-session (SEC-11). Server side, the step 3.5 `isActiveUser()` rule refuses it everywhere except reading its own `users` document.
+- `api/send-email.js` only mails an address held in `users`, `pendingUsers`, `customers`, `partners` or `partner_applications` (SEC-1). Send any email before deleting the record it depends on: `handleExecuteRejection` sends `registration_declined` before `onReject` deletes the `pendingUsers` document.
 
 ## Before you edit
 
@@ -26,8 +30,10 @@ Registration queue, admin approval, role and status management, password reset, 
 - Never make `role`, `isApproved` or `status` client-settable outside the approve / self-heal paths (see the top of the `users` block in the rules).
 - The two bootstrap admin email lists (App.jsx and rules) must be edited together.
 
-- `DEFAULT_PERMISSIONS` does not change the live matrix; `settings/permissions` needs the 3.3 migration. `PERMISSIONS_FIXTURE` in `tests/helpers/emulator.js` is a hand-kept copy (synced at Phase 7 3.2). `App.jsx` opens each Firestore listener only when the role can read that module. Only Admin holds the `admin` (System Overview) module; `agents` stays delegable to Manager.
+- `DEFAULT_PERMISSIONS` does not change the live matrix; `settings/permissions` needs the 3.3 migration. `PERMISSIONS_FIXTURE` in `tests/helpers/emulator.js` is a hand-kept copy; `tests/unit/effectiveAccess.test.js` fails when it drifts from `DEFAULT_PERMISSIONS`. `App.jsx` opens each Firestore listener only when the role can read that module. Only Admin holds the `admin` (System Overview) module; `agents` stays delegable to Manager.
 
 - `api/admin-user.js` accepts Admin and Manager callers, rejects Deactivated/Disabled callers, and refuses a Manager acting on an Admin account or granting Admin. Only the Firebase Auth account is handled here; role changes are Firestore writes governed by the rules.
 
 - Step 3.5 rules (written, not deployed): active-account check in `checkPermission`; Managers with `agents` may administer non-Admin users; see `docs/03_security/FIRESTORE_RULES_NOTES.md`. Deploy order: matrix migration (3.3), additive rules (3.4d), then these.
+
+- Effective access (SEC-9): `tests/integration/effectiveAccess.test.js` prints every role's read/create/update/delete per collection under `origin/main` and working-tree rules. The rules OR create and edit (`create, update: if ... create || edit || write`), so either grant opens both; deleting a deal (`leads` with `isDeal`) needs `leads:delete`. A rules change that alters access lists its cells in the test's `EXPECTED_RULE_CHANGES`.

@@ -454,6 +454,32 @@ Best regards,
 Print To Frame Pvt Ltd`,
   },
   {
+    id: 'employee_approved',
+    title: 'Staff Registration Approved',
+    category: 'Internal Team',
+    description: 'Tells a self-registered staff applicant that their workspace access is approved. Sent automatically when the registration is approved in User Management.',
+    targetRoles: ['Admin', 'Manager', 'Sales', 'Operations', 'Support', 'Accounts', 'Logistics'],
+    subject: 'Your Print To Frame Workspace Access Is Approved [{{assignedRole}}]',
+    body: `Hi {{recipientName}},
+
+Your registration on the Print To Frame ERP has been approved with the {{assignedRole}} role.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WORKSPACE ACCESS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Assigned Department / Role: {{assignedRole}}
+• Portal URL: {{portalUrl}}
+• Login Email: {{loginEmail}}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Sign in at {{portalUrl}} with the password you chose when you registered.
+
+Welcome aboard,
+
+{{senderName}}
+Print To Frame Pvt Ltd`,
+  },
+  {
     id: 'password_reset',
     title: 'Password Reset & Account Security Notice',
     category: 'Security',

@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
+import { loadDefaultPermissions } from './defaultPermissions.mjs';
 
 const projectId = process.env.GCLOUD_PROJECT || '';
 const firestoreHost = process.env.FIRESTORE_EMULATOR_HOST || '';
@@ -26,22 +27,16 @@ export const SEED_USERS = {
   admin: 'admin@example.com',
   partner: 'partner@example.com',
   deactivated: 'deactivated@example.com',
+  sales: 'sales@example.com',
+  manager: 'manager@example.com',
+  customer: 'customer@example.com',
+  // Active on every seed; rbac.spec.js deactivates it mid-session.
+  evicted: 'evicted@example.com',
 };
 
 initializeApp({ projectId });
 const db = getFirestore();
 const auth = getAuth();
-
-// DEFAULT_PERMISSIONS lives in a .jsx file that imports the real Firebase client, so it cannot
-// be imported from Node. Evaluate just its definition from the source to avoid a stale copy.
-function loadDefaultPermissions() {
-  const src = readFileSync(new URL('../../src/context/PermissionsContext.jsx', import.meta.url), 'utf8');
-  const start = src.indexOf('const full = ');
-  const end = src.indexOf('// ── Migration helper');
-  if (start < 0 || end < 0) throw new Error('Could not locate DEFAULT_PERMISSIONS in PermissionsContext.jsx');
-  const body = src.slice(start, end).replace('export const DEFAULT_PERMISSIONS', 'const DEFAULT_PERMISSIONS');
-  return new Function(`${body}\nreturn DEFAULT_PERMISSIONS;`)();
-}
 
 async function ensureAuthUser(email, displayName) {
   try {
@@ -74,6 +69,10 @@ await db.doc('settings/permissions').set(loadDefaultPermissions());
 await ensureAuthUser(SEED_USERS.admin, 'Seed Admin');
 await ensureAuthUser(SEED_USERS.partner, 'Seed Partner');
 await ensureAuthUser(SEED_USERS.deactivated, 'Seed Deactivated');
+await ensureAuthUser(SEED_USERS.sales, 'Seed Sales');
+await ensureAuthUser(SEED_USERS.manager, 'Seed Manager');
+await ensureAuthUser(SEED_USERS.customer, 'Seed Customer');
+await ensureAuthUser(SEED_USERS.evicted, 'Seed Evicted');
 
 await db.doc(`users/${SEED_USERS.admin}`).set(userDoc(SEED_USERS.admin, 'Seed Admin', 'Admin'));
 await db.doc(`users/${SEED_USERS.partner}`).set(
@@ -82,6 +81,11 @@ await db.doc(`users/${SEED_USERS.partner}`).set(
 await db.doc(`users/${SEED_USERS.deactivated}`).set(
   userDoc(SEED_USERS.deactivated, 'Seed Deactivated', 'Sales', { isApproved: true, status: 'Deactivated' })
 );
+
+await db.doc(`users/${SEED_USERS.sales}`).set(userDoc(SEED_USERS.sales, 'Seed Sales', 'Sales'));
+await db.doc(`users/${SEED_USERS.manager}`).set(userDoc(SEED_USERS.manager, 'Seed Manager', 'Manager'));
+await db.doc(`users/${SEED_USERS.customer}`).set(userDoc(SEED_USERS.customer, 'Seed Customer', 'Customer'));
+await db.doc(`users/${SEED_USERS.evicted}`).set(userDoc(SEED_USERS.evicted, 'Seed Evicted', 'Sales'));
 
 await db.doc('partners/P-1001').set({
   id: 'P-1001', partnerId: 'P-1001', name: 'Seed Art Studio', type: 'Art & Framing Studio',
@@ -123,5 +127,22 @@ await db.doc('projects/PTF-1001').set({
   stageEnteredAt: now, createdAt: now, value: 100000, totalSqFt: 10, flexReceived: false,
   checklist: { materialsCut: false, frameWelded: false, primerApplied: false, canvasWrapped: false, qaPassed: false },
 });
+
+// Money journey (tests/e2e/money.spec.js): a deal with an Accepted quotation and no invoices yet.
+// Invoices for it are removed on every seed so the journey starts clean on a reused emulator.
+await db.doc('leads/D-200001').set({
+  id: 'D-200001', name: 'Money Journey Client', company: '', phone: '+9477 555 0001', email: 'money@example.com',
+  value: 200000, totalSqFt: 20, stage: 'Waiting', stageEnteredAt: now, source: 'Manual', date: '2026-01-01',
+  jobScope: 'Gallery wall framing', deliveryLocation: 'Kandy', isDeal: true, convertedToDeal: false,
+});
+await db.doc('quotations/QT-200001').set({
+  id: 'QT-200001', leadId: 'D-200001', clientName: 'Money Journey Client', company: '', phone: '+9477 555 0001',
+  status: 'Accepted', version: 1,
+  lineItems: [{ description: 'Gallery frames', qty: 2, unit: 'pcs', unitPrice: 100000, taxPct: 0, discountPct: 0 }],
+  subtotal: 200000, grandTotal: 200000, advanceDue: 150000, balanceDue: 50000, notes: '',
+  scope: 'Gallery wall framing', createdBy: SEED_USERS.admin, createdAt: now, updatedAt: now,
+});
+const staleInvoices = await db.collection('invoices').where('leadId', '==', 'D-200001').get();
+await Promise.all(staleInvoices.docs.map((d) => d.ref.delete()));
 
 console.log(`Seeded emulator project ${projectId}. Password for seeded accounts: ${SEED_PASSWORD}`);

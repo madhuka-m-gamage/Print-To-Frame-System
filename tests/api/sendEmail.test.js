@@ -4,10 +4,25 @@ import { createMockReqRes } from '../helpers/mockHttp';
 const verifyIdToken = vi.fn();
 const getDoc = vi.fn();
 const sendMail = vi.fn();
+// Recipient records by collection: doc ids for users/pendingUsers, `email` field values for the rest.
+let records;
 
 vi.mock('../../api/_lib/firebaseAdmin.js', () => ({
   getAdminAuth: () => ({ verifyIdToken }),
-  getAdminFirestore: () => ({ collection: () => ({ doc: () => ({ get: getDoc }) }) }),
+  getAdminFirestore: () => ({
+    collection: (name) => ({
+      doc: (id) => ({
+        get: () => (name === 'users' && id === 'user@example.com'
+          ? getDoc()
+          : Promise.resolve({ exists: (records[name] || []).includes(id) })),
+      }),
+      where: (field, op, values) => ({
+        limit: () => ({
+          get: () => Promise.resolve({ empty: !(field === 'email' && op === 'in' && values.some((v) => (records[name] || []).includes(v))) }),
+        }),
+      }),
+    }),
+  }),
 }));
 vi.mock('nodemailer', () => ({
   default: { createTransport: () => ({ sendMail }) },
@@ -32,6 +47,7 @@ beforeEach(() => {
   verifyIdToken.mockResolvedValue({ email: 'user@example.com' });
   getDoc.mockResolvedValue(snap({ role: 'Sales', isApproved: true, status: 'Active' }));
   sendMail.mockResolvedValue({});
+  records = { users: ['a@b.co'] };
 });
 
 describe('api/send-email.js gate', () => {
@@ -100,8 +116,8 @@ describe('api/send-email.js payload', () => {
     expect(sendMail).not.toHaveBeenCalled();
   });
 
-  it('allows each of the seven templates the app sends', async () => {
-    const ids = ['client_approval', 'client_activation_confirmed', 'partner_approval', 'partner_activation_confirmed', 'employee_invite', 'password_reset', 'registration_declined'];
+  it('allows each of the eight templates the app sends', async () => {
+    const ids = ['client_approval', 'client_activation_confirmed', 'partner_approval', 'partner_activation_confirmed', 'employee_invite', 'employee_approved', 'password_reset', 'registration_declined'];
     const handler = await load();
     for (const templateId of ids) {
       expect((await call(handler, { body: { to: 'a@b.co', templateId, data: {} } })).statusCode).toBe(200);
@@ -148,5 +164,37 @@ describe('api/send-email.js who may send (AUTHORIZATION_MAP finding 1)', () => {
       expect((await call(await load(), { body })).statusCode).toBe(403);
     }
     expect(sendMail).not.toHaveBeenCalled();
+  });
+});
+
+describe('api/send-email.js recipient check (BACKLOG SEC-1)', () => {
+  it('refuses an address that matches no record and sends nothing', async () => {
+    const res = await call(await load(), { body: { to: 'stranger@elsewhere.co', templateId: 'password_reset', data: {} } });
+    expect(res.statusCode).toBe(403);
+    expect(res.body.error).toMatch(/recipient/i);
+    expect(sendMail).not.toHaveBeenCalled();
+  });
+
+  it('matches a record stored in lower case when the address is typed in mixed case', async () => {
+    records = { users: ['mixed@case.co'] };
+    expect((await call(await load(), { body: { to: 'Mixed@Case.co', templateId: 'password_reset', data: {} } })).statusCode).toBe(200);
+  });
+
+  // Each caller, with the record that exists at the moment it sends.
+  it.each([
+    ['client_approval', 'customers', 'Customers.jsx after the customer record is added'],
+    ['client_activation_confirmed', 'customers', 'Customers.jsx after the customer record is added'],
+    ['partner_approval', 'partners', 'Partners.jsx after the partner record is added'],
+    ['partner_activation_confirmed', 'partners', 'Partners.jsx after the partner record is added'],
+    ['employee_invite', 'users', 'AgentDatabase.jsx after users/{email} is written'],
+    ['employee_approved', 'users', 'AgentDatabase.jsx after approvePending writes users/{email}'],
+    ['password_reset', 'users', 'AgentDatabase.jsx and Partners.jsx for an existing user'],
+    ['registration_declined', 'pendingUsers', 'AgentDatabase.jsx before the pendingUsers doc is deleted'],
+    ['registration_declined', 'partner_applications', 'AgentDatabase.jsx for a rejected partner application'],
+  ])('sends %s to an address held in %s (%s)', async (templateId, collection) => {
+    records = { [collection]: ['new@person.co'] };
+    const res = await call(await load(), { body: { to: 'new@person.co', templateId, data: {} } });
+    expect(res.statusCode).toBe(200);
+    expect(sendMail.mock.calls[0][0].to).toBe('new@person.co');
   });
 });

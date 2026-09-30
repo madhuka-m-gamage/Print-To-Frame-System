@@ -24,11 +24,11 @@ Pushing `firestore.rules` does **not** change live rules. Deploy separately:
 firebase deploy --only firestore:rules --project print-to-frame-erp
 ```
 
-`firebase` is installed and authenticated as the project owner in this environment. Confirm which of the three databases in `firebase.json` the app targets before deploying.
+`firebase` is installed and authenticated as the project owner in this environment. `firebase.json` lists the `(default)` database only (the two unused `ai-studio-...` entries were removed under ENG-4), so a rules deploy touches nothing else.
 
 ## Environment variables
 
-Names only (values live in Vercel and a local `.env`, never in git): `GEMINI_API_KEY`, `APP_URL`, `FIREBASE_SERVICE_ACCOUNT_JSON` (server), `VITE_FIREBASE_*` (API_KEY, AUTH_DOMAIN, PROJECT_ID, STORAGE_BUCKET, MESSAGING_SENDER_ID, APP_ID, MEASUREMENT_ID, DATABASE_ID, OAUTH_CLIENT_ID), `VITE_SENTRY_DSN`, `VITE_GOOGLE_MAPS_API_KEY`. `FIREBASE_SERVICE_ACCOUNT_JSON` is required even in local dev for the admin-user endpoint.
+Names only (values live in Vercel and a local `.env`, never in git): `GEMINI_API_KEY`, `APP_URL`, `FIREBASE_SERVICE_ACCOUNT_JSON` (server), `VITE_FIREBASE_*` (API_KEY, AUTH_DOMAIN, PROJECT_ID, STORAGE_BUCKET, MESSAGING_SENDER_ID, APP_ID, MEASUREMENT_ID, DATABASE_ID, OAUTH_CLIENT_ID), `VITE_SENTRY_DSN`, `VITE_GOOGLE_MAPS_API_KEY`. `FIREBASE_SERVICE_ACCOUNT_JSON` is required even in local dev: all three endpoints verify the caller's ID token with it.
 
 ## Storage rules deployment
 
@@ -49,7 +49,7 @@ The rules call `firestore.get()` on the caller's `users` document, so the Storag
 ## Local commands
 
 ```bash
-npm run dev         # Vite on 0.0.0.0:3000, proxies /api/* locally
+npm run dev         # Vite on 127.0.0.1:3000, runs the api/*.js handlers locally
 npm run build
 npm test            # unit tests
 npm run test:rules  # Firestore rules vs local emulator (needs Java)

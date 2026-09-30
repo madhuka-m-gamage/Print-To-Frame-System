@@ -1,10 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { db } from '@/services/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, documentId } from 'firebase/firestore';
 import { addDocument, updateDocument, COLLECTIONS } from '@/services/firestoreSync';
 import { triggerBrowserNotification } from '@/App';
+import { playMessageChime } from './audioAlert';
+import { buildReplyTo } from './messageFilters';
 
 const MessagingContext = createContext(null);
+
+const HISTORY_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
 export function getChannelId(id1, id2) {
   if (!id1 || !id2) return null;
@@ -17,6 +21,8 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
   const [isMiniChatOpen, setIsMiniChatOpen] = useState(false);
   const [miniChatContact, setMiniChatContact] = useState(null);
   const [activeChatContactId, setActiveChatContactId] = useState(null); // When user is on Messages tab viewing specific contact
+  const [historySince, setHistorySince] = useState(() => Date.now() - HISTORY_WINDOW_MS);
+  const [pendingSends, setPendingSends] = useState([]);
 
   const lastMsgTimestampRef = useRef(Date.now());
   const initialLoadDoneRef = useRef(false);
@@ -30,9 +36,12 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
 
     const myId = String(currentUser.identifier).trim().toLowerCase();
 
+    // Message ids are msg_<send time in ms>, so a range on the id bounds the listener by time
+    // without the composite index an orderBy('timestamp') + limit would need.
     const q = query(
       collection(db, COLLECTIONS.MESSAGES),
-      where('participants', 'array-contains', myId)
+      where('participants', 'array-contains', myId),
+      where(documentId(), '>=', `msg_${historySince}`)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -52,9 +61,11 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
           const isNewer = (Number(msg.timestamp) || 0) > lastMsgTimestampRef.current;
 
           if (isFromOther && isUnread && isNewer) {
-            // Check if user is currently looking at this active conversation
-            const isCurrentlyViewingChat = (activeTab === 'messages' && activeChatContactId === msgFrom) ||
-                                           (isMiniChatOpen && miniChatContact?.identifier?.toLowerCase() === msgFrom);
+            const pageInFocus = document.visibilityState === 'visible' && document.hasFocus();
+            const isCurrentlyViewingChat = pageInFocus && (
+              (activeTab === 'messages' && activeChatContactId === msgFrom) ||
+              (isMiniChatOpen && miniChatContact?.identifier?.toLowerCase() === msgFrom)
+            );
 
             if (!isCurrentlyViewingChat) {
               const sender = users.find(u => String(u.identifier || '').trim().toLowerCase() === msgFrom) || {
@@ -74,6 +85,8 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
                   tag: 'chat-message'
                 });
               }
+
+              if (currentUser?.audioAlertsEnabled !== false) playMessageChime();
             }
           }
         });
@@ -92,7 +105,11 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
     });
 
     return () => unsubscribe();
-  }, [currentUser, users, activeTab, activeChatContactId, isMiniChatOpen, miniChatContact]);
+  }, [currentUser, users, activeTab, activeChatContactId, isMiniChatOpen, miniChatContact, historySince]);
+
+  const loadOlderMessages = useCallback(() => {
+    setHistorySince(prev => prev - HISTORY_WINDOW_MS);
+  }, []);
 
   // 2. Real-Time Unread Counts Calculation
   const { unreadCounts, totalUnreadCount } = useMemo(() => {
@@ -148,17 +165,29 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
       text: text.trim(),
       timestamp: Date.now(),
       readBy: [myId],
-      replyTo: replyTo ? {
-        id: replyTo._firestoreId || replyTo.id,
-        text: replyTo.text,
-        fromId: replyTo.fromId
-      } : null
+      replyTo: buildReplyTo(replyTo)
     };
 
     const docId = `msg_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-    await addDocument(COLLECTIONS.MESSAGES, newMsg, docId);
+    setPendingSends(prev => [...prev, { ...newMsg, _firestoreId: docId }]);
+    try {
+      await addDocument(COLLECTIONS.MESSAGES, newMsg, docId);
+    } finally {
+      setPendingSends(prev => prev.filter(m => m._firestoreId !== docId));
+    }
     return true;
   }, [currentUser]);
+
+  // Sent messages show as 'sending' until Firestore acknowledges the write.
+  const visibleMessages = useMemo(() => {
+    if (!pendingSends.length) return messages;
+    const pendingIds = new Set(pendingSends.map(m => m._firestoreId));
+    const listenedIds = new Set(messages.map(m => m._firestoreId));
+    return [
+      ...messages.map(m => (pendingIds.has(m._firestoreId) ? { ...m, status: 'sending' } : m)),
+      ...pendingSends.filter(m => !listenedIds.has(m._firestoreId)).map(m => ({ ...m, status: 'sending' })),
+    ];
+  }, [messages, pendingSends]);
 
   // 5. Action: Mark Conversation as Read
   const markChatAsRead = useCallback(async (contactId) => {
@@ -329,7 +358,7 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
   }, [messages, currentUser, users, unreadCounts, resolveUserProfile]);
 
   const value = {
-    messages,
+    messages: visibleMessages,
     unreadCounts,
     totalUnreadCount,
     activeToastMessage,
@@ -346,6 +375,8 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
     sendDirectMessage,
     markChatAsRead,
     markAllAsRead,
+    historySince,
+    loadOlderMessages,
     resolveUserProfile,
     getChannelId
   };

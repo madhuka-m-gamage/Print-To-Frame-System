@@ -4,7 +4,7 @@ Full map: [README.md](README.md). Cross-module chains: [CROSS_MODULE_TRIGGERS.md
 
 ## What it does
 
-Fabrication Kanban over `projects` (Pending, Ongoing, Ready For Inspection, Revision, Completed) with a cut-list calculator and a 4-point QA gate.
+Fabrication Kanban over `projects` (Pending, Ongoing, Ready For Inspection, Revision, Completed, plus On Hold, Cancelled and an Other bucket) with a cut-list calculator and a 4-point QA gate.
 
 ## Code
 
@@ -28,6 +28,7 @@ Fabrication Kanban over `projects` (Pending, Ongoing, Ready For Inspection, Revi
 - Final invoice guard: deal completion and job QA pass call `getExistingFinalInvoice` (`src/shared/utils/entityUtils.js`) and skip creating a second Final. It runs on client state, so two sessions acting at the same moment can still both create one.
 
 - A `Cancelled` project (its deal was deleted) gets no QA-pass Final invoice and no delivery job (owner decision DEC-4): `cancelledProjectBlock` in `src/features/fabrication/fabricationLink.js` returns the message, checked against the current `projects` state, so a project cancelled while the QA gate is open is still refused.
+- Board statuses (FEA-3): `boardColumnOf` in `FabricationWorks.jsx` puts any status outside the five stages, `On Hold` and `Cancelled` into an **Other** column (shown only when it has jobs; its forward button resets the job to Pending), so a job is never hidden. **Cancelled** is muted and read-only (reason shown, no moves, QA, dispatch or update; Admin delete stays). **On Hold**: the Hold button (Pending, Ongoing, Ready For Inspection, Revision) requires a reason and stores `holdFromStatus` and `holdReason`; Resume restores `holdFromStatus` (Pending if missing) and nulls both; `handleMoveJob` ignores On Hold and Cancelled jobs. **Archived** is the flag `archived: true`, not a status; `archiveBlock` (`fabricationLink.js`) allows it only for Completed and Cancelled, archived jobs are hidden unless "Show archived" is ticked. Hold, resume and archive write `JOB_HELD`, `JOB_RESUMED`, `JOB_ARCHIVED`, `JOB_UNARCHIVED` audit entries. `projectStatusForDealStage` leaves all of these statuses alone.
 - Completed is terminal: no backward move from it, and bulk change cannot set Completed. Deal completion sets `commissionAccrued: true` and skips commission accrual when it is already set.
 
 - Stock bars: `packStockBars` in `src/features/fabrication/cutListEngine.js` packs pieces first-fit-decreasing, one kerf per cut.

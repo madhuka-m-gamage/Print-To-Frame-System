@@ -4,7 +4,7 @@ import {
   Camera, Check, Save, LogOut, Bell, Sparkles, Briefcase, 
   Layers, Hammer, Palette, Clock, Award, ShieldCheck, 
   Smartphone, AlertCircle, RefreshCw, ExternalLink,
-  Map, MessageSquare, Calculator
+  MessageSquare, Calculator
 } from 'lucide-react';
 import { doc, updateDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/services/firebase';
@@ -130,33 +130,8 @@ export default function UserProfile({ currentUser, onUpdateUser, onSignOut, setA
 
       // Cross-Collection Profile Sync (Finding 9)
       try {
-        if (isPartner) {
-          const partnersCol = collection(db, COLLECTIONS.PARTNERS);
-          const emailQuery = (currentUser.email || currentUser.identifier || '').trim().toLowerCase();
-          const partnerQueries = [];
-          if (emailQuery) {
-            partnerQueries.push(getDocs(query(partnersCol, where('email', '==', emailQuery))));
-          }
-          if (currentUser.partnerId) {
-            partnerQueries.push(getDocs(query(partnersCol, where('partnerId', '==', currentUser.partnerId))));
-          }
-          const results = await Promise.all(partnerQueries);
-          const matchedDocIds = new Set();
-          results.forEach(snap => snap.docs.forEach(d => matchedDocIds.add(d.id)));
-
-          const partnerUpdate = {
-            name: formData.name.trim() || currentUser.name,
-            contactPerson: formData.name.trim() || currentUser.name,
-            photoURL: formData.photoURL || '',
-          };
-          if (formData.contactNumber.trim()) partnerUpdate.phone = formData.contactNumber.trim();
-          if (formData.location.trim()) partnerUpdate.address = formData.location.trim();
-          if (formData.company.trim()) partnerUpdate.company = formData.company.trim();
-
-          for (const docId of matchedDocIds) {
-            await updateDoc(doc(db, COLLECTIONS.PARTNERS, docId), partnerUpdate);
-          }
-        } else if (isCustomer) {
+        // A Partner's partners record is mirrored by handleUpdateUser in App.jsx (onUpdateUser below).
+        if (isCustomer) {
           const customersCol = collection(db, COLLECTIONS.CUSTOMERS);
           const emailQuery = (currentUser.email || currentUser.identifier || '').trim().toLowerCase();
           const custQueries = [];
@@ -712,15 +687,7 @@ export default function UserProfile({ currentUser, onUpdateUser, onSignOut, setA
                   {/* Quick Shortcut Navigation */}
                   <div className="p-4 bg-surface-container-low rounded-2xl border border-outline space-y-3">
                     <h4 className="text-xs font-bold text-on-surface uppercase tracking-wider">Operational Jump Links</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab && setActiveTab('roadmap')}
-                        className="p-3 bg-surface-container rounded-xl border border-outline hover:border-primary text-left text-xs font-bold text-on-surface transition-colors"
-                      >
-                        <Map size={14} className="text-primary mb-1.5" />
-                        Execution Plan
-                      </button>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                       <button
                         type="button"
                         onClick={() => setActiveTab && setActiveTab('projects')}

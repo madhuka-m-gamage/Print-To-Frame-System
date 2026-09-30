@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Send, X, ExternalLink, CornerDownLeft } from 'lucide-react';
 import { useMessaging } from './MessagingContext';
 import { UserAvatar } from '@/shared/ui';
+import { toast } from '@/shared/utils/toast';
 
 export default function FloatingMessageToast({ setActiveTab }) {
   const { activeToastMessage, dismissToast, openMiniChat, sendDirectMessage, resolveUserProfile } = useMessaging();
@@ -58,7 +59,7 @@ export default function FloatingMessageToast({ setActiveTab }) {
       setShowReplyBox(false);
       dismissToast();
     } catch (err) {
-      console.error("Quick reply error:", err);
+      toast.error(`Message not sent: ${err.message}`);
     } finally {
       setIsSending(false);
     }

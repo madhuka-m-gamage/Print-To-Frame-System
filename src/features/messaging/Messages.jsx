@@ -11,6 +11,9 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { PageHeader, FilterBar, StatusBadge, UserAvatar } from "@/shared/ui";
 import EmailTemplateModal from "@/shared/components/EmailTemplateModal";
 import { useMessaging, getChannelId } from "./MessagingContext";
+import MessageStatus from "./MessageStatus";
+
+const TYPING_THROTTLE_MS = 800;
 
 export default function Messages({ users = [], currentUser }) {
   const { 
@@ -18,7 +21,9 @@ export default function Messages({ users = [], currentUser }) {
     unreadCounts, 
     sendDirectMessage, 
     markChatAsRead, 
-    setActiveChatContactId 
+    setActiveChatContactId,
+    historySince,
+    loadOlderMessages
   } = useMessaging();
 
   const [activeUser, setActiveUser] = useState(null);
@@ -31,6 +36,7 @@ export default function Messages({ users = [], currentUser }) {
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
   const chatContainerRef = useRef(null);
+  const lastTypingSentRef = useRef({ channelId: null, isTyping: false, at: 0 });
 
   // Sync active contact with global messaging context
   useEffect(() => {
@@ -71,6 +77,11 @@ export default function Messages({ users = [], currentUser }) {
     const myId = String(currentUser.identifier).trim().toLowerCase();
     const targetId = String(activeUser.identifier).trim().toLowerCase();
     const activeChan = getChannelId(myId, targetId);
+    const now = Date.now();
+    const last = lastTypingSentRef.current;
+    if (last.channelId === activeChan && last.isTyping === isTyping &&
+        (!isTyping || now - last.at < TYPING_THROTTLE_MS)) return;
+    lastTypingSentRef.current = { channelId: activeChan, isTyping, at: now };
     try {
       setDocument(COLLECTIONS.TYPING_INDICATORS, myId, {
         fromId: myId,
@@ -85,7 +96,6 @@ export default function Messages({ users = [], currentUser }) {
     if (e) e.preventDefault();
     if (!inputText.trim() || !activeUser || !currentUser) return;
 
-    const myId = String(currentUser.identifier).trim().toLowerCase();
     const targetId = String(activeUser.identifier).trim().toLowerCase();
     const textToSend = inputText.trim();
 
@@ -97,15 +107,11 @@ export default function Messages({ users = [], currentUser }) {
       await sendDirectMessage({
         toId: targetId,
         text: textToSend,
-        replyTo: replyTo ? {
-          id: replyTo._firestoreId || replyTo.id,
-          text: replyTo.text,
-          senderName: replyTo.senderName
-        } : null
+        replyTo
       });
     } catch(err) {
-      console.error(err);
-      toast.error("Failed to send message: " + err.message);
+      setInputText(current => current || textToSend);
+      toast.error("Message not sent: " + err.message);
     }
   };
 
@@ -343,6 +349,15 @@ export default function Messages({ users = [], currentUser }) {
                 aria-live="polite"
                 aria-label={`Conversation with ${activeUser.name}`}
               >
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={loadOlderMessages}
+                    className="text-[10px] font-bold text-primary hover:underline cursor-pointer"
+                  >
+                    Load older messages (showing since {new Date(historySince).toLocaleDateString()})
+                  </button>
+                </div>
                 {activeChannelMessages.length === 0 ? (
                   <div className="py-16 text-center text-on-surface-variant text-xs">
                     <MessageSquare size={36} className="mx-auto mb-2 opacity-25" aria-hidden="true" />
@@ -360,7 +375,7 @@ export default function Messages({ users = [], currentUser }) {
                       >
                         {msg.replyTo && (
                           <div className="text-[10px] text-on-surface-variant bg-surface-container-low p-2 rounded-t-xl border border-outline-variant/40 mb-0.5 max-w-full truncate">
-                            Replying to <strong>{msg.replyTo.senderName}</strong>: {msg.replyTo.text}
+                            Replying to <strong>{msg.replyTo.senderName || msg.replyTo.fromId}</strong>: {msg.replyTo.text}
                           </div>
                         )}
 
@@ -374,7 +389,16 @@ export default function Messages({ users = [], currentUser }) {
 
                         <div className="flex items-center gap-1.5 text-[9px] text-on-surface-variant font-mono mt-1 px-1">
                           <span>{new Date(Number(msg.timestamp) || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                          {isMe && <CheckCheck size={11} className="text-primary" aria-hidden="true" />}
+                          {isMe && <MessageStatus msg={msg} size={11} />}
+                          <button
+                            type="button"
+                            onClick={() => setReplyTo(msg)}
+                            aria-label="Reply to message"
+                            title="Reply"
+                            className="p-0.5 rounded opacity-60 hover:opacity-100 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
+                          >
+                            <Reply size={11} aria-hidden="true" />
+                          </button>
                         </div>
                       </div>
                     );
@@ -383,9 +407,25 @@ export default function Messages({ users = [], currentUser }) {
               </div>
 
               {/* Typing indicator */}
-              {typingState[activeUser.identifier] && (
+              {typingState[String(activeUser.identifier).trim().toLowerCase()] === getChannelId(currentUser?.identifier, activeUser.identifier) && (
                 <div role="status" aria-live="polite" className="px-5 py-1 text-[10px] text-primary font-bold italic animate-pulse">
                   {activeUser.name} is typing...
+                </div>
+              )}
+
+              {replyTo && (
+                <div className="px-4 py-2 bg-surface-container-low border-t border-outline-variant/60 flex items-center justify-between gap-2 text-[10px] text-on-surface-variant">
+                  <span className="truncate">
+                    Replying to <strong>{replyTo.senderName || replyTo.fromId}</strong>: {replyTo.text}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setReplyTo(null)}
+                    aria-label="Cancel reply"
+                    className="p-1 rounded hover:bg-surface-container-high cursor-pointer"
+                  >
+                    <X size={12} aria-hidden="true" />
+                  </button>
                 </div>
               )}
 

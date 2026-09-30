@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { dimensionsFromLead, resolveManualJobLink, NON_BILLABLE, cancelledProjectBlock } from '@/features/fabrication/fabricationLink';
+import { dimensionsFromLead, resolveManualJobLink, NON_BILLABLE, cancelledProjectBlock, archiveBlock } from '@/features/fabrication/fabricationLink';
 
 const deal = {
   id: 'D-0001', originalLeadId: 'L-0001', name: 'Client', phone: '+94711111111', company: 'Co', email: 'Client@Example.com',
@@ -60,5 +60,18 @@ describe('cancelledProjectBlock (DEC-4)', () => {
   it('allows any other project, or none', () => {
     expect(cancelledProjectBlock({ jobNo: 'PTF-0003', status: 'Completed' }, 'delivery')).toBeNull();
     expect(cancelledProjectBlock(undefined, 'finalInvoice')).toBeNull();
+  });
+});
+
+describe('archiveBlock (FEA-3)', () => {
+  it('allows archiving only Completed and Cancelled jobs', () => {
+    expect(archiveBlock({ jobNo: 'PTF-0001', status: 'Completed' })).toBeNull();
+    expect(archiveBlock({ jobNo: 'PTF-0002', status: 'Cancelled' })).toBeNull();
+  });
+
+  it('refuses every other status', () => {
+    expect(archiveBlock({ jobNo: 'PTF-0003', status: 'Ongoing' })).toBe('PTF-0003 is Ongoing, so it cannot be archived. Only Completed and Cancelled jobs can be.');
+    expect(archiveBlock({ jobNo: 'PTF-0004', status: 'On Hold' })).toMatch(/On Hold/);
+    expect(archiveBlock({ jobNo: 'PTF-0005' })).toMatch(/Pending/);
   });
 });

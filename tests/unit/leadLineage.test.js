@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getLineageIds, invoicesForLineage, logisticsJobForLineage, lineageIdsForLeadId } from '@/features/leads/leadLineage';
+import { getLineageIds, invoicesForLineage, logisticsJobForLineage, lineageIdsForLeadId, invoiceLineageFields, leadForInvoice } from '@/features/leads/leadLineage';
 
 describe('lead lineage', () => {
   it('lists a record id, its original lead and its converted deal, skipping blanks', () => {
@@ -39,5 +39,30 @@ describe('lineage lookups for logistics and invoice references', () => {
     expect(lineageIdsForLeadId('D-1', leads)).toEqual(['D-1', 'L-1']);
     expect(lineageIdsForLeadId('L-7', leads)).toEqual(['L-7']);
     expect(lineageIdsForLeadId('L-7')).toEqual(['L-7']);
+  });
+});
+
+describe('invoice lineage stamps (MON-2)', () => {
+  it('stamps the original lead id and the deal id on an invoice for a deal', () => {
+    expect(invoiceLineageFields({ id: 'D-1', isDeal: true, originalLeadId: 'L-1' })).toEqual({ leadId: 'L-1', dealId: 'D-1' });
+    expect(invoiceLineageFields({ id: 'D-2', isDeal: true })).toEqual({ leadId: 'D-2', dealId: 'D-2' });
+  });
+
+  it('stamps the lead id, and the deal id once the lead is converted', () => {
+    expect(invoiceLineageFields({ id: 'L-1' })).toEqual({ leadId: 'L-1', dealId: '' });
+    expect(invoiceLineageFields({ id: 'L-1', convertedDealId: 'D-1' })).toEqual({ leadId: 'L-1', dealId: 'D-1' });
+    expect(invoiceLineageFields({ _firestoreId: 'L-3' })).toEqual({ leadId: 'L-3', dealId: '' });
+  });
+
+  it('finds the deal an invoice belongs to before the lead it was first raised on', () => {
+    const leads = [
+      { id: 'L-1', convertedToDeal: true, convertedDealId: 'D-1' },
+      { id: 'D-1', isDeal: true, originalLeadId: 'L-1' },
+      { id: 'L-2' },
+    ];
+    expect(leadForInvoice({ leadId: 'L-1', dealId: 'D-1' }, leads)?.id).toBe('D-1');
+    expect(leadForInvoice({ leadId: 'L-2', dealId: '' }, leads)?.id).toBe('L-2');
+    expect(leadForInvoice({ leadId: 'L-1', dealId: 'D-9' }, leads)?.id).toBe('L-1');
+    expect(leadForInvoice({ leadId: 'L-9' }, leads)).toBeNull();
   });
 });

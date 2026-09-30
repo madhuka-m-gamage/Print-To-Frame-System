@@ -14,3 +14,11 @@ export function shouldEvict(record) {
   const status = String(record.status || '').toLowerCase();
   return status === 'deactivated' || status === 'disabled' || record.isApproved === false;
 }
+
+// Whether an existing users record may start a session. A Deactivated or Disabled status wins even
+// when isApproved is still true, which is what AgentDatabase's Deactivate button leaves behind.
+export function canSignIn(record, isBootstrapAdmin) {
+  if (isBootstrapAdmin) return true;
+  if (!record || shouldEvict(record)) return false;
+  return Boolean(record.isApproved) || record.status === 'Active' || record.status === undefined;
+}
