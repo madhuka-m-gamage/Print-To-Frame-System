@@ -29,7 +29,11 @@ import {
   Scissors,
   Layers,
   Send,
-  Sparkles
+  Sparkles,
+  Pause,
+  Play,
+  Archive,
+  ArchiveRestore
 } from 'lucide-react';
 import { toast } from '@/shared/utils/toast';
 import Card from '@/shared/components/Card';
@@ -42,7 +46,7 @@ import { stripEmojis, sanitizeTechnicalScope } from '@/shared/utils/validation';
 import { generateText } from '@/services/gemini';
 import { getExistingFinalInvoice } from '@/shared/utils/entityUtils';
 import { logActivity } from '@/services/auditLog';
-import { NON_BILLABLE, resolveManualJobLink, cancelledProjectBlock } from './fabricationLink';
+import { NON_BILLABLE, resolveManualJobLink, cancelledProjectBlock, archiveBlock } from './fabricationLink';
 import { checklistWithGuardedQa, withDefectRecorded } from './qaGate';
 import { buildLogisticsTask } from '@/features/logistics/logisticsTask';
 import { STEEL_PROFILES, calculateCutList, mmToFtIn } from './cutListEngine';
@@ -54,7 +58,18 @@ const STAGE_COLORS = {
   "Ongoing": "primary",
   "Ready For Inspection": "primary",
   "Revision": "rose",
-  "Completed": "emerald"
+  "Completed": "emerald",
+  "On Hold": "amber",
+  "Cancelled": "rose",
+  "Other": "purple"
+};
+
+const BOARD_COLUMNS = [...STAGES, "On Hold", "Cancelled"];
+const HOLDABLE = ["Pending", "Ongoing", "Ready For Inspection", "Revision"];
+
+const boardColumnOf = (job) => {
+  const status = job.status || "Pending";
+  return BOARD_COLUMNS.includes(status) ? status : "Other";
 };
 
 const getFabricationTitle = (job) => {
@@ -166,14 +181,18 @@ function FabricationColumn({
   onDelete,
   onInspect,
   onSendToRevision,
-  onDispatchLogistics
+  onDispatchLogistics,
+  onHold,
+  onResume,
+  onArchive
 }) {
+  const isCancelled = stage === "Cancelled";
   return (
     <KanbanColumn
       title={stage}
       count={items.length}
       stageColor={STAGE_COLORS[stage] || "primary"}
-      onAddNew={isFirstStage ? onAddNew : null}
+      onAddNew={stage === "Pending" ? onAddNew : null}
       addNewText="Add Job"
     >
       {items.map((job) => {
@@ -205,6 +224,11 @@ function FabricationColumn({
                 <AlertTriangle size={10} className="mr-1" /> {job.defectDetails.category}
               </span>
             ) : null}
+            {job.archived && (
+              <span className="text-[10px] font-bold text-on-surface-variant bg-surface-container-high px-2 py-0.5 rounded-md uppercase flex items-center border border-outline-variant/60">
+                <Archive size={10} className="mr-1" /> Archived
+              </span>
+            )}
             {milestonesDone > 0 && (
               <span className="text-[10px] font-medium text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-md border border-outline-variant/50">
                 {milestonesDone}/5 Steps
@@ -222,6 +246,16 @@ function FabricationColumn({
 
         const details = (
           <div className="space-y-1.5 mb-2">
+            {isCancelled && (
+              <div className="text-[10px] text-rose-400 font-semibold">
+                Cancelled{job.cancelledReason ? `: ${job.cancelledReason}` : ''}
+              </div>
+            )}
+            {stage === "On Hold" && (
+              <div className="text-[10px] text-amber-400 font-semibold">
+                On hold{job.holdFromStatus ? ` from ${job.holdFromStatus}` : ''}{job.holdReason ? `: ${job.holdReason}` : ''}
+              </div>
+            )}
             <div className="flex items-center text-[10px] text-on-surface-variant">
               <Hammer size={11} className="mr-1.5 text-on-surface-variant flex-shrink-0" />
               <span className="truncate">
@@ -295,7 +329,47 @@ function FabricationColumn({
               </button>
             )}
 
+            {HOLDABLE.includes(stage) && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onHold(job);
+                }}
+                className="p-1.5 rounded-lg transition-all border bg-surface-container-high text-on-surface-variant hover:text-amber-400 hover:bg-amber-400/10 border-outline-variant/60"
+                title="Put on Hold"
+              >
+                <Pause size={13} />
+              </button>
+            )}
+
+            {stage === "On Hold" && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onResume(job);
+                }}
+                className="p-1.5 rounded-lg transition-all border bg-primary/15 text-primary hover:bg-primary/25 border-primary/30"
+                title="Resume job"
+              >
+                <Play size={13} />
+              </button>
+            )}
+
+            {(stage === "Completed" || isCancelled) && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onArchive(job, !job.archived);
+                }}
+                className="p-1.5 rounded-lg transition-all border bg-surface-container-high text-on-surface-variant hover:text-on-surface hover:bg-surface-container border-outline-variant/60"
+                title={job.archived ? "Unarchive job" : "Archive job"}
+              >
+                {job.archived ? <ArchiveRestore size={13} /> : <Archive size={13} />}
+              </button>
+            )}
+
             {/* WhatsApp AI Update */}
+            {!isCancelled && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -314,6 +388,7 @@ function FabricationColumn({
                 <MessageSquare size={13} />
               )}
             </button>
+            )}
           </div>
         );
 
@@ -326,6 +401,8 @@ function FabricationColumn({
         } else if (stage === "Revision") {
           moveForwardTitle = "Return to Inspection";
           moveForwardIcon = <Check size={13} />;
+        } else if (stage === "Other") {
+          moveForwardTitle = "Reset to Pending";
         }
 
         return (
@@ -342,6 +419,7 @@ function FabricationColumn({
             onMoveForward={() => onMove(job.jobNo)}
             onDelete={() => onDelete(job.jobNo)}
             isAdmin={isAdmin}
+            className={isCancelled ? 'opacity-60' : ''}
             isFirstStage={isFirstStage}
             isLastStage={isLastStage}
             moveForwardIcon={moveForwardIcon}
@@ -393,6 +471,9 @@ export default function FabricationWorks({
   });
 
   const [filterStage, setFilterStage] = useState('ALL');
+  const [showArchived, setShowArchived] = useState(false);
+  const [holdJob, setHoldJob] = useState(null);
+  const [holdReason, setHoldReason] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [deletingJobId, setDeletingJobId] = useState(null);
 
@@ -595,6 +676,7 @@ export default function FabricationWorks({
     if (!jobBeingMoved) return;
 
     const currentStatus = jobBeingMoved.status || "Pending";
+    if (currentStatus === "On Hold" || currentStatus === "Cancelled") return;
 
     // Gate: "Ready For Inspection" requires QA inspection dialog before moving to "Completed"
     if (currentStatus === "Ready For Inspection") {
@@ -673,6 +755,69 @@ export default function FabricationWorks({
       toast.info(`Job ${jobNo} moved back to ${prevStatusStr}`);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const persistJobChange = async (job, changes) => {
+    const updatedJobObj = { ...job, ...changes };
+    setProjects(projects.map(j => j.jobNo === job.jobNo ? updatedJobObj : j));
+    await updateDocument(COLLECTIONS.PROJECTS, job._firestoreId || job.jobNo, changes);
+  };
+
+  const handleConfirmHold = async () => {
+    if (!holdJob) return;
+    const reason = holdReason.trim();
+    if (!reason) {
+      toast.error("Enter a reason for putting this job on hold.");
+      return;
+    }
+    const targetJob = holdJob;
+    setHoldJob(null);
+    try {
+      await persistJobChange(targetJob, {
+        status: "On Hold",
+        holdFromStatus: targetJob.status || "Pending",
+        holdReason: reason,
+        stageEnteredAt: new Date().toISOString()
+      });
+      logActivity(currentUser?.identifier, currentUser?.name, 'JOB_HELD', 'Fabrication', `Job ${targetJob.jobNo} put on hold: ${reason}`);
+      toast.info(`Job ${targetJob.jobNo} put on hold.`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to put job on hold in DB");
+    }
+  };
+
+  const handleResumeJob = async (job) => {
+    const resumeTo = STAGES.includes(job.holdFromStatus) ? job.holdFromStatus : "Pending";
+    try {
+      await persistJobChange(job, {
+        status: resumeTo,
+        holdFromStatus: null,
+        holdReason: null,
+        stageEnteredAt: new Date().toISOString()
+      });
+      logActivity(currentUser?.identifier, currentUser?.name, 'JOB_RESUMED', 'Fabrication', `Job ${job.jobNo} resumed to ${resumeTo}`);
+      toast.success(`Job ${job.jobNo} resumed to ${resumeTo}.`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to resume job in DB");
+    }
+  };
+
+  const handleArchiveJob = async (job, archived) => {
+    const current = projects.find(p => p.jobNo === job.jobNo) || job;
+    const blocked = archived ? archiveBlock(current) : null;
+    if (blocked) {
+      toast.error(blocked);
+      return;
+    }
+    try {
+      await persistJobChange(current, { archived });
+      logActivity(currentUser?.identifier, currentUser?.name, archived ? 'JOB_ARCHIVED' : 'JOB_UNARCHIVED', 'Fabrication', `Job ${job.jobNo} ${archived ? 'archived' : 'unarchived'}`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update archive state in DB");
     }
   };
 
@@ -893,7 +1038,9 @@ export default function FabricationWorks({
     }
   };
 
-  const filteredProjects = projects.filter((job) => {
+  const visibleProjects = showArchived ? projects : projects.filter((p) => !p.archived);
+
+  const filteredProjects = visibleProjects.filter((job) => {
     const title = getFabricationTitle(job);
     const matchesSearch = !searchQuery ||
       (job.jobNo && job.jobNo.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -903,17 +1050,19 @@ export default function FabricationWorks({
       (job.materials && job.materials.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (job.scope && job.scope.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (job.deadline && job.deadline.toLowerCase().includes(searchQuery.toLowerCase()));
-    const jobStage = job.status || "Pending";
-    const matchesStage = filterStage === 'ALL' || jobStage === filterStage;
+    const matchesStage = filterStage === 'ALL' || boardColumnOf(job) === filterStage;
     return matchesSearch && matchesStage;
   });
 
+  const hasOther = filterStage === 'Other' || visibleProjects.some((p) => boardColumnOf(p) === 'Other');
+  const boardColumns = hasOther ? [...BOARD_COLUMNS, 'Other'] : BOARD_COLUMNS;
+
   const filterOptions = [
-    { id: 'ALL', label: 'All Jobs', count: projects.length },
-    ...STAGES.map(stg => ({
+    { id: 'ALL', label: 'All Jobs', count: visibleProjects.length },
+    ...boardColumns.map(stg => ({
       id: stg,
       label: stg,
-      count: projects.filter(p => (p.status || "Pending") === stg).length
+      count: visibleProjects.filter(p => boardColumnOf(p) === stg).length
     }))
   ];
 
@@ -931,7 +1080,7 @@ export default function FabricationWorks({
           { label: "Ongoing", value: ongoingCount, color: "primary" },
           { label: "Ready Inspection", value: readyCount, color: readyCount > 0 ? "secondary" : "default" },
           { label: "In Revision", value: revisionCount, color: revisionCount > 0 ? "rose" : "default" },
-          { label: "Total Active", value: projects.length, color: "default" }
+          { label: "Total Active", value: projects.filter(p => !p.archived).length, color: "default" }
         ]}
         actions={
           <button
@@ -988,24 +1137,40 @@ export default function FabricationWorks({
         activeFilter={filterStage}
         onFilterChange={setFilterStage}
         filterOptions={filterOptions}
-        totalCount={projects.length}
+        totalCount={visibleProjects.length}
         filteredCount={filteredProjects.length}
-      />
+      >
+        <label className="flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant whitespace-nowrap cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showArchived}
+            onChange={(e) => setShowArchived(e.target.checked)}
+            className="accent-primary"
+          />
+          Show archived
+        </label>
+      </FilterBar>
 
       {/* Kanban Board Columns */}
       <div className="flex-1 overflow-x-auto pb-4 custom-scrollbar snap-x snap-mandatory">
         <div className="flex space-x-3 sm:space-x-5 h-full min-w-max">
-          {STAGES.filter(stage => filterStage === 'ALL' || filterStage === stage).map((stage) => {
+          {boardColumns.filter(stage => filterStage === 'ALL' || filterStage === stage).map((stage) => {
             const originalIdx = STAGES.indexOf(stage);
             return (
               <FabricationColumn
                 key={stage}
                 stage={stage}
-                items={filteredProjects.filter((p) => (p.status || "Pending") === stage)}
+                items={filteredProjects.filter((p) => boardColumnOf(p) === stage)}
                 onMove={handleMoveJob}
                 onMoveBack={handleMoveJobBack}
-                isFirstStage={originalIdx === 0}
-                isLastStage={originalIdx === STAGES.length - 1}
+                isFirstStage={originalIdx <= 0}
+                isLastStage={originalIdx === STAGES.length - 1 || stage === "On Hold" || stage === "Cancelled"}
+                onHold={(job) => {
+                  setHoldJob(job);
+                  setHoldReason('');
+                }}
+                onResume={handleResumeJob}
+                onArchive={handleArchiveJob}
                 onClientUpdate={handleGenerateUpdate}
                 updatingJobId={updatingJobId}
                 isGeneratingUpdate={isGeneratingUpdate}
@@ -1227,6 +1392,60 @@ export default function FabricationWorks({
                 <span>{isApprovingQA ? 'Approving...' : 'Approve & Complete'}</span>
               </button>
             </div>
+          </div>
+        </ModalWrapper>
+      )}
+
+      {holdJob && (
+        <ModalWrapper
+          isOpen={!!holdJob}
+          onClose={() => setHoldJob(null)}
+          maxWidth="max-w-md"
+          ariaLabel="Put Job On Hold"
+        >
+          <div className="px-6 py-4 border-b border-outline-variant bg-surface-container-low flex justify-between items-center flex-shrink-0">
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-on-surface">Put Job On Hold</h3>
+              <p className="text-[11px] text-amber-400 font-mono font-bold tracking-wider">
+                {holdJob.jobNo} — {getFabricationTitle(holdJob)}
+              </p>
+            </div>
+            <button
+              onClick={() => setHoldJob(null)}
+              className="p-1.5 rounded-full hover:bg-surface-container-highest text-on-surface-variant transition-colors"
+              aria-label="Close"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className="p-6">
+            <label className="text-[10px] uppercase font-bold text-on-surface-variant tracking-widest block mb-1">
+              Reason
+            </label>
+            <textarea
+              rows={3}
+              value={holdReason}
+              onChange={(e) => setHoldReason(e.target.value)}
+              className="w-full p-3 bg-surface-container-low border border-outline-variant rounded-xl text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-amber-400/50"
+              placeholder="Why is this job on hold? e.g. waiting for the client to confirm the size."
+            />
+          </div>
+
+          <div className="p-4 sm:p-5 border-t border-outline-variant bg-surface-container-low flex justify-end space-x-2 flex-shrink-0">
+            <button
+              onClick={() => setHoldJob(null)}
+              className="px-4 py-2 bg-surface-container-high text-on-surface-variant rounded-xl font-bold text-xs hover:bg-surface-container-highest border border-outline-variant/60"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirmHold}
+              className="px-5 py-2 bg-amber-500 text-black rounded-xl font-bold text-xs hover:bg-amber-400 transition-all flex items-center active:scale-95"
+            >
+              <Pause size={14} className="mr-1.5" />
+              <span>Confirm Hold</span>
+            </button>
           </div>
         </ModalWrapper>
       )}
