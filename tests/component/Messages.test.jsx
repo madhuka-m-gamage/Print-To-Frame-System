@@ -83,6 +83,18 @@ describe('Messages typing indicator (D-MSG-04)', () => {
   });
 });
 
+describe('Messages send failure (D-MSG-07)', () => {
+  it('puts the text back in the input and shows an error toast', async () => {
+    const { toast } = await import('@/shared/utils/toast');
+    ctx.sendDirectMessage = vi.fn(async () => { throw new Error('offline'); });
+    render(<Messages users={users} currentUser={me} />);
+    fireEvent.change(input(), { target: { value: 'Frame is ready' } });
+    await act(async () => { fireEvent.submit(input().closest('form')); });
+    expect(toast.error).toHaveBeenCalledWith('Message not sent: offline');
+    expect(input()).toHaveValue('Frame is ready');
+  });
+});
+
 describe('Messages history paging (D-MSG-05)', () => {
   it('offers "Load older messages" in the open conversation and asks the context for them', () => {
     ctx.loadOlderMessages = vi.fn();

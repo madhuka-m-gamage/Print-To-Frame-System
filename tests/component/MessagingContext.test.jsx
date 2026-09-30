@@ -24,6 +24,7 @@ const { MessagingProvider, useMessaging } = await import('@/features/messaging/M
 const { where } = await import('firebase/firestore');
 const { triggerBrowserNotification } = await import('@/App');
 const { playMessageChime } = await import('@/features/messaging/audioAlert');
+const { addDocument } = await import('@/services/firestoreSync');
 
 const snapshotOf = (msgs) => ({ forEach: (fn) => msgs.forEach((m) => fn({ id: m.id, data: () => m })) });
 const incoming = (overrides = {}) => ({
@@ -71,6 +72,55 @@ describe('MessagingProvider history window (D-MSG-05)', () => {
     act(() => api.loadOlderMessages());
     expect(idFloors().at(-1)).toBe(`>= msg_${40 * DAY}`);
     expect(api.historySince).toBe(40 * DAY);
+  });
+});
+
+describe('MessagingProvider optimistic sends (D-MSG-07)', () => {
+  const deferred = () => {
+    let resolve, reject;
+    const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
+    return { promise, resolve, reject };
+  };
+
+  it('shows the message as sending at once, and as sent when the write is acknowledged', async () => {
+    const write = deferred();
+    addDocument.mockReturnValueOnce(write.promise);
+    renderProvider();
+    let sent;
+    act(() => { sent = api.sendDirectMessage({ toId: 'alice@example.com', text: 'On my way' }); });
+    expect(api.messages).toEqual([expect.objectContaining({ text: 'On my way', status: 'sending' })]);
+
+    await act(async () => { write.resolve(); await sent; });
+    expect(api.messages).toEqual([]);
+  });
+
+  it('drops the optimistic copy and rethrows when the write fails, so the caller can restore the text', async () => {
+    const write = deferred();
+    addDocument.mockReturnValueOnce(write.promise);
+    renderProvider();
+    let sent;
+    act(() => { sent = api.sendDirectMessage({ toId: 'alice@example.com', text: 'On my way' }); });
+    await act(async () => {
+      write.reject(new Error('offline'));
+      await expect(sent).rejects.toThrow('offline');
+    });
+    expect(api.messages).toEqual([]);
+  });
+
+  it('marks the listener copy as sending until the write is acknowledged', async () => {
+    const write = deferred();
+    addDocument.mockReturnValueOnce(write.promise);
+    renderProvider();
+    let sent;
+    act(() => { sent = api.sendDirectMessage({ toId: 'alice@example.com', text: 'On my way' }); });
+    const [optimistic] = api.messages;
+    act(() => snap.emit(snapshotOf([{ ...optimistic, id: optimistic._firestoreId, status: undefined }])));
+    expect(api.messages).toHaveLength(1);
+    expect(api.messages[0].status).toBe('sending');
+
+    await act(async () => { write.resolve(); await sent; });
+    expect(api.messages).toHaveLength(1);
+    expect(api.messages[0].status).toBeUndefined();
   });
 });
 

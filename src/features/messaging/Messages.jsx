@@ -114,8 +114,8 @@ export default function Messages({ users = [], currentUser }) {
         } : null
       });
     } catch(err) {
-      console.error(err);
-      toast.error("Failed to send message: " + err.message);
+      setInputText(current => current || textToSend);
+      toast.error("Message not sent: " + err.message);
     }
   };
 

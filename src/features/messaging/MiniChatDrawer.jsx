@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useMessaging, getChannelId } from './MessagingContext';
 import { UserAvatar } from '@/shared/ui';
+import { toast } from '@/shared/utils/toast';
 
 export default function MiniChatDrawer({ currentUser, setActiveTab }) {
   const { 
@@ -69,7 +70,8 @@ export default function MiniChatDrawer({ currentUser, setActiveTab }) {
         text: textToSend
       });
     } catch (err) {
-      console.error('Send error:', err);
+      setInputText(current => current || textToSend);
+      toast.error(`Message not sent: ${err.message}`);
     } finally {
       setIsSending(false);
     }

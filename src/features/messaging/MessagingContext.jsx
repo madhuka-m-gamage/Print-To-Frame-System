@@ -21,6 +21,7 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
   const [miniChatContact, setMiniChatContact] = useState(null);
   const [activeChatContactId, setActiveChatContactId] = useState(null); // When user is on Messages tab viewing specific contact
   const [historySince, setHistorySince] = useState(() => Date.now() - HISTORY_WINDOW_MS);
+  const [pendingSends, setPendingSends] = useState([]);
 
   const lastMsgTimestampRef = useRef(Date.now());
   const initialLoadDoneRef = useRef(false);
@@ -171,9 +172,25 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
     };
 
     const docId = `msg_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-    await addDocument(COLLECTIONS.MESSAGES, newMsg, docId);
+    setPendingSends(prev => [...prev, { ...newMsg, _firestoreId: docId }]);
+    try {
+      await addDocument(COLLECTIONS.MESSAGES, newMsg, docId);
+    } finally {
+      setPendingSends(prev => prev.filter(m => m._firestoreId !== docId));
+    }
     return true;
   }, [currentUser]);
+
+  // Sent messages show as 'sending' until Firestore acknowledges the write.
+  const visibleMessages = useMemo(() => {
+    if (!pendingSends.length) return messages;
+    const pendingIds = new Set(pendingSends.map(m => m._firestoreId));
+    const listenedIds = new Set(messages.map(m => m._firestoreId));
+    return [
+      ...messages.map(m => (pendingIds.has(m._firestoreId) ? { ...m, status: 'sending' } : m)),
+      ...pendingSends.filter(m => !listenedIds.has(m._firestoreId)).map(m => ({ ...m, status: 'sending' })),
+    ];
+  }, [messages, pendingSends]);
 
   // 5. Action: Mark Conversation as Read
   const markChatAsRead = useCallback(async (contactId) => {
@@ -344,7 +361,7 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
   }, [messages, currentUser, users, unreadCounts, resolveUserProfile]);
 
   const value = {
-    messages,
+    messages: visibleMessages,
     unreadCounts,
     totalUnreadCount,
     activeToastMessage,
