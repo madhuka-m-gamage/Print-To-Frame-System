@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { db } from '@/services/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, documentId } from 'firebase/firestore';
 import { addDocument, updateDocument, COLLECTIONS } from '@/services/firestoreSync';
 import { triggerBrowserNotification } from '@/App';
 
 const MessagingContext = createContext(null);
+
+const HISTORY_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
 export function getChannelId(id1, id2) {
   if (!id1 || !id2) return null;
@@ -17,6 +19,7 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
   const [isMiniChatOpen, setIsMiniChatOpen] = useState(false);
   const [miniChatContact, setMiniChatContact] = useState(null);
   const [activeChatContactId, setActiveChatContactId] = useState(null); // When user is on Messages tab viewing specific contact
+  const [historySince, setHistorySince] = useState(() => Date.now() - HISTORY_WINDOW_MS);
 
   const lastMsgTimestampRef = useRef(Date.now());
   const initialLoadDoneRef = useRef(false);
@@ -30,9 +33,12 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
 
     const myId = String(currentUser.identifier).trim().toLowerCase();
 
+    // Message ids are msg_<send time in ms>, so a range on the id bounds the listener by time
+    // without the composite index an orderBy('timestamp') + limit would need.
     const q = query(
       collection(db, COLLECTIONS.MESSAGES),
-      where('participants', 'array-contains', myId)
+      where('participants', 'array-contains', myId),
+      where(documentId(), '>=', `msg_${historySince}`)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -92,7 +98,11 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
     });
 
     return () => unsubscribe();
-  }, [currentUser, users, activeTab, activeChatContactId, isMiniChatOpen, miniChatContact]);
+  }, [currentUser, users, activeTab, activeChatContactId, isMiniChatOpen, miniChatContact, historySince]);
+
+  const loadOlderMessages = useCallback(() => {
+    setHistorySince(prev => prev - HISTORY_WINDOW_MS);
+  }, []);
 
   // 2. Real-Time Unread Counts Calculation
   const { unreadCounts, totalUnreadCount } = useMemo(() => {
@@ -346,6 +356,8 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
     sendDirectMessage,
     markChatAsRead,
     markAllAsRead,
+    historySince,
+    loadOlderMessages,
     resolveUserProfile,
     getChannelId
   };

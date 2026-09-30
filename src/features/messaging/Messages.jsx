@@ -20,7 +20,9 @@ export default function Messages({ users = [], currentUser }) {
     unreadCounts, 
     sendDirectMessage, 
     markChatAsRead, 
-    setActiveChatContactId 
+    setActiveChatContactId,
+    historySince,
+    loadOlderMessages
   } = useMessaging();
 
   const [activeUser, setActiveUser] = useState(null);
@@ -351,6 +353,15 @@ export default function Messages({ users = [], currentUser }) {
                 aria-live="polite"
                 aria-label={`Conversation with ${activeUser.name}`}
               >
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={loadOlderMessages}
+                    className="text-[10px] font-bold text-primary hover:underline cursor-pointer"
+                  >
+                    Load older messages (showing since {new Date(historySince).toLocaleDateString()})
+                  </button>
+                </div>
                 {activeChannelMessages.length === 0 ? (
                   <div className="py-16 text-center text-on-surface-variant text-xs">
                     <MessageSquare size={36} className="mx-auto mb-2 opacity-25" aria-hidden="true" />

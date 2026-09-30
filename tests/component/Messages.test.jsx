@@ -82,3 +82,13 @@ describe('Messages typing indicator (D-MSG-04)', () => {
     expect(screen.getByText('Alice is typing...')).toBeInTheDocument();
   });
 });
+
+describe('Messages history paging (D-MSG-05)', () => {
+  it('offers "Load older messages" in the open conversation and asks the context for them', () => {
+    ctx.loadOlderMessages = vi.fn();
+    ctx.historySince = now - 30 * 24 * 60 * 60 * 1000;
+    render(<Messages users={users} currentUser={me} />);
+    fireEvent.click(screen.getByRole('button', { name: /Load older messages/ }));
+    expect(ctx.loadOlderMessages).toHaveBeenCalledTimes(1);
+  });
+});
