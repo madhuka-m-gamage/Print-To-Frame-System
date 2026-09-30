@@ -3,6 +3,7 @@ import { db } from '@/services/firebase';
 import { collection, query, where, onSnapshot, documentId } from 'firebase/firestore';
 import { addDocument, updateDocument, COLLECTIONS } from '@/services/firestoreSync';
 import { triggerBrowserNotification } from '@/App';
+import { playMessageChime } from './audioAlert';
 
 const MessagingContext = createContext(null);
 
@@ -58,9 +59,11 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
           const isNewer = (Number(msg.timestamp) || 0) > lastMsgTimestampRef.current;
 
           if (isFromOther && isUnread && isNewer) {
-            // Check if user is currently looking at this active conversation
-            const isCurrentlyViewingChat = (activeTab === 'messages' && activeChatContactId === msgFrom) ||
-                                           (isMiniChatOpen && miniChatContact?.identifier?.toLowerCase() === msgFrom);
+            const pageInFocus = document.visibilityState === 'visible' && document.hasFocus();
+            const isCurrentlyViewingChat = pageInFocus && (
+              (activeTab === 'messages' && activeChatContactId === msgFrom) ||
+              (isMiniChatOpen && miniChatContact?.identifier?.toLowerCase() === msgFrom)
+            );
 
             if (!isCurrentlyViewingChat) {
               const sender = users.find(u => String(u.identifier || '').trim().toLowerCase() === msgFrom) || {
@@ -80,6 +83,8 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
                   tag: 'chat-message'
                 });
               }
+
+              if (currentUser?.audioAlertsEnabled !== false) playMessageChime();
             }
           }
         });

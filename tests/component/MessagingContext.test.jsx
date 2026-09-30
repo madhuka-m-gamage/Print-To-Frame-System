@@ -18,8 +18,24 @@ vi.mock('@/services/firestoreSync', () => ({
   updateDocument: vi.fn(async () => {}),
 }));
 
+vi.mock('@/features/messaging/audioAlert', () => ({ playMessageChime: vi.fn() }));
+
 const { MessagingProvider, useMessaging } = await import('@/features/messaging/MessagingContext');
 const { where } = await import('firebase/firestore');
+const { triggerBrowserNotification } = await import('@/App');
+const { playMessageChime } = await import('@/features/messaging/audioAlert');
+
+const snapshotOf = (msgs) => ({ forEach: (fn) => msgs.forEach((m) => fn({ id: m.id, data: () => m })) });
+const incoming = (overrides = {}) => ({
+  id: `msg_${now + 1}_abcde`, channelId: 'alice@example.com_bob@example.com',
+  participants: ['alice@example.com', 'bob@example.com'], fromId: 'alice@example.com', toId: 'bob@example.com',
+  senderName: 'Alice', text: 'Frame is ready', timestamp: now + 1, readBy: ['alice@example.com'], ...overrides,
+});
+let visibility = 'visible';
+const receive = (msg) => {
+  act(() => snap.emit(snapshotOf([])));
+  act(() => snap.emit(snapshotOf([msg])));
+};
 
 const DAY = 24 * 60 * 60 * 1000;
 const me = { identifier: 'bob@example.com', name: 'Bob', role: 'Sales' };
@@ -55,5 +71,48 @@ describe('MessagingProvider history window (D-MSG-05)', () => {
     act(() => api.loadOlderMessages());
     expect(idFloors().at(-1)).toBe(`>= msg_${40 * DAY}`);
     expect(api.historySince).toBe(40 * DAY);
+  });
+});
+
+describe('MessagingProvider incoming alerts (D-MSG-06)', () => {
+  beforeEach(() => {
+    visibility = 'visible';
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => visibility });
+    vi.spyOn(document, 'hasFocus').mockReturnValue(true);
+  });
+
+  const viewAliceChat = () => {
+    renderProvider({ activeTab: 'messages' });
+    act(() => api.setActiveChatContactId('alice@example.com'));
+  };
+
+  it('stays quiet when the open, focused Messages tab is showing that chat', () => {
+    viewAliceChat();
+    receive(incoming());
+    expect(triggerBrowserNotification).not.toHaveBeenCalled();
+    expect(playMessageChime).not.toHaveBeenCalled();
+    expect(api.activeToastMessage).toBeNull();
+  });
+
+  it('notifies and chimes when the chat is open but the browser tab is in the background', () => {
+    visibility = 'hidden';
+    viewAliceChat();
+    receive(incoming());
+    expect(triggerBrowserNotification).toHaveBeenCalledWith('Message from Alice', expect.objectContaining({ tag: 'chat-message' }));
+    expect(playMessageChime).toHaveBeenCalledTimes(1);
+  });
+
+  it('notifies when the window has lost focus', () => {
+    document.hasFocus.mockReturnValue(false);
+    viewAliceChat();
+    receive(incoming());
+    expect(triggerBrowserNotification).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not chime when the user turned audio alerts off in their profile', () => {
+    renderProvider({ currentUser: { ...me, audioAlertsEnabled: false } });
+    receive(incoming());
+    expect(triggerBrowserNotification).toHaveBeenCalledTimes(1);
+    expect(playMessageChime).not.toHaveBeenCalled();
   });
 });
