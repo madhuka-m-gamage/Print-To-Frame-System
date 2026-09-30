@@ -130,33 +130,8 @@ export default function UserProfile({ currentUser, onUpdateUser, onSignOut, setA
 
       // Cross-Collection Profile Sync (Finding 9)
       try {
-        if (isPartner) {
-          const partnersCol = collection(db, COLLECTIONS.PARTNERS);
-          const emailQuery = (currentUser.email || currentUser.identifier || '').trim().toLowerCase();
-          const partnerQueries = [];
-          if (emailQuery) {
-            partnerQueries.push(getDocs(query(partnersCol, where('email', '==', emailQuery))));
-          }
-          if (currentUser.partnerId) {
-            partnerQueries.push(getDocs(query(partnersCol, where('partnerId', '==', currentUser.partnerId))));
-          }
-          const results = await Promise.all(partnerQueries);
-          const matchedDocIds = new Set();
-          results.forEach(snap => snap.docs.forEach(d => matchedDocIds.add(d.id)));
-
-          const partnerUpdate = {
-            name: formData.name.trim() || currentUser.name,
-            contactPerson: formData.name.trim() || currentUser.name,
-            photoURL: formData.photoURL || '',
-          };
-          if (formData.contactNumber.trim()) partnerUpdate.phone = formData.contactNumber.trim();
-          if (formData.location.trim()) partnerUpdate.address = formData.location.trim();
-          if (formData.company.trim()) partnerUpdate.company = formData.company.trim();
-
-          for (const docId of matchedDocIds) {
-            await updateDoc(doc(db, COLLECTIONS.PARTNERS, docId), partnerUpdate);
-          }
-        } else if (isCustomer) {
+        // A Partner's partners record is mirrored by handleUpdateUser in App.jsx (onUpdateUser below).
+        if (isCustomer) {
           const customersCol = collection(db, COLLECTIONS.CUSTOMERS);
           const emailQuery = (currentUser.email || currentUser.identifier || '').trim().toLowerCase();
           const custQueries = [];

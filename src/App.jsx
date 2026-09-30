@@ -992,6 +992,8 @@ function App() {
           photoURL: updatedUser.photoURL || pMatch.photoURL || '',
           contactPerson: updatedUser.name || pMatch.contactPerson,
         };
+        if (updatedUser.location) pUpdates.address = updatedUser.location;
+        if (updatedUser.company) pUpdates.company = updatedUser.company;
         updateDocument(COLLECTIONS.PARTNERS, pDocId, pUpdates).catch(console.warn);
         setPartners(prev => prev.map(p => (p.id === pDocId || p.partnerId === pMatch.partnerId) ? { ...p, ...pUpdates } : p));
       }
