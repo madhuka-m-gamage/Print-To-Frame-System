@@ -15,6 +15,10 @@ vi.mock('@/shared/utils/toast', () => ({
 }));
 vi.mock('@/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
 vi.mock('@/services/mailer', () => ({ sendTemplatedEmail: vi.fn(async () => {}) }));
+vi.mock('firebase/storage', () => ({
+  ref: vi.fn((_storage, path) => ({ fullPath: path })),
+  getDownloadURL: vi.fn(async (r) => `https://files.test/${r.fullPath}`),
+}));
 vi.mock('@/features/admin/adminUsers', () => ({
   createUserAccount: vi.fn(async () => {}),
   deleteUserAccount: vi.fn(async () => {}),
@@ -23,6 +27,8 @@ vi.mock('@/features/admin/adminUsers', () => ({
 
 const { default: AgentDatabase } = await import('@/features/admin/AgentDatabase');
 const { sendTemplatedEmail } = await import('@/services/mailer');
+const { toast } = await import('@/shared/utils/toast');
+const { ref, getDownloadURL } = await import('firebase/storage');
 
 const admin = { role: 'Admin', name: 'Admin', identifier: 'admin@example.com' };
 
@@ -127,5 +133,74 @@ describe('AgentDatabase member status and email defaults (employees D8)', () => 
     renderMembers([{ identifier: 'sales@example.com', name: 'Active Sales', role: 'Sales', status: 'Active' }]);
     fireEvent.click(screen.getByRole('button', { name: 'Email' }));
     expect(await screen.findByDisplayValue(/Welcome to the Print To Frame Team/)).toBeInTheDocument();
+  });
+});
+
+describe('AgentDatabase partner application files (FEA-11)', () => {
+  const reviewApplication = (app) => {
+    renderWithProviders(
+      <AgentDatabase users={[]} setUsers={vi.fn()} pendingUsers={[]} setPendingUsers={vi.fn()} currentUser={admin}
+        partnerApplications={[{ id: 'app-1', email: 'studio@example.com', contactPerson: 'Ruwan', ...app }]} />,
+      { role: 'Admin' }
+    );
+    fireEvent.click(screen.getByTitle('Review Full Dossier'));
+  };
+
+  it('opens the BR and NIC copies from their Storage paths in a new tab', async () => {
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    reviewApplication({
+      brCertPath: 'partners/applications/APP-1/br_cert.pdf',
+      nicCopyPath: 'partners/applications/APP-1/nic_front.jpg',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open BR copy' }));
+    await waitFor(() => expect(open).toHaveBeenCalledTimes(1));
+    expect(ref).toHaveBeenCalledWith(expect.anything(), 'partners/applications/APP-1/br_cert.pdf');
+    expect(open).toHaveBeenLastCalledWith('https://files.test/partners/applications/APP-1/br_cert.pdf', '_blank', 'noopener,noreferrer');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open NIC copy' }));
+    await waitFor(() => expect(open).toHaveBeenCalledTimes(2));
+    expect(open).toHaveBeenLastCalledWith('https://files.test/partners/applications/APP-1/nic_front.jpg', '_blank', 'noopener,noreferrer');
+    open.mockRestore();
+  });
+
+  it('shows only the button for the file that was uploaded', () => {
+    reviewApplication({ brCertPath: 'partners/applications/APP-1/br_cert.pdf' });
+    expect(screen.getByRole('button', { name: 'Open BR copy' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Open NIC copy' })).not.toBeInTheDocument();
+  });
+
+  it('shows neither button when the application has no file paths', () => {
+    reviewApplication({ brCertPath: '', nicCopyPath: '' });
+    expect(screen.queryByRole('button', { name: 'Open BR copy' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Open NIC copy' })).not.toBeInTheDocument();
+  });
+
+  it('toasts an error and opens nothing when the download link cannot be resolved', async () => {
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    getDownloadURL.mockRejectedValueOnce(new Error('storage/object-not-found'));
+    reviewApplication({ nicCopyPath: 'partners/applications/APP-1/nic_front.jpg' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open NIC copy' }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Could not open the NIC copy.'));
+    expect(open).not.toHaveBeenCalled();
+    open.mockRestore();
+  });
+
+  it('does not copy the file paths into the approved user record', async () => {
+    const onApprove = vi.fn(async () => {});
+    renderWithProviders(
+      <AgentDatabase users={[]} setUsers={vi.fn()} pendingUsers={[]} setPendingUsers={vi.fn()} currentUser={admin} onApprove={onApprove}
+        partnerApplications={[{ id: 'app-1', email: 'studio@example.com', contactPerson: 'Ruwan', brCertPath: 'partners/applications/APP-1/br_cert.pdf', nicCopyPath: 'partners/applications/APP-1/nic_front.jpg' }]} />,
+      { role: 'Admin' }
+    );
+    fireEvent.click(screen.getByTitle('Review Full Dossier'));
+    fireEvent.change(screen.getByPlaceholderText('Minimum 6 characters'), { target: { value: 'secret12' } });
+    fireEvent.click(screen.getByText('Approve as Partner'));
+
+    await waitFor(() => expect(onApprove).toHaveBeenCalled());
+    expect(onApprove.mock.calls[0][0]).not.toHaveProperty('brCertPath');
+    expect(onApprove.mock.calls[0][0]).not.toHaveProperty('nicCopyPath');
   });
 });
