@@ -50,6 +50,7 @@ Every item implicitly includes these.
 | MON-5 | Server-side numbering (counters, public-form ids) | money | L | api + rules | no | none |
 | MON-6 | Old data: leads without frame size, inline blueprints | data | M | Storage | partly | DEC-3, DEC-5 |
 | MON-7 | List and alert defaulted-commission leads | money | M | rules | no | FEA-2 |
+| MON-8 | Round the 75 / 25 invoice split to cents | money | S | no | **yes** | none |
 | FEA-1 | Real partner payout (step 4.1) | feature | M | rules | no | LIVE-1 (to work live) |
 | FEA-2 | Persistent notifications and claim resolution (step 4.3) | feature | L | rules | no | none |
 | FEA-3 | Fabrication board statuses: Cancelled, On Hold, Archived, Other (done) | feature | M | no | DEC-4 | none |
@@ -61,6 +62,8 @@ Every item implicitly includes these.
 | FEA-9 | Employees HR model | feature | L | rules | no | none |
 | FEA-10 | Task-assignment fields across modules | feature | L | rules | no | FEA-9 |
 | FEA-11 | Staff screen to open partner-application BR/NIC files (done) | feature | S | no | no | none |
+| FEA-12 | Batch the read-receipt writes (D-MSG-02, second half) | ux | S | no | no | none |
+| FEA-13 | Profile sync: the Customer write path and clearing fields | ux | S | rules? | no | none |
 | SEC-1 | Check the recipient in `api/send-email.js` | security | S | api | no | none |
 | SEC-2 | Restrict `api/generate.js` to staff roles | security | S | api | no | none |
 | SEC-3 | Make the dev proxy safe | security | S | no | no | none |
@@ -72,6 +75,7 @@ Every item implicitly includes these.
 | SEC-9 | Effective-access test (which rule wins) | security | M | no | no | none |
 | SEC-10 | Restrict the browser API key to the app's domains | security | S | GCP console | owner | LIVE-3 |
 | SEC-11 | Deactivated users can still sign in (done) | security | S | no | no | none |
+| SEC-12 | Scope `typing_indicators` rules to the chat's participants | security | S | rules | no | none |
 | TST-1 | Component tests for the lead card (done) | tests | M | no | no | none |
 | TST-2 | End-to-end journeys (money, RBAC) (done) | tests | L | no | no | none |
 | TST-3 | Tests for Leads, QuotationBuilder, Customers; refresh the coverage map (done) | tests | M | no | no | none |
@@ -80,8 +84,9 @@ Every item implicitly includes these.
 | ENG-2 | Add Prettier | health | S | no | no | ENG-1 |
 | ENG-3 | Repository hygiene | health | S | no | partly | DEC-9 |
 | ENG-4 | Remove the two unused Firestore databases from `firebase.json` (done) | health | S | deploy target | no | none |
-| ENG-5 | Unsafe release scripts in `package.json` | health | S | no | no | none |
+| ENG-5 | Unsafe release scripts in `package.json` (skipped by owner 2026-10-01) | health | S | no | no | none |
 | ENG-6 | Documentation that no longer matches reality | health | S | no | no | none |
+| ENG-7 | Coverage and CI gaps: component coverage, e2e on staging PRs | health | S | no | no | none |
 | LIVE-1 | Live rollout: matrix, code, rules | rollout | M | **yes** | **yes** | DEC-6 |
 | LIVE-2 | Separate staging and production environments (Part 1) | rollout | L | **yes** | yes | LIVE-3 |
 | LIVE-3 | One canonical repository and one deploy path | rollout | M | **yes** | yes | DEC-6 |
@@ -180,6 +185,11 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 
 ---
 
+### MON-8: Round the 75 / 25 invoice split to cents
+- **Why (found by TST-3, 2026-10-01):** `QuotationBuilder.jsx` computes the Advance and Final amounts as `grandTotal * 0.75` and `* 0.25` and stores them unrounded, so a total of LKR 33,333.33 gives an Advance of 24,999.9975. A characterisation test in `tests/component/QuotationBuilder.test.jsx` and a row in the TESTING.md register lock in the current behaviour.
+- **Owner decision first:** round the Advance to cents and make the Final the remainder, so the two always add up to the total? This changes invoice amounts, so it needs the owner's go.
+- **Build:** a pure helper in `src/features/quotations/` used by QuotationBuilder, Deals completion and the Fabrication QA pass, with a unit test. Flip the characterisation test.
+
 ## Features
 
 ### FEA-1: Real partner payout (step 4.1, partners D-1)
@@ -265,6 +275,13 @@ Source: `docs/02_modules/notifications/FINDINGS.md`. NOTIF-01 (sign-out leak) is
 
 ---
 
+### FEA-12: Batch the read-receipt writes (D-MSG-02, second half)
+- **Why (found by FEA-6, 2026-10-01):** `markChatAsRead` and `markAllAsRead` in `src/features/messaging/MessagingContext.jsx` still send one Firestore write per message. Use `batchWrite` from `src/services/firestoreSync.js` (500-write chunks). Client only; a component or unit test on the batching.
+
+### FEA-13: Profile sync: the Customer write path and clearing fields
+- **Why (found by FEA-8, 2026-10-01):** `UserProfile.jsx` still writes the `customers` record directly for Customer and Business Client; profile-settings FINDINGS says that write always fails under the current rules (not checked). Profile sync also cannot clear a field: an emptied phone, address or company keeps its old value in `partners` and `customers` (profile-settings finding 7).
+- **Build:** route the Customer write through `handleUpdateUser` like the Partner path, or confirm the rule and add one. Write empty values on purpose. Needs a rules test if the rule changes.
+
 ## Security
 
 Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file overrides another; Firestore rules combine with OR, so only a broad `allow` widens access.
@@ -312,6 +329,10 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 
 ---
 
+### SEC-12: Scope `typing_indicators` rules to the chat's participants
+- **Why (found by FEA-6, 2026-10-01):** `firestore.rules` has `allow read, write: if isAuthenticated()` on `typing_indicators`, so any signed-in user can read or overwrite anyone's typing indicator. The FEA-6 channel check exists only in the app.
+- **Build:** allow a write only when the caller is the indicator's own user, and a read only to the channel's participants. Add an emulator rules test. **Live:** Wave B, goes out with the next rules deploy.
+
 ## Tests
 
 ### TST-1: Component tests for the lead card
@@ -356,6 +377,10 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 
 ---
 
+### ENG-7: Coverage and CI gaps
+- **Why (found by TST-3 and the Wave A run review, 2026-10-01):** `npm run coverage` counts unit and API tests only (13.41% statements), not the component layer (41.9% measured with a one-off command, documented in TESTING.md). CI skips the e2e job on PRs into `staging`, so e2e first runs in CI on the promotion PR to `main`. None of the 8 PRs in the 2026-10-01 run had e2e in CI.
+- **Build:** a `coverage:all` script that includes the component config, and run the e2e job on PRs into `staging` when `src/`, `tests/e2e/` or `tests/fixtures/` change (the `changes` job already filters paths).
+
 ## Live rollout and environments
 
 These change the live project. Nothing here has been applied. Each step needs the owner's explicit go.
@@ -366,6 +391,8 @@ These change the live project. Nothing here has been applied. Each step needs th
   2. **Code.** The live site runs the old code because it deploys from the original repository. Either reconnect the live Vercel project to this repository (LIVE-3, recommended) or copy the code into the original repository.
   3. **Rules.** Firestore security rules are deployed by hand, not by pushing. Deploy the additive set first (branch `claude/rules-3-4d-deploy`, commit `1776444`: the 3.4 rules plus the `L` and `D` counter prefixes; **not** the bare 3.4 commit, which would reject new lead and deal ids), check each role, and only later the stricter set from `staging`. The stricter set's `isActiveUser()` is the server-side half of SEC-11 (Deactivated and Disabled accounts refused everywhere but their own `users` document); after deploying it, check that a deactivated staff account is refused at sign-in and signed out mid-session.
 - **Owner actions:** a backup of the matrix, a smoke test on the preview, the go for each step, and the Vercel reconnect. Until this is done, the live site keeps working as it is, but the security fixes on `staging` (send-email hardening, stricter rules) do not take effect.
+
+- **Post-deploy checks added 2026-10-01:** the D-MSG-05 message-history query (`participants` array-contains plus a `documentId() >= msg_<since>` range) should run without a custom composite index, but the emulator does not enforce indexes, so check it once on the real project. `claude/rules-3-4d-deploy` still has the three-database `firebase.json`; deploy with `--only firestore:rules` from a branch that has ENG-4, or note that the two extra databases are unused.
 
 ### LIVE-2: Separate staging and production environments (Part 1)
 - **Why:** the app has one Firebase project and one Firestore, so rules and matrix changes can only be tested on live data. Goal: a real staging environment sharing nothing with production.
