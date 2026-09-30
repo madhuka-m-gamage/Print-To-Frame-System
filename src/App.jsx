@@ -1290,8 +1290,12 @@ function App() {
       </div>
 
       <Toaster position="bottom-right" richColors duration={3000} />
-      <FloatingMessageToast setActiveTab={setActiveTab} />
-      <MiniChatDrawer currentUser={currentUser} setActiveTab={setActiveTab} />
+      {canAccess(currentUser?.role, 'messages') && (
+        <>
+          <FloatingMessageToast setActiveTab={setActiveTab} />
+          <MiniChatDrawer currentUser={currentUser} setActiveTab={setActiveTab} />
+        </>
+      )}
 
       {/* Main Content Area */}
       <main
@@ -1611,15 +1615,17 @@ function App() {
               <span className="text-[10px] font-bold">Ops</span>
             </button>
 
-            <button
-              onClick={() => { setActiveTab('messages'); setMobileMenuOpen(false); }}
-              className={`flex-1 py-1 flex flex-col items-center justify-center gap-0.5 rounded-xl transition-all cursor-pointer ${
-                activeTab === 'messages' ? 'text-primary font-black' : 'text-on-surface-variant hover:text-on-surface'
-              }`}
-            >
-              <MessageSquare size={18} />
-              <span className="text-[10px] font-bold">Messages</span>
-            </button>
+            {canAccess(currentUser?.role, 'messages') && (
+              <button
+                onClick={() => { setActiveTab('messages'); setMobileMenuOpen(false); }}
+                className={`flex-1 py-1 flex flex-col items-center justify-center gap-0.5 rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'messages' ? 'text-primary font-black' : 'text-on-surface-variant hover:text-on-surface'
+                }`}
+              >
+                <MessageSquare size={18} />
+                <span className="text-[10px] font-bold">Messages</span>
+              </button>
+            )}
 
             <button
               onClick={() => setMobileMenuOpen(true)}

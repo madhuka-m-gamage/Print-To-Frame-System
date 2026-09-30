@@ -399,17 +399,17 @@ All approved users receive the complete `users` collection. In `Messages.jsx`, t
 
 ## 7. Implementation Checklist
 
-> All items in §6 are **accepted**. The following checklist tracks execution status. Mark `[x]` when a change is committed to `review-internal-messaging` branch.
+> All items in §6 are **accepted**. The following checklist tracks execution status as of backlog item FEA-6. Rules items are written in `firestore.rules` but go live only with a rules deploy.
 
-- [ ] **D-MSG-01** — Update `firestore.rules` for `/messages/{messageId}`: enforce participant read check (`token.email in resource.data.participants || isAdmin()`) and sender create check (`fromId == token.email`).
-- [ ] **D-MSG-02** — Update `firestore.rules` update check to allow `affectedKeys().hasOnly(['readBy', 'updatedAt'])`; refactor `markChatAsRead` and `markAllAsRead` in `MessagingContext.jsx` to use `writeBatch(db)`.
-- [ ] **D-MSG-03** — Wrap `FloatingMessageToast` and `MiniChatDrawer` in `src/App.jsx` with `canAccess(currentUser?.role, 'messages')`; guard the mobile bottom navigation bar button.
-- [ ] **D-MSG-04** — Add 800ms debounce/throttle to `sendTypingIndicator` in `Messages.jsx`; check `typingState[uId] === activeChan` before rendering typing indicator bar.
-- [ ] **D-MSG-05** — Add query date/count boundaries to `MessagingContext.jsx` global listener and support on-demand channel history.
-- [ ] **D-MSG-06** — Implement Web Audio API chime for incoming messages respecting `audioAlertsEnabled`; fix background tab window visibility check in `MessagingContext.jsx`.
-- [ ] **D-MSG-07** — Implement optimistic message updates with delivery status; preserve input text on error in `MiniChatDrawer.jsx`.
-- [ ] **D-MSG-08** — Update message checkmark icons to show single check (`Check`) for sent and double check (`CheckCheck`) only when `readBy` includes recipient.
-- [ ] **D-MSG-09** — Add reply hover button to `Messages.jsx`; standardize `replyTo` schema to `{ id, text, fromId, senderName }`.
-- [ ] **D-MSG-10** — Update `DEFAULT_PERMISSIONS` in `PermissionsContext.jsx` to set `messages: none()` for `Customer` and `Business Client`.
-- [ ] **D-MSG-11** — Reaffirm 1-on-1 team chat architecture boundary; document broadcast announcements as future milestone.
-- [ ] **D-MSG-12** — Filter current user's sent messages from `NotificationsView.jsx`; remove dead prop `onUnreadCountChange` and fix marketing copy in `Messages.jsx`.
+- [x] **D-MSG-01** (rules written, not deployed; `rulesAccess.test.js`) — Update `firestore.rules` for `/messages/{messageId}`: enforce participant read check (`token.email in resource.data.participants || isAdmin()`) and sender create check (`fromId == token.email`).
+- [~] **D-MSG-02** (rules half written, not deployed; the `writeBatch` half is open: `markChatAsRead`/`markAllAsRead` still write per message) — Update `firestore.rules` update check to allow `affectedKeys().hasOnly(['readBy', 'updatedAt'])`; refactor `markChatAsRead` and `markAllAsRead` in `MessagingContext.jsx` to use `writeBatch(db)`.
+- [x] **D-MSG-03** (FEA-6: was not done in `src/App.jsx`; now gated; `App.messagingGate.test.jsx`) — Wrap `FloatingMessageToast` and `MiniChatDrawer` in `src/App.jsx` with `canAccess(currentUser?.role, 'messages')`; guard the mobile bottom navigation bar button.
+- [x] **D-MSG-04** (FEA-6, a throttle rather than a debounce so the reader's 3 s freshness check stays satisfied while typing; `Messages.test.jsx`) — Add 800ms debounce/throttle to `sendTypingIndicator` in `Messages.jsx`; check `typingState[uId] === activeChan` before rendering typing indicator bar.
+- [x] **D-MSG-05** (FEA-6: 30-day window on the message id, `documentId() >= msg_<since>`, and Load older messages; no composite index; `MessagingContext.test.jsx`, `Messages.test.jsx`) — Add query date/count boundaries to `MessagingContext.jsx` global listener and support on-demand channel history.
+- [x] **D-MSG-06** (FEA-6: `audioAlert.js`; `MessagingContext.test.jsx`) — Implement Web Audio API chime for incoming messages respecting `audioAlertsEnabled`; fix background tab window visibility check in `MessagingContext.jsx`.
+- [x] **D-MSG-07** (FEA-6: `sending` until acknowledged, text restored with a toast on failure in the drawer and the full view, the toast keeps its reply text; `MessagingContext.test.jsx`, `MiniChatDrawer.test.jsx`, `Messages.test.jsx`, `FloatingMessageToast.test.jsx`) — Implement optimistic message updates with delivery status; preserve input text on error in `MiniChatDrawer.jsx`.
+- [x] **D-MSG-08** (FEA-6: `MessageStatus.jsx`, `isReadByRecipient`; `messageFilters.test.js`, `Messages.test.jsx`, `MiniChatDrawer.test.jsx`) — Update message checkmark icons to show single check (`Check`) for sent and double check (`CheckCheck`) only when `readBy` includes recipient.
+- [x] **D-MSG-09** (FEA-6: `buildReplyTo`; `messageFilters.test.js`, `Messages.test.jsx`, `MessagingContext.test.jsx`) — Add reply hover button to `Messages.jsx`; standardize `replyTo` schema to `{ id, text, fromId, senderName }`.
+- [x] **D-MSG-10** (in `DEFAULT_PERMISSIONS`; the live `settings/permissions` document is separate) — Update `DEFAULT_PERMISSIONS` in `PermissionsContext.jsx` to set `messages: none()` for `Customer` and `Business Client`.
+- [x] **D-MSG-11** (FEA-6: boundary recorded in the module `CLAUDE.md`) — Reaffirm 1-on-1 team chat architecture boundary; document broadcast announcements as future milestone.
+- [x] **D-MSG-12** (Phase 7 step 1; FEA-6 added `NotificationsView.test.jsx`) — Filter current user's sent messages from `NotificationsView.jsx`; remove dead prop `onUnreadCountChange` and fix marketing copy in `Messages.jsx`.
