@@ -15,7 +15,7 @@ import {
   ImageCropModal 
 } from '@/shared/ui';
 import EmailTemplateModal from '@/shared/components/EmailTemplateModal';
-import { SYSTEM_ROLES, ROLE_METADATA, getRoleCategory } from '@/constants/roles';
+import { SYSTEM_ROLES, ROLE_METADATA, ROLE_CATEGORIES, getRoleCategory } from '@/constants/roles';
 import { formatPhone } from '@/shared/utils/validation';
 import { usePermissions } from '@/context/PermissionsContext';
 import { logActivity } from '@/services/auditLog';
@@ -404,6 +404,22 @@ export default function AgentDatabase({
 
       if (fromApplication && _appDocId) {
         await updateDocument(COLLECTIONS.PARTNER_APPLICATIONS, _appDocId, { status: 'Approved' });
+      }
+
+      // After onApprove: /api/send-email only mails an address it finds in a record.
+      // A partner application has no password of its own yet, so it gets the invite that carries one.
+      if (!ROLE_CATEGORIES.EXTERNAL.includes(finalRole)) {
+        try {
+          await sendTemplatedEmail(targetUser.identifier, fromApplication ? 'employee_invite' : 'employee_approved', {
+            recipientName: targetUser.name,
+            assignedRole: finalRole,
+            loginEmail: targetUser.identifier,
+            tempPassword: fromApplication ? reviewPassword : undefined,
+            senderName: currentUser?.name,
+          });
+        } catch (mailErr) {
+          toast.error(`${targetUser.name} was approved, but the approval email failed to send: ${mailErr.message}`);
+        }
       }
 
       setReviewingApplicant(null);

@@ -58,6 +58,17 @@ describe('EMAIL_TEMPLATES', () => {
     expect(EMAIL_TEMPLATES.find(t => t.id === 'password_reset')).toBeTruthy();
   });
 
+  // employees D6: a self-registered staff member already chose a password, so the
+  // approval email must not print one.
+  it('has an employee_approved template that names the role and carries no password', () => {
+    const t = EMAIL_TEMPLATES.find(t => t.id === 'employee_approved');
+    expect(t).toBeTruthy();
+    const body = interpolateTemplate(t.body, { recipientName: 'Nimal', assignedRole: 'Sales', loginEmail: 'nimal@example.com' });
+    expect(interpolateTemplate(t.subject, { assignedRole: 'Sales' })).toContain('Sales');
+    expect(body).toContain('nimal@example.com');
+    expect(t.body).not.toContain('{{tempPassword}}');
+  });
+
   it('fully interpolating every template leaves no unresolved {{tokens}} behind', () => {
     const sampleData = {
       recipientName: 'Jane Fernando',
