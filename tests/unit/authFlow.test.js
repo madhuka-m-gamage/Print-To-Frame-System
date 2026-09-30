@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { newUserAction, shouldEvict } from '@/features/auth/authFlow';
+import { newUserAction, shouldEvict, canSignIn } from '@/features/auth/authFlow';
 
 describe('newUserAction', () => {
   it('always creates the record for a bootstrap admin', () => {
@@ -28,5 +28,29 @@ describe('shouldEvict', () => {
     expect(shouldEvict({ isApproved: true })).toBe(false);
     expect(shouldEvict({})).toBe(false);
     expect(shouldEvict(undefined)).toBe(false);
+  });
+});
+
+describe('canSignIn (SEC-11)', () => {
+  it('refuses a Deactivated or Disabled account even when isApproved is still true', () => {
+    // AgentDatabase's Deactivate button sets only status and leaves isApproved true.
+    expect(canSignIn({ status: 'Deactivated', isApproved: true }, false)).toBe(false);
+    expect(canSignIn({ status: 'disabled', isApproved: true }, false)).toBe(false);
+  });
+
+  it('admits an active approved account and a legacy record with no status', () => {
+    expect(canSignIn({ status: 'Active', isApproved: true }, false)).toBe(true);
+    expect(canSignIn({ status: 'Active' }, false)).toBe(true);
+    expect(canSignIn({ isApproved: true }, false)).toBe(true);
+  });
+
+  it('refuses a pending or unapproved account and a missing record', () => {
+    expect(canSignIn({ status: 'Pending', isApproved: false }, false)).toBe(false);
+    expect(canSignIn({ isApproved: false }, false)).toBe(false);
+    expect(canSignIn(undefined, false)).toBe(false);
+  });
+
+  it('always admits a bootstrap super admin, who self-heals to Active', () => {
+    expect(canSignIn({ status: 'Deactivated', isApproved: false }, true)).toBe(true);
   });
 });

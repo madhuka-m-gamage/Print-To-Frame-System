@@ -19,6 +19,7 @@ Registration queue, admin approval, role and status management, password reset, 
 
 - `approvePending` batch-writes `users` and deletes `pendingUsers`. It does **not** create partners / customers; it pre-fills their registration form.
 - `api/admin-user.js` needs an Admin caller; delete removes the Auth account only.
+- Deactivate / Reactivate (`handleToggleStatus` in `AgentDatabase.jsx`) writes only `status`; `isApproved` stays true. The app still refuses the account: `canSignIn` in `src/features/auth/authFlow.js` at login and `shouldEvict` on the user's own-document listener mid-session (SEC-11). Server side, the step 3.5 `isActiveUser()` rule refuses it everywhere except reading its own `users` document.
 - `api/send-email.js` only mails an address held in `users`, `pendingUsers`, `customers`, `partners` or `partner_applications` (SEC-1). Send any email before deleting the record it depends on: `handleExecuteRejection` sends `registration_declined` before `onReject` deletes the `pendingUsers` document.
 
 ## Before you edit

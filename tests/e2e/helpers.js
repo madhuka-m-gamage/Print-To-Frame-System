@@ -2,7 +2,7 @@ import { expect } from '@playwright/test';
 
 export const PASSWORD = 'Passw0rd!test';
 
-async function signIn(page, email) {
+export async function signIn(page, email) {
   await page.goto('/');
   await page.getByLabel('Email or Mobile').fill(email);
   await page.getByLabel('Password').fill(PASSWORD);
