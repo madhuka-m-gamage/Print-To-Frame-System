@@ -16,7 +16,7 @@ There are **zero Cloud Functions, Eventarc triggers, Scheduler jobs, or Pub/Sub 
 
 | Target | Status / Details |
 |---|---|
-| `firebase.json` | **Present**. Configures Hosting (`dist`), Firestore rules for 3 databases (`(default)`, `ai-studio-printtoframeerp-66900443-b6c9-4743-892c-f50b58bf8595`, and `ai-studio-printtoframe-66900443-b6c9-4743-892c-f50b58bf8595`), and Local Emulators (Auth `9099`, Firestore `8080`, UI `4000`). **No `functions` stanza exists**. |
+| `firebase.json` | **Present**. Configures Hosting (`dist`), Firestore rules for the `(default)` database only (the two unused `ai-studio-...` databases were removed from the file under ENG-4; they still exist in GCP, nothing was deleted there), and Local Emulators (Auth `9099`, Firestore `8080`, UI `4000`). **No `functions` stanza exists**. |
 | `.firebaserc` | **Not Present**. Project mapping is handled via runtime configs (`firebase-applet-config.json`) and CLI flags. |
 | `functions/` folder | **Not present**. It was an empty placeholder (only `.gitkeep`) and was removed in Phase 7 8.2. |
 | Functions in the repo | **0 functions**. No background functions, HTTP callables, or event triggers exist. |

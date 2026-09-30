@@ -4,7 +4,7 @@
 
 ## Structure
 
-`rules_version = '2'`, one `match /databases/{database}/documents` block, per-collection blocks, and a final catch-all `match /{document=**} { allow read, write: if false; }`. The same file is deployed to three databases (`firebase.json`: `(default)` and two `ai-studio-*` databases).
+`rules_version = '2'`, one `match /databases/{database}/documents` block, per-collection blocks, and a final catch-all `match /{document=**} { allow read, write: if false; }`. `firebase.json` deploys the file to the `(default)` database only (ENG-4 removed the two unused `ai-studio-*` entries).
 
 ## Helper functions
 
