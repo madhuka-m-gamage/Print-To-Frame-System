@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Agent-run prerequisites: change fragments (`docs/04_workflows/changes/`) for multi-agent runs; emulator and dev-server ports from the environment with today's defaults (`src/services/emulatorPorts.js`, `tests/tools/testSlot.mjs`, offset 10, at most 2 slots, a separate `TMPDIR` per slot) so two lanes can run rules and e2e at once; `link-deps.sh` shares `node_modules` across worktrees when lockfiles match. Slot 0, CI and `npm run dev` unchanged. Tests: unit 268 (+9), API 80, component 156, rules 62 (+1 skipped, 2 todo), e2e 10.
+
 - Decision 0005 (accepted, docs only): spec for the `agent-run` repo skill (plan, run and review batched agent runs) and its prerequisite PR (change fragments, per-slot test ports, shared `node_modules`), with the implementation plan in `docs/04_workflows/AGENT_RUN_PLAN.md`.
 
 - Wave A run review (docs only): PLAN.md gains a Run calibration section (estimated vs actual time and usage per item, tuning rules for the next run) and a Wave A2 line; BACKLOG gains MON-8 (round the 75/25 invoice split, owner decision), FEA-12 (batched read receipts), FEA-13 (profile sync fixes), SEC-12 (`typing_indicators` rules, Wave B) and ENG-7 (component coverage and e2e on staging PRs), plus two LIVE-1 post-deploy checks; ENG-5 marked skipped by the owner.

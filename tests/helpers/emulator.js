@@ -4,17 +4,21 @@ import { doc, setDoc } from 'firebase/firestore';
 
 // Shared setup for tests that exercise firestore.rules against the Firebase Emulator
 // (run through `npm run test:rules`, which wraps vitest in `firebase emulators:exec`).
-// Ports match firebase.json.
 export const PROJECT_ID = 'demo-print2frame-test';
+
+// emulators:exec sets these hosts for the slot it started; the fallbacks match firebase.json.
+function hostAndPort(value, fallbackPort) {
+  const [host, port] = String(value || '').split(':');
+  return { host: host || 'localhost', port: Number(port) || fallbackPort };
+}
+
+export const firestoreEmulator = () => hostAndPort(process.env.FIRESTORE_EMULATOR_HOST, 8080);
+export const storageEmulator = () => hostAndPort(process.env.FIREBASE_STORAGE_EMULATOR_HOST, 9199);
 
 export function setupRulesEnv() {
   return initializeTestEnvironment({
     projectId: PROJECT_ID,
-    firestore: {
-      rules: readFileSync('firestore.rules', 'utf8'),
-      host: 'localhost',
-      port: 8080,
-    },
+    firestore: { rules: readFileSync('firestore.rules', 'utf8'), ...firestoreEmulator() },
   });
 }
 
@@ -105,7 +109,7 @@ export async function asRole(testEnv, role, email) {
 export function setupStorageRulesEnv() {
   return initializeTestEnvironment({
     projectId: PROJECT_ID,
-    firestore: { rules: readFileSync('firestore.rules', 'utf8'), host: 'localhost', port: 8080 },
-    storage: { rules: readFileSync('storage.rules', 'utf8'), host: 'localhost', port: 9199 },
+    firestore: { rules: readFileSync('firestore.rules', 'utf8'), ...firestoreEmulator() },
+    storage: { rules: readFileSync('storage.rules', 'utf8'), ...storageEmulator() },
   });
 }

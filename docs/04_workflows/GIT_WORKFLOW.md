@@ -22,7 +22,7 @@ The live site `portal.print2frame.xyz` still deploys `main` of the **old** repos
 
 1. `git switch staging && git pull && git switch -c claude/<topic>` (topic = the backlog item, e.g. `claude/commission-38`).
 2. Tests first, then the change, then the full local gate: `npm run lint`, `npm run test:all`, `npm run build`, and `npm run test:e2e` when the change is visible (see [TESTING.md](TESTING.md)).
-3. Docs, the module's `CLAUDE.md` and `CHANGELOG.md` in the same PR.
+3. Docs, the module's `CLAUDE.md` and `CHANGELOG.md` in the same PR. In a multi-agent run, write a change fragment instead of editing `CHANGELOG.md`, the BACKLOG status line, the TESTING map or `PLAN.md` ([changes/README.md](changes/README.md)).
 4. `gh pr create --base staging`, wait for CI, merge with `gh pr merge --merge`.
 
 ## Promotion to `main`

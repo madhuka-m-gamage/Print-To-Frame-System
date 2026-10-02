@@ -16,7 +16,7 @@ export default async function globalSetup() {
   }
 
   await waitOn({
-    resources: [`tcp:${firestoreHost}`, `tcp:${authHost}`, 'tcp:127.0.0.1:3000'],
+    resources: [`tcp:${firestoreHost}`, `tcp:${authHost}`, `tcp:127.0.0.1:${process.env.P2F_DEV_PORT || 3000}`],
     timeout: 60_000,
   });
 

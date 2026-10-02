@@ -8,6 +8,7 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, connectFirestoreEmulator, collection, addDoc, getDocs, updateDoc, doc, deleteDoc, getDocFromServer } from 'firebase/firestore';
 import { getAuth, connectAuthEmulator, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
+import { emulatorPorts } from './emulatorPorts';
 
 import fallbackConfig from '../../firebase-applet-config.json';
 import { assertGoogleWorkspaceAllowed } from '@/features/auth/superAdmin';
@@ -49,11 +50,12 @@ if (
   import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true' &&
   (import.meta.env.DEV || String(firebaseConfig.projectId).startsWith('demo-'))
 ) {
-  connectFirestoreEmulator(db, '127.0.0.1', 8080);
-  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
-  connectStorageEmulator(storage, '127.0.0.1', 9199);
+  const ports = emulatorPorts(import.meta.env);
+  connectFirestoreEmulator(db, '127.0.0.1', ports.firestore);
+  connectAuthEmulator(auth, `http://127.0.0.1:${ports.auth}`, { disableWarnings: true });
+  connectStorageEmulator(storage, '127.0.0.1', ports.storage);
   console.warn(
-    `[firebase] USING EMULATORS for project "${firebaseConfig.projectId}": firestore 127.0.0.1:8080, auth 127.0.0.1:9099, storage 127.0.0.1:9199. Production Firebase is NOT in use.`
+    `[firebase] USING EMULATORS for project "${firebaseConfig.projectId}": firestore 127.0.0.1:${ports.firestore}, auth 127.0.0.1:${ports.auth}, storage 127.0.0.1:${ports.storage}. Production Firebase is NOT in use.`
   );
 }
 
