@@ -196,6 +196,7 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 ### MON-9: Printed and emailed Advance / Final figures use the rounded split
 - **Why (found by MON-8, 2026-10-02):** `invoiceTemplate.js`, `invoicePrintData.js` and `EmailTemplateModal.jsx` still derive the displayed Advance and Final with `* 0.75` / `* 0.25`, so a printed or emailed figure can differ from the stored amount by one cent now that stored amounts come from `splitInvoiceAmounts` (`src/features/quotations/splitInvoiceAmounts.js`).
 - **Build:** use `splitInvoiceAmounts` in all three, or print the stored `amount`; a unit test on `invoicePrintData` for a total such as LKR 33,333.33. No decision needed (follows the MON-8 decision).
+- **Done (MON-9):** `invoicePrintData.js`, `invoiceTemplate.js` (totals), `EmailTemplateModal.jsx` (via `buildSplitTokens` in `emailTemplates.js`) and `gemini.js` `generateAdvanceInvoice` now use `splitInvoiceAmounts`. Known remaining: the per-line rows in `invoiceTemplate.js` (~line 242) still scale each line by 0.75 / 0.25 and can differ from the total by a cent; left unchanged on purpose.
 
 ## Features
 

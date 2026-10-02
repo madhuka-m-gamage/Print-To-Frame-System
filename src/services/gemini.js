@@ -1,4 +1,5 @@
 import { stripEmojis } from '@/shared/utils/validation';
+import { splitInvoiceAmounts } from '@/features/quotations/splitInvoiceAmounts';
 import { auth } from './firebase';
 
 /**
@@ -202,8 +203,7 @@ export const generateAdvanceInvoice = async (clientData, scope, totalAmount) => 
     day: 'numeric', month: 'long', year: 'numeric'
   });
 
-  const advanceAmount = totalAmount * 0.75;
-  const balanceAmount = totalAmount * 0.25;
+  const { advance: advanceAmount, final: balanceAmount } = splitInvoiceAmounts(totalAmount);
 
   const prompt = `Generate a professional 75% Advance Payment Invoice document for Print To Frame Pvt Ltd.
 

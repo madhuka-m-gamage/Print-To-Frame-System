@@ -4,7 +4,7 @@ import {
   Send, RefreshCw, Layers, User, Shield, CheckCheck, Eye
 } from 'lucide-react';
 import ModalWrapper from '@/shared/ui/detail-modal/ModalWrapper';
-import { EMAIL_TEMPLATES, interpolateTemplate } from '@/constants/emailTemplates';
+import { EMAIL_TEMPLATES, interpolateTemplate, buildSplitTokens } from '@/constants/emailTemplates';
 import { toast } from '@/shared/utils/toast';
 import { DEFAULT_REFERRAL_COMMISSION_RATE } from '@/features/quotations/quotePricing';
 
@@ -72,8 +72,7 @@ export default function EmailTemplateModal({
       jobScope: recipient?.jobScope || recipient?.scope || 'Custom Steel Frame Fabrication & Tension Mounting',
       totalSqFt: recipient?.totalSqFt || '120.00',
       totalValue: Number(recipient?.value || 240000).toLocaleString(undefined, { minimumFractionDigits: 2 }),
-      advanceAmount: Number((recipient?.value || 240000) * 0.75).toLocaleString(undefined, { minimumFractionDigits: 2 }),
-      balanceAmount: Number((recipient?.value || 240000) * 0.25).toLocaleString(undefined, { minimumFractionDigits: 2 }),
+      ...buildSplitTokens(recipient?.value || 240000),
       // Uses this specific partner's real negotiated rate when composing for
       // one (Partners.jsx's Email button passes the actual partner record).
       commissionRate: Number(recipient?.commissionRate || DEFAULT_REFERRAL_COMMISSION_RATE).toFixed(2),
