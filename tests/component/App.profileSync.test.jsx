@@ -66,11 +66,13 @@ vi.mock('@/features/messaging/MessagingContext', () => ({
 const { default: App } = await import('@/App');
 const { updateDocument } = await import('@/services/firestoreSync');
 const { updateDoc, getDocs, where } = await import('firebase/firestore');
+const { auth } = await import('@/services/firebase');
 
 beforeEach(() => {
   globalThis.__TEST_PERMISSIONS__ = DEFAULT_PERMISSIONS;
   localStorage.clear();
   authState.user = null;
+  auth.currentUser = null;
   vi.clearAllMocks();
 });
 
@@ -133,5 +135,42 @@ describe('Customer profile save', () => {
     // the rules let a client read only rows whose email matches their token, so the lookup is by email alone
     expect(where.mock.calls.filter(([field]) => field === 'nic')).toHaveLength(0);
     expect(getDocs).toHaveBeenCalled();
+  });
+});
+
+describe('Customer profile save, linked by userId (FEA-15)', () => {
+  const saveCustomerProfile = async () => {
+    authState.user = customerUser;
+    render(<PermissionsProvider><App /></PermissionsProvider>);
+    await waitFor(() => expect(authState.callback).toBeTruthy());
+    await act(async () => { await authState.callback({ email: 'nimal@example.com', displayName: 'Nimal', uid: 'uid-nimal' }, 'token'); });
+    fireEvent.click(await screen.findByTitle('My Profile'));
+    fireEvent.click(await screen.findByText('Save Profile Changes'));
+    await waitFor(() => expect(updateDocument.mock.calls.some(([name]) => name === 'customers')).toBe(true));
+    return updateDocument.mock.calls.filter(([name]) => name === 'customers');
+  };
+
+  it('finds the customers row by the login uid first, without an email lookup', async () => {
+    auth.currentUser = { uid: 'uid-nimal', email: 'nimal@example.com' };
+    getDocs.mockResolvedValueOnce({ docs: [{ id: 'customer-by-uid' }], empty: false, forEach: () => {} });
+
+    const writes = await saveCustomerProfile();
+
+    expect(where).toHaveBeenCalledWith('userId', '==', 'uid-nimal');
+    expect(where.mock.calls.filter(([field]) => field === 'email')).toHaveLength(0);
+    expect(writes).toHaveLength(1);
+    expect(writes[0][1]).toBe('customer-by-uid');
+  });
+
+  it('falls back to the email lookup when no row carries the uid', async () => {
+    auth.currentUser = { uid: 'uid-nimal', email: 'nimal@example.com' };
+    getDocs.mockResolvedValueOnce({ docs: [], empty: true, forEach: () => {} });
+
+    const writes = await saveCustomerProfile();
+
+    expect(where).toHaveBeenCalledWith('userId', '==', 'uid-nimal');
+    expect(where).toHaveBeenCalledWith('email', '==', 'nimal@example.com');
+    expect(writes).toHaveLength(1);
+    expect(writes[0][1]).toBe('customer-doc-1');
   });
 });

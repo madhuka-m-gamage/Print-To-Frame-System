@@ -112,6 +112,27 @@ describe('Customers register and delete (TST-3)', () => {
     await waitFor(() => expect(sync.addDocument).toHaveBeenCalledWith('customers', expect.objectContaining({ nic: '951111111V', name: 'Duplicate Person', orders: 1 }), '951111111V'));
   });
 
+  it('links an approved Business Client to their login: the handed-off form saves the userId (FEA-15)', async () => {
+    renderWithProviders(
+      <Customers customers={[]} setCustomers={vi.fn()} users={[]} setUsers={vi.fn()} currentUser={{ role: 'Admin', name: 'Admin', identifier: 'admin@example.com' }}
+        prefillClient={{ name: 'Acme Contact', email: 'acme@example.com', businessName: 'Acme Ltd', userId: 'uid-acme' }} onClientPrefillConsumed={vi.fn()} />,
+      { role: 'Admin' }
+    );
+    fireEvent.change(await screen.findByPlaceholderText('e.g. 199012345678 or PV123456'), { target: { value: 'PV777777' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Profile' }));
+    await waitFor(() => expect(sync.addDocument).toHaveBeenCalledWith('customers', expect.objectContaining({ nic: 'PV777777', email: 'acme@example.com', userId: 'uid-acme' }), 'PV777777'));
+  });
+
+  it('a manual registration carries no userId', async () => {
+    renderWith({ customers: [] });
+    openRegister();
+    fireEvent.change(screen.getByPlaceholderText('e.g. 199012345678 or PV123456'), { target: { value: '951111111V' } });
+    fireEvent.change(screen.getByPlaceholderText('Client Name'), { target: { value: 'Walk In' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Profile' }));
+    await waitFor(() => expect(sync.addDocument).toHaveBeenCalled());
+    expect(sync.addDocument.mock.calls[0][1]).not.toHaveProperty('userId');
+  });
+
   it('deleting a Business Client removes the customer, its users document and its login', async () => {
     const biz = { nic: 'PV123456', name: 'Acme Contact', email: 'Acme@Example.com', type: 'Business', businessName: 'Acme Ltd', orders: 1 };
     const users = [{ identifier: 'acme@example.com', role: 'Business Client' }];

@@ -400,13 +400,14 @@ export default function AgentDatabase({
 
     setIsApprovingReview(true);
     try {
-      if (fromApplication) {
-        await createUserAccount(targetUser.identifier, reviewPassword, targetUser.name);
-      }
+      const created = fromApplication
+        ? await createUserAccount(targetUser.identifier, reviewPassword, targetUser.name)
+        : null;
 
       // Strip the internal bookkeeping fields before this becomes part of the
       // stored users/{email} document — onApprove spreads regData as-is.
       const { _source, _appDocId, brCertPath, nicCopyPath, ...regData } = targetUser;
+      if (created?.uid) regData.uid = created.uid;
       if (onApprove) {
         // The welcome/activation email fires from Partners.jsx/Customers.jsx once
         // the admin completes the handed-off Register Partner/Client form, not

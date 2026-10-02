@@ -103,6 +103,7 @@ export default function Customers({ customers = [], setCustomers, users = [], se
       phone: prefillClient.phone || prev.phone,
       businessName: prefillClient.businessName || prev.businessName,
       type: 'Business',
+      ...(prefillClient.userId ? { userId: prefillClient.userId } : {}),
     }));
     setPendingClientApprovalEmail({ tempPassword: prefillClient.tempPassword || null });
     setShowCreateModal(true);
@@ -112,6 +113,7 @@ export default function Customers({ customers = [], setCustomers, users = [], se
   const closeCreateModal = () => {
     setShowCreateModal(false);
     setPendingClientApprovalEmail(null);
+    setNewProfile(({ userId: _userId, ...rest }) => rest);
   };
 
   // AI WhatsApp draft state

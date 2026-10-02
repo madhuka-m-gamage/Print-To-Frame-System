@@ -29,6 +29,7 @@ const { default: AgentDatabase } = await import('@/features/admin/AgentDatabase'
 const { sendTemplatedEmail } = await import('@/services/mailer');
 const { toast } = await import('@/shared/utils/toast');
 const { ref, getDownloadURL } = await import('firebase/storage');
+const { createUserAccount } = await import('@/features/admin/adminUsers');
 
 const admin = { role: 'Admin', name: 'Admin', identifier: 'admin@example.com' };
 
@@ -103,6 +104,37 @@ describe('AgentDatabase staff approval email (employees D6)', () => {
     expect(sendTemplatedEmail).toHaveBeenCalledWith('studio@example.com', 'employee_invite', expect.objectContaining({
       assignedRole: 'Operations', tempPassword: 'secret12',
     }));
+  });
+});
+
+describe('AgentDatabase approval carries the login uid (FEA-15)', () => {
+  it('passes a self-registered applicant\'s uid through to the approved record', async () => {
+    const onApprove = vi.fn(async () => {});
+    renderWithProviders(
+      <AgentDatabase users={[]} setUsers={vi.fn()} currentUser={admin} onApprove={onApprove} setPendingUsers={vi.fn()}
+        pendingUsers={[{ identifier: 'acme@example.com', name: 'Acme', role: 'Business Client', uid: 'uid-acme' }]} />,
+      { role: 'Admin' }
+    );
+    fireEvent.click(screen.getByTitle(/Quick Approve/));
+    await waitFor(() => expect(onApprove).toHaveBeenCalled());
+    expect(onApprove.mock.calls[0][0]).toEqual(expect.objectContaining({ uid: 'uid-acme' }));
+    expect(onApprove.mock.calls[0][1]).toBe('Business Client');
+  });
+
+  it('records the uid of the account it creates for an application', async () => {
+    createUserAccount.mockResolvedValueOnce({ created: true, uid: 'uid-new' });
+    const onApprove = vi.fn(async () => {});
+    renderWithProviders(
+      <AgentDatabase users={[]} setUsers={vi.fn()} pendingUsers={[]} setPendingUsers={vi.fn()} currentUser={admin} onApprove={onApprove}
+        partnerApplications={[{ id: 'app-1', email: 'acme@example.com', contactPerson: 'Ruwan' }]} />,
+      { role: 'Admin' }
+    );
+    fireEvent.click(screen.getByTitle('Review Full Dossier'));
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'Business Client' } });
+    fireEvent.change(screen.getByPlaceholderText('Minimum 6 characters'), { target: { value: 'secret12' } });
+    fireEvent.click(screen.getByText('Approve as Business Client'));
+    await waitFor(() => expect(onApprove).toHaveBeenCalled());
+    expect(onApprove.mock.calls[0][0]).toEqual(expect.objectContaining({ uid: 'uid-new' }));
   });
 });
 

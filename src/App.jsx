@@ -28,7 +28,7 @@ import {
   Moon,
   Handshake,
 } from "lucide-react";
-import { initAuth, logout, emailLogin, emailRegister, db } from "./services/firebase";
+import { initAuth, logout, emailLogin, emailRegister, db, auth } from "./services/firebase";
 import { doc, getDoc, setDoc, collection, getDocs, deleteDoc, onSnapshot, query, where } from "firebase/firestore";
 import { subscribeToCollection, subscribeToQuery, addDocument, updateDocument, batchWrite, COLLECTIONS, generateInvoiceId, deriveReceiptId, createDocumentIfAbsent } from "./services/firestoreSync";
 import { toast } from "./shared/utils/toast";
@@ -750,6 +750,7 @@ function App() {
                   name: user.displayName || emailKey,
                   role: "Customer",
                   status: 'Pending',
+                  uid: user.uid,
                 };
                 await setDoc(doc(db, COLLECTIONS.PENDING_USERS, emailKey), pendingUser);
                 console.log("5. Created pending successfully");
@@ -892,13 +893,14 @@ function App() {
     registeringRef.current = true;
     try {
       // Create user in Firebase Auth (throws if already exists)
-      await emailRegister(regData.identifier, regData.password);
+      const credential = await emailRegister(regData.identifier, regData.password);
       
       // At this point, the user is authenticated and onAuthStateChanged will fire.
       // We explicitly overwrite any basic pendingUser document created by initAuth
       // with our complete registration data including requested role and mobile.
       const completeRegData = { ...regData };
       delete completeRegData.password; // Don't store plaintext password
+      if (credential?.user?.uid) completeRegData.uid = credential.user.uid;
       
       await setDoc(doc(db, COLLECTIONS.PENDING_USERS, regData.identifier), completeRegData);
       
@@ -968,6 +970,7 @@ function App() {
           businessName: regData.company || regData.name,
           email: regData.identifier,
           phone: regData.mobile || regData.contactNumber || '',
+          userId: regData.uid,
           tempPassword,
         });
         setActiveTab('customers');
@@ -1036,21 +1039,23 @@ function App() {
       }
     }
 
-    // The rules let a client read only customers whose email (or nic) equals their token email,
-    // so the record is looked up by email alone.
+    // The rules let a client read only customers linked by userId or whose email (or nic)
+    // equals their token email, and each query carries one of those constraints.
     if (['Customer', 'Business Client'].includes(updatedUser.role)) {
+      const uid = auth.currentUser?.uid;
       const email = (updatedUser.email || updatedUser.identifier || '').trim().toLowerCase();
-      if (email) {
-        const cUpdates = {
-          name: updatedUser.name,
-          photoURL: updatedUser.photoURL || '',
-          phone: updatedUser.contactNumber ?? '',
-          address: updatedUser.location ?? '',
-        };
-        getDocs(query(collection(db, COLLECTIONS.CUSTOMERS), where('email', '==', email)))
-          .then(snap => Promise.all(snap.docs.map(d => updateDocument(COLLECTIONS.CUSTOMERS, d.id, cUpdates))))
-          .catch(console.warn);
-      }
+      const customersWhere = (field, value) => getDocs(query(collection(db, COLLECTIONS.CUSTOMERS), where(field, '==', value)));
+      const cUpdates = {
+        name: updatedUser.name,
+        photoURL: updatedUser.photoURL || '',
+        phone: updatedUser.contactNumber ?? '',
+        address: updatedUser.location ?? '',
+      };
+      (async () => {
+        let docs = uid ? (await customersWhere('userId', uid)).docs : [];
+        if (!docs.length && email) docs = (await customersWhere('email', email)).docs;
+        await Promise.all(docs.map(d => updateDocument(COLLECTIONS.CUSTOMERS, d.id, cUpdates)));
+      })().catch(console.warn);
     }
   };
 
