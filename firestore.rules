@@ -92,6 +92,13 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Vehicle and driver lists for the logistics pickers (driver phone numbers are in it,
+    // so reading follows the logistics view permission rather than any signed-in user).
+    match /settings/fleet {
+      allow read: if checkPermission('logistics', 'view');
+      allow write: if isAdmin();
+    }
+
     // ── User Profiles ─────────────────────────────────────
     // SECURITY: `role`, `isApproved`, and `status` must never be settable by the user
     // themselves except through the two narrow, intentional self-service paths the app

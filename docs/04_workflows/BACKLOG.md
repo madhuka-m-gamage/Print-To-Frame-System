@@ -249,6 +249,7 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 ### FEA-4: Fleet and driver directory in Firestore (logistics D-7, employees D2)
 - **Why:** `FLEET_VEHICLES` and `DRIVER_DIRECTORY` are hardcoded in `src/features/logistics/logisticsEngine.js` and used by `LogisticsCardDetails.jsx`.
 - **Build:** store them in `settings/fleet` (or a collection) editable by Admin in Settings; keep the constants as a fallback when the document is missing. Needs a rules block and tests. **Live:** rules deploy.
+- **Done in the repo (FEA-4):** `settings/fleet` `{ vehicles, drivers }`; hook `src/features/logistics/useFleetDirectory.js` falls back per list to the constants when the document is missing or the field is not an array; used by `Logistics.jsx` and `LogisticsCardDetails.jsx`. Editor: new "Fleet & Drivers" tab in the existing Admin panel (`src/features/admin/AdminPanel.jsx`, `FleetDirectoryEditor.jsx`). Rules: `match /settings/fleet` read `checkPermission('logistics','view')` (driver phones), write `isAdmin()`. **Still live:** `firebase deploy --only firestore:rules`. Not done: the new-delivery form still defaults to `Sunil (Driver)` / `Lorry (WP GE 1234)` even if an edited list drops them; employees D2's `users`-based driver query is a separate step.
 
 ### FEA-5: Inspection follow-ups
 - **Revision alert (inspection #5):** notify the deal's sales owner when a linked job goes to Revision (defect category and notes). Needs FEA-2's stored notifications.
