@@ -82,6 +82,7 @@ SKILL.md stays short and is always loaded; each other file is read only at the s
 - The plan table has one row per item and per separate stage: item, task type, policy default, agent's pick, why it differs, owner's choice.
 - Before ExitPlanMode, one question per row with four options (Opus·high, Opus·medium, Sonnet·medium, Sonnet·low), the agent's pick first and marked, "Other" for anything else. Up to 4 rows per prompt.
 - The model is set per agent, so an item's implementation, catch-up and docs share one model. A step gets its own model only when it is its own agent (final docs step, review, plan).
+- Addendum 2026-10-02: each row now has a decision card (what changes, open decisions, safety net, blast radius, signals, option costs) shown in the question and in each option's preview; the policy has a selection rubric and effort definitions; the review records whether each pick was sufficient. Plan: [AGENT_RUN_CARDS_PLAN.md](../04_workflows/AGENT_RUN_CARDS_PLAN.md).
 
 ### Stage 2: Run
 
