@@ -189,16 +189,16 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
     ];
   }, [messages, pendingSends]);
 
-const BATCH_LIMIT = 500;
-const sendReadReceipts = async (unreadMsgs, myId) => {
-  const ops = unreadMsgs.map((m) => ({
-    type: 'update', collection: COLLECTIONS.MESSAGES, docId: m._firestoreId,
-    data: { readBy: [...(m.readBy || []), myId] },
-  }));
-  const chunks = [];
-  for (let i = 0; i < ops.length; i += BATCH_LIMIT) chunks.push(ops.slice(i, i + BATCH_LIMIT));
-  await Promise.all(chunks.map((chunk) => batchWrite(chunk).catch(e => console.warn("Read sync error:", e))));
-};
+  const BATCH_LIMIT = 500;
+  const sendReadReceipts = async (unreadMsgs, myId) => {
+    const ops = unreadMsgs.map((m) => ({
+      type: 'update', collection: COLLECTIONS.MESSAGES, docId: m._firestoreId,
+      data: { readBy: [...(m.readBy || []), myId] },
+    }));
+    const chunks = [];
+    for (let i = 0; i < ops.length; i += BATCH_LIMIT) chunks.push(ops.slice(i, i + BATCH_LIMIT));
+    await Promise.all(chunks.map((chunk) => batchWrite(chunk).catch(e => console.warn("Read sync error:", e))));
+  };
 
   // 5. Action: Mark Conversation as Read
   const markChatAsRead = useCallback(async (contactId) => {
