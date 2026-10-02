@@ -56,6 +56,7 @@ Map, then per-module Claude instructions.
 - [GIT_WORKFLOW.md](docs/04_workflows/GIT_WORKFLOW.md)
 - [DEPLOY_PROCESS.md](docs/04_workflows/DEPLOY_PROCESS.md)
 - [TESTING.md](docs/04_workflows/TESTING.md)
+- [AGENT_RUN_PLAN.md](docs/04_workflows/AGENT_RUN_PLAN.md): implementation plan for the agent-run skill (decision 0005)
 - [POST_MERGE_VERIFICATION_REPORT.md](docs/POST_MERGE_VERIFICATION_REPORT.md): historical: Antigravity 16-module review verification
 - [HANDOFF_REPORT.md](docs/HANDOFF_REPORT.md): Milestone 1 handoff (journey, live vs repo, how we work, what's left)
 
@@ -65,4 +66,4 @@ Map, then per-module Claude instructions.
 - [0002-deferred-until-live-rollout.md](docs/05_decisions/0002-deferred-until-live-rollout.md)
 - [0003-source-layout.md](docs/05_decisions/0003-source-layout.md): `src/features`, `src/shared` and the `@/` import alias
 - [0004-owner-decisions-backlog.md](docs/05_decisions/0004-owner-decisions-backlog.md): answers to backlog decisions DEC-1 to DEC-9
-- [0005-agent-run-skill.md](docs/05_decisions/0005-agent-run-skill.md): the `agent-run` skill for batched agent runs (proposed)
+- [0005-agent-run-skill.md](docs/05_decisions/0005-agent-run-skill.md): the `agent-run` skill for batched agent runs (accepted)

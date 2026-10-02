@@ -1,6 +1,6 @@
 # 0005: The `agent-run` skill for batched agent runs
 
-Status: proposed, 2026-10-02. Design agreed with the owner in conversation; this record is the spec for review before the implementation plan.
+Status: accepted, 2026-10-02 (owner approved). Implementation plan: [AGENT_RUN_PLAN.md](../04_workflows/AGENT_RUN_PLAN.md).
 
 ## Context
 
@@ -86,14 +86,14 @@ SKILL.md stays short and is always loaded; each other file is read only at the s
 ### Stage 2: Run
 
 1. **Launch:** re-read the meter and stop if the projected peak exceeds 80% of the window; request keep-awake (`mcp__ccd_host__request_keep_awake`); record the run ID; check the filled workflow script's syntax; launch.
-2. **Two balanced lanes** built by `lanes.mjs`: items sharing files stay in one lane in order; lane minutes within about 20% of each other; BACKLOG dependencies ordered; an item waiting on the other lane waits for it. Lane *N* uses test slot *N*.
+2. **Two balanced lanes** built by `lanes.mjs`: items sharing files, and items that depend on each other, stay in one lane in dependency order; lane minutes within about 20% of each other. A dependency outside the batch is assumed already merged. Lane *N* uses test slot *N*.
 3. **Agent brief** (`agent-brief.md`): the item's BACKLOG section pasted in, expected files, module notes, slot environment, linked `node_modules`, and the approved test plan. Agents open the full docs only when needed.
 4. **Local checks vs CI:** locally lint, the item's tests and the affected module's suites, plus rules and e2e when the plan says so. CI (`lint-unit`: lint, unit, API, component, build; `rules`) is the gate and must be green to merge. e2e three times only for a new e2e spec, otherwise once.
 5. **Docs per item:** its fragment `docs/04_workflows/changes/<ID>.md` and its own `### <ID>` BACKLOG section only.
 6. **Catch-up:** `git merge origin/staging`, never rebase or force-push. If only docs files conflicted, check the conflict markers are gone and skip the local checks (CI re-runs); if code conflicted, re-run the local checks.
-7. **One owner per PR:** the agent switches Auto-fix off for its own PR if the app's per-PR setting is reachable from the agent (unverified; otherwise the readiness check asks the owner to switch Auto-fix off for the run). The orchestrator never pushes to a branch whose agent is running.
+7. **One owner per PR:** the agent switches Auto-fix off for its own PR (`mcp__ccd_pr__set_monitor`, `auto_fix: false`; confirmed available by the owner). The orchestrator never pushes to a branch whose agent is running.
 8. **Stop rules:** at most 2 fix rounds; an item needing an owner decision or a live action leaves its PR open as blocked and stops its lane; the other lane continues.
-9. **Usage guard:** before each item the script compares the run's output-token count (`budget.spent()`) with the plan's threshold and starts no new item past it; running items finish and merge. Assumption to calibrate: output tokens track the window percentage.
+9. **Usage guard:** before each item the script compares the run's output-token count (`budget.spent()`) with the plan's threshold and starts no new item past it; running items finish and merge. The owner accepted output tokens as the guard measure; each review calibrates output tokens per 1% of the window.
 10. **Final step** (one agent, Sonnet·low by default): run `npm run test:e2e` locally on the merged `staging`; fold every fragment into CHANGELOG.md, the BACKLOG status line and the TESTING map; update PLAN.md; delete the fragments; open one docs PR into `staging` and leave it unmerged for the review.
 
 ### Stage 3: Review
@@ -112,13 +112,13 @@ No deploys of rules or anything else, nothing to `main`, no live data, no consol
 
 **A. Change fragments (docs).** `docs/04_workflows/changes/README.md` defines `<ID>.md` with three headings: `## Changelog` (the exact bullet), `## Testing map` (lines to add or change), `## Status` (done, blocked or open, plus test counts), and how the final step folds and deletes them. Rule: inside a multi-agent run items write fragments and their own BACKLOG section; the shared CHANGELOG, BACKLOG status line, TESTING map and PLAN.md are written once by the final step. A single manual session may still edit CHANGELOG.md directly. Updates root `CLAUDE.md` (the CHANGELOG rule), `GIT_WORKFLOW.md`, `TESTING.md` ("Adding a test"), `PROJECT_INDEX.md`.
 
-**B. Per-slot test ports (code and tests).** Slot 0 keeps today's ports, so CI, `npm run dev` and manual habits are unchanged. `tests/tools/testSlot.mjs <slot>` writes a gitignored `firebase.slot<N>.json` with every emulator port (Firestore, Auth, Storage, UI, hub, logging) shifted by N × 100 and prints the slot's environment variables. The six hard-coded places read the environment and default to today's values:
+**B. Per-slot test ports (code and tests).** Slot 0 keeps today's ports, so CI, `npm run dev` and manual habits are unchanged. `tests/tools/testSlot.mjs <slot>` writes a gitignored `firebase.slot<N>.json` (one `.gitignore` line, for the owner's OK) with every emulator port (Firestore and its websocket, Auth, Storage, UI, hub, logging) shifted by N × 10 and prints the slot's environment variables. The offset is 10, not the 100 first discussed: Auth 9099 + 100 would land on Storage 9199. Variables use a `P2F_` prefix; `FIREBASE_CONFIG` is avoided because firebase-admin reads it. The seven hard-coded places read the environment and default to today's values:
 
 | File | Today | Change |
 |---|---|---|
 | `firebase.json` | fixed ports | unchanged; slots use the generated copy via `--config` |
-| `package.json` `test:rules`, `dev:emulated` | default config, `--port 3000` | `FIREBASE_CONFIG`, `P2F_DEV_PORT` with today's defaults |
-| `tests/helpers/emulator.js` | 8080, 9199 | the `*_EMULATOR_HOST` variables `emulators:exec` sets |
+| `package.json` `test:rules`, `dev:emulated` | default config, `--port 3000` | `P2F_FIREBASE_CONFIG`, `P2F_DEV_PORT` with today's defaults |
+| `tests/helpers/emulator.js`, `tests/integration/effectiveAccess.test.js` | 8080, 9199 | the `*_EMULATOR_HOST` variables `emulators:exec` sets |
 | `playwright.config.js` | `baseURL` and wait URLs on 3000 and 9099 | from the environment |
 | `tests/e2e/global-setup.js` | 3000 in the safety check | from the environment |
 | `src/services/firebase.js` | 8080, 9099, 9199 (test-mode branch only) | `VITE_EMULATOR_*_PORT`, today's defaults |

@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Decision 0005 (proposed, docs only): spec for the `agent-run` repo skill (plan, run and review batched agent runs) and its prerequisite PR (change fragments, per-slot test ports, shared `node_modules`).
+- Decision 0005 (accepted, docs only): spec for the `agent-run` repo skill (plan, run and review batched agent runs) and its prerequisite PR (change fragments, per-slot test ports, shared `node_modules`), with the implementation plan in `docs/04_workflows/AGENT_RUN_PLAN.md`.
 
 - Wave A run review (docs only): PLAN.md gains a Run calibration section (estimated vs actual time and usage per item, tuning rules for the next run) and a Wave A2 line; BACKLOG gains MON-8 (round the 75/25 invoice split, owner decision), FEA-12 (batched read receipts), FEA-13 (profile sync fixes), SEC-12 (`typing_indicators` rules, Wave B) and ENG-7 (component coverage and e2e on staging PRs), plus two LIVE-1 post-deploy checks; ENG-5 marked skipped by the owner.
 
