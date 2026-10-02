@@ -77,6 +77,16 @@ describe('Messages typing indicator (D-MSG-04)', () => {
     expect(setDocument.mock.calls[2][2]).toMatchObject({ isTyping: false });
   });
 
+  it('handles a refused typing write instead of raising an unhandled rejection (FEA-16)', async () => {
+    const handled = vi.fn((_resolve, reject) => reject(new Error('permission-denied')));
+    setDocument.mockReturnValueOnce({ then: handled });
+    render(<Messages users={users} currentUser={me} />);
+    fireEvent.change(input(), { target: { value: 'h' } });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(setDocument).toHaveBeenCalledTimes(1);
+    expect(handled).toHaveBeenCalled();
+  });
+
   it('listens only to indicators of chats the user is part of (SEC-12)', () => {
     render(<Messages users={users} currentUser={me} />);
     expect(onSnapshot.mock.calls[0][0].constraints).toEqual([
