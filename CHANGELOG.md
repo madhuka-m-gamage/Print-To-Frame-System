@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Printed and emailed Advance / Final figures (invoice print draft amount, invoice template, email template modal, Gemini invoice prompt) now use `splitInvoiceAmounts`, so they match the stored amounts to the cent (MON-9; unit +15).
+
+- none
+
+- Profile: an empty location is no longer pre-filled with "Kadawatha, Sri Lanka" (FEA-14); it stays empty and the text is only the placeholder. Matching customers whose email differs from the login email is split out as FEA-15. Component tests: 2 added.
+
+- none
+
 - agent-run decision cards (owner request): every model/effort row gets a card with what changes, open decisions, safety net, blast radius, signals and per-option costs; the question carries the facts, the options carry the costs and risks, the preview carries the card; the policy gains selection signals, effort levels and an evidence table; the review records pick outcomes. Unit +4.
 
 - `agent-run` tuning (owner-approved proposals from the Wave A2 review): measured Sonnet and mixed rates in `SKILL.md` and the projected peak computed from them instead of a flat 3% per agent; the agent brief and the final step name the item's own model in the commit trailer (`{{trailerModel}}`); new model-policy task type `money-small` (Sonnet·medium). Tests: unit 297 (+1, trailer per model), component 169.
