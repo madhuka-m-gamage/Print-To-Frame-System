@@ -16,6 +16,7 @@ vi.mock('@/services/firestoreSync', () => ({
   COLLECTIONS: { MESSAGES: 'messages' },
   addDocument: vi.fn(async () => {}),
   updateDocument: vi.fn(async () => {}),
+  batchWrite: vi.fn(async () => {}),
 }));
 
 vi.mock('@/features/messaging/audioAlert', () => ({ playMessageChime: vi.fn() }));
@@ -24,7 +25,7 @@ const { MessagingProvider, useMessaging } = await import('@/features/messaging/M
 const { where } = await import('firebase/firestore');
 const { triggerBrowserNotification } = await import('@/App');
 const { playMessageChime } = await import('@/features/messaging/audioAlert');
-const { addDocument } = await import('@/services/firestoreSync');
+const { addDocument, updateDocument, batchWrite } = await import('@/services/firestoreSync');
 
 const snapshotOf = (msgs) => ({ forEach: (fn) => msgs.forEach((m) => fn({ id: m.id, data: () => m })) });
 const incoming = (overrides = {}) => ({
@@ -176,5 +177,53 @@ describe('MessagingProvider incoming alerts (D-MSG-06)', () => {
     receive(incoming());
     expect(triggerBrowserNotification).toHaveBeenCalledTimes(1);
     expect(playMessageChime).not.toHaveBeenCalled();
+  });
+});
+
+describe('MessagingProvider batched read receipts (FEA-12)', () => {
+  const unreadFrom = (n, fromId = 'alice@example.com') => Array.from({ length: n }, (_, i) => incoming({
+    id: `msg_${now + 1 + i}_${String(i).padStart(5, '0')}`,
+    timestamp: now + 1 + i,
+    fromId,
+    readBy: i === 0 ? [fromId] : [fromId, 'carol@example.com'],
+  }));
+  const seed = (msgs) => {
+    renderProvider();
+    act(() => snap.emit(snapshotOf([])));
+    act(() => snap.emit(snapshotOf(msgs)));
+  };
+  const written = () => batchWrite.mock.calls.flatMap(([ops]) => ops);
+
+  it.each([[0, 0], [1, 1], [3, 1], [501, 2]])('markChatAsRead with %i unread sends %i batch call(s)', async (count, calls) => {
+    const msgs = unreadFrom(count);
+    seed(msgs);
+    await act(async () => { await api.markChatAsRead('alice@example.com'); });
+    expect(batchWrite).toHaveBeenCalledTimes(calls);
+    batchWrite.mock.calls.forEach(([ops]) => expect(ops.length).toBeLessThanOrEqual(500));
+    expect(updateDocument).not.toHaveBeenCalled();
+    expect(written()).toEqual(msgs.map((m) => ({
+      type: 'update', collection: 'messages', docId: m.id, data: { readBy: [...m.readBy, 'bob@example.com'] },
+    })));
+  });
+
+  it.each([[0, 0], [1, 1], [3, 1], [501, 2]])('markAllAsRead with %i unread sends %i batch call(s)', async (count, calls) => {
+    const msgs = unreadFrom(count);
+    seed(msgs);
+    await act(async () => { await api.markAllAsRead(); });
+    expect(batchWrite).toHaveBeenCalledTimes(calls);
+    batchWrite.mock.calls.forEach(([ops]) => expect(ops.length).toBeLessThanOrEqual(500));
+    expect(updateDocument).not.toHaveBeenCalled();
+    expect(written().map((o) => o.docId)).toEqual(msgs.map((m) => m.id));
+    expect(written().every((o) => o.data.readBy.at(-1) === 'bob@example.com')).toBe(true);
+  });
+
+  it('skips messages that are already read or sent by me', async () => {
+    const msgs = [
+      incoming({ id: `msg_${now + 1}_aaaaa`, readBy: ['alice@example.com', 'bob@example.com'] }),
+      incoming({ id: `msg_${now + 2}_bbbbb`, fromId: 'bob@example.com', toId: 'alice@example.com', readBy: ['bob@example.com'] }),
+    ];
+    seed(msgs);
+    await act(async () => { await api.markAllAsRead(); });
+    expect(batchWrite).not.toHaveBeenCalled();
   });
 });

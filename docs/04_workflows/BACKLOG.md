@@ -278,6 +278,7 @@ Source: `docs/02_modules/notifications/FINDINGS.md`. NOTIF-01 (sign-out leak) is
 
 ### FEA-12: Batch the read-receipt writes (D-MSG-02, second half)
 - **Why (found by FEA-6, 2026-10-01):** `markChatAsRead` and `markAllAsRead` in `src/features/messaging/MessagingContext.jsx` still send one Firestore write per message. Use `batchWrite` from `src/services/firestoreSync.js` (500-write chunks). Client only; a component or unit test on the batching.
+- **Done 2026-10-02:** both functions now build one `update` op per unread message and send them through `batchWrite` in chunks of 500 (`sendReadReceipts` in `MessagingContext.jsx`); same messages and `readBy` values as before. A failed chunk is logged and does not stop the others. Tests: `tests/component/MessagingContext.test.jsx` (0, 1, 3 and 501 unread; no `updateDocument`).
 
 ### FEA-13: Profile sync: the Customer write path and clearing fields
 - **Why (found by FEA-8, 2026-10-01):** `UserProfile.jsx` still writes the `customers` record directly for Customer and Business Client; profile-settings FINDINGS says that write always fails under the current rules (not checked). Profile sync also cannot clear a field: an emptied phone, address or company keeps its old value in `partners` and `customers` (profile-settings finding 7).
