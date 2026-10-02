@@ -162,6 +162,13 @@ describe('Deals completion amounts', () => {
     await waitFor(() => expect(sync.updateDocument).toHaveBeenCalledWith('leads', expect.anything(), expect.objectContaining({ value: 200000 })));
   });
 
+  it('rounds the fallback split to cents so Advance and Final add up to the value (MON-8)', async () => {
+    const { onSaveInvoice } = renderDeals({ dealOverrides: { value: 33333.33 } });
+    fireEvent.click(screen.getByRole('button', { name: /for Kasun Silva/i }));
+    await waitFor(() => expect(onSaveInvoice).toHaveBeenCalledTimes(1));
+    expect(onSaveInvoice.mock.calls[0][0]).toMatchObject({ amount: 8333.33, advancePaid: 25000, totalValue: 33333.33 });
+  });
+
   it('prices the fallback line at the full deal value so the template scales it to 25%', async () => {
     const { onSaveInvoice } = renderDeals({ dealOverrides: { value: 100000 } });
     fireEvent.click(screen.getByRole('button', { name: /for Kasun Silva/i }));

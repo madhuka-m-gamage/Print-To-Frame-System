@@ -9,6 +9,7 @@ import { ModalWrapper } from '@/shared/ui';
 import { matchesEntity } from '@/shared/utils/entityUtils';
 import { isAcceptedQuote } from './quotationStatus';
 import { invoiceLineageFields } from '@/features/leads/leadLineage';
+import { splitInvoiceAmounts } from './splitInvoiceAmounts';
 
 // WhatsApp renders *text* as bold and _text_ as italic client-side — this
 // converts those same markers to HTML purely for the in-app chat-bubble
@@ -88,8 +89,7 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
 
   const subtotal = lineItems.reduce((s, i) => s + lineTotal(i), 0);
   const grandTotal = subtotal;
-  const advanceDue = grandTotal * 0.75;
-  const balanceDue = grandTotal * 0.25;
+  const { advance: advanceDue, final: balanceDue } = splitInvoiceAmounts(grandTotal);
 
   const setField = (id, field, val) =>
     setLineItems(prev => prev.map(i =>

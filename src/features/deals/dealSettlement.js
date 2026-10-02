@@ -1,12 +1,13 @@
 import { DEFAULT_REFERRAL_COMMISSION_RATE } from '@/features/quotations/quotePricing';
 import { matchesEntity } from '@/shared/utils/entityUtils';
+import { splitInvoiceAmounts } from '@/features/quotations/splitInvoiceAmounts';
 import { isAcceptedQuote } from '@/features/quotations/quotationStatus';
 
 /**
  * Amounts for the Final invoice raised when a deal completes. An Accepted
  * quotation (highest version) is the source of truth for the contract value;
  * without one the deal's own value is used. The 25% figure is the stored
- * balanceDue when present, otherwise grandTotal * 0.25.
+ * balanceDue when present, otherwise the remainder after the cent-rounded 75% Advance.
  * @returns {{ quote: Object|null, totalValue: number, finalAmount: number, advancePaid: number, quotedTotal: number }}
  */
 export function getFinalInvoiceAmounts(deal, quotations) {
@@ -18,9 +19,10 @@ export function getFinalInvoiceAmounts(deal, quotations) {
   const quotedTotal = accepted ? Number(accepted.grandTotal) || 0 : 0;
   const totalValue = quotedTotal > 0 ? quotedTotal : Number(deal.value) || 0;
   const storedBalance = accepted ? Number(accepted.balanceDue) || 0 : 0;
-  const finalAmount = storedBalance > 0 ? storedBalance : totalValue * 0.25;
+  const split = splitInvoiceAmounts(totalValue);
+  const finalAmount = storedBalance > 0 ? storedBalance : split.final;
 
-  return { quote, totalValue, finalAmount, advancePaid: totalValue * 0.75, quotedTotal };
+  return { quote, totalValue, finalAmount, advancePaid: split.advance, quotedTotal };
 }
 
 /**

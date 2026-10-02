@@ -186,16 +186,14 @@ describe('QuotationBuilder quote to invoice (TST-3)', () => {
     expect(sync.generateInvoiceId).toHaveBeenCalledTimes(1);
   });
 
-  // Characterisation: the 75 / 25 split is plain multiplication with no rounding to cents, so an
-  // odd total stores fractional cents on the invoice. Changes with a rounding fix (see BACKLOG TST-3 note).
-  it('stores unrounded amounts when the total does not divide into whole cents', async () => {
+  it('rounds the Advance to cents and bills the remainder as the Final (MON-8)', async () => {
     const lead = makeLead({ id: 'L-9' });
     const quote = quoteFor(lead, { lineItems: [item({ unitPrice: 33333.33 })] });
     const { onSaveInvoice } = render(lead, { allQuotations: [quote] });
     fireEvent.click(screen.getByRole('button', { name: /75% Advance Invoice/ }));
     await waitFor(() => expect(onSaveInvoice).toHaveBeenCalled());
     const inv = onSaveInvoice.mock.calls[0][0];
-    expect(inv.amount).toBeCloseTo(24999.9975, 6);
-    expect(inv.amount).not.toBe(Math.round(inv.amount * 100) / 100);
+    expect(inv.amount).toBe(25000);
+    expect(inv.balanceDue).toBe(8333.33);
   });
 });

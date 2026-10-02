@@ -50,6 +50,7 @@ import { NON_BILLABLE, resolveManualJobLink, cancelledProjectBlock, archiveBlock
 import { checklistWithGuardedQa, withDefectRecorded } from './qaGate';
 import { buildLogisticsTask } from '@/features/logistics/logisticsTask';
 import { STEEL_PROFILES, calculateCutList, mmToFtIn } from './cutListEngine';
+import { splitInvoiceAmounts } from '@/features/quotations/splitInvoiceAmounts';
 
 const STAGES = ["Pending", "Ongoing", "Ready For Inspection", "Revision", "Completed"];
 
@@ -914,7 +915,7 @@ export default function FabricationWorks({
         company: targetJob.company || cust?.businessName || cust?.company || "",
         phone: targetJob.customerPhone || targetJob.phone || cust?.phone || "",
         date: now.split("T")[0],
-        amount: (Number(targetJob.value) || 0) * 0.25,
+        amount: splitInvoiceAmounts(targetJob.value).final,
         totalValue: Number(targetJob.value) || 0,
         type: 'Final',
         status: 'Unpaid',

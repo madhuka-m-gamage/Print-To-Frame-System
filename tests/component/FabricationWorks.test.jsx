@@ -49,6 +49,15 @@ describe('FabricationWorks QA pass wiring', () => {
     expect(onSaveInvoice.mock.calls[0][0]).toMatchObject({ id: 'INV-FIN-0001', type: 'Final', status: 'Unpaid', jobNo: 'PTF-2001', amount: 25000, totalValue: 100000 });
   });
 
+  it('rounds the Final to the remainder after a cent-rounded Advance (MON-8)', async () => {
+    const project = makeProject({ jobNo: 'PTF-2001', title: 'Gallery Canvas', status: 'Ready For Inspection', value: 33333.33 });
+    const { onSaveInvoice } = renderFabrication({ projects: [project] });
+    fireEvent.click(screen.getByTitle('Run QA Inspection Gate'));
+    fireEvent.click(await screen.findByRole('button', { name: /Approve & Complete/i }));
+    await waitFor(() => expect(onSaveInvoice).toHaveBeenCalledTimes(1));
+    expect(onSaveInvoice.mock.calls[0][0].amount).toBe(8333.33);
+  });
+
   // Flipped in Phase 7 2.1 (invoicing D-1, fabrication F-1): App passes invoices in,
   // so a job that already has a Final invoice passes QA without creating another.
   it('does not create another Final invoice when one already exists for the job', async () => {
