@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Wave A2 run review (docs only): PLAN.md Run calibration rewritten with the first all-Sonnet rates (about 54k subagent tokens per 1% of the 5-hour window, about 1.7% floor per agent, small items 7–14 min); new backlog items MON-9 (printed and emailed figures still use `* 0.75`) and FEA-14 (profile location default, customers matched by email).
+
+- Invoice split rounded to cents (MON-8): new `splitInvoiceAmounts` helper makes the Advance 75% rounded half up to cents and the Final the remainder, used by the quotation builder, deal completion and the Fabrication QA pass, so the two always add up to the total (LKR 33,333.33 gives 25,000.00 and 8,333.33). Existing invoices are not rewritten. Unit 7 new (6 helper, 1 settlement), component 2 new and 1 flipped.
+
+- ENG-7: `npm run coverage:all` reports unit, API and component coverage; the e2e CI job now also runs on pull requests into `staging` (code changes only). Unit +2 (in `tests/unit/ci.test.js`).
+
+- Profile sync: a Customer's or Business Client's `customers` record is now updated through `handleUpdateUser` (looked up by email, which the rules allow; the old NIC lookup was denied and broke the whole sync), and an emptied phone, address or company now clears the stored value in `partners` and `customers`. No rules change. Tests: rules 1 added, component 2 added.
+
+- Messaging: `markChatAsRead` and `markAllAsRead` send read receipts with `batchWrite` in chunks of 500 instead of one write per message (D-MSG-02 closed). Component tests for 0, 1, 3 and 501 unread (component 175).
+
 - `agent-run` skill (`.claude/skills/agent-run/`, decision 0005): plans a batch of backlog items with an 18-section template and per-row model and effort confirmation, runs them as two worktree lanes with their own test slots and change fragments, and reviews estimates against actuals into PLAN.md's Run calibration. A skill-reviewer pass and a final code review found bugs, all fixed with tests: slot exports were lost between shell calls; a missing, blank or out-of-range slot silently ran on slot 0 (the CLI now refuses it and the slot follows the lane); a missing final-step model crashed the last step; a stopped lane did not record its remaining items; a thrown agent dropped a lane's merged items; the final e2e could reuse the owner's dev server on port 3000; two linked worktrees shared Vite's dependency cache (now `P2F_VITE_CACHE_DIR` per slot). Verified e2e on slots 1 and 2 at the same time. Tests: unit 287 (+19), API 80, component 156, rules 62 (+1 skipped, 2 todo).
 
 - Agent-run prerequisites: change fragments (`docs/04_workflows/changes/`) for multi-agent runs; emulator and dev-server ports from the environment with today's defaults (`src/services/emulatorPorts.js`, `tests/tools/testSlot.mjs`, offset 10, at most 2 slots, a separate `TMPDIR` per slot) so two lanes can run rules and e2e at once; `link-deps.sh` shares `node_modules` across worktrees when lockfiles match. Slot 0, CI and `npm run dev` unchanged. Tests: unit 268 (+9), API 80, component 156, rules 62 (+1 skipped, 2 todo), e2e 10.
