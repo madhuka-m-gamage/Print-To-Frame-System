@@ -22,6 +22,8 @@ const RESULT = {
 }
 
 const trailerName = (model) => (model === 'opus' ? 'Opus 5.5' : 'Sonnet 5.5')
+// A second workflow launched alongside the first uses slotOffset 2, so its lanes get slots 3 and 4.
+const slotOffset = Number(args.slotOffset) || 0
 const fill = (template, values) => template.replace(/\{\{(\w+)\}\}/g, (_, key) => String(values[key] ?? ''))
 
 const runLane = async (lane, index) => {
@@ -37,7 +39,7 @@ const runLane = async (lane, index) => {
       continue
     }
     // The slot always follows the lane, so a missing or wrong value in args cannot fall back to slot 0.
-    const prompt = fill(args.brief, { ...item, slot: index + 1, mainCheckout: args.mainCheckout, trailerModel: trailerName(item.model) })
+    const prompt = fill(args.brief, { ...item, slot: slotOffset + index + 1, mainCheckout: args.mainCheckout, trailerModel: trailerName(item.model) })
     let r = null
     try {
       r = await agent(prompt, { label: item.id, phase: phaseTitle, isolation: 'worktree', model: item.model, effort: item.effort, schema: RESULT })
@@ -63,7 +65,7 @@ let final
 try {
   final = await agent(`Final step of an agent run in this repo. Items merged into staging: ${merged.join(', ')}.
 1. git fetch origin && git switch -c claude/run-docs-${merged[0].toLowerCase()} origin/staging --no-track; .claude/skills/agent-run/scripts/link-deps.sh "${args.mainCheckout}".
-2. Run e2e once on this staging head on slot 1 (free now that the lanes are done; slot 0 may be the owner's own dev server): node tests/tools/testSlot.mjs 1 > /tmp/p2f-slot1.env && . /tmp/p2f-slot1.env && npm run test:e2e. Record the result.
+2. Run e2e once on this staging head on slot ${slotOffset + 1} (free now that this workflow's lanes are done; slot 0 may be the owner's own dev server): node tests/tools/testSlot.mjs ${slotOffset + 1} > /tmp/p2f-slot${slotOffset + 1}.env && . /tmp/p2f-slot${slotOffset + 1}.env && npm run test:e2e. Record the result.
 3. Fold every file in docs/04_workflows/changes/ except README.md, following that README: CHANGELOG.md, TESTING.md, the BACKLOG "Status at Milestone 1" line, PLAN.md (strike the items, update the wave bar and "next up"). Delete the folded fragments in the same commit.
 4. Commit (message ends with "Co-Authored-By: Claude ${trailerName(finalStep.model)} <noreply@anthropic.com>"), push, gh pr create --base staging (body ends with "🤖 Generated with [Claude Code](https://claude.com/claude-code)"), call mcp__ccd_pr__set_monitor with auto_fix false for it, and DO NOT merge: the review stage adds the calibration and merges.
 Return prUrl, the e2e result and anything a fragment said was blocked.`,

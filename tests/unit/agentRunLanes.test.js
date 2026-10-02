@@ -33,6 +33,13 @@ describe('agent-run lanes', () => {
     expect(out).toEqual(['A', 'B', 'C', 'D', 'E']);
   });
 
+  it('builds 4 lanes for two workflows, keeping same-file items together', () => {
+    const lanes = buildLanes([item('A', 20, ['firestore.rules']), item('B', 15, ['firestore.rules']), item('C', 12, ['x.js']), item('D', 10, ['y.js']), item('E', 9, ['z.js'])], 4);
+    expect(lanes).toHaveLength(4);
+    expect(lanes.find((l) => l.some((i) => i.id === 'A')).map((i) => i.id)).toEqual(['A', 'B']);
+    expect(ids(lanes).flat().sort()).toEqual(['A', 'B', 'C', 'D', 'E']);
+  });
+
   it('returns exactly `slots` lanes, empty ones included', () => {
     expect(buildLanes([item('A', 5)], 2)).toHaveLength(2);
   });

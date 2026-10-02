@@ -6,7 +6,7 @@ import { pathToFileURL } from 'node:url';
 export const BASE_PORTS = { firestore: 8080, firestoreWebsocket: 9150, auth: 9099, storage: 9199, ui: 4000, hub: 4400, logging: 4500, dev: 3000 };
 // 10, not 100: Auth 9099 + 100 would land on Storage 9199.
 export const SLOT_OFFSET = 10;
-export const MAX_SLOT = 2;
+export const MAX_SLOT = 4;
 
 export function slotPorts(slot) {
   if (!Number.isInteger(slot) || slot < 0 || slot > MAX_SLOT) {
