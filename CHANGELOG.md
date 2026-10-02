@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Wave B run B2 review (docs only): Run calibration rewritten (wall-clock on estimate; the meter delta includes other usage so per-item % use the B1 rates); the parallel-by-block rules policy worked (no conflict at catch-up); new backlog items SEC-13 (bind a pending registration to its own uid), SEC-14 (dead partnerId-email read clause), FEA-17 (link a customers row to a login) and SEC-8 post-deploy checks for LIVE-1; evidence table updated; two proposed skill changes.
+
 - FEA-4: the logistics driver and vehicle pickers read `settings/fleet` (Admin edits it in the Admin panel, Fleet & Drivers tab) and fall back to the built-in lists when it is missing; new `settings/fleet` rules block (read: logistics view, write: Admin), not yet deployed. Tests: component +7, rules +10.
 
 - **FEA-15: customers linked to logins by `userId`** (rules not deployed, LIVE-1). `firestore.rules` `customers`: `ownsCustomer()` adds `userId == request.auth.uid` beside the email / nic clauses for a client's read and profile-field update (`name`, `photoURL`, `phone`, `address`). Registration stores the Auth `uid` on `pendingUsers` (form and Google first sign-in), an application approval takes it from `/api/admin-user`, the Business Client hand-off pre-fills it and `Customers.jsx` saves it as `customers.userId`; `handleUpdateUser` looks the row up by `userId`, then by `email`. Tests: new `tests/integration/customerUserId.test.js` (6), `App.profileSync.test.jsx` (+2), `AgentDatabase.test.jsx` (+2), `Customers.test.jsx` (+2); no `EXPECTED_RULE_CHANGES` cell flips. Unit 322, component 194, rules 114 (+1 skipped, 1 todo).

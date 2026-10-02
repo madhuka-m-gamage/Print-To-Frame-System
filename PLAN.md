@@ -40,36 +40,33 @@ One item per fresh session: branch `claude/<topic>` from `staging` → tests fir
 | Wave C | `[##########]` 1/1 | TST-2 done |
 
 ## Run calibration (overwritten after each agent run)
-Last run: 2026-10-02, Wave B run B1 (SEC-12, SEC-7, FEA-1 on Opus·medium; ENG-6 on Sonnet·low; final docs on Sonnet·medium), the **first Opus measurement**. 5 agents, 669k subagent tokens (Opus 471k, Sonnet 198k), 50.5 min from launch to the docs PR (estimate 32). Run ID `wf_afe59f7b-6c7`. Meter **2% → 29%** in one window (estimate 19-26% + 1%); weekly 31% → 34%. The machine's load average reached about 30 on 4 CPUs during the run, which slowed the e2e runs.
+Last run: 2026-10-02, Wave B run B2 (SEC-8, FEA-15 on Opus·medium; FEA-4 Sonnet·medium, FEA-16 Sonnet·low; final docs Sonnet·medium), one workflow, 2 lanes. 5 agents, 677k subagent tokens (Opus 327k, Sonnet 351k), 48.5 min from launch to the docs PR (estimate 50). Run ID `wf_1576bff8-844`. Meter 57% → 89% (+32%, estimate 23-25%); weekly 38% → 42%. **The meter delta is not a clean measurement this time:** the owner was running another agent in a different application during the run, so the window also counts that usage. Per-item % below use the B1 rates (Opus 21.6k, Sonnet 54k tokens per 1%).
 
-| Item | Model·effort | Est. min | Actual min | Est. % | Actual % | Fix rounds / catch-ups | Pick outcome |
+| Item | Model·effort | Est. min | Actual min | Est. % | Actual % (rates) | Fix rounds / catch-ups | Pick outcome |
 |---|---|---|---|---|---|---|---|
-| SEC-12 | Opus·medium (owner override of Opus·high) | 10 | 16.5 | 3-5 | ~6.0 | 0 / 0 | sufficient: found that indicator documents had no participants field and fixed the app side too |
-| SEC-7 | Opus·medium (owner override of Opus·high) | 20 | 27.9 | 5-8 | ~8.3 | 0 / 1 | sufficient: found the Register Partner form stored mixed-case emails; extended the editable fields with `company`, `updatedAt` |
-| FEA-1 | Opus·medium | 20 | 26.1 | 5-8 | ~7.5 | 0 / 1 | sufficient (diff read by me: eligible-only, cents, one batch, no local change on failure) |
-| ENG-6 | Sonnet·low | 8 | 2.1 | 1.7 | ~1.7 | 0 / 0 | sufficient |
-| Final docs | Sonnet·medium (owner override of low) | 2 | 5.8 | 1.6 | ~1.9 | n/a | sufficient; 1 e2e timeout under load, rerun clean; did not record the promotion guard (not in its prompt) |
-| **Run (to docs PR)** | | **32 (26-42)** | **50.5** | **19-26** | **27** (meter, incl. ~1.5 orchestration) | | |
+| SEC-8 | Opus·medium | 27 | 23.2 | ~8 | ~7.8 | 0 / 1 | sufficient: found invoices have no partner field and scoped them through the lead (rules get()); kept the leads read under Firestore's expression limit |
+| FEA-15 | Opus·medium (owner override of Sonnet·medium) | 20 | 12.9 | 6-8 | ~7.4 | 0 / 0 | sufficient, likely over-spec'd on time (13 min) but it found a pendingUsers uid gap (SEC-13) |
+| FEA-4 | Sonnet·medium | 15 | 12.9 | ~3 | ~2.7 | 0 / 0 | sufficient |
+| FEA-16 | Sonnet·low | 8 | 7.0 | ~1.9 | ~1.8 | 0 / 0 | sufficient, but wrote no change fragment (the final step reconstructed it from the commit) |
+| Final docs | Sonnet·medium | 3 | 12.3 | ~1.9 | ~2.0 | n/a | sufficient; slower because it rebuilt FEA-16's fragment and ran e2e |
+| **Run (to docs PR)** | | **50** | **48.5** | **23-25** | **~22** (rates) / 32 (meter, includes other usage) | | |
 
-Flagged (more than 30% off): SEC-12 +65%, SEC-7 +40%, FEA-1 +30%, ENG-6 -74%, final docs +190%, run +58%. Causes: **estimate model** (Opus minutes were taken from the mixed run and are too low; Opus items ran 16-28 min) and **environment** (load average about 30: the final step's e2e timed out once, and my own first rerun failed 2 tests in 9.5 min; a rerun on a quiet machine passed 10/10 in 1.1 min). Usage landed just above the top of the range.
+Flagged (more than 30% off): FEA-15 time (-36%) and the final step (+310%). Causes: **scope** (final step rebuilt a missing fragment) and **estimate model** (FEA-15 was smaller than SEC-8). Wall-clock was on estimate.
 
-**Opus rates (first measurement, 3 agents at medium effort):** the meter moved 27%; Sonnet agents account for about 3.7% (198k / 54k) and orchestration about 1.5%, leaving about 21.8% for 471k Opus tokens: **about 21.6k Opus subagent tokens per 1% of the 5-hour window** (Sonnet: 54k, so Opus costs about 2.5× per token). S item about 16 min and 6%; M item about 26-28 min and 7.5-8.5%. Opus tool calls: 33 (S), 62-70 (M).
+**Parallel rules by block (owner decision, first use):** lane 1 changed the leads, invoices and customers blocks while lane 2 added `settings/fleet`; SEC-8's catch-up merged FEA-4's rules **with no conflict**, and the `EXPECTED_RULE_CHANGES` list needed no entries. The policy worked.
 
 **Rolling rates (last 3 runs)**
-| Rate | A2 (Sonnet) | A3 (Sonnet) | B1 (Opus + Sonnet) | Use next |
+| Rate | A3 (Sonnet) | B1 (Opus + Sonnet) | B2 (Opus + Sonnet) | Use next |
 |---|---|---|---|---|
-| Sonnet tokens per 1% | about 54k | not measurable (cap) | consistent with 54k | 54k |
-| **Opus tokens per 1%** | n/a | n/a | **about 21.6k** | 21.6k (one run, medium effort) |
-| Sonnet small item | 7-14 min, ~1.9% | 7-8 min, ~1.9% | docs 2 min, 1.7% | 7-14 min, 1.9% |
-| **Opus S item (medium)** | n/a | n/a | **16.5 min, ~6%** | 14-18 min, 6% |
-| **Opus M item (medium)** | n/a | n/a | **26-28 min, 7.5-8.5%** | 25-30 min, 8% |
-| Final docs | 2.0 min | 1.6 min | 5.8 min (e2e retry) | 2-6 min, 1.9% |
-| CI round (PR to merge) | 3-4 | 3-4 | 3-11 (e2e now in CI) | 4-6 |
-| Catch-up | about 4 | none | 2 (both clean merges) | 4-7 |
-| Concurrency | 2 | 2 | 2 | 2 |
+| Opus tokens per 1% | n/a | about 21.6k (clean) | not measurable (other usage in the window) | 21.6k |
+| Sonnet tokens per 1% | capped | consistent with 54k | not measurable | 54k |
+| Opus M item (medium) | n/a | 26-28 min, 163-178k tokens | 13-23 min, 159-168k tokens | 13-28 min, ~165k tokens (~7.6%) |
+| Sonnet M item (medium) | n/a | n/a | 12.9 min, 147k tokens (~2.7%) | 13 min, 2.7% |
+| Sonnet S item | 7-8 min | docs 2 min | 7 min, 97k | 7-8 min, 1.8% |
+| Final docs | 1.6 min | 5.8 min | 12.3 min (rebuilt a fragment) | 3-12 min, ~2% |
+| Concurrency | 2 | 2 | 2 | 2 per workflow; 4 with two workflows |
 
-**Model overrides:** the owner changed 3 of 5 picks (SEC-12 and SEC-7 Opus·high → Opus·medium; final docs Sonnet·low → Sonnet·medium). All three Opus·medium security and money items were sufficient with 0 fix rounds.
-**Same-file lane (test goal 2):** SEC-12 and SEC-7 both edited `firestore.rules` in order; SEC-7 started from the merged SEC-12 and had one clean catch-up (for FEA-1 and ENG-6). No conflicts.
+**Model overrides:** the owner moved FEA-15 up (Sonnet·medium → Opus·medium) and final docs to Sonnet·medium. All picks were sufficient with 0 fix rounds.
 
 **Tuning (adopted = in effect now; not yet = needs the owner or the skill)**
 1. Adopted: Sonnet rates for all-Sonnet runs; for Opus use the B1 Opus figures above.
@@ -84,3 +81,6 @@ Flagged (more than 30% off): SEC-12 +65%, SEC-7 +40%, FEA-1 +30%, ENG-6 -74%, fi
 12. Adopted 2026-10-02 (owner approved): the worktree guard refused `env="$(node tests/tools/testSlot.mjs N)" && eval "$env"`; both lane-1 agents fell back to literal exports. Make the brief write the slot exports to a file and source it (`node tests/tools/testSlot.mjs N > <tmp>/slotN.env && . <tmp>/slotN.env && npm run ...`).
 13. Adopted 2026-10-02 (owner approved): put the Opus rates above into SKILL.md "Rates" (replacing the unreliable mixed-run figure).
 14. Declined by the owner 2026-10-02: the final step should retry a failing e2e spec once and report the load average, and the workflow template's final prompt should carry plan-specific notes (here: the Wave B promotion guard).
+15. Not yet (skill change, from B2): the worktree guard also refused sourcing the slot file (`. /tmp/p2f-slotN.env`); both lane-1 agents passed the slot values inline instead. Give `tests/tools/testSlot.mjs` a run mode, `node tests/tools/testSlot.mjs N -- npm run test:rules`, that starts the command with the slot environment itself (no shell sourcing, no command substitution), and use it in the brief.
+16. Not yet (skill change, from B2): FEA-16's agent skipped its change fragment. The brief should state that the fragment is required even for a one-line fix, and the final step should list items with no fragment instead of reconstructing them silently.
+17. Watch (from B2): SEC-8 merged after `staging` moved (FEA-16 had merged); no CI ran on the exact combined tree. The review ran the full suite on the staging head instead. CI does not run on pushes to `staging`, only on PRs.

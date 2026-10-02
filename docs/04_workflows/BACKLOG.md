@@ -70,6 +70,7 @@ Every item implicitly includes these.
 | FEA-14 | Profile: blank-location default and customers matched by email | ux | S | no | no | none |
 | FEA-15 | Link customers to logins with a userId | security/ux | M | rules | no | LIVE-1 |
 | FEA-16 | Await the typing-indicator write | ux | S | no | no | none |
+| FEA-17 | Admin action to link a customers row to a login | ux | S | no | no | FEA-15 |
 | SEC-1 | Check the recipient in `api/send-email.js` | security | S | api | no | none |
 | SEC-2 | Restrict `api/generate.js` to staff roles | security | S | api | no | none |
 | SEC-3 | Make the dev proxy safe | security | S | no | no | none |
@@ -82,6 +83,8 @@ Every item implicitly includes these.
 | SEC-10 | Restrict the browser API key to the app's domains | security | S | GCP console | owner | LIVE-3 |
 | SEC-11 | Deactivated users can still sign in (done) | security | S | no | no | none |
 | SEC-12 | Scope `typing_indicators` rules to the chat's participants | security | S | rules | no | none |
+| SEC-13 | Bind a pending registration to its own login uid | security | S | rules | no | none |
+| SEC-14 | Remove the dead `partnerId == token email` read clause on invoices and receipts | security | S | rules | no | none |
 | TST-1 | Component tests for the lead card (done) | tests | M | no | no | none |
 | TST-2 | End-to-end journeys (money, RBAC) (done) | tests | L | no | no | none |
 | TST-3 | Tests for Leads, QuotationBuilder, Customers; refresh the coverage map (done) | tests | M | no | no | none |
@@ -327,6 +330,10 @@ Source: `docs/02_modules/notifications/FINDINGS.md`. NOTIF-01 (sign-out leak) is
 - **Why (found by SEC-12, 2026-10-02):** `sendTypingIndicator` calls `setDocument` without awaiting it inside its try/catch, so a refused write (now likelier under the SEC-12 rule) becomes an unhandled promise rejection instead of being caught.
 - **Build:** await the write (or attach a catch); a component test that a rejected write does not throw.
 
+### FEA-17: Admin action to link a customers row to a login
+- **Why (found by FEA-15, 2026-10-02):** a plain Customer approval has no Register Client form, so no `customers` row gets a `userId`; rows made from leads, contact import or manual add stay unlinked and sync only by email.
+- **Build:** an Admin action on the customer record to pick the matching login and set `userId`; component test.
+
 ## Security
 
 Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file overrides another; Firestore rules combine with OR, so only a broad `allow` widens access.
@@ -382,6 +389,14 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 - **Why (found by FEA-6, 2026-10-01):** `firestore.rules` has `allow read, write: if isAuthenticated()` on `typing_indicators`, so any signed-in user can read or overwrite anyone's typing indicator. The FEA-6 channel check exists only in the app.
 - **Build:** allow a write only when the caller is the indicator's own user, and a read only to the channel's participants. Add an emulator rules test. **Live:** Wave B, goes out with the next rules deploy.
 - **Done 2026-10-02 (rules written, not deployed):** the indicator had no participants field and the app listened to the whole collection, so the rule alone would have broken the indicator. `Messages.jsx` now writes `participants: [me, contact]` and listens with `where('participants', 'array-contains', me)`. `firestore.rules`: read only if the caller's email is in `participants` (missing field denied); create and update only on `typing_indicators/<own email>` with `fromId` = caller and a two-entry `participants` including the caller; delete only your own. Tests: `tests/integration/typingIndicators.test.js` (5 rules tests), `tests/component/Messages.test.jsx` (+1 test, write shape asserted). Deploy order: deploy the app first or together with the rules; an old client's whole-collection listener is refused once the rules are live (its error handler is silent, so typing indicators just stop showing until reload). Indicator documents written before this change have no `participants` and are unreadable until their owner types again.
+
+### SEC-13: Bind a pending registration to its own login uid
+- **Why (found by FEA-15, 2026-10-02):** the uid saved on `pendingUsers` at registration is not checked by the rules, and anyone can create a `pendingUsers` record. Someone could create a request for another person's email with their own uid; if an admin approved it and completed the Business Client form, that login could read and edit the victim's `customers` row through the FEA-15 `userId` clause.
+- **Build:** require `request.resource.data.uid == request.auth.uid` (and the document id equal to the caller's email) on `pendingUsers` create; emulator tests. **Live:** rules deploy.
+
+### SEC-14: Remove the dead `partnerId == token email` read clause
+- **Why (found by SEC-8, 2026-10-02):** the `invoices` and `receipts` read rules allow `resource.data.partnerId == request.auth.token.email`, but `partnerId` holds a partner code such as `P-1`, never an email, so the clause never matches. SEC-8 now scopes Partner invoice reads through the lead; receipts have no Partner read.
+- **Build:** remove the clause (or replace it with the SEC-8 lead-based check for receipts if Partners should see them; owner call) and update the effective-access expectations.
 
 ## Tests
 
@@ -447,6 +462,8 @@ These change the live project. Nothing here has been applied. Each step needs th
 - **Post-deploy checks added 2026-10-01:** the D-MSG-05 message-history query (`participants` array-contains plus a `documentId() >= msg_<since>` range) should run without a custom composite index, but the emulator does not enforce indexes, so check it once on the real project. `claude/rules-3-4d-deploy` still has the three-database `firebase.json`; deploy with `--only firestore:rules` from a branch that has ENG-4, or note that the two extra databases are unused.
 
 - **Order with SEC-12 (added 2026-10-02):** deploy the app before or together with the rules. An old client listens to the whole `typing_indicators` collection, which the SEC-12 rule refuses; its error handler is silent, so typing indicators stop until the page reloads on the new build.
+
+- **Post-deploy checks added by SEC-8 (2026-10-02):** a partner whose `partners` document id differs from the `partnerId` on its leads is not matched; an invoice with an empty `leadId` stays hidden from its partner. Check both on the fresh data.
 
 ### LIVE-2: Separate staging and production environments (Part 1)
 - **Why:** the app has one Firebase project and one Firestore, so rules and matrix changes can only be tested on live data. Goal: a real staging environment sharing nothing with production.
