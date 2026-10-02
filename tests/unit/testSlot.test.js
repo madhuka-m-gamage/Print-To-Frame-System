@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { slotPorts, slotConfigPath, slotFirebaseConfig, slotEnv, MAX_SLOT } from '../tools/testSlot.mjs';
 
 const base = JSON.parse(readFileSync('firebase.json', 'utf8'));
@@ -40,8 +42,14 @@ describe('test slots', () => {
       VITE_EMULATOR_FIRESTORE_PORT: '8100',
       VITE_EMULATOR_AUTH_PORT: '9119',
       VITE_EMULATOR_STORAGE_PORT: '9219',
+      TMPDIR: join(tmpdir(), 'p2f-slot2'),
     });
     expect(Object.keys(slotEnv(1))).not.toContain('FIREBASE_CONFIG');
+  });
+
+  it('gives each extra slot its own temp dir, because the Storage emulator deletes a shared blob dir on stop', () => {
+    expect(slotEnv(0)).not.toHaveProperty('TMPDIR');
+    expect(slotEnv(1).TMPDIR).not.toBe(slotEnv(2).TMPDIR);
   });
 
   it('refuses slots outside 0..2 and non-integers', () => {

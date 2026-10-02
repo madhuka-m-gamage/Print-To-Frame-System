@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { initializeTestEnvironment } from '@firebase/rules-unit-testing';
-import { PROJECT_ID, PERMISSIONS_FIXTURE } from '../helpers/emulator';
+import { PROJECT_ID, PERMISSIONS_FIXTURE, firestoreEmulator } from '../helpers/emulator';
 import {
   DEPLOYED_RULES_REF,
   PROBES,
@@ -34,7 +34,7 @@ const ROLES = Object.keys(PERMISSIONS_FIXTURE);
 async function accessUnder(rules, matrix, roles) {
   const testEnv = await initializeTestEnvironment({
     projectId: PROJECT_ID,
-    firestore: { rules, host: 'localhost', port: 8080 },
+    firestore: { rules, ...firestoreEmulator() },
   });
   try {
     return await probeAccess(testEnv, matrix, roles);
