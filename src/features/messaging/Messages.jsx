@@ -7,7 +7,7 @@ import {
 import { toast } from "@/shared/utils/toast";
 import { setDocument, COLLECTIONS } from "@/services/firestoreSync";
 import { db } from "@/services/firebase";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { PageHeader, FilterBar, StatusBadge, UserAvatar } from "@/shared/ui";
 import EmailTemplateModal from "@/shared/components/EmailTemplateModal";
 import { useMessaging, getChannelId } from "./MessagingContext";
@@ -52,7 +52,12 @@ export default function Messages({ users = [], currentUser }) {
   // Typing indicators
   useEffect(() => {
     if (!currentUser) return;
-    const typingUnsub = onSnapshot(collection(db, COLLECTIONS.TYPING_INDICATORS), (snap) => {
+    const myId = String(currentUser.identifier).trim().toLowerCase();
+    const typingQuery = query(
+      collection(db, COLLECTIONS.TYPING_INDICATORS),
+      where('participants', 'array-contains', myId)
+    );
+    const typingUnsub = onSnapshot(typingQuery, (snap) => {
       const typingData = {};
       snap.forEach(d => {
         const data = d.data();
@@ -86,6 +91,7 @@ export default function Messages({ users = [], currentUser }) {
       setDocument(COLLECTIONS.TYPING_INDICATORS, myId, {
         fromId: myId,
         channelId: activeChan,
+        participants: [myId, targetId],
         isTyping,
         timestamp: Date.now()
       }, true);

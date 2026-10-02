@@ -321,8 +321,18 @@ service cloud.firestore {
     }
 
     // ── Typing Indicators ────────────────────────────────
+    // One document per user, id = the user's email. Read: only the chat's two participants
+    // (a document without participants is denied). Write: only your own, in your own chat (SEC-12).
     match /typing_indicators/{indicatorId} {
-      allow read, write: if isAuthenticated();
+      allow read: if isAuthenticated()
+        && request.auth.token.email in resource.data.get('participants', []);
+      allow create, update: if isAuthenticated()
+        && indicatorId == request.auth.token.email
+        && request.resource.data.get('fromId', '') == request.auth.token.email
+        && request.resource.data.get('participants', []) is list
+        && request.resource.data.get('participants', []).size() == 2
+        && request.auth.token.email in request.resource.data.participants;
+      allow delete: if isAuthenticated() && indicatorId == request.auth.token.email;
     }
 
     // ── Audit Log ────────────────────────────────────────
