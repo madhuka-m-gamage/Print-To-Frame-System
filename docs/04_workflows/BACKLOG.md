@@ -187,7 +187,8 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 
 ### MON-8: Round the 75 / 25 invoice split to cents
 - **Why (found by TST-3, 2026-10-01):** `QuotationBuilder.jsx` computes the Advance and Final amounts as `grandTotal * 0.75` and `* 0.25` and stores them unrounded, so a total of LKR 33,333.33 gives an Advance of 24,999.9975. A characterisation test in `tests/component/QuotationBuilder.test.jsx` and a row in the TESTING.md register lock in the current behaviour.
-- **Owner decision first:** round the Advance to cents and make the Final the remainder, so the two always add up to the total? This changes invoice amounts, so it needs the owner's go.
+- **Owner decision (2026-10-02):** round the Advance to cents and make the Final the remainder, so the two always add up to the total. Nothing stored is rewritten.
+- **Done:** `splitInvoiceAmounts` in `src/features/quotations/` (Advance = 75% half up to cents, Final = total minus Advance) used by `QuotationBuilder`, `getFinalInvoiceAmounts` (Deals completion fallback) and the Fabrication QA pass; unit test `tests/unit/splitInvoiceAmounts.test.js`, flipped QuotationBuilder test, new Deals and FabricationWorks checks. Not changed (outside this item): `invoiceTemplate.js`, `invoicePrintData.js` and `EmailTemplateModal.jsx` still derive display figures with `* 0.75` / `* 0.25`, so a printed or emailed figure can differ from the stored amount by a cent.
 - **Build:** a pure helper in `src/features/quotations/` used by QuotationBuilder, Deals completion and the Fabrication QA pass, with a unit test. Flip the characterisation test.
 
 ## Features

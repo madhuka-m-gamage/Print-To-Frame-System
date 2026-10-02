@@ -59,3 +59,10 @@ describe('calculateDealCommission', () => {
     expect(calculateDealCommission({}, { commissionRate: 53.5 })).toEqual({ commissionAmount: 0, sqFtToAdd: 0 });
   });
 });
+
+describe('getFinalInvoiceAmounts rounding (MON-8)', () => {
+  it('rounds the Advance to cents and returns the remainder as the Final', () => {
+    const res = getFinalInvoiceAmounts({ id: 'D-3', value: 33333.33 }, []);
+    expect(res).toMatchObject({ finalAmount: 8333.33, advancePaid: 25000 });
+  });
+});
