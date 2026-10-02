@@ -20,11 +20,11 @@
 | `users/{email}` | authenticated | create: Admin, or self as Customer / unapproved / Pending, or bootstrap admin as Admin; update: Admin, or self without changing `role`, `isApproved`, `status` (or bootstrap admin); delete: Admin |
 | `pendingUsers/{email}` | own doc, or Admin | create by anyone (signed-out too); update / delete Admin |
 | `partner_applications` | Admin | create by anyone; update / delete Admin |
-| `leads` | `leads` view | create: `leads` create, **or any request with `source == 'Referral'`** (no auth check); update: edit; delete Admin |
+| `leads` | `leads` view, or the referring partner (SEC-8: `partnerId` or `agentId` names a `partners` document whose `email` is the token email) | create: `leads` create, **or any request with `source == 'Referral'`** (no auth check); update: edit; delete Admin |
 | `deals` | `pipeline` view | `pipeline` create / edit; delete Admin |
 | `quotations` | **any authenticated user** | **any authenticated user** |
 | `counters` | any authenticated | any authenticated |
-| `invoices` | `invoices` view, or own (`customerId` / `partnerId` == token email) | `invoices` create / edit; delete Admin |
+| `invoices` | `invoices` view, or own (`customerId` / `partnerId` == token email), or the referring partner of the lead its `leadId` names (SEC-8) | `invoices` create / edit; delete Admin |
 | `receipts` | `receipts` view, or own | `receipts` create / edit; delete Admin |
 | `customers` | `customers` view | create / edit; delete: `customers` delete or Admin |
 | `partners` | `partners` view for a non-Partner role, or own (`ownsPartner`: doc id or `email` == token email) | create / edit for a non-Partner role; an active Partner updates its own record's profile fields only (`name, contactPerson, phone, address, company, bankName, accountNumber, accountName, branchName, photoURL, documents, updatedAt`), never `commissionRate`, `status`, `email` or balances (SEC-7); delete: `partners` delete or Admin |
@@ -59,6 +59,7 @@
 - `/pendingUsers` and `/partner_applications` may also be reviewed by roles with `agents` edit.
 - `/leads`: read with `leads` or `pipeline`; create and update check `pipeline` when the document is a deal (`isDeal`), else `leads`; delete follows `leads` delete. Invoices, receipts, projects and logistics deletes follow their own `delete` permission.
 - Done in SEC-7 (not deployed): the Partner role reaches only its own `partners` document, with field limits on what it may edit; `App.jsx` queries `where('email', '==', identifier)` for a Partner. The match is exact, so a partner `email` stored with capitals no longer matches the (lowercase) login email; the Register Partner form now saves the email lowercased.
+- Done in SEC-8 (not deployed): a Partner reads the `leads` whose `partnerId` or `agentId` is the document id of a `partners` record carrying its login email (`ownsPartnerRecord`, `isReferringPartnerOf`), and the `invoices` whose `leadId` names such a lead (a rules `get()` of the lead, since Advance invoices carry no partner field). Rules are not filters: `App.jsx` queries a Partner's leads with `where('partnerId'|'agentId', '==', <its partners doc id>)` and its invoices with one `where('leadId', '==', <lead id>)` per lead. The leads read clause calls `checkPermission` once per module (`read` already accepts `view`), since four calls plus the partner lookups passed Firestore's 1000-expression limit. Limits: a partner whose `partners` document id differs from the `partnerId` its leads carry is not matched, and an invoice whose `leadId` is empty or names no lead stays hidden from the partner.
 
 ## Storage rules (`storage.rules`, DEC-3; deployed 2026-09-27)
 
@@ -75,7 +76,7 @@ Editing `firestore.rules` and pushing to `staging` or `main` only changes the fi
 
 ## Tests
 
-`npm run test:rules` runs `tests/integration/*` against local Firestore, Auth and Storage emulators (needs Java; project id `demo-print2frame-test`). `firestoreRules.test.js` covers role-escalation prevention. `typingIndicators.test.js` (SEC-12) covers the typing indicator rules. `rulesAccess.test.js` (B4) covers permission-gated writes, owner reads, the audit log and the public forms, and records each gap listed in the observations above as a characterisation test, with `it.todo` entries for the target rules. Its SEC-7 block covers a Partner limited to its own `partners` record.
+`npm run test:rules` runs `tests/integration/*` against local Firestore, Auth and Storage emulators (needs Java; project id `demo-print2frame-test`). `firestoreRules.test.js` covers role-escalation prevention. `typingIndicators.test.js` (SEC-12) covers the typing indicator rules. `rulesAccess.test.js` (B4) covers permission-gated writes, owner reads, the audit log and the public forms, and records each gap listed in the observations above as a characterisation test, with `it.todo` entries for the target rules. Its SEC-7 block covers a Partner limited to its own `partners` record; `partnerScopedReads.test.js` (SEC-8) covers a Partner's own referred leads and their invoices.
 
 ## Open questions
 

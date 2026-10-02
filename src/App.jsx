@@ -345,6 +345,40 @@ function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, permissions]);
 
+  // SEC-8: a Partner reads only the leads naming its partners record (by document id, in
+  // partnerId or agentId) and those leads' invoices by leadId, the fields the rules check.
+  const ownPartnerDocId = currentUser?.isApproved && currentUser.role === 'Partner'
+    ? partners.find(p => p._firestoreId && p.email === currentUser.identifier)?._firestoreId || ''
+    : '';
+  useEffect(() => {
+    if (!ownPartnerDocId) return;
+    const byField = {};
+    const unsubs = ['partnerId', 'agentId'].map(field => subscribeToQuery(
+      query(collection(db, COLLECTIONS.LEADS), where(field, '==', ownPartnerDocId)),
+      (docs) => {
+        byField[field] = docs;
+        setLeads(Object.values(Object.fromEntries(Object.values(byField).flat().map(l => [l._firestoreId, l]))));
+      }
+    ));
+    return () => unsubs.forEach(unsub => unsub());
+  }, [ownPartnerDocId]);
+
+  const partnerLeadIdsKey = ownPartnerDocId
+    ? [...new Set(leads.map(l => l._firestoreId).filter(Boolean))].sort().join('|')
+    : '';
+  useEffect(() => {
+    if (!partnerLeadIdsKey) return;
+    const byLead = {};
+    const unsubs = partnerLeadIdsKey.split('|').map(leadId => subscribeToQuery(
+      query(collection(db, COLLECTIONS.INVOICES), where('leadId', '==', leadId)),
+      (docs) => {
+        byLead[leadId] = docs;
+        setInvoices(Object.values(byLead).flat());
+      }
+    ));
+    return () => unsubs.forEach(unsub => unsub());
+  }, [partnerLeadIdsKey]);
+
   // Invoices Firestore Sync Handlers
   const handleSaveInvoice = async (invoiceData) => {
     try {

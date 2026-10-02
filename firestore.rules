@@ -162,9 +162,23 @@ service cloud.firestore {
     // ── Leads (CRM) ──────────────────────────────────────
     // Deals are stored here with isDeal == true, so they are governed by the pipeline
     // permission and plain leads by the leads permission; either one may read.
+    // SEC-8: a lead names its partner by partnerId or agentId, holding the partners
+    // document id; the caller owns it when that record's email is the login email.
+    function ownsPartnerRecord(pid) {
+      return isAuthenticated() && pid is string && pid != ''
+        && exists(/databases/$(database)/documents/partners/$(pid))
+        && get(/databases/$(database)/documents/partners/$(pid)).data.get('email', '') == request.auth.token.email;
+    }
+
+    function isReferringPartnerOf(lead) {
+      return ownsPartnerRecord(lead.get('partnerId', '')) || ownsPartnerRecord(lead.get('agentId', ''));
+    }
+
     match /leads/{leadId} {
-      allow read: if checkPermission('leads', 'view') || checkPermission('leads', 'read')
-        || checkPermission('pipeline', 'view') || checkPermission('pipeline', 'read');
+      // checkPermission(m, 'read') also accepts view; one call per module keeps the
+      // partner branch under the 1000-expression limit.
+      allow read: if checkPermission('leads', 'read') || checkPermission('pipeline', 'read')
+        || isReferringPartnerOf(resource.data);
       allow create: if (request.resource.data.get('isDeal', false) == true
             ? (checkPermission('pipeline', 'create') || checkPermission('pipeline', 'write'))
             : (checkPermission('leads', 'create') || checkPermission('leads', 'write')))
@@ -218,8 +232,12 @@ service cloud.firestore {
     }
 
     // ── Invoices ─────────────────────────────────────────
+    // SEC-8: a referring partner reads an invoice through its leadId, the lead it names.
     match /invoices/{invoiceId} {
-      allow read: if checkPermission('invoices', 'view') || checkPermission('invoices', 'read') || (isAuthenticated() && resource.data.customerId == request.auth.token.email) || (isAuthenticated() && resource.data.partnerId == request.auth.token.email);
+      allow read: if checkPermission('invoices', 'view') || checkPermission('invoices', 'read') || (isAuthenticated() && resource.data.customerId == request.auth.token.email) || (isAuthenticated() && resource.data.partnerId == request.auth.token.email)
+        || (isAuthenticated() && resource.data.get('leadId', '') is string && resource.data.get('leadId', '') != ''
+          && exists(/databases/$(database)/documents/leads/$(resource.data.leadId))
+          && isReferringPartnerOf(get(/databases/$(database)/documents/leads/$(resource.data.leadId)).data));
       allow create, update: if checkPermission('invoices', 'create') || checkPermission('invoices', 'edit') || checkPermission('invoices', 'write');
       allow delete: if checkPermission('invoices', 'delete');
     }
