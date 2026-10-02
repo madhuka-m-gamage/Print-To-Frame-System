@@ -32,6 +32,8 @@ const EXPECTED_RULE_CHANGES = [
   { role: 'Partner', probe: 'partners', op: 'read', deployed: true, next: false },
   { role: 'Partner', probe: 'partners', op: 'create', deployed: true, next: false },
   { role: 'Partner', probe: 'partners', op: 'update', deployed: true, next: false },
+  // SEC-8 flips no cell here: the probe leads and invoices name no partner, so a Partner's
+  // scoped read is covered in partnerScopedReads.test.js.
 ];
 
 const ROLES = Object.keys(PERMISSIONS_FIXTURE);
