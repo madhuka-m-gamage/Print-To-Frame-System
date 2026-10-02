@@ -1,11 +1,11 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../helpers/renderWithProviders';
 import { makePartner } from '../helpers/factories';
 
 vi.mock('@/services/firestoreSync', () => ({
-  COLLECTIONS: { PARTNERS: 'partners', LEADS: 'leads', REFERRAL_CLAIMS: 'referral_claims', USERS: 'users', PARTNER_APPLICATIONS: 'partner_applications' },
+  COLLECTIONS: { PARTNERS: 'partners', LEADS: 'leads', PARTNER_PAYOUTS: 'partner_payouts', REFERRAL_CLAIMS: 'referral_claims', USERS: 'users', PARTNER_APPLICATIONS: 'partner_applications' },
   subscribeToCollection: vi.fn(() => () => {}),
   addDocument: vi.fn(async () => {}),
   updateDocument: vi.fn(async () => {}),
@@ -29,30 +29,99 @@ vi.mock('@/features/partners/PartnerQRModal', () => ({ default: () => null }));
 const { default: Partners } = await import('@/features/partners/Partners');
 const sync = await import('@/services/firestoreSync');
 const { toast } = await import('@/shared/utils/toast');
+const { logActivity } = await import('@/services/auditLog');
 
 const admin = { role: 'Admin', name: 'Admin', identifier: 'admin@example.com' };
 
 beforeEach(() => vi.clearAllMocks());
 
 describe('Partners monthly settlements', () => {
-  // Characterisation: docs/02_modules/partners/FINDINGS.md D-1 (phantom payout).
-  // "Disburse Payout" only raises a success toast: nothing is written, no
-  // payout record is created and the partner's pending balance is untouched.
-  // Flips in Phase 7 4.1, which writes a partner_payouts document and settles
-  // the leads in one batch.
-  it('shows a success toast on Disburse Payout but writes nothing', () => {
-    const partner = makePartner({ partnerId: 'P-1', name: 'Lanka Art Studio', pending: 5000 });
+  // Flipped from the phantom-payout characterisation (partners D-1, FEA-1):
+  // Disburse Payout now writes the payout, settles the leads and moves the
+  // partner's balance in one batch.
+  const partner = makePartner({ _firestoreId: 'P-1', partnerId: 'P-1', name: 'Lanka Art Studio', email: 'studio@example.com', commissionRate: 30, pending: 5000, settled: 100 });
+  const deal = { id: 'D-1', _firestoreId: 'D-1', name: 'Deal Client', partnerId: 'P-1', source: 'Referral', stage: 'Completed', isDeal: true, originalLeadId: 'L-1', value: 1000, totalSqFt: 10 };
+  const paidInvoices = [{ id: 'INV-ADV-1', leadId: 'L-1', amount: 750, status: 'Paid' }, { id: 'INV-FIN-1', leadId: 'D-1', amount: 250, status: 'Paid' }];
+
+  const renderSettlements = ({ leads = [deal], invoices = paidInvoices } = {}) => {
+    const setLeads = vi.fn();
+    const setPartners = vi.fn();
     renderWithProviders(
-      <Partners partners={[partner]} setPartners={vi.fn()} leads={[]} setLeads={vi.fn()} invoices={[]} projects={[]} users={[]} setUsers={vi.fn()} currentUser={admin} />,
+      <Partners partners={[partner]} setPartners={setPartners} leads={leads} setLeads={setLeads} invoices={invoices} projects={[]} users={[]} setUsers={vi.fn()} currentUser={admin} />,
       { role: 'Admin' }
     );
     fireEvent.click(screen.getByRole('button', { name: /Monthly Settlements/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Disburse Payout/i }));
+    return { setLeads, setPartners, button: screen.getByRole('button', { name: /Disburse Payout/i }) };
+  };
 
-    expect(toast.success).toHaveBeenCalledWith(expect.stringMatching(/settlement processed for Lanka Art Studio \(Ref: TXN-\d{6}\)/));
-    for (const fn of [sync.addDocument, sync.updateDocument, sync.setDocument, sync.deleteDocument, sync.batchWrite]) {
+  it('writes the payout, settles the lead and moves the partner balance in exactly one batch', async () => {
+    const { setLeads, setPartners, button } = renderSettlements();
+    fireEvent.click(button);
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+    expect(sync.batchWrite).toHaveBeenCalledTimes(1);
+    const ops = sync.batchWrite.mock.calls[0][0];
+    expect(ops).toHaveLength(3);
+    const [payoutOp, leadOp, partnerOp] = ops;
+    expect(payoutOp).toEqual({
+      type: 'set',
+      collection: 'partner_payouts',
+      docId: expect.any(String),
+      data: {
+        partnerId: 'P-1',
+        partnerEmail: 'studio@example.com',
+        partnerName: 'Lanka Art Studio',
+        amount: 300,
+        reference: expect.stringMatching(/^TXN-\d{6}$/),
+        leadIds: ['D-1'],
+        createdAt: expect.any(String),
+        createdBy: 'admin@example.com',
+      },
+    });
+    expect(leadOp).toEqual({ type: 'update', collection: 'leads', docId: 'D-1', data: { payoutStatus: 'Paid', payoutReference: payoutOp.data.reference } });
+    expect(partnerOp).toEqual({ type: 'update', collection: 'partners', docId: 'P-1', data: { pending: 4700, settled: 400 } });
+
+    expect(toast.success).toHaveBeenCalledWith(expect.stringContaining(payoutOp.data.reference));
+    expect(logActivity).toHaveBeenCalledWith('admin@example.com', 'Admin', 'PAYOUT_DISBURSED', 'Partners', expect.stringContaining(payoutOp.data.reference));
+    expect(setLeads).toHaveBeenCalledTimes(1);
+    expect(setPartners).toHaveBeenCalledTimes(1);
+    expect(setLeads.mock.calls[0][0]([deal])[0]).toMatchObject({ payoutStatus: 'Paid' });
+    expect(setPartners.mock.calls[0][0]([partner])[0]).toMatchObject({ pending: 4700, settled: 400 });
+    for (const fn of [sync.addDocument, sync.updateDocument, sync.setDocument, sync.deleteDocument]) {
       expect(fn).not.toHaveBeenCalled();
     }
+  });
+
+  it('writes nothing and says so when no commission is eligible', async () => {
+    const { button } = renderSettlements({ invoices: [] });
+    fireEvent.click(button);
+    await waitFor(() => expect(toast.info).toHaveBeenCalledWith(expect.stringMatching(/No eligible commission/i)));
+    expect(sync.batchWrite).not.toHaveBeenCalled();
+    expect(logActivity).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it('toasts the error and leaves local state unchanged when the batch fails', async () => {
+    sync.batchWrite.mockRejectedValueOnce(new Error('permission-denied'));
+    const { setLeads, setPartners, button } = renderSettlements();
+    fireEvent.click(button);
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(setLeads).not.toHaveBeenCalled();
+    expect(setPartners).not.toHaveBeenCalled();
+    expect(logActivity).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it('disables the button while the payout runs, so a double click writes one batch', async () => {
+    let release;
+    sync.batchWrite.mockImplementationOnce(() => new Promise((resolve) => { release = resolve; }));
+    const { button } = renderSettlements();
+    fireEvent.click(button);
+    await waitFor(() => expect(button).toBeDisabled());
+    fireEvent.click(button);
+    expect(sync.batchWrite).toHaveBeenCalledTimes(1);
+    release();
+    await waitFor(() => expect(button).not.toBeDisabled());
   });
 });
 

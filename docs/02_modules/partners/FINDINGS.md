@@ -484,7 +484,7 @@ if (r.includes('operation') || r.includes('logistics') || r.includes('fabricat')
 
 > All items in §5 are **accepted**. The following checklist tracks execution status. Mark `[x]` when a change is committed to the `review-partners` branch.
 
-- [ ] **D-1** — Implement real `handleDisbursePayout` in `Partners.jsx`: write `partner_payouts` doc, update leads `payoutStatus: 'Paid'`, update partner balances, emit `PAYOUT_DISBURSED` audit log.
+- [x] **D-1** — Implement real `handleDisbursePayout` in `Partners.jsx`: write `partner_payouts` doc, update leads `payoutStatus: 'Paid'`, update partner balances, emit `PAYOUT_DISBURSED` audit log. (FEA-1: one `batchWrite`, helper `buildPayout` in `payout.js`; the settled total is `partner.settled`. Live only after LIVE-1 deploys the rules.)
 - [x] **D-2** — Filter out `!lead.convertedToDeal` in `Partners.jsx` `getPartnerReferrals` and gate `Eligible for Payout` on `lead.isDeal` and full settlement.
 - [x] **D-3** — In `Deals.jsx:L363`, add `(Number(deal.value) / 850) * commRate` fallback when `totalSqFt <= 0`; update trigger documentation.
 - [x] **D-4** — Disable backward moves on Completed deal cards in `Deals.jsx` (`DealColumn` conditional `onMoveBack`); add `commissionAccrued: true` idempotency check.
