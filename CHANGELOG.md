@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `agent-run` tuning (owner-approved proposals from the Wave A2 review): measured Sonnet and mixed rates in `SKILL.md` and the projected peak computed from them instead of a flat 3% per agent; the agent brief and the final step name the item's own model in the commit trailer (`{{trailerModel}}`); new model-policy task type `money-small` (Sonnet·medium). Tests: unit 297 (+1, trailer per model), component 169.
+
 - Wave A2 run review (docs only): PLAN.md Run calibration rewritten with the first all-Sonnet rates (about 54k subagent tokens per 1% of the 5-hour window, about 1.7% floor per agent, small items 7–14 min); new backlog items MON-9 (printed and emailed figures still use `* 0.75`) and FEA-14 (profile location default, customers matched by email).
 
 - Invoice split rounded to cents (MON-8): new `splitInvoiceAmounts` helper makes the Advance 75% rounded half up to cents and the Final the remainder, used by the quotation builder, deal completion and the Fabrication QA pass, so the two always add up to the total (LKR 33,333.33 gives 25,000.00 and 8,333.33). Existing invoices are not rewritten. Unit 7 new (6 helper, 1 settlement), component 2 new and 1 flipped.
