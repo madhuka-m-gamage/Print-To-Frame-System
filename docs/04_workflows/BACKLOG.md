@@ -66,6 +66,7 @@ Every item implicitly includes these.
 | FEA-12 | Batch the read-receipt writes (D-MSG-02, second half) | ux | S | no | no | none |
 | FEA-13 | Profile sync: the Customer write path and clearing fields | ux | S | rules? | no | none |
 | FEA-14 | Profile: blank-location default and customers matched by email | ux | S | no | no | none |
+| FEA-15 | Link customers to logins with a userId | security/ux | M | rules | no | LIVE-1 |
 | SEC-1 | Check the recipient in `api/send-email.js` | security | S | api | no | none |
 | SEC-2 | Restrict `api/generate.js` to staff roles | security | S | api | no | none |
 | SEC-3 | Make the dev proxy safe | security | S | no | no | none |
@@ -295,6 +296,13 @@ Source: `docs/02_modules/notifications/FINDINGS.md`. NOTIF-01 (sign-out leak) is
 ### FEA-14: Profile: blank-location default and customers matched by email
 - **Why (found by FEA-13, 2026-10-02):** `UserProfile.jsx` pre-fills an empty location with "Kadawatha, Sri Lanka", so a user with no location saves that text unless they clear it; and a customer whose `customers.email` differs from their login email is not synced at all (the lookup is by email). The earlier "customer write always fails under the rules" claim was wrong: the rule allows it, it was the NIC lookup that failed (fixed in FEA-13).
 - **Build:** drop the default (keep the placeholder), and decide how to match a customer whose email differs (a `nic` or `userId` link). Component tests for both.
+- **Owner decision (2026-10-02):** this item does only the blank-location default; the userId link is FEA-15 (Wave B).
+- **Done 2026-10-02:** `UserProfile.jsx` no longer defaults an empty location to `Kadawatha, Sri Lanka` (the input keeps it as placeholder), so an empty location saves as empty. Tests: `tests/component/UserProfile.test.jsx` (no stored location shows an empty field and saves `''`; a stored location is kept). `App.jsx` line 1304 is a static sidebar label, left as is.
+
+### FEA-15: Link customers to logins with a userId
+- **Why (split from FEA-14, 2026-10-02):** `handleUpdateUser` finds the `customers` record by `email`, so a customer whose `customers.email` differs from their login email is never synced, and the rules let a client read only rows whose email or nic equals their token email.
+- **Build:** add a `userId` field on `customers` (set at approval/registration), let a client read and self-update the row where `userId` equals their uid, and look up by it in `handleUpdateUser` (email as fallback). Rules tests and a component test.
+- **Care:** changes `firestore.rules`, which goes live only with a separate `firebase deploy --only firestore:rules`; depends on LIVE-1.
 
 ## Security
 
