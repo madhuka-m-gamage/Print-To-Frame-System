@@ -12,7 +12,7 @@ No deploys, nothing to main, no live data, no console or config changes. Tests f
 
 ## Rates (seed values; PLAN.md "Run calibration" wins when it has newer ones)
 - Sonnet agent: about 54k subagent tokens per 1% of the 5-hour window (measured 2026-10-02), floor about 1.7% per agent (about 90k tokens just to start), small item 7-14 min and 1.7-2.0% of the window.
-- Opus or mixed runs: 2026-10-01 figures: about 26k tokens per 1% (derived, unreliable), floor about 3% per agent, small item 9-19 min and 4-5%, medium item 17-19 min and 6.5-8.5%. Replace with an Opus-only measurement when one exists.
+- Opus agent (medium effort): about 21.6k subagent tokens per 1% of the 5-hour window (measured 2026-10-02, run B1, 3 agents), about 2.5× Sonnet per token; small item 14-18 min and about 6%, medium item 25-30 min and about 8%. Opus at high effort is not yet measured: estimate it from these figures and mark it unmeasured.
 - Projected peak = meter now + sum over agents of (floor + item tokens / tokens-per-1%) + about 1% for orchestration. The launch check stops above 80%.
 
 ## Stage 1: Plan (in plan mode)

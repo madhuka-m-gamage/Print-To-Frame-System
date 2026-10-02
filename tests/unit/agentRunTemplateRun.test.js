@@ -35,8 +35,8 @@ describe('agent-run workflow template at run time', () => {
       prompts.push(prompt);
       return opts.label === 'Final docs' ? { prUrl: 'p', e2e: 'ok' } : merged(opts.label);
     });
-    expect(prompts[0]).toContain('testSlot.mjs 1)');
-    expect(prompts[1]).toContain('testSlot.mjs 2)');
+    expect(prompts[0]).toContain('testSlot.mjs 1 >');
+    expect(prompts[1]).toContain('testSlot.mjs 2 >');
   });
 
   it('records items after a stopped item as not-started', async () => {
@@ -68,6 +68,6 @@ describe('agent-run workflow template at run time', () => {
       if (opts.label === 'Final docs') { finalPrompt = prompt; return { prUrl: 'p', e2e: 'ok' }; }
       return merged('A');
     });
-    expect(finalPrompt).toContain('env="$(node tests/tools/testSlot.mjs 1)" && eval "$env" && npm run test:e2e');
+    expect(finalPrompt).toContain('node tests/tools/testSlot.mjs 1 > /tmp/p2f-slot1.env && . /tmp/p2f-slot1.env && npm run test:e2e');
   });
 });

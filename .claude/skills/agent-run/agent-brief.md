@@ -15,7 +15,7 @@ You are running ONE backlog item end to end in this repo: {{id}}. Model {{model}
 ## Setup
 1. `git fetch origin && git switch -c {{branch}} origin/staging --no-track`
 2. `.claude/skills/agent-run/scripts/link-deps.sh "{{mainCheckout}}"`
-3. Your test slot is {{slot}}. Shell exports do not survive between Bash calls, so prefix every rules, e2e or dev-server command with the slot exports in the same call: `env="$(node tests/tools/testSlot.mjs {{slot}})" && eval "$env" && npm run test:rules`, `env="$(node tests/tools/testSlot.mjs {{slot}})" && eval "$env" && npm run test:e2e`. The `env=` assignment keeps the slot script's exit status, so a bad slot stops the command instead of falling back to slot 0. Never run them bare: bare commands use slot 0 and collide with the other lane.
+3. Your test slot is {{slot}}. Shell exports do not survive between Bash calls, so prefix every rules, e2e or dev-server command with the slot exports in the same call: `node tests/tools/testSlot.mjs {{slot}} > /tmp/p2f-slot{{slot}}.env && . /tmp/p2f-slot{{slot}}.env && npm run test:rules`, `node tests/tools/testSlot.mjs {{slot}} > /tmp/p2f-slot{{slot}}.env && . /tmp/p2f-slot{{slot}}.env && npm run test:e2e`. Writing the exports to a file and sourcing it keeps the slot script's exit status (a bad slot stops the command instead of falling back to slot 0) and avoids command substitution, which the worktree guard refuses. Never run them bare: bare commands use slot 0 and collide with the other lane.
 
 ## Rules
 - Tests first: write them, run them, see them fail for the right reason, then make the minimal change. Comments only where the why is not obvious.
