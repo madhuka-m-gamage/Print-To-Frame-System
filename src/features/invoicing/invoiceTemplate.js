@@ -1,3 +1,5 @@
+import { splitInvoiceAmounts } from '@/features/quotations/splitInvoiceAmounts';
+
 /**
  * ============================================================
  * Print To Frame ERP — Canonical Invoice Print Template
@@ -36,8 +38,9 @@ export function buildInvoiceHtml({ invoice, customerPhone = '', deliveryLocation
   const dateStr = inv.date || new Date().toISOString().split('T')[0];
   const invoiceAmount = Number(inv.amount || 0);
   const totalContractValue = Number(inv.totalValue) || (isFinal ? (invoiceAmount > 0 ? invoiceAmount / 0.25 : 0) : (invoiceAmount > 0 ? invoiceAmount / 0.75 : 0));
-  const advanceAmount = isFinal ? totalContractValue * 0.75 : invoiceAmount;
-  const balanceAmount = isFinal ? invoiceAmount : totalContractValue * 0.25;
+  const split = splitInvoiceAmounts(totalContractValue);
+  const advanceAmount = isFinal ? split.advance : invoiceAmount;
+  const balanceAmount = isFinal ? invoiceAmount : split.final;
   const badgeText = isFinal ? '25% Final Settlement Invoice' : '75% Advance Invoice';
   const lineItemTitle = isFinal ? 'Final Settlement Payment (25%)' : 'Custom Framing Advance Payment (75%)';
 

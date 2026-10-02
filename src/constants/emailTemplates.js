@@ -1,3 +1,4 @@
+import { splitInvoiceAmounts } from '../features/quotations/splitInvoiceAmounts';
 /**
  * Email Communication Templates for Print To Frame ERP
  * Used by Administrators, Sales Reps, and Operators to dispatch onboarding credentials,
@@ -654,4 +655,10 @@ export const interpolateTemplate = (templateString, data = {}) => {
         return match;
     }
   });
+};
+
+export const buildSplitTokens = (total) => {
+  const { advance, final } = splitInvoiceAmounts(total);
+  const fmt = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 2 });
+  return { advanceAmount: fmt(advance), balanceAmount: fmt(final) };
 };

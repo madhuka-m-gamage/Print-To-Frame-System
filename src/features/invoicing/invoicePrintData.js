@@ -1,8 +1,10 @@
+import { splitInvoiceAmounts } from '@/features/quotations/splitInvoiceAmounts';
 // A saved invoice is a snapshot: once it exists, a reprint must show what was issued, not the
 // lead's current name or the newest quotation. Draft values are used only before an invoice is saved.
 export function resolveInvoiceForPrint({ realInvoice, type, formData = {}, activeQuote, draftTotal = 0 }) {
   const isFinal = type === 'Final';
-  const draftAmount = draftTotal * (isFinal ? 0.25 : 0.75);
+  const split = splitInvoiceAmounts(draftTotal);
+  const draftAmount = isFinal ? split.final : split.advance;
   const quoteItems = activeQuote?.lineItems?.length ? activeQuote.lineItems : null;
 
   return {
