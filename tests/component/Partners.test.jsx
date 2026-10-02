@@ -7,11 +7,24 @@ import { makePartner } from '../helpers/factories';
 vi.mock('@/services/firestoreSync', () => ({
   COLLECTIONS: { PARTNERS: 'partners', LEADS: 'leads', REFERRAL_CLAIMS: 'referral_claims', USERS: 'users', PARTNER_APPLICATIONS: 'partner_applications' },
   subscribeToCollection: vi.fn(() => () => {}),
+  subscribeToQuery: vi.fn(() => () => {}),
   addDocument: vi.fn(async () => {}),
   updateDocument: vi.fn(async () => {}),
   deleteDocument: vi.fn(async () => {}),
   setDocument: vi.fn(async () => {}),
   batchWrite: vi.fn(async () => {}),
+}));
+vi.mock('firebase/firestore', () => ({
+  doc: vi.fn(() => ({})),
+  getDoc: vi.fn(async () => ({ exists: () => false })),
+  setDoc: vi.fn(async () => {}),
+  onSnapshot: vi.fn((_ref, onNext) => {
+    onNext({ exists: () => true, data: () => globalThis.__TEST_PERMISSIONS__ });
+    return () => {};
+  }),
+  collection: vi.fn((_db, name) => ({ name })),
+  query: vi.fn((ref, ...constraints) => ({ ref, constraints })),
+  where: vi.fn((field, op, value) => ({ field, op, value })),
 }));
 vi.mock('@/shared/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
@@ -83,5 +96,38 @@ describe('Partners referral eligibility', () => {
   it('a Completed deal becomes payable once both invoices, under either id, are paid', () => {
     renderDeal(deal, [{ id: 'INV-ADV-1', leadId: 'L-1', amount: 750, status: 'Paid' }, { id: 'INV-FIN-1', leadId: 'D-1', amount: 250, status: 'Paid' }]);
     expect(screen.getAllByText(/Eligible for Payout/).length).toBeGreaterThan(0);
+  });
+});
+
+// SEC-7: the rules let a Partner read only its own claims and edit only its profile fields.
+describe('Partners for a signed-in Partner', () => {
+  const partnerUser = { role: 'Partner', name: 'Lanka Art Studio', identifier: 'partner@example.com', partnerId: 'P-1' };
+  const renderAsPartner = (partner) => renderWithProviders(
+    <Partners partners={[partner]} setPartners={vi.fn()} leads={[]} setLeads={vi.fn()} invoices={[]} projects={[]} users={[]} setUsers={vi.fn()} currentUser={partnerUser} />,
+    { role: 'Partner' }
+  );
+
+  it('reads referral claims with a query on its own partnerEmail, not the whole collection', () => {
+    renderAsPartner(makePartner({ partnerId: 'P-1', email: 'partner@example.com' }));
+    expect(sync.subscribeToCollection).not.toHaveBeenCalledWith('referral_claims', expect.anything());
+    expect(sync.subscribeToQuery).toHaveBeenCalledWith(
+      { ref: { name: 'referral_claims' }, constraints: [{ field: 'partnerEmail', op: '==', value: 'partner@example.com' }] },
+      expect.any(Function)
+    );
+  });
+
+  it('saves only the editable profile fields, never the commission rate or status', async () => {
+    const partner = makePartner({ partnerId: 'P-1', _firestoreId: 'P-1', email: 'partner@example.com', commissionRate: 38, status: 'Active' });
+    renderAsPartner(partner);
+    fireEvent.click(screen.getAllByRole('button', { name: /^Edit$/ })[0]);
+    expect(screen.queryByText(/Commission Rate \(LKR \/ SqFt\)/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
+
+    await vi.waitFor(() => expect(sync.updateDocument).toHaveBeenCalled());
+    const [collectionName, docId, payload] = sync.updateDocument.mock.calls[0];
+    expect(collectionName).toBe('partners');
+    expect(docId).toBe('P-1');
+    const editable = ['name', 'contactPerson', 'phone', 'address', 'company', 'bankName', 'accountNumber', 'accountName', 'branchName', 'photoURL', 'documents'];
+    expect(Object.keys(payload).filter((k) => !editable.includes(k))).toEqual([]);
   });
 });

@@ -18,7 +18,9 @@ vi.mock('@/services/firebase', () => ({
 }));
 vi.mock('firebase/firestore', () => ({
   doc: vi.fn(() => ({})),
-  collection: vi.fn(() => ({})),
+  collection: vi.fn((_db, name) => ({ name })),
+  query: vi.fn((ref, ...constraints) => ({ ref, constraints })),
+  where: vi.fn((field, op, value) => ({ field, op, value })),
   getDoc: vi.fn(async () => ({ exists: () => true, data: () => ({ identifier: 'user@example.com', name: 'User', role: authState.role, isApproved: true, status: 'Active' }) })),
   getDocs: vi.fn(async () => ({ docs: [], forEach: () => {} })),
   setDoc: vi.fn(async () => {}),
@@ -31,6 +33,7 @@ vi.mock('firebase/firestore', () => ({
 vi.mock('@/services/firestoreSync', () => ({
   COLLECTIONS: new Proxy({}, { get: (_t, key) => String(key).toLowerCase() }),
   subscribeToCollection: vi.fn(() => () => {}),
+  subscribeToQuery: vi.fn(() => () => {}),
   addDocument: vi.fn(async () => {}),
   updateDocument: vi.fn(async () => {}),
   batchWrite: vi.fn(async () => {}),
@@ -48,17 +51,18 @@ vi.mock('@/features/messaging/MessagingContext', () => ({
 }));
 
 const { default: App } = await import('@/App');
-const { subscribeToCollection } = await import('@/services/firestoreSync');
+const { subscribeToCollection, subscribeToQuery } = await import('@/services/firestoreSync');
 const { collection } = await import('firebase/firestore');
 
 const listenersFor = async (role) => {
   authState.role = role;
   subscribeToCollection.mockClear();
+  subscribeToQuery.mockClear();
   collection.mockClear();
   render(<PermissionsProvider><App /></PermissionsProvider>);
   await waitFor(() => expect(authState.callback).toBeTruthy());
   await act(async () => { await authState.callback({ email: 'user@example.com', displayName: 'User' }, 'token'); });
-  await waitFor(() => expect(subscribeToCollection).toHaveBeenCalled());
+  await waitFor(() => expect(subscribeToCollection.mock.calls.length + subscribeToQuery.mock.calls.length).toBeGreaterThan(0));
   return new Set(subscribeToCollection.mock.calls.map(([name]) => name));
 };
 
@@ -89,6 +93,17 @@ describe('App Firestore listeners follow the role permissions', () => {
     for (const name of ['customers', 'partners', 'projects', 'logistics', 'leads', 'invoices', 'receipts', 'quotations', 'partner_applications']) {
       expect(opened.has(name), name).toBe(true);
     }
+  });
+
+  // SEC-7: the rules let a Partner read only its own partners record.
+  it('gives a Partner only its own partners record, queried by its login email', async () => {
+    const opened = await listenersFor('Partner');
+    expect(opened.has('partners')).toBe(false);
+    const queries = subscribeToQuery.mock.calls.map(([q]) => q);
+    expect(queries).toContainEqual({
+      ref: { name: 'partners' },
+      constraints: [{ field: 'email', op: '==', value: 'user@example.com' }],
+    });
   });
 
   it('lists the users collection only for roles that manage users or use messaging', async () => {

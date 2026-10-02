@@ -247,9 +247,27 @@ service cloud.firestore {
     }
 
     // ── Partners & Commission Ledgers ────────────────────
+    // A Partner reaches only its own record (SEC-7): the document id or its `email` field
+    // equals the login email, compared as stored (a rule cannot lowercase a query
+    // constraint, so partner emails are saved lowercased). The Partner role's partners
+    // permission is for its own record only.
+    function ownsPartner(partnerId) {
+      return isAuthenticated()
+        && (partnerId == request.auth.token.email || resource.data.get('email', '') == request.auth.token.email);
+    }
+
     match /partners/{partnerId} {
-      allow read: if checkPermission('partners', 'view') || checkPermission('partners', 'read') || (isAuthenticated() && partnerId == request.auth.token.email);
-      allow create, update: if checkPermission('partners', 'create') || checkPermission('partners', 'edit') || checkPermission('partners', 'write');
+      allow read: if ((checkPermission('partners', 'view') || checkPermission('partners', 'read')) && !hasRole('Partner'))
+        || ownsPartner(partnerId);
+      allow create: if (checkPermission('partners', 'create') || checkPermission('partners', 'edit') || checkPermission('partners', 'write'))
+        && !hasRole('Partner');
+      // Profile fields only: never commissionRate, status, email or balances.
+      allow update: if ((checkPermission('partners', 'create') || checkPermission('partners', 'edit') || checkPermission('partners', 'write'))
+          && !hasRole('Partner'))
+        || (isActiveUser() && ownsPartner(partnerId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+               'name', 'contactPerson', 'phone', 'address', 'company', 'bankName', 'accountNumber',
+               'accountName', 'branchName', 'photoURL', 'documents', 'updatedAt']));
       allow delete: if checkPermission('partners', 'delete') || isAdmin();
     }
 

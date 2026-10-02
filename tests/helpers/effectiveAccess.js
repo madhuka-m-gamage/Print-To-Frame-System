@@ -54,9 +54,22 @@ export const PROBES = [
       delete: can('leads', 'delete'),
     }),
   },
-  ...['quotations', 'invoices', 'receipts', 'customers', 'partners', 'projects', 'logistics'].map((mod) => ({
+  ...['quotations', 'invoices', 'receipts', 'customers', 'projects', 'logistics'].map((mod) => ({
     name: mod, collection: mod, data: { name: 'Probe', customerId: OWNER, email: OWNER }, rule: gated(mod),
   })),
+  {
+    // SEC-7: the Partner role reaches only its own partners record, never this probe's.
+    name: 'partners', collection: 'partners', data: { name: 'Probe', customerId: OWNER, email: OWNER },
+    rule: ({ can, role }) => {
+      const staff = role !== 'Partner';
+      return {
+        read: staff && canRead(can, 'partners'),
+        create: staff && canWrite(can, 'partners'),
+        update: staff && canWrite(can, 'partners'),
+        delete: can('partners', 'delete'),
+      };
+    },
+  },
   {
     name: 'users', collection: 'users', targetId: 'probe-target@example.com', newId: 'probe-new@example.com',
     data: { name: 'Probe', role: 'Sales', isApproved: true, status: 'Active' },
@@ -80,7 +93,7 @@ export const PROBES = [
 // role is null for a signed-out caller.
 export function expectedAccess(matrix, role, probe, op, authed) {
   const can = authed ? permissionChecker(matrix, role) : () => false;
-  return probe.rule({ can, authed, admin: authed && role === 'Admin' })[op];
+  return probe.rule({ can, authed, role, admin: authed && role === 'Admin' })[op];
 }
 
 async function attempt(fn) {
