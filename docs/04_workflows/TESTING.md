@@ -115,6 +115,9 @@ npm run dev:emulated                                                            
 - `firebase emulators:start` does not load `firestore.rules` from `firebase.json` (firestore is declared as an array of databases), so it would run allow-all. The seed script therefore uploads `firestore.rules` to the running emulator.
 - The Storage emulator is configured in `firebase.json` (port 9199) and started by `npm run test:rules`; `dev:emulated` and Playwright start Firestore and Auth only, so uploads in the browser journeys still fail instead of reaching production.
 
+### Test slots (two suites at once)
+Slot 0 is the default and uses the ports in `firebase.json` and dev port 3000. Agent runs use slots 1 and 2 (offset 10 per slot, at most 2 on this machine): `eval "$(node tests/tools/testSlot.mjs 1)"` writes `firebase.slot1.json` (gitignored), creates a slot temp dir, and exports `P2F_*`, `VITE_EMULATOR_*_PORT` and `TMPDIR`, after which `npm run test:rules`, `npm run test:e2e` and `npm run dev:emulated` use that slot's ports. The separate `TMPDIR` matters: the Storage emulator deletes `<tmp>/firebase/storage/blobs` when it stops, so two slots sharing a tmp dir break each other's shutdown. `npm run seed:emulator` stays on slot 0.
+
 ## Node version
 `.nvmrc` pins Node 22 and CI reads it (`node-version-file`). Some test dependencies need a recent Node: `jsdom` 29 needs 20.19 or later, and crashes on older 20.x. `package.json` deliberately has no `engines` field, because Vercel picks its build runtime from it and this change is about tests only.
 
