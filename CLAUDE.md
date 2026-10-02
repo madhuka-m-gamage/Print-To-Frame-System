@@ -30,6 +30,7 @@ This repo deploys via Vercel from two branches; the user-level `staging-deploy` 
 - `staging` branch → Vercel **preview** deployment (day-to-day work happens here).
 - `main` branch → Vercel project `print-to-frame-system`. The live `portal.print2frame.xyz` still deploys the old repository `madhukagamage6/Print-To-Frame-ERP-System` until backlog item LIVE-3 moves it here.
 - Work happens on one `claude/<topic>` branch per item, merged into `staging` by PR. Promotion is a PR `staging` → `main` merged with a merge commit (never squash). Never commit directly to `main`.
+- Batched agent runs (several backlog items in parallel worktrees) use the repo skill `.claude/skills/agent-run/` (decision 0005).
 
 **Critical gotcha:** editing `firestore.rules` and pushing to `staging`/`main` only updates the *file in git* — it does **not** touch the live Firestore rules engine. Vercel deploys the SPA and `api/*.js` functions; it has no relationship to Firestore rules at all. Any change to `firestore.rules` must be separately deployed with `firebase deploy --only firestore:rules --project print-to-frame-erp` (already-authenticated as `madhukagamage6@gmail.com` in this environment). A rules edit that's merged and deployed to production but never `firebase deploy`'d will silently keep enforcing the old ruleset — this exact gap caused a live admin lockout on `portal.print2frame.xyz` (rules had been edited across several commits earlier in the session, deployed via Vercel, but never pushed to Firebase itself).
 

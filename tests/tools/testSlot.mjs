@@ -51,12 +51,13 @@ export function slotEnv(slot) {
     VITE_EMULATOR_STORAGE_PORT: String(p.storage),
     // The Storage emulator keeps blobs in <tmp>/firebase/storage/blobs and deletes that dir on
     // stop, so two slots sharing a tmp dir break each other's shutdown.
-    ...(slot === 0 ? {} : { TMPDIR: join(tmpdir(), `p2f-slot${slot}`) }),
+    ...(slot === 0 ? {} : { TMPDIR: join(tmpdir(), `p2f-slot${slot}`), P2F_VITE_CACHE_DIR: join(tmpdir(), `p2f-slot${slot}`, 'vite-cache') }),
   };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const slot = Number(process.argv[2] ?? 0);
+  if (!process.argv[2]?.trim()) throw new Error('usage: node tests/tools/testSlot.mjs <slot 0..2>');
+  const slot = Number(process.argv[2]);
   if (slot > 0) {
     const base = JSON.parse(readFileSync('firebase.json', 'utf8'));
     writeFileSync(slotConfigPath(slot), `${JSON.stringify(slotFirebaseConfig(base, slot), null, 2)}\n`);

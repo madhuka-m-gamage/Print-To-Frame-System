@@ -55,6 +55,8 @@ export default defineConfig({
     host: '127.0.0.1',
     port: 3000,
   },
+  // Agent lanes share one linked node_modules; a per-slot cache keeps their dev servers apart.
+  ...(process.env.P2F_VITE_CACHE_DIR ? { cacheDir: process.env.P2F_VITE_CACHE_DIR } : {}),
   base: './',
   build: {
     rollupOptions: {

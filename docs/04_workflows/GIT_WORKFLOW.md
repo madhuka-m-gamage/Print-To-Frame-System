@@ -25,6 +25,10 @@ The live site `portal.print2frame.xyz` still deploys `main` of the **old** repos
 3. Docs, the module's `CLAUDE.md` and `CHANGELOG.md` in the same PR. In a multi-agent run, write a change fragment instead of editing `CHANGELOG.md`, the BACKLOG status line, the TESTING map or `PLAN.md` ([changes/README.md](changes/README.md)).
 4. `gh pr create --base staging`, wait for CI, merge with `gh pr merge --merge`.
 
+## Batched agent runs
+
+Several items at once run through the `agent-run` skill ([0005](../05_decisions/0005-agent-run-skill.md)): two lanes in separate worktrees with their own test slots, change fragments instead of shared doc lines, `git merge origin/staging` to catch up (never rebase), each PR merged into `staging` on green CI, one docs PR per run that folds the fragments and records calibration.
+
 ## Promotion to `main`
 
 Only when the owner says so: `gh pr create --base main --head staging`, wait for CI, then `gh pr merge <n> --merge`. Use a **merge commit, never a squash**, so `main` stays a descendant of `staging`. Afterwards `git diff origin/main origin/staging` should be empty. Milestones are tagged on `main` (`v1.0.0` = Milestone 1). The user-level `staging-deploy` skill can run a promotion.

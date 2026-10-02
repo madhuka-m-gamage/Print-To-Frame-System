@@ -1,6 +1,6 @@
 # 0005: The `agent-run` skill for batched agent runs
 
-Status: accepted, 2026-10-02 (owner approved). Implementation plan: [AGENT_RUN_PLAN.md](../04_workflows/AGENT_RUN_PLAN.md).
+Status: accepted, 2026-10-02 (owner approved); implemented by PR #97 (prerequisites) and the agent-run skill PR. Implementation plan: [AGENT_RUN_PLAN.md](../04_workflows/AGENT_RUN_PLAN.md).
 
 ## Context
 
