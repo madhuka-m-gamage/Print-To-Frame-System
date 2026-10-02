@@ -23,5 +23,5 @@ Table per item: est. min, actual min, est. %, actual %. Flag > 30% off with one 
 - Skill or model policy: a "proposed skill changes" list for the owner; never edit the skill or policy without approval.
 
 ## 5. Ship and report
-- Commit the calibration and BACKLOG items to the final step's open docs PR branch, wait for CI, `gh pr merge <n> --merge`.
+- `git fetch origin`, check out the final step's open docs PR branch in a clean worktree, commit the calibration and BACKLOG items, wait for CI, `gh pr merge <n> --merge`. If the workflow returned `final: null` (nothing merged), branch `claude/run-review-<date>` from `origin/staging` and open a docs PR for the review yourself.
 - Chat report: the comparison table, top 3 tuning changes, new BACKLOG items, proposed skill and policy changes, promotion recommendation (owner decides).

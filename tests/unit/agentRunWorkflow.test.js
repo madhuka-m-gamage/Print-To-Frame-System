@@ -11,6 +11,16 @@ describe('agent-run workflow template', () => {
     expect(() => checkWorkflow('export const meta = { name: "x", description: "y" }\nconst a = ;')).toThrow();
   });
 
+  it('runs every slot command in the same shell call as the slot exports', () => {
+    const brief = readFileSync('.claude/skills/agent-run/agent-brief.md', 'utf8');
+    expect(brief).toContain('eval "$(node tests/tools/testSlot.mjs {{slot}})" && npm run test:rules');
+    expect(brief).toContain('eval "$(node tests/tools/testSlot.mjs {{slot}})" && npm run test:e2e');
+  });
+
+  it('falls back to Sonnet low for the final step when args.final is missing', () => {
+    expect(readFileSync('.claude/skills/agent-run/workflow-template.js', 'utf8')).toContain("const finalStep = args.final || { model: 'sonnet', effort: 'low' }");
+  });
+
   it('every {{placeholder}} in the brief is one the template fills', () => {
     const brief = readFileSync('.claude/skills/agent-run/agent-brief.md', 'utf8');
     const used = new Set([...brief.matchAll(/\{\{(\w+)\}\}/g)].map((m) => m[1]));

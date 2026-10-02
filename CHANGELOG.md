@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `agent-run` skill (`.claude/skills/agent-run/`, decision 0005): plans a batch of backlog items with an 18-section template and per-row model and effort confirmation, runs them as two worktree lanes with their own test slots and change fragments, and reviews estimates against actuals into PLAN.md's Run calibration. A skill-reviewer pass found two bugs, fixed with tests: slot exports were lost between shell calls, and a missing final-step model crashed the run's last step. Tests: unit 280 (+12), API 80, component 156, rules 62 (+1 skipped, 2 todo).
+
 - Agent-run prerequisites: change fragments (`docs/04_workflows/changes/`) for multi-agent runs; emulator and dev-server ports from the environment with today's defaults (`src/services/emulatorPorts.js`, `tests/tools/testSlot.mjs`, offset 10, at most 2 slots, a separate `TMPDIR` per slot) so two lanes can run rules and e2e at once; `link-deps.sh` shares `node_modules` across worktrees when lockfiles match. Slot 0, CI and `npm run dev` unchanged. Tests: unit 268 (+9), API 80, component 156, rules 62 (+1 skipped, 2 todo), e2e 10.
 
 - Decision 0005 (accepted, docs only): spec for the `agent-run` repo skill (plan, run and review batched agent runs) and its prerequisite PR (change fragments, per-slot test ports, shared `node_modules`), with the implementation plan in `docs/04_workflows/AGENT_RUN_PLAN.md`.
