@@ -21,6 +21,7 @@ One item per fresh session: branch `claude/<topic>` from `staging` → tests fir
 - [ ] **Wave A2, follow-ups found during Wave A (repo only):** ~~MON-8~~, ~~FEA-12~~, ~~FEA-13~~, ~~ENG-7~~
 - [x] **Wave A3, follow-ups found in Wave A2 (repo only):** ~~MON-9~~, ~~FEA-14~~
 - [ ] **Wave A4, follow-up found in Wave A3 (repo only):** MON-10 (owner decision first)
+- **Wave B promotion guard:** SEC-12, SEC-7 and FEA-1 (and every later Wave B item) change or rely on `firestore.rules` that are not deployed. Do not promote `staging` to `main` before the LIVE-1 rules deploy, and deploy the app before or together with the rules: an old client's whole-collection `typing_indicators` listener is refused by the SEC-12 rule, and the FEA-1 payout batch is refused by the deployed rules until they are updated.
 - [ ] **Wave B, code + rules built and tested here, live with the next rules deploy:** MON-4, MON-5, MON-7, ~~FEA-1~~, FEA-2, FEA-4, FEA-5, FEA-7, FEA-9, FEA-10, SEC-6, ~~SEC-7~~, SEC-8, ~~SEC-12~~
 - [x] **Wave C, before restrictive rules go live:** ~~TST-2~~ (money and RBAC browser journeys)
 - [ ] **Wave D, environment and go-live (owner sittings):** LIVE-2 fresh environment (seed `DEFAULT_PERMISSIONS`, deploy Firestore + Storage rules), LIVE-3 move production here and archive the old repos, LIVE-1, LIVE-4, SEC-4, SEC-5, SEC-10, TST-4
@@ -39,42 +40,47 @@ One item per fresh session: branch `claude/<topic>` from `staging` → tests fir
 | Wave C | `[##########]` 1/1 | TST-2 done |
 
 ## Run calibration (overwritten after each agent run)
-Last run: 2026-10-02, Wave A3 (MON-9, FEA-14 + final docs), 3 agents, all Sonnet, 287k subagent tokens, 9.7 min from launch to the docs PR (estimate 14, 25 with the review). Run ID `wf_fb2b7124-155`. Meter 94% → 100% (estimate +7%; the reading is capped at 100, so the true use is unknown, 5.3% by token share); weekly 24% → 25%. The launch was above the skill's 80% rule on the owner's override; the run did not pause. The final docs PR (#108) was merged before this review, so the calibration came in a separate PR.
+Last run: 2026-10-02, Wave B run B1 (SEC-12, SEC-7, FEA-1 on Opus·medium; ENG-6 on Sonnet·low; final docs on Sonnet·medium), the **first Opus measurement**. 5 agents, 669k subagent tokens (Opus 471k, Sonnet 198k), 50.5 min from launch to the docs PR (estimate 32). Run ID `wf_afe59f7b-6c7`. Meter **2% → 29%** in one window (estimate 19-26% + 1%); weekly 31% → 34%. The machine's load average reached about 30 on 4 CPUs during the run, which slowed the e2e runs.
 
-| Item | Model·effort | Est. min | Actual min | Est. % | Actual % (token share) | Fix rounds / catch-ups | Pick outcome |
+| Item | Model·effort | Est. min | Actual min | Est. % | Actual % | Fix rounds / catch-ups | Pick outcome |
 |---|---|---|---|---|---|---|---|
-| MON-9 | Sonnet·low (owner override of Sonnet·medium) | 12 | 8.1 | 2.0-2.4 | ~1.9 | 0 / 0 | sufficient |
-| FEA-14 | Sonnet·medium | 10 | 7.3 | 2.0 | ~1.9 | 0 / 0 | sufficient |
-| Final docs | Sonnet·low | 2 | 1.6 | 1.7 | ~1.6 | n/a | sufficient |
-| **Run (to docs PR)** | | **14** | **9.7** | **~6** | **5.3** (tokens) | | |
+| SEC-12 | Opus·medium (owner override of Opus·high) | 10 | 16.5 | 3-5 | ~6.0 | 0 / 0 | sufficient: found that indicator documents had no participants field and fixed the app side too |
+| SEC-7 | Opus·medium (owner override of Opus·high) | 20 | 27.9 | 5-8 | ~8.3 | 0 / 1 | sufficient: found the Register Partner form stored mixed-case emails; extended the editable fields with `company`, `updatedAt` |
+| FEA-1 | Opus·medium | 20 | 26.1 | 5-8 | ~7.5 | 0 / 1 | sufficient (diff read by me: eligible-only, cents, one batch, no local change on failure) |
+| ENG-6 | Sonnet·low | 8 | 2.1 | 1.7 | ~1.7 | 0 / 0 | sufficient |
+| Final docs | Sonnet·medium (owner override of low) | 2 | 5.8 | 1.6 | ~1.9 | n/a | sufficient; 1 e2e timeout under load, rerun clean; did not record the promotion guard (not in its prompt) |
+| **Run (to docs PR)** | | **32 (26-42)** | **50.5** | **19-26** | **27** (meter, incl. ~1.5 orchestration) | | |
 
-Flagged (more than 30% off): MON-9 time (-33%) and the run total (-31%). One cause: **estimate model**. I sized the items from the Wave A2 averages; two small Sonnet items in parallel took about 8 min each. Nothing was slower or costlier than estimated.
+Flagged (more than 30% off): SEC-12 +65%, SEC-7 +40%, FEA-1 +30%, ENG-6 -74%, final docs +190%, run +58%. Causes: **estimate model** (Opus minutes were taken from the mixed run and are too low; Opus items ran 16-28 min) and **environment** (load average about 30: the final step's e2e timed out once, and my own first rerun failed 2 tests in 9.5 min; a rerun on a quiet machine passed 10/10 in 1.1 min). Usage landed just above the top of the range.
 
-**Rolling rates (3 runs)**
-| Rate | 2026-10-01 (mixed) | 2026-10-02 A2 (Sonnet) | 2026-10-02 A3 (Sonnet) | Use next |
+**Opus rates (first measurement, 3 agents at medium effort):** the meter moved 27%; Sonnet agents account for about 3.7% (198k / 54k) and orchestration about 1.5%, leaving about 21.8% for 471k Opus tokens: **about 21.6k Opus subagent tokens per 1% of the 5-hour window** (Sonnet: 54k, so Opus costs about 2.5× per token). S item about 16 min and 6%; M item about 26-28 min and 7.5-8.5%. Opus tool calls: 33 (S), 62-70 (M).
+
+**Rolling rates (last 3 runs)**
+| Rate | A2 (Sonnet) | A3 (Sonnet) | B1 (Opus + Sonnet) | Use next |
 |---|---|---|---|---|
-| Minutes, small item | 9-19 | 7-14 | **7-8** | Sonnet S: 7-14 (7-8 when the file list is exact and the test plan names the files) |
-| Minutes, final docs | 1.4 | 2.0 | 1.6 | 2 |
-| Minutes, CI round | 3-4 | 3-4 | 3-4 (PR create to merge 3-4) | 3-4; up to 5 with e2e |
-| Minutes, catch-up | 5-7 | about 4 | none needed | 4-7 |
-| Subagent tokens per small item | n/a | 91-109k | **100-102k** (20-23 tool calls) | 100k |
-| Floor (final docs, 10 tool calls) | about 75k | 91k | 84k | about 85k = 1.6% |
-| Subagent tokens per 1% of the window | about 26k (derived) | about 54k (measured) | not measurable (meter capped at 100%) | 54k |
+| Sonnet tokens per 1% | about 54k | not measurable (cap) | consistent with 54k | 54k |
+| **Opus tokens per 1%** | n/a | n/a | **about 21.6k** | 21.6k (one run, medium effort) |
+| Sonnet small item | 7-14 min, ~1.9% | 7-8 min, ~1.9% | docs 2 min, 1.7% | 7-14 min, 1.9% |
+| **Opus S item (medium)** | n/a | n/a | **16.5 min, ~6%** | 14-18 min, 6% |
+| **Opus M item (medium)** | n/a | n/a | **26-28 min, 7.5-8.5%** | 25-30 min, 8% |
+| Final docs | 2.0 min | 1.6 min | 5.8 min (e2e retry) | 2-6 min, 1.9% |
+| CI round (PR to merge) | 3-4 | 3-4 | 3-11 (e2e now in CI) | 4-6 |
+| Catch-up | about 4 | none | 2 (both clean merges) | 4-7 |
 | Concurrency | 2 | 2 | 2 | 2 |
 
-**Model overrides:** the owner changed 1 of 3 picks (MON-9 Sonnet·medium → Sonnet·low) and answered the open decision for FEA-14 (userId link deferred, FEA-15). Across Wave A2 and A3 the owner moved 3 of 8 picks, all downwards.
-**Cost of effort level:** Sonnet·low (MON-9: 101.8k tokens, 8.1 min) and Sonnet·medium (FEA-14: 100.5k tokens, 7.3 min) cost the same within noise on these small items. The cards' option costs (2.0% vs 2.4%) overstated the difference.
+**Model overrides:** the owner changed 3 of 5 picks (SEC-12 and SEC-7 Opus·high → Opus·medium; final docs Sonnet·low → Sonnet·medium). All three Opus·medium security and money items were sufficient with 0 fix rounds.
+**Same-file lane (test goal 2):** SEC-12 and SEC-7 both edited `firestore.rules` in order; SEC-7 started from the merged SEC-12 and had one clean catch-up (for FEA-1 and ENG-6). No conflicts.
 
 **Tuning (adopted = in effect now; not yet = needs the owner or the skill)**
-1. Adopted: Sonnet rates above for all-Sonnet runs; the mixed run for any run with Opus until an Opus-only run exists.
-2. Adopted: wall-clock for lanes of small Sonnet items is about (longest lane) + 2 (final) + 10 (review); two items in parallel ran 8 + 2 min.
-3. Adopted 2026-10-02: projected peak computed from the measured rates (SKILL.md "Rates").
-4. Adopted 2026-10-02: the commit trailer follows the item's model (`{{trailerModel}}`).
-5. Not yet: `coverage:all` writes separate unit/API and component reports; merging them is optional, not scheduled.
-6. Adopted 2026-10-02 (owner approved): `money-small` defaults to Sonnet·medium. Evidence now 2 runs of Sonnet·low with 0 fix rounds, but low and medium cost the same, so medium stays as free insurance.
-7. Process: `coverage` and the e2e CI job run for code PRs into `staging` (ENG-7); the final docs step still runs e2e locally on slot 1.
-8. Not yet (skill change, needs approval): card option costs for Sonnet·low and Sonnet·medium should be equal (about 1.9% each for a small item) until a larger item shows a difference; keep the risk text.
-9. Not yet (skill change): `review-checklist.md` step 5 assumes the final docs PR is still open. It was merged before the review this time. Add: if it is merged, open a new review PR into `staging`; or make the final step leave a marker so a merge is not mistaken for approval of the review.
-10. Not yet (skill change): the usage guard needs a mid-run meter reading. The plan said I would read the meter when the first item merges, but the workflow only reports at the end, so I could not. The reading at the end is capped at 100%. Options: poll the meter with a Monitor during the run, or add a meter check between lane items.
-11. Watch (no change yet): both items merged with a green CI while `origin/staging` had moved, with no catch-up merge and no problem; the brief's "catch up if staging moved" rule is stricter than needed when GitHub reports no conflict.
-12. Watch: the MON-9 agent reported that shell heredocs were blocked in its worktree; it used another way to write files. No cost measured.
+1. Adopted: Sonnet rates for all-Sonnet runs; for Opus use the B1 Opus figures above.
+2. Adopted: wall-clock = longest lane + 2-6 (final) + 10 (review).
+3-4, 6. Adopted 2026-10-02: peak from measured rates; per-model trailer; `money-small` = Sonnet·medium.
+5. Not yet: merge the `coverage:all` reports (optional).
+7. Process: e2e runs in CI for code PRs into `staging` (ENG-7); CI rounds are now 3-11 min.
+8. Not yet (skill change): equal Sonnet·low and Sonnet·medium option costs in the cards.
+9. Not yet (skill change): review fallback when the final docs PR is already merged.
+10. Not yet (skill change): a mid-run meter reading for the usage guard.
+11. Watch: catch-up when `staging` moved but GitHub shows no conflict.
+12. Not yet (skill change, from B1): the worktree guard refused `env="$(node tests/tools/testSlot.mjs N)" && eval "$env"`; both lane-1 agents fell back to literal exports. Make the brief write the slot exports to a file and source it (`node tests/tools/testSlot.mjs N > <tmp>/slotN.env && . <tmp>/slotN.env && npm run ...`).
+13. Not yet (skill change, from B1): put the Opus rates above into SKILL.md "Rates" (replacing the unreliable mixed-run figure).
+14. Not yet (skill change, from B1): the final step should retry a failing e2e spec once and report the load average, and the workflow template's final prompt should carry plan-specific notes (here: the Wave B promotion guard).

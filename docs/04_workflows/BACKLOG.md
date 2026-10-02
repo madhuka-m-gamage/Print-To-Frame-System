@@ -53,6 +53,7 @@ Every item implicitly includes these.
 | MON-8 | Round the 75 / 25 invoice split to cents | money | S | no | **yes** | none |
 | MON-9 | Printed and emailed Advance / Final figures use the rounded split | money | S | no | no | MON-8 |
 | MON-10 | Per-line invoice rows sum to the rounded Advance | money | S | no | **yes** | MON-9 |
+| MON-11 | Server-side guard against a double partner payout | money | M | rules | no | MON-4 |
 | FEA-1 | Real partner payout (step 4.1) | feature | M | rules | no | LIVE-1 (to work live) |
 | FEA-2 | Persistent notifications and claim resolution (step 4.3) | feature | L | rules | no | none |
 | FEA-3 | Fabrication board statuses: Cancelled, On Hold, Archived, Other (done) | feature | M | no | DEC-4 | none |
@@ -68,6 +69,7 @@ Every item implicitly includes these.
 | FEA-13 | Profile sync: the Customer write path and clearing fields | ux | S | rules? | no | none |
 | FEA-14 | Profile: blank-location default and customers matched by email | ux | S | no | no | none |
 | FEA-15 | Link customers to logins with a userId | security/ux | M | rules | no | LIVE-1 |
+| FEA-16 | Await the typing-indicator write | ux | S | no | no | none |
 | SEC-1 | Check the recipient in `api/send-email.js` | security | S | api | no | none |
 | SEC-2 | Restrict `api/generate.js` to staff roles | security | S | api | no | none |
 | SEC-3 | Make the dev proxy safe | security | S | no | no | none |
@@ -205,6 +207,10 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 - **Owner decision first:** show each line at full value with the 75% / 25% only in the totals, or spread the rounding across the lines so they sum to the total? The first is simpler and cannot drift; the second keeps today's layout.
 - **Build:** after the decision, change the row calculation and flip the pinning test.
 
+### MON-11: Server-side guard against a double partner payout
+- **Why (found in the B1 review, 2026-10-02):** `handleDisbursePayout` in `src/features/partners/Partners.jsx` (FEA-1) picks the eligible referrals and computes the partner's new `pending` and `settled` from the screen's copy. Two admins paying out the same partner at the same moment can both pay the same referrals and both reduce `pending`. Same class as MON-4.
+- **Build:** a deterministic guard document per lead payout (or a transaction that re-reads each lead's `payoutStatus` and the partner balances) in the same write, with an emulator test that a second payout of the same referrals is refused. **Live:** rules deploy.
+
 ## Features
 
 ### FEA-1: Real partner payout (step 4.1, partners D-1)
@@ -313,6 +319,10 @@ Source: `docs/02_modules/notifications/FINDINGS.md`. NOTIF-01 (sign-out leak) is
 - **Why (split from FEA-14, 2026-10-02):** `handleUpdateUser` finds the `customers` record by `email`, so a customer whose `customers.email` differs from their login email is never synced, and the rules let a client read only rows whose email or nic equals their token email.
 - **Build:** add a `userId` field on `customers` (set at approval/registration), let a client read and self-update the row where `userId` equals their uid, and look up by it in `handleUpdateUser` (email as fallback). Rules tests and a component test.
 - **Care:** changes `firestore.rules`, which goes live only with a separate `firebase deploy --only firestore:rules`; depends on LIVE-1.
+
+### FEA-16: Await the typing-indicator write
+- **Why (found by SEC-12, 2026-10-02):** `sendTypingIndicator` calls `setDocument` without awaiting it inside its try/catch, so a refused write (now likelier under the SEC-12 rule) becomes an unhandled promise rejection instead of being caught.
+- **Build:** await the write (or attach a catch); a component test that a rejected write does not throw.
 
 ## Security
 
@@ -431,6 +441,8 @@ These change the live project. Nothing here has been applied. Each step needs th
 - **Owner actions:** a backup of the matrix, a smoke test on the preview, the go for each step, and the Vercel reconnect. Until this is done, the live site keeps working as it is, but the security fixes on `staging` (send-email hardening, stricter rules) do not take effect.
 
 - **Post-deploy checks added 2026-10-01:** the D-MSG-05 message-history query (`participants` array-contains plus a `documentId() >= msg_<since>` range) should run without a custom composite index, but the emulator does not enforce indexes, so check it once on the real project. `claude/rules-3-4d-deploy` still has the three-database `firebase.json`; deploy with `--only firestore:rules` from a branch that has ENG-4, or note that the two extra databases are unused.
+
+- **Order with SEC-12 (added 2026-10-02):** deploy the app before or together with the rules. An old client listens to the whole `typing_indicators` collection, which the SEC-12 rule refuses; its error handler is silent, so typing indicators stop until the page reloads on the new build.
 
 ### LIVE-2: Separate staging and production environments (Part 1)
 - **Why:** the app has one Firebase project and one Firestore, so rules and matrix changes can only be tested on live data. Goal: a real staging environment sharing nothing with production.
