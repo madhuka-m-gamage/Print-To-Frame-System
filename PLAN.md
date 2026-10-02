@@ -67,8 +67,8 @@ Flagged (more than 30% off, all one cause: **estimate model**, the rates came fr
 **Tuning (adopted = in effect now; not yet = needs the owner or the skill)**
 1. Adopted: use the Sonnet rates above for all-Sonnet runs; use the mixed run for any run with Opus until an Opus-only run exists.
 2. Adopted: wall-clock for lanes of small Sonnet items is about (sum of item minutes) / 2 + 2 (final) + 10 (review).
-3. Not yet (skill change, needs approval): the 80% projected-peak rule uses a flat 3% per agent; with measured rates the same run is about 10%. Compute the projected peak from the rates table, and add the Sonnet and mixed rates to the skill's SKILL.md so the first plan of a run is not calibrated from PLAN.md alone.
-4. Not yet (skill change): the agent brief hardcodes the commit trailer; this run overrode it in `args.brief` to match the model. Make the trailer `{{trailerModel}}` in `agent-brief.md`.
+3. Adopted 2026-10-02 (owner approved; rates are now in SKILL.md and the peak is computed from them): the 80% projected-peak rule uses a flat 3% per agent; with measured rates the same run is about 10%. Compute the projected peak from the rates table, and add the Sonnet and mixed rates to the skill's SKILL.md so the first plan of a run is not calibrated from PLAN.md alone.
+4. Adopted 2026-10-02 (the brief takes the model from the item): the agent brief hardcoded the commit trailer; this run overrode it in `args.brief` to match the model. Make the trailer `{{trailerModel}}` in `agent-brief.md`.
 5. Not yet: `coverage:all` writes separate unit/API and component reports (13.54% and 43.33% statements); merging them is optional, not scheduled.
-6. Not yet (policy, needs approval): money-path helpers of this size ran correctly on Sonnet·low; consider Sonnet·medium as the money default for S items, keeping Opus for money items with several decisions. Wait for a second data point.
+6. Adopted 2026-10-02 (owner approved, one data point): new task type `money-small` defaults to Sonnet·medium; `money` with several decisions or new rules stays Opus·high.
 7. Process: `coverage` runs and the e2e CI job now run for code PRs into `staging`; PRs that only touch docs skip them. The final docs step still runs e2e locally on slot 1 before the review.

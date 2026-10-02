@@ -10,9 +10,14 @@ Three stages. Never skip the approval between Plan and Run.
 ## Hard rules (every run)
 No deploys, nothing to main, no live data, no console or config changes. Tests first and seen failing. CI green to merge. e2e coverage never weakened. Merge staging in, never rebase or force-push. One owner per PR (agents switch Auto-fix off on their own PRs; the orchestrator never pushes to a branch whose agent is running). Skill and model-policy changes only with the owner's approval. At most 2 lanes on this machine.
 
+## Rates (seed values; PLAN.md "Run calibration" wins when it has newer ones)
+- Sonnet agent: about 54k subagent tokens per 1% of the 5-hour window (measured 2026-10-02), floor about 1.7% per agent (about 90k tokens just to start), small item 7-14 min and 1.7-2.0% of the window.
+- Opus or mixed runs: 2026-10-01 figures: about 26k tokens per 1% (derived, unreliable), floor about 3% per agent, small item 9-19 min and 4-5%, medium item 17-19 min and 6.5-8.5%. Replace with an Opus-only measurement when one exists.
+- Projected peak = meter now + sum over agents of (floor + item tokens / tokens-per-1%) + about 1% for orchestration. The launch check stops above 80%.
+
 ## Stage 1: Plan (in plan mode)
 1. `git fetch origin`. Read PLAN.md (roadmap, "Run calibration", carry-overs), each item's BACKLOG section and dependencies, TESTING.md "Planning a change" for each item, `gh pr list`, `gh run list --branch staging --limit 1`, `git log origin/main..origin/staging`, `java -version`, and the meter (`mcp__ccd_session_mgmt__get_usage`).
-2. Classify each item with `model-policy.md`; estimate minutes per item from the calibration rates; write `<scratchpad>/items.json` (`id, minutes, files, deps`; `files` and `deps` always arrays, `[]` when empty) and run `node .claude/skills/agent-run/scripts/lanes.mjs <scratchpad>/items.json`.
+2. Classify each item with `model-policy.md`; estimate minutes and window % per item from the rates above; write `<scratchpad>/items.json` (`id, minutes, files, deps`; `files` and `deps` always arrays, `[]` when empty) and run `node .claude/skills/agent-run/scripts/lanes.mjs <scratchpad>/items.json`.
 3. Fill every section of `plan-template.md` into the plan file.
 4. Confirm model and effort for every row with AskUserQuestion: one question per row, options Opus·high, Opus·medium, Sonnet·medium, Sonnet·low, the pick first with "(Recommended)". Up to 4 rows per call, plus the final-docs row. Recompute sections 12–15 with the answers; if any item's minutes change, re-run `lanes.mjs` and update section 6.
 5. ExitPlanMode.

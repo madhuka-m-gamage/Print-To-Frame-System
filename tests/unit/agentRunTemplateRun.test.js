@@ -17,6 +17,18 @@ const it2 = (id, extra = {}) => ({ id, branch: `claude/${id.toLowerCase()}`, mod
 const merged = (id) => ({ item: id, status: 'merged', merged: true, summary: 'ok', prUrl: `https://x/${id}` });
 
 describe('agent-run workflow template at run time', () => {
+  it('names the item\'s own model in the commit trailer, not a fixed one', async () => {
+    const prompts = {};
+    await runTemplate({ lanes: [[it2('A', { model: 'opus' })], [it2('B', { model: 'sonnet' })]], final: { model: 'sonnet', effort: 'low' } }, async (prompt, opts) => {
+      prompts[opts.label] = prompt;
+      return opts.label === 'Final docs' ? { prUrl: 'p', e2e: 'ok' } : merged(opts.label);
+    });
+    expect(prompts.A).toContain('Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>');
+    expect(prompts.A).not.toContain('Claude Sonnet 5.5');
+    expect(prompts.B).toContain('Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>');
+    expect(prompts['Final docs']).toContain('Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>');
+  });
+
   it('takes each item slot from its lane, whatever args say', async () => {
     const prompts = [];
     await runTemplate({ lanes: [[it2('A', { slot: 7 })], [it2('B')]] }, async (prompt, opts) => {
