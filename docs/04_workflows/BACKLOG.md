@@ -381,6 +381,7 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 ### ENG-7: Coverage and CI gaps
 - **Why (found by TST-3 and the Wave A run review, 2026-10-01):** `npm run coverage` counts unit and API tests only (13.41% statements), not the component layer (41.9% measured with a one-off command, documented in TESTING.md). CI skips the e2e job on PRs into `staging`, so e2e first runs in CI on the promotion PR to `main`. None of the 8 PRs in the 2026-10-01 run had e2e in CI.
 - **Build:** a `coverage:all` script that includes the component config, and run the e2e job on PRs into `staging` when `src/`, `tests/e2e/` or `tests/fixtures/` change (the `changes` job already filters paths).
+- **Done (ENG-7 PR):** `npm run coverage:all` (unit and API 13.54%, component 43.33% statements, reported separately) and the e2e job now runs for PRs into `staging` and `main`.
 
 ## Live rollout and environments
 
