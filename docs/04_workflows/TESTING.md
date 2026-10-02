@@ -10,7 +10,7 @@ Five layers, each with one job. Pick the cheapest layer that can prove the behav
 | Integration / rules | `tests/integration/` | Firebase emulator | `npm run test:rules` | live |
 | End to end | `tests/e2e/` | Playwright + emulator | `npm run test:e2e` | live |
 
-Coverage: `npm run coverage` (text, html, lcov in `coverage/`). There is no threshold; it is a report, not a gate.
+Coverage: `npm run coverage` (unit and API only; text, html, lcov in `coverage/`), `npm run coverage:all` (adds the component layer; reports in `coverage/unit-api` and `coverage/component`, not merged). There is no threshold; it is a report, not a gate.
 
 ## Planning a change (read this before writing an implementation plan)
 Every plan should answer these, and name the tests it will add or change:
@@ -96,7 +96,7 @@ it('lets Sales create an invoice but not delete one', async () => {
 `.github/workflows/test.yml` runs on pull requests to `staging` and `main` (not on pushes to `staging`, which the pull request already covered) and on manual dispatch. A `changes` job skips the three jobs below for a pull request that only touches `docs/` or `*.md` files; skipped jobs still report, so they can be required checks later.
 - `lint-unit`: `npm run lint`, `npm run coverage` (unit and API, coverage uploaded as an artifact), `npm run test:api`, `npm run test:component`, `npm run build`.
 - `rules`: Java 21 and `firebase-tools`, then `npm run test:rules` against the emulator with the fake `demo-print2frame-test` project.
-- `e2e`: Playwright against the emulators, for pull requests to `main` and manual dispatch only, so a flaky browser run never blocks staging work.
+- `e2e`: Playwright against the emulators, for pull requests to `staging` or `main` that change code (the `changes` job skips docs-only PRs) and manual dispatch (ENG-7).
 
 No job uses secrets. Do not add `FIREBASE_SERVICE_ACCOUNT_JSON` or `GEMINI_API_KEY` to the workflow: tests must never reach real Firebase, Gemini or SMTP.
 

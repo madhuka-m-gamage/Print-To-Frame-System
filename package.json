@@ -16,6 +16,7 @@
     "preview": "vite preview --port 3000",
     "test": "vitest run tests/unit",
     "coverage": "vitest run tests/unit tests/api --coverage",
+    "coverage:all": "vitest run tests/unit tests/api --coverage --coverage.reportsDirectory=coverage/unit-api && vitest run -c vitest.component.config.js --coverage --coverage.include='src/**' --coverage.reportsDirectory=coverage/component",
     "test:watch": "vitest tests/unit",
     "seed:emulator": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 GCLOUD_PROJECT=demo-print2frame-test node tests/fixtures/seed.mjs",
     "test:api": "vitest run tests/api",

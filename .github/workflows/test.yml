@@ -87,11 +87,11 @@ jobs:
       - run: npm ci
       - run: npm run test:rules
 
-  # Browser journeys are the slowest, flakiest layer, so they gate PRs to main only
-  # (and can be run by hand) and never block day-to-day staging work.
+  # Browser journeys are the slowest layer; they run on PRs to staging and main (code changes only)
+  # and can be run by hand.
   e2e:
     needs: changes
-    if: needs.changes.outputs.code == 'true' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.base_ref == 'main'))
+    if: needs.changes.outputs.code == 'true' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && (github.base_ref == 'main' || github.base_ref == 'staging')))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
