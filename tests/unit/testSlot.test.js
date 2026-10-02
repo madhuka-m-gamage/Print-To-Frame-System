@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { slotPorts, slotConfigPath, slotFirebaseConfig, slotEnv, MAX_SLOT } from '../tools/testSlot.mjs';
@@ -43,16 +44,30 @@ describe('test slots', () => {
       VITE_EMULATOR_AUTH_PORT: '9119',
       VITE_EMULATOR_STORAGE_PORT: '9219',
       TMPDIR: join(tmpdir(), 'p2f-slot2'),
+      P2F_VITE_CACHE_DIR: join(tmpdir(), 'p2f-slot2', 'vite-cache'),
     });
     expect(Object.keys(slotEnv(1))).not.toContain('FIREBASE_CONFIG');
   });
 
   it('gives each extra slot its own temp dir, because the Storage emulator deletes a shared blob dir on stop', () => {
     expect(slotEnv(0)).not.toHaveProperty('TMPDIR');
+    expect(slotEnv(0)).not.toHaveProperty('P2F_VITE_CACHE_DIR');
     expect(slotEnv(1).TMPDIR).not.toBe(slotEnv(2).TMPDIR);
   });
 
   it('refuses slots outside 0..2 and non-integers', () => {
     for (const bad of [-1, 3, 1.5, NaN, '1a']) expect(() => slotPorts(bad)).toThrow(/slot must be an integer from 0 to 2/);
+  });
+
+  it('the CLI refuses a missing, blank or out-of-range slot with a non-zero exit and no exports', () => {
+    for (const argv of [[], [''], ['3'], ['abc']]) {
+      const r = spawnSync(process.execPath, ['tests/tools/testSlot.mjs', ...argv], { encoding: 'utf8' });
+      expect(r.status).not.toBe(0);
+      expect(r.stdout).not.toContain('export ');
+    }
+  });
+
+  it('vite takes its dependency cache dir from the slot, so linked worktrees do not share it', () => {
+    expect(readFileSync('vite.config.js', 'utf8')).toContain('process.env.P2F_VITE_CACHE_DIR');
   });
 });

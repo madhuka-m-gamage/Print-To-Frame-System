@@ -13,8 +13,8 @@ describe('agent-run workflow template', () => {
 
   it('runs every slot command in the same shell call as the slot exports', () => {
     const brief = readFileSync('.claude/skills/agent-run/agent-brief.md', 'utf8');
-    expect(brief).toContain('eval "$(node tests/tools/testSlot.mjs {{slot}})" && npm run test:rules');
-    expect(brief).toContain('eval "$(node tests/tools/testSlot.mjs {{slot}})" && npm run test:e2e');
+    expect(brief).toContain('env="$(node tests/tools/testSlot.mjs {{slot}})" && eval "$env" && npm run test:rules');
+    expect(brief).toContain('env="$(node tests/tools/testSlot.mjs {{slot}})" && eval "$env" && npm run test:e2e');
   });
 
   it('falls back to Sonnet low for the final step when args.final is missing', () => {
