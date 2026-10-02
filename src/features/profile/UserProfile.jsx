@@ -37,7 +37,7 @@ export default function UserProfile({ currentUser, onUpdateUser, onSignOut, setA
     identifier: currentUser?.identifier || '',
     contactNumber: currentUser?.contactNumber || '',
     company: currentUser?.company || '',
-    location: currentUser?.location || 'Kadawatha, Sri Lanka',
+    location: currentUser?.location || '',
     jobTitle: currentUser?.jobTitle || '',
     bio: currentUser?.bio || '',
     specialty: currentUser?.specialty || '',

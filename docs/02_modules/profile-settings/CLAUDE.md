@@ -21,7 +21,7 @@ One self-service profile page plus a theme toggle. There is no separate settings
 
 ## Before you edit
 
-- The form defaults an empty location to the placeholder `Kadawatha, Sri Lanka`, so a profile with no location saves that text unless the user clears the field.
+- An empty location stays empty (FEA-14); `Kadawatha, Sri Lanka` is only the input's placeholder. A customer whose `customers.email` differs from the login email is still not synced (needs a userId link, FEA-15).
 - Password change is a stub (toast only).
 - Role, status and email are protected only by the client payload; rules block role / status changes for non-admins.
 - `src/constants/companyInfo.js` is unused.
