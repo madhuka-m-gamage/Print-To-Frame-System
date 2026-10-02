@@ -1,6 +1,6 @@
 import { beforeAll, afterAll, beforeEach, describe, it } from 'vitest';
 import { assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import {
   setupRulesEnv,
   clearAll,
@@ -284,6 +284,18 @@ describe('known gaps in today\'s rules (characterisation)', () => {
     await assertSucceeds(updateDoc(doc(db, 'customers', 'c1'), { name: 'Nimal P', phone: '9', address: 'Kandy', photoURL: 'u' }));
     await assertFails(updateDoc(doc(db, 'customers', 'c1'), { orders: 0 }));
     await assertFails(updateDoc(doc(db, 'customers', 'c2'), { name: 'Hacked' }));
+  });
+
+  // FEA-13: profile sync finds the record with a query, so the query has to pass the read rule too,
+  // and clearing a field is an update of the same four keys.
+  it('lets a customer find their record by email, not by NIC, and clear phone and address', async () => {
+    await seedDoc('customers', 'c1', { name: 'Nimal', email: 'nimal@example.com', nic: '912345678V', phone: '1', address: 'Galle' });
+    await seedPermissions(testEnv);
+    const db = await dbAs('Customer', 'nimal@example.com');
+    const found = await assertSucceeds(getDocs(query(collection(db, 'customers'), where('email', '==', 'nimal@example.com'))));
+    if (found.docs.length !== 1) throw new Error('expected the own record');
+    await assertFails(getDocs(query(collection(db, 'customers'), where('nic', '==', '912345678V'))));
+    await assertSucceeds(updateDoc(doc(db, 'customers', 'c1'), { name: 'Nimal', photoURL: '', phone: '', address: '' }));
   });
 
   // Flipped in Phase 7 3.5 (employees D4, owner decision): Managers administer users, but never

@@ -281,6 +281,8 @@ Source: `docs/02_modules/notifications/FINDINGS.md`. NOTIF-01 (sign-out leak) is
 ### FEA-13: Profile sync: the Customer write path and clearing fields
 - **Why (found by FEA-8, 2026-10-01):** `UserProfile.jsx` still writes the `customers` record directly for Customer and Business Client; profile-settings FINDINGS says that write always fails under the current rules (not checked). Profile sync also cannot clear a field: an emptied phone, address or company keeps its old value in `partners` and `customers` (profile-settings finding 7).
 - **Build:** route the Customer write through `handleUpdateUser` like the Partner path, or confirm the rule and add one. Write empty values on purpose. Needs a rules test if the rule changes.
+- **Done 2026-10-02:** the rule already existed (`firestore.rules` `/customers` self-update of `name`, `photoURL`, `phone`, `address`), so no rules change. The old write failed because the lookup by the real NIC is denied by the read rule and rejected the whole `Promise.all`. `handleUpdateUser` in `App.jsx` now looks the record up by email and writes via `updateDocument`; `UserProfile.jsx` no longer writes `customers`. Phone, address (and company for partners) are written even when empty. Tests: `tests/integration/rulesAccess.test.js` (email query allowed, NIC query denied, clearing allowed), `tests/component/App.profileSync.test.jsx`.
+- **Note:** a customer whose `customers.email` differs from their login email is not synced (the rules allow nothing else). The form pre-fills an empty location with `Kadawatha, Sri Lanka`; left as is.
 
 ## Security
 

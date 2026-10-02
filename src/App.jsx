@@ -29,7 +29,7 @@ import {
   Handshake,
 } from "lucide-react";
 import { initAuth, logout, emailLogin, emailRegister, db } from "./services/firebase";
-import { doc, getDoc, setDoc, collection, getDocs, deleteDoc, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, setDoc, collection, getDocs, deleteDoc, onSnapshot, query, where } from "firebase/firestore";
 import { subscribeToCollection, addDocument, updateDocument, batchWrite, COLLECTIONS, generateInvoiceId, deriveReceiptId, createDocumentIfAbsent } from "./services/firestoreSync";
 import { toast } from "./shared/utils/toast";
 import { isFullyPaid } from "./features/invoicing/invoiceSettlement";
@@ -988,14 +988,31 @@ function App() {
         const pDocId = pMatch._firestoreId || pMatch.id || pMatch.partnerId;
         const pUpdates = {
           name: updatedUser.name || pMatch.name,
-          phone: updatedUser.contactNumber || pMatch.phone,
-          photoURL: updatedUser.photoURL || pMatch.photoURL || '',
+          phone: updatedUser.contactNumber ?? '',
+          photoURL: updatedUser.photoURL || '',
           contactPerson: updatedUser.name || pMatch.contactPerson,
+          address: updatedUser.location ?? '',
+          company: updatedUser.company ?? '',
         };
-        if (updatedUser.location) pUpdates.address = updatedUser.location;
-        if (updatedUser.company) pUpdates.company = updatedUser.company;
         updateDocument(COLLECTIONS.PARTNERS, pDocId, pUpdates).catch(console.warn);
         setPartners(prev => prev.map(p => (p.id === pDocId || p.partnerId === pMatch.partnerId) ? { ...p, ...pUpdates } : p));
+      }
+    }
+
+    // The rules let a client read only customers whose email (or nic) equals their token email,
+    // so the record is looked up by email alone.
+    if (['Customer', 'Business Client'].includes(updatedUser.role)) {
+      const email = (updatedUser.email || updatedUser.identifier || '').trim().toLowerCase();
+      if (email) {
+        const cUpdates = {
+          name: updatedUser.name,
+          photoURL: updatedUser.photoURL || '',
+          phone: updatedUser.contactNumber ?? '',
+          address: updatedUser.location ?? '',
+        };
+        getDocs(query(collection(db, COLLECTIONS.CUSTOMERS), where('email', '==', email)))
+          .then(snap => Promise.all(snap.docs.map(d => updateDocument(COLLECTIONS.CUSTOMERS, d.id, cUpdates))))
+          .catch(console.warn);
       }
     }
   };
