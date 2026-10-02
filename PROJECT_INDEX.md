@@ -58,6 +58,7 @@ Map, then per-module Claude instructions.
 - [TESTING.md](docs/04_workflows/TESTING.md)
 - [changes/README.md](docs/04_workflows/changes/README.md): change fragments written by items in a multi-agent run
 - [AGENT_RUN_PLAN.md](docs/04_workflows/AGENT_RUN_PLAN.md): implementation plan for the agent-run skill (decision 0005)
+- [AGENT_RUN_CARDS_PLAN.md](docs/04_workflows/AGENT_RUN_CARDS_PLAN.md): implementation plan for the model decision cards (decision 0005 addendum)
 - `.claude/skills/agent-run/`: the agent-run skill (plan, run, review)
 - [POST_MERGE_VERIFICATION_REPORT.md](docs/POST_MERGE_VERIFICATION_REPORT.md): historical: Antigravity 16-module review verification
 - [HANDOFF_REPORT.md](docs/HANDOFF_REPORT.md): Milestone 1 handoff (journey, live vs repo, how we work, what's left)

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- agent-run decision cards (owner request): every model/effort row gets a card with what changes, open decisions, safety net, blast radius, signals and per-option costs; the question carries the facts, the options carry the costs and risks, the preview carries the card; the policy gains selection signals, effort levels and an evidence table; the review records pick outcomes. Unit +4.
+
 - `agent-run` tuning (owner-approved proposals from the Wave A2 review): measured Sonnet and mixed rates in `SKILL.md` and the projected peak computed from them instead of a flat 3% per agent; the agent brief and the final step name the item's own model in the commit trailer (`{{trailerModel}}`); new model-policy task type `money-small` (Sonnet·medium). Tests: unit 297 (+1, trailer per model), component 169.
 
 - Wave A2 run review (docs only): PLAN.md Run calibration rewritten with the first all-Sonnet rates (about 54k subagent tokens per 1% of the 5-hour window, about 1.7% floor per agent, small items 7–14 min); new backlog items MON-9 (printed and emailed figures still use `* 0.75`) and FEA-14 (profile location default, customers matched by email).

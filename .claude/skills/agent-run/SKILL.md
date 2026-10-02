@@ -19,7 +19,12 @@ No deploys, nothing to main, no live data, no console or config changes. Tests f
 1. `git fetch origin`. Read PLAN.md (roadmap, "Run calibration", carry-overs), each item's BACKLOG section and dependencies, TESTING.md "Planning a change" for each item, `gh pr list`, `gh run list --branch staging --limit 1`, `git log origin/main..origin/staging`, `java -version`, and the meter (`mcp__ccd_session_mgmt__get_usage`).
 2. Classify each item with `model-policy.md`; estimate minutes and window % per item from the rates above; write `<scratchpad>/items.json` (`id, minutes, files, deps`; `files` and `deps` always arrays, `[]` when empty) and run `node .claude/skills/agent-run/scripts/lanes.mjs <scratchpad>/items.json`.
 3. Fill every section of `plan-template.md` into the plan file.
-4. Confirm model and effort for every row with AskUserQuestion: one question per row, options Opus·high, Opus·medium, Sonnet·medium, Sonnet·low, the pick first with "(Recommended)". Up to 4 rows per call, plus the final-docs row. Recompute sections 12–15 with the answers; if any item's minutes change, re-run `lanes.mjs` and update section 6.
+4. Confirm model and effort for every row with AskUserQuestion, one question per row (final docs included), at most 4 questions per call:
+   - **Question text**: the item's decision-card facts in 3-4 short lines (what changes, decisions still open, safety net, blast radius), then the pick and why.
+   - **Options**: Sonnet·low, Sonnet·medium, Opus·medium, Opus·high (at most 4), the pick first with "(Recommended)". Each option description gives that option's minutes and % of the window, and what you risk by choosing it. Opus costs say "unmeasured, estimate" until an Opus-only run is in the calibration.
+   - **Preview**: put the full decision card (section 8) in each option's `preview`, so the owner can compare options side by side.
+   - The final docs row uses the one-line card and no preview.
+   Recompute sections 12-15 with the answers; if any item's minutes change, re-run `lanes.mjs` and update section 6. Write the owner's choice into the section 8 summary table, noting each override of the pick.
 5. ExitPlanMode.
 
 ## Stage 2: Run (after approval)

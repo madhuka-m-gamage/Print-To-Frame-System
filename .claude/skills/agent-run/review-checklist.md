@@ -9,12 +9,14 @@ Run in the orchestrating session after the workflow returns. About 10 min, 3–4
 
 ## 2. Compare
 Table per item: est. min, actual min, est. %, actual %. Flag > 30% off with one cause: scope, catch-up, CI, environment, estimate model.
+Add a **Pick outcome** column per item: the pick used, fix rounds, catch-ups, reviewer findings, rework, and one verdict: `sufficient`, `over-spec'd` (could have been lower with the same result) or `under-spec'd` (needed fix rounds or rework a higher pick likely avoids). Append each item to the "Evidence by task type" table in `model-policy.md`.
 
 ## 3. Calibration (overwrite PLAN.md "## Run calibration")
 - Last run: date, items, agents, wall-clock, meter start → end, weekly start → end, run ID.
 - The comparison table.
 - Rolling rates (last 3 runs, one row each plus average): min per S / M / L item; min per CI round; min per catch-up; % per S / M / L item by model; agent startup floor %; output tokens per 1%; window % per weekly %; concurrency. Models share one rate until two runs with different Opus/Sonnet mixes exist; say so in the table.
 - Model overrides: "owner changed X of Y picks" and which task types.
+- Pick outcomes: one line per task type from the evidence table. A task type with two or more `under-spec'd` or `over-spec'd` verdicts goes on the "proposed skill changes" list; never change the policy without the owner's approval, and one run alone is not enough.
 - Tuning: numbered rules, each "adopted" or "not yet" (not-yet lines carry over to the next plan's section 5).
 
 ## 4. Findings
