@@ -77,7 +77,7 @@ export default function Messages({ users = [], currentUser }) {
     }
   }, [messages, activeUser]);
 
-  const sendTypingIndicator = (isTyping) => {
+  const sendTypingIndicator = async (isTyping) => {
     if (!activeUser || !currentUser) return;
     const myId = String(currentUser.identifier).trim().toLowerCase();
     const targetId = String(activeUser.identifier).trim().toLowerCase();
@@ -88,7 +88,7 @@ export default function Messages({ users = [], currentUser }) {
         (!isTyping || now - last.at < TYPING_THROTTLE_MS)) return;
     lastTypingSentRef.current = { channelId: activeChan, isTyping, at: now };
     try {
-      setDocument(COLLECTIONS.TYPING_INDICATORS, myId, {
+      await setDocument(COLLECTIONS.TYPING_INDICATORS, myId, {
         fromId: myId,
         channelId: activeChan,
         participants: [myId, targetId],
