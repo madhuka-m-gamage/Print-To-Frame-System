@@ -17,6 +17,7 @@
 | Collection | Read | Write |
 |---|---|---|
 | `settings/permissions` | **anyone, including signed-out** | Admin only |
+| `settings/fleet` | `checkPermission('logistics', 'view')` | Admin only (FEA-4; rules deploy pending) |
 | `users/{email}` | authenticated | create: Admin, or self as Customer / unapproved / Pending, or bootstrap admin as Admin; update: Admin, or self without changing `role`, `isApproved`, `status` (or bootstrap admin); delete: Admin |
 | `pendingUsers/{email}` | own doc, or Admin | create by anyone (signed-out too); update / delete Admin |
 | `partner_applications` | Admin | create by anyone; update / delete Admin |

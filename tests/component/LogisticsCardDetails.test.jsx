@@ -23,6 +23,27 @@ function renderCard({ invoices, canCollectCod = true, onCollectCod = vi.fn(async
   return { onCollectCod };
 }
 
+describe('LogisticsCardDetails fleet pickers (FEA-4)', () => {
+  it('lists the drivers and vehicles from settings/fleet when the document exists', () => {
+    globalThis.__TEST_FLEET__ = {
+      vehicles: [{ id: 'v1', name: 'Tuk Cargo (WP TK 1)', type: 'Tuk', capacity: 'Small' }],
+      drivers: [{ name: 'Ravi (Driver)', phone: '0771111111', role: 'Driver' }],
+    };
+    renderCard({ invoices: [] });
+    const options = screen.getAllByRole('option').map((o) => o.value);
+    expect(options).toContain('Ravi (Driver)');
+    expect(options).toContain('Tuk Cargo (WP TK 1)');
+    expect(options).not.toContain('Nimal (Driver)');
+  });
+
+  it('falls back to the built-in lists when settings/fleet is missing', () => {
+    renderCard({ invoices: [] });
+    const options = screen.getAllByRole('option').map((o) => o.value);
+    expect(options).toContain('Nimal (Driver)');
+    expect(options).toContain('Van (WP LH 5678)');
+  });
+});
+
 describe('LogisticsCardDetails cash on delivery (Phase 7 6.5b, D-6)', () => {
   it('asks for confirmation, then records the cash against the unpaid Final invoice', async () => {
     const inv = finalInv();

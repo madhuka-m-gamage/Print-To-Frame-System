@@ -20,7 +20,7 @@ Kanban of pickup and delivery jobs (Pending, In Transit, Completed) with COD fro
 
 ## Before you edit
 
-- `DRIVER_DIRECTORY`, `FLEET_VEHICLES` and the route hub are hardcoded in code.
+- Drivers and vehicles come from `settings/fleet` through `useFleetDirectory` (Admin edits them in Admin panel, Fleet & Drivers tab); `DRIVER_DIRECTORY` and `FLEET_VEHICLES` in `logisticsEngine.js` are only the fallback when the document is missing. The route hub is still hardcoded.
 - `AddressPickerModal` / Maps JS API are used by Customers, not Logistics.
 
 - COD: `calculateCODFromInvoices` counts only the latest unpaid Final invoice. A paid Advance with no Final returns `finalInvoicePending: true` and the shortfall against the Advance's `totalValue` (or amount / 0.75), and the UI shows it as pending Final invoice creation instead of settled.

@@ -5,6 +5,7 @@ import {
   Database, HardDrive, ShieldCheck, Clock, ArrowUpRight, Layers
 } from 'lucide-react';
 import PermissionsManager from './PermissionsManager';
+import FleetDirectoryEditor from './FleetDirectoryEditor';
 import { PageHeader, FilterBar, StatusBadge, TwoToneIcon } from '@/shared/ui';
 import { subscribeToCollection, COLLECTIONS } from '@/services/firestoreSync';
 
@@ -85,6 +86,7 @@ export default function AdminPanel({ dataStore, currentUser }) {
           { id: 'analytics', label: 'Executive Analytics', count: 4 },
           { id: 'permissions', label: 'RBAC Permissions Matrix', count: 8 },
           { id: 'database', label: 'Database Storage Health', count: 5 },
+          { id: 'fleet', label: 'Fleet & Drivers' },
           { id: 'audit', label: 'System Audit Logs', count: auditLogs.length }
         ]}
         totalCount={totalRecords + auditLogs.length}
@@ -163,6 +165,12 @@ export default function AdminPanel({ dataStore, currentUser }) {
       {activeTab === 'permissions' && (
         <div className="bg-surface-container/60 rounded-2xl border border-outline-variant/60 p-6 shadow-sm">
           <PermissionsManager currentUser={currentUser} />
+        </div>
+      )}
+
+      {activeTab === 'fleet' && (
+        <div className="bg-surface-container/60 rounded-2xl border border-outline-variant/60 p-6 shadow-sm">
+          <FleetDirectoryEditor />
         </div>
       )}
 

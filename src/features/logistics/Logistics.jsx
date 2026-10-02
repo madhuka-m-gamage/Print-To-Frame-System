@@ -42,9 +42,8 @@ import {
   getWhatsAppUrl, 
   formatDispatchMessage, 
   calculateCODFromInvoices,
-  FLEET_VEHICLES,
-  DRIVER_DIRECTORY 
 } from './logisticsEngine';
+import { useFleetDirectory } from './useFleetDirectory';
 
 const STAGES = ["Pending", "In Transit", "Completed"];
 
@@ -83,7 +82,8 @@ function LogisticsColumn({
   onDrop,
   onDragEnd,
   draggedJobId,
-  invoices = []
+  invoices = [],
+  drivers = []
 }) {
   return (
     <KanbanColumn
@@ -218,7 +218,7 @@ function LogisticsColumn({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                const matchedDriver = DRIVER_DIRECTORY.find(d => d.name === job.driver);
+                const matchedDriver = drivers.find(d => d.name === job.driver);
                 const msg = formatDispatchMessage({
                   customerName: job.customer,
                   location: job.location,
@@ -313,6 +313,7 @@ export default function Logistics({
   onCollectCod
 }) {
   const isAdmin = currentUser?.role === "Admin";
+  const { vehicles, drivers } = useFleetDirectory();
   const { canAccess } = usePermissions();
   const canCollectCod = !!onCollectCod && canAccess(currentUser?.role, 'invoices', 'edit') && canAccess(currentUser?.role, 'receipts', 'create');
   const [activeSubTab, setActiveSubTab] = useState("delivery"); // Default to Delivery
@@ -791,6 +792,7 @@ export default function Logistics({
                 isAdmin={isAdmin}
                 onDelete={setDeletingJobId}
                 onCardClick={setActiveJob}
+                drivers={drivers}
                 onDragStart={handleDragStart}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
@@ -966,7 +968,7 @@ export default function Logistics({
                   onChange={(e) => setForm({ ...form, driver: e.target.value })}
                   className="w-full p-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-xs font-semibold focus:ring-2 focus:ring-primary/50 text-on-surface"
                 >
-                  {DRIVER_DIRECTORY.map(d => (
+                  {drivers.map(d => (
                     <option key={d.name} value={d.name}>{d.name}</option>
                   ))}
                 </select>
@@ -981,7 +983,7 @@ export default function Logistics({
                   onChange={(e) => setForm({ ...form, vehicle: e.target.value })}
                   className="w-full p-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-xs font-semibold focus:ring-2 focus:ring-primary/50 text-on-surface"
                 >
-                  {FLEET_VEHICLES.map(v => (
+                  {vehicles.map(v => (
                     <option key={v.id} value={v.name}>{v.name}</option>
                   ))}
                 </select>

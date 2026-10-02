@@ -9,7 +9,7 @@ There is no separate Employees feature; employee-like data is the `users` collec
 ## Code
 
 - No Employees module. Staff are `users` documents: see [user-management-rbac.md](../user-management-rbac/README.md).
-- `src/features/logistics/logisticsEngine.js` has a hardcoded `DRIVER_DIRECTORY`.
+- Drivers and vehicles are stored in `settings/fleet` (FEA-4, Admin-edited); `DRIVER_DIRECTORY` in `logisticsEngine.js` is only the fallback. Linking drivers to `users` (D2) is not done.
 
 ## Firestore collections it owns or writes
 
