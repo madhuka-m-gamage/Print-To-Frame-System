@@ -80,7 +80,7 @@ Link fields: invoice `quotationId`; lead / deal / job ids (`leadId`, `dealId`, `
 | 6a | Client submits the public referral form | `ReferralForm.jsx` | Lead `source: 'Referral'`, stage Intake, tagged with the partner id and rate |
 | 6b | Deal moves from Hand Over to Completed | `Deals.jsx` | `partners.pending += totalSqFt * commissionRate` (default `DEFAULT_REFERRAL_COMMISSION_RATE`, LKR 38.00 / sq ft) |
 | 6c | Advance and Final both Paid | `handleMarkInvoicePaid` | `referralStatus: 'Eligible for Payout'`; one-time `commission` notification via `emitNotification` (session-only, seen only by the user who marked it paid) |
-| 6d | Admin clicks "Disburse Payout" | `Partners.jsx` | **Toast only.** No write to `payoutStatus` or `partner_payouts`; `pending` is never reduced |
+| 6d | Admin clicks "Disburse Payout" | `Partners.jsx` `handleDisbursePayout` (FEA-1) | One `batchWrite`: `partner_payouts` record (`TXN-######`), `payoutStatus: 'Paid'` on each eligible lead, partner `pending` reduced and `settled` increased; `PAYOUT_DISBURSED` audit entry |
 
 ## 7. Registration to approval to record creation
 

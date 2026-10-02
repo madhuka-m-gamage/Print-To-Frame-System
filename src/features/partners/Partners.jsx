@@ -21,8 +21,10 @@ import {
   addDocument, 
   updateDocument, 
   deleteDocument,
-  COLLECTIONS 
+  batchWrite,
+  COLLECTIONS
 } from '@/services/firestoreSync';
+import { buildPayout } from './payout';
 import { formatPhone, validatePhone, validateEmail } from '@/shared/utils/validation';
 import { exportToCsv } from '@/shared/utils/csvExport';
 import { usePermissions } from '@/context/PermissionsContext';
@@ -314,6 +316,66 @@ export default function Partners({
   const selectedPartnerLeads = useMemo(() => {
     return getPartnerReferrals(selectedPartner);
   }, [selectedPartner, getPartnerReferrals]);
+
+  const [disbursingPartnerId, setDisbursingPartnerId] = useState(null);
+
+  const handleDisbursePayout = async (partner) => {
+    if (disbursingPartnerId) return;
+    const { leads: payoutLeads, amount, leadIds } = buildPayout(getPartnerReferrals(partner), partner);
+    if (!leadIds.length) {
+      toast.info(`No eligible commission to disburse for ${partner.name}`);
+      return;
+    }
+
+    const reference = 'TXN-' + String(Date.now()).slice(-6);
+    const partnerDocId = partner._firestoreId || partner.id || partner.partnerId;
+    const pending = Math.max(0, Math.round(((Number(partner.pending) || 0) - amount) * 100) / 100);
+    const settled = Math.round(((Number(partner.settled) || 0) + amount) * 100) / 100;
+    const leadDocIds = new Set(payoutLeads.map(l => l._firestoreId || l.id));
+
+    setDisbursingPartnerId(partner.partnerId);
+    try {
+      await batchWrite([
+        {
+          type: 'set',
+          collection: COLLECTIONS.PARTNER_PAYOUTS,
+          docId: `${partner.partnerId}-${Date.now()}`,
+          data: {
+            partnerId: partner.partnerId,
+            partnerEmail: partner.email || '',
+            partnerName: partner.name,
+            amount,
+            reference,
+            leadIds,
+            createdAt: new Date().toISOString(),
+            createdBy: currentUser?.identifier || currentUser?.email || '',
+          },
+        },
+        ...payoutLeads.map(l => ({
+          type: 'update',
+          collection: COLLECTIONS.LEADS,
+          docId: l._firestoreId || l.id,
+          data: { payoutStatus: 'Paid', payoutReference: reference },
+        })),
+        { type: 'update', collection: COLLECTIONS.PARTNERS, docId: partnerDocId, data: { pending, settled } },
+      ]);
+    } catch (err) {
+      console.error('Payout error:', err);
+      toast.error(`Payout for ${partner.name} failed; nothing was recorded.`);
+      return;
+    } finally {
+      setDisbursingPartnerId(null);
+    }
+
+    if (setLeads) {
+      setLeads(prev => prev.map(l => (leadDocIds.has(l._firestoreId || l.id) ? { ...l, payoutStatus: 'Paid', payoutReference: reference } : l)));
+    }
+    if (setPartners) {
+      setPartners(prev => prev.map(p => (p.partnerId === partner.partnerId ? { ...p, pending, settled } : p)));
+    }
+    logActivity(currentUser?.identifier, currentUser?.name, 'PAYOUT_DISBURSED', 'Partners', `Disbursed LKR ${amount.toFixed(2)} to ${partner.name} for ${leadIds.length} referral(s) (Ref: ${reference})`);
+    toast.success(`Payout of LKR ${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })} disbursed to ${partner.name} (Ref: ${reference})`);
+  };
 
   // Image Upload & Crop Handlers for Partner Avatar
   const handlePartnerPhotoSelect = (e) => {
@@ -874,11 +936,9 @@ export default function Partners({
                     </div>
 
                     <button
-                      onClick={() => {
-                        const txId = 'TXN-' + String(Date.now()).slice(-6);
-                        toast.success(`Monthly settlement processed for ${p.name} (Ref: ${txId})`);
-                      }}
-                      className="px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-xl border border-primary/30 flex items-center gap-1.5 cursor-pointer active:scale-95"
+                      onClick={() => handleDisbursePayout(p)}
+                      disabled={!!disbursingPartnerId}
+                      className="px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-xl border border-primary/30 flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <CreditCard size={14} /> Disburse Payout
                     </button>
