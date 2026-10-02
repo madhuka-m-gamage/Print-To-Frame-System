@@ -48,10 +48,11 @@ One line per task type that has been run. The review appends here; the policy de
 | Task type | Runs | Picks used | Fix rounds | Findings / rework |
 |---|---|---|---|---|
 | money-small | 2 (MON-8, MON-9) | Sonnet·low both (owner overrides of the Sonnet·medium default) | 0 | MON-8: 1 out-of-scope finding (MON-9); MON-9: per-line rows deliberately untouched (cent drift, MON-10), no rework |
-| small-ui | 3 (FEA-12, FEA-13, FEA-14) | Sonnet·medium | 0 | FEA-13: the claim in BACKLOG proved wrong, fixed by verifying first; FEA-14: the userId link split out as FEA-15 on the owner's decision |
-| security | 2 (SEC-12, SEC-7) | Opus·medium (owner overrides of Opus·high) | 0 | both found and fixed a gap the BACKLOG item did not name (missing participants field; mixed-case partner emails) |
+| small-ui | 4 (FEA-12, FEA-13, FEA-14, FEA-16) | Sonnet·medium (FEA-16 Sonnet·low) | 0 | FEA-13: the claim in BACKLOG proved wrong, fixed by verifying first; FEA-14: the userId link split out as FEA-15 on the owner's decision |
+| security | 4 (SEC-12, SEC-7, SEC-8, FEA-15) | Opus·medium (owner overrides of Opus·high; FEA-15 moved up from Sonnet·medium) | 0 | both found and fixed a gap the BACKLOG item did not name (missing participants field; mixed-case partner emails) |
 | money (M) | 1 (FEA-1) | Opus·medium | 0 | review found a concurrency gap (MON-11), not a defect in scope |
 | config / docs | 2 (ENG-7, ENG-6) | Sonnet·low | 0 | none |
+| feature with rules | 1 (FEA-4) | Sonnet·medium | 0 | none; new rules block merged in parallel with lane 1 |
 
 ## Learned
 - 2026-10-02: `money-small` added (owner approved). Evidence: MON-8 (rounding helper plus three call sites) ran on Sonnet·low with 0 fix rounds and a correct helper; one data point, so the default is Sonnet·medium, not low. Revisit after another run.
