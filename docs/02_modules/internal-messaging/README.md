@@ -17,8 +17,8 @@
 - `messages`: flat collection, one document per message, id `msg_<ts>_<rand>`. Fields: `channelId` (two lowercased user ids sorted and joined with `_`), `participants` `[me, target]`, `fromId`, `toId`, `senderName`, `text`, `timestamp` (ms number), `readBy` (array of user ids, starts as `[sender]`), `replyTo` (`{id, text, fromId}` or null). Ids are lowercased emails.
 - **No thread / conversation document.** A conversation is the set of messages sharing a `channelId`, derived client-side. One `onSnapshot` on `messages` with `where('participants', 'array-contains', myId)`.
 - **Unread counts:** computed client-side (messages from the other user whose `readBy` lacks me, grouped by sender). **Read receipts:** `markChatAsRead` / `markAllAsRead` append my id to `readBy` via `updateDocument`.
-- `typing_indicators`: one document per user (id = user id) with `fromId`, `channelId`, `isTyping`, `timestamp`, written with merge on input change; read by a whole-collection `onSnapshot`; only entries under 3 seconds old count.
-- Rules (from the pass): `messages` read and create for any authenticated user; update by Admin, the original sender, or a participant changing only `readBy`; delete by Admin or the sender within 15 minutes. `typing_indicators` read / write for any authenticated user.
+- `typing_indicators`: one document per user (id = user id) with `fromId`, `channelId`, `participants`, `isTyping`, `timestamp`, written with merge on input change; read by an `onSnapshot` on `participants array-contains <me>` (SEC-12); only entries under 3 seconds old count.
+- Rules (from the pass): `messages` read and create for any authenticated user; update by Admin, the original sender, or a participant changing only `readBy`; delete by Admin or the sender within 15 minutes. `typing_indicators` read / write for any authenticated user (SEC-12 on `staging`, not deployed: read by the document's participants, write only your own).
 - No edit or delete UI was found in the context or `Messages.jsx`.
 
 ## Cloud Functions / triggers
@@ -38,4 +38,4 @@ Firestore-only 1-on-1 direct chat provided by a root `MessagingProvider`. Each m
 ## Open questions
 
 - Confirmed in `firestore.rules`: any authenticated user can read all `messages` documents (reads are not restricted to participants), even though the client filters by `participants`; see [FIRESTORE_RULES_NOTES.md](../../03_security/FIRESTORE_RULES_NOTES.md).
-- The whole-collection `typing_indicators` listener reads every user's indicator.
+- The whole-collection `typing_indicators` listener reads every user's indicator. Fixed in SEC-12: the listener is scoped to `participants array-contains <me>`.

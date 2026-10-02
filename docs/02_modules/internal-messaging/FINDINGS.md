@@ -356,7 +356,7 @@ In `src/context/PermissionsContext.jsx`:
 
 In `firestore.rules`:
 - `/messages/{messageId}`: `allow read, create: if isAuthenticated();` (No role or permission checks).
-- `/typing_indicators/{indicatorId}`: `allow read, write: if isAuthenticated();` (No role or permission checks).
+- `/typing_indicators/{indicatorId}`: `allow read, write: if isAuthenticated();` (No role or permission checks). Fixed in SEC-12 (rules written on `staging`, not deployed): read by the document's participants only, write and delete only your own indicator.
 
 ### 5.2 Contact Directory Exposure
 
