@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Wave A2 run review (docs only): PLAN.md Run calibration rewritten with the first all-Sonnet rates (about 54k subagent tokens per 1% of the 5-hour window, about 1.7% floor per agent, small items 7–14 min); new backlog items MON-9 (printed and emailed figures still use `* 0.75`) and FEA-14 (profile location default, customers matched by email).
+
 - Invoice split rounded to cents (MON-8): new `splitInvoiceAmounts` helper makes the Advance 75% rounded half up to cents and the Final the remainder, used by the quotation builder, deal completion and the Fabrication QA pass, so the two always add up to the total (LKR 33,333.33 gives 25,000.00 and 8,333.33). Existing invoices are not rewritten. Unit 7 new (6 helper, 1 settlement), component 2 new and 1 flipped.
 
 - ENG-7: `npm run coverage:all` reports unit, API and component coverage; the e2e CI job now also runs on pull requests into `staging` (code changes only). Unit +2 (in `tests/unit/ci.test.js`).

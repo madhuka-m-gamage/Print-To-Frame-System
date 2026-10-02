@@ -51,6 +51,7 @@ Every item implicitly includes these.
 | MON-6 | Old data: leads without frame size, inline blueprints | data | M | Storage | partly | DEC-3, DEC-5 |
 | MON-7 | List and alert defaulted-commission leads | money | M | rules | no | FEA-2 |
 | MON-8 | Round the 75 / 25 invoice split to cents | money | S | no | **yes** | none |
+| MON-9 | Printed and emailed Advance / Final figures use the rounded split | money | S | no | no | MON-8 |
 | FEA-1 | Real partner payout (step 4.1) | feature | M | rules | no | LIVE-1 (to work live) |
 | FEA-2 | Persistent notifications and claim resolution (step 4.3) | feature | L | rules | no | none |
 | FEA-3 | Fabrication board statuses: Cancelled, On Hold, Archived, Other (done) | feature | M | no | DEC-4 | none |
@@ -64,6 +65,7 @@ Every item implicitly includes these.
 | FEA-11 | Staff screen to open partner-application BR/NIC files (done) | feature | S | no | no | none |
 | FEA-12 | Batch the read-receipt writes (D-MSG-02, second half) | ux | S | no | no | none |
 | FEA-13 | Profile sync: the Customer write path and clearing fields | ux | S | rules? | no | none |
+| FEA-14 | Profile: blank-location default and customers matched by email | ux | S | no | no | none |
 | SEC-1 | Check the recipient in `api/send-email.js` | security | S | api | no | none |
 | SEC-2 | Restrict `api/generate.js` to staff roles | security | S | api | no | none |
 | SEC-3 | Make the dev proxy safe | security | S | no | no | none |
@@ -191,6 +193,10 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 - **Done:** `splitInvoiceAmounts` in `src/features/quotations/` (Advance = 75% half up to cents, Final = total minus Advance) used by `QuotationBuilder`, `getFinalInvoiceAmounts` (Deals completion fallback) and the Fabrication QA pass; unit test `tests/unit/splitInvoiceAmounts.test.js`, flipped QuotationBuilder test, new Deals and FabricationWorks checks. Not changed (outside this item): `invoiceTemplate.js`, `invoicePrintData.js` and `EmailTemplateModal.jsx` still derive display figures with `* 0.75` / `* 0.25`, so a printed or emailed figure can differ from the stored amount by a cent.
 - **Build:** a pure helper in `src/features/quotations/` used by QuotationBuilder, Deals completion and the Fabrication QA pass, with a unit test. Flip the characterisation test.
 
+### MON-9: Printed and emailed Advance / Final figures use the rounded split
+- **Why (found by MON-8, 2026-10-02):** `invoiceTemplate.js`, `invoicePrintData.js` and `EmailTemplateModal.jsx` still derive the displayed Advance and Final with `* 0.75` / `* 0.25`, so a printed or emailed figure can differ from the stored amount by one cent now that stored amounts come from `splitInvoiceAmounts` (`src/features/quotations/splitInvoiceAmounts.js`).
+- **Build:** use `splitInvoiceAmounts` in all three, or print the stored `amount`; a unit test on `invoicePrintData` for a total such as LKR 33,333.33. No decision needed (follows the MON-8 decision).
+
 ## Features
 
 ### FEA-1: Real partner payout (step 4.1, partners D-1)
@@ -285,6 +291,10 @@ Source: `docs/02_modules/notifications/FINDINGS.md`. NOTIF-01 (sign-out leak) is
 - **Build:** route the Customer write through `handleUpdateUser` like the Partner path, or confirm the rule and add one. Write empty values on purpose. Needs a rules test if the rule changes.
 - **Done 2026-10-02:** the rule already existed (`firestore.rules` `/customers` self-update of `name`, `photoURL`, `phone`, `address`), so no rules change. The old write failed because the lookup by the real NIC is denied by the read rule and rejected the whole `Promise.all`. `handleUpdateUser` in `App.jsx` now looks the record up by email and writes via `updateDocument`; `UserProfile.jsx` no longer writes `customers`. Phone, address (and company for partners) are written even when empty. Tests: `tests/integration/rulesAccess.test.js` (email query allowed, NIC query denied, clearing allowed), `tests/component/App.profileSync.test.jsx`.
 - **Note:** a customer whose `customers.email` differs from their login email is not synced (the rules allow nothing else). The form pre-fills an empty location with `Kadawatha, Sri Lanka`; left as is.
+
+### FEA-14: Profile: blank-location default and customers matched by email
+- **Why (found by FEA-13, 2026-10-02):** `UserProfile.jsx` pre-fills an empty location with "Kadawatha, Sri Lanka", so a user with no location saves that text unless they clear it; and a customer whose `customers.email` differs from their login email is not synced at all (the lookup is by email). The earlier "customer write always fails under the rules" claim was wrong: the rule allows it, it was the NIC lookup that failed (fixed in FEA-13).
+- **Build:** drop the default (keep the placeholder), and decide how to match a customer whose email differs (a `nic` or `userId` link). Component tests for both.
 
 ## Security
 
