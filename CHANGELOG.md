@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `agent-run` (owner-approved B1 proposals 1 and 2): agents and the final step load the test-slot settings by writing them to `/tmp/p2f-slot<N>.env` and sourcing it, instead of `env="$(...)" && eval "$env"`, which the worktree guard refused; `SKILL.md` "Rates" now carries the measured Opus rate (about 21.6k subagent tokens per 1% of the 5-hour window at medium effort) in place of the mixed-run estimate. Proposal 3 (final-step e2e retry and plan notes) declined.
+
 - Wave B run B1 review (docs only): first Opus measurement in PLAN.md Run calibration (about 21.6k Opus subagent tokens per 1% of the 5-hour window, S item about 16 min and 6%, M item about 27 min and 8%); the Wave B promotion guard recorded in PLAN.md (do not promote before the LIVE-1 rules deploy; deploy the app before or with the rules); new backlog items MON-11 (double partner payout guard) and FEA-16 (await the typing-indicator write); evidence table updated; three proposed skill changes.
 
 - **SEC-12:** `typing_indicators` rules scoped to the chat: only the indicator's own user may write or delete it (`fromId` = caller, caller in a two-entry `participants`), and only the chat's participants may read it (a document without `participants` is denied). `Messages.jsx` now writes `participants` and listens with `participants array-contains <me>` instead of the whole collection. Rules not deployed. Tests: rules +5 (`typingIndicators.test.js`), component +1 (`Messages.test.jsx`).
