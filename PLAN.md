@@ -19,7 +19,7 @@ One item per fresh session: branch `claude/<topic>` from `staging` → tests fir
 ## Roadmap to Milestone 2
 - [ ] **Wave A, repo only, no live impact:** ~~MON-1~~, ~~MON-3~~, ~~MON-2~~, ~~SEC-1~~, ~~SEC-2~~, ~~SEC-3~~, ~~SEC-9~~, ~~TST-1~~, ~~TST-3~~, ~~FEA-3~~, ~~FEA-8~~, ~~FEA-6~~, ~~FEA-11~~, ~~ENG-4~~, ~~SEC-11~~ (deactivated-user sign-in), ENG-5 (skipped by owner 2026-10-01)
 - [ ] **Wave A2, follow-ups found during Wave A (repo only):** ~~MON-8~~, ~~FEA-12~~, ~~FEA-13~~, ~~ENG-7~~
-- [ ] **Wave A3, follow-ups found in Wave A2 (repo only):** MON-9, FEA-14
+- [x] **Wave A3, follow-ups found in Wave A2 (repo only):** ~~MON-9~~, ~~FEA-14~~
 - [ ] **Wave B, code + rules built and tested here, live with the next rules deploy:** MON-4, MON-5, MON-7, FEA-1, FEA-2, FEA-4, FEA-5, FEA-7, FEA-9, FEA-10, SEC-6, SEC-7, SEC-8, SEC-12
 - [x] **Wave C, before restrictive rules go live:** ~~TST-2~~ (money and RBAC browser journeys)
 - [ ] **Wave D, environment and go-live (owner sittings):** LIVE-2 fresh environment (seed `DEFAULT_PERMISSIONS`, deploy Firestore + Storage rules), LIVE-3 move production here and archive the old repos, LIVE-1, LIVE-4, SEC-4, SEC-5, SEC-10, TST-4
@@ -31,7 +31,7 @@ One item per fresh session: branch `claude/<topic>` from `staging` → tests fir
 | Milestone 1 | `[##########]` 100% | Tagged `v1.0.0` |
 | Wave A | `[#########-]` 15/16 | MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, TST-1, TST-3, FEA-3, FEA-8, FEA-6, FEA-11, ENG-4, SEC-11 done; next up: ENG-5 (skipped by owner 2026-10-01), so Wave A is otherwise complete |
 | Wave A2 | `[##########]` 4/4 | MON-8, ENG-7, FEA-13, FEA-12 done |
-| Wave A3 | `[----------]` 0/2 | MON-9, FEA-14 found in Wave A2 |
+| Wave A3 | `[##########]` 2/2 | MON-9, FEA-14 done; FEA-15 split out to Wave B; next up: Wave B (needs the rules deploy), Wave D with the owner |
 | Waves B, D, E | `[----------]` 0% | Wave D needs the owner |
 | Wave C | `[##########]` 1/1 | TST-2 done |
 
