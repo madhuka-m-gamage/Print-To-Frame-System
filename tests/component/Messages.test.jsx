@@ -6,6 +6,8 @@ const typing = { emit: null };
 
 vi.mock('firebase/firestore', () => ({
   collection: vi.fn(() => ({})),
+  query: vi.fn((ref, ...constraints) => ({ ref, constraints })),
+  where: vi.fn((field, op, value) => ({ field, op, value })),
   onSnapshot: vi.fn((_ref, onNext) => { typing.emit = onNext; return () => {}; }),
 }));
 vi.mock('@/services/firestoreSync', () => ({
@@ -25,6 +27,7 @@ vi.mock('@/features/messaging/MessagingContext', () => ({
 
 const { default: Messages } = await import('@/features/messaging/Messages');
 const { setDocument } = await import('@/services/firestoreSync');
+const { onSnapshot } = await import('firebase/firestore');
 
 const me = { identifier: 'bob@example.com', name: 'Bob', role: 'Sales' };
 const alice = { identifier: 'alice@example.com', name: 'Alice', role: 'Operations' };
@@ -57,7 +60,12 @@ describe('Messages typing indicator (D-MSG-04)', () => {
     now += 100;
     fireEvent.change(input(), { target: { value: 'hel' } });
     expect(setDocument).toHaveBeenCalledTimes(1);
-    expect(setDocument.mock.calls[0][2]).toMatchObject({ isTyping: true });
+    expect(setDocument.mock.calls[0][1]).toBe('bob@example.com');
+    expect(setDocument.mock.calls[0][2]).toMatchObject({
+      isTyping: true,
+      fromId: 'bob@example.com',
+      participants: ['bob@example.com', 'alice@example.com'],
+    });
 
     now += 800;
     fireEvent.change(input(), { target: { value: 'hell' } });
@@ -67,6 +75,13 @@ describe('Messages typing indicator (D-MSG-04)', () => {
     fireEvent.change(input(), { target: { value: '' } });
     expect(setDocument).toHaveBeenCalledTimes(3);
     expect(setDocument.mock.calls[2][2]).toMatchObject({ isTyping: false });
+  });
+
+  it('listens only to indicators of chats the user is part of (SEC-12)', () => {
+    render(<Messages users={users} currentUser={me} />);
+    expect(onSnapshot.mock.calls[0][0].constraints).toEqual([
+      { field: 'participants', op: 'array-contains', value: 'bob@example.com' },
+    ]);
   });
 
   it('shows "is typing" only when the contact is typing in this conversation', () => {

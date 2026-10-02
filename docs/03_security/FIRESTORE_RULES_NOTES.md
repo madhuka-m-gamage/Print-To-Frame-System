@@ -55,6 +55,7 @@
 - `/quotations` follows the `quotations` permission, so the live matrix must have that module (step 3.3) before this deploys, or Sales and Manager lose quotations.
 - `/messages`: read needs the `messages` permission and being a participant (or Admin); create needs `fromId` to be the caller and a participant; only `readBy` and `updatedAt` may change on a message you did not send.
 - `/users`: read for Admin, self, or `agents`/`messages` view. Create, update and delete by a role with the matching `agents` permission are allowed only on non-Admin targets, never granting Admin and never on your own document.
+- `/typing_indicators` (SEC-12): one document per user, id = the caller's email. Read only when the caller's email is in the document's `participants` (a document without `participants` is denied); create and update only on your own document, with `fromId` = you and a two-entry `participants` that includes you; delete only your own. The app's listener queries `participants array-contains <me>`, which these rules serve; a whole-collection read is refused.
 - `/pendingUsers` and `/partner_applications` may also be reviewed by roles with `agents` edit.
 - `/leads`: read with `leads` or `pipeline`; create and update check `pipeline` when the document is a deal (`isDeal`), else `leads`; delete follows `leads` delete. Invoices, receipts, projects and logistics deletes follow their own `delete` permission.
 - Not done: limiting the Partner role to its own `partners` document (the Partners screen still lists the whole collection), and field limits on what a partner may edit about themselves.
@@ -74,7 +75,7 @@ Editing `firestore.rules` and pushing to `staging` or `main` only changes the fi
 
 ## Tests
 
-`npm run test:rules` runs `tests/integration/*` against local Firestore, Auth and Storage emulators (needs Java; project id `demo-print2frame-test`). `firestoreRules.test.js` covers role-escalation prevention. `rulesAccess.test.js` (B4) covers permission-gated writes, owner reads, the audit log and the public forms, and records each gap listed in the observations above as a characterisation test, with `it.todo` entries for the target rules. Note the Partner matrix grants full `partners` access, so a partner can read other partners today.
+`npm run test:rules` runs `tests/integration/*` against local Firestore, Auth and Storage emulators (needs Java; project id `demo-print2frame-test`). `firestoreRules.test.js` covers role-escalation prevention. `typingIndicators.test.js` (SEC-12) covers the typing indicator rules. `rulesAccess.test.js` (B4) covers permission-gated writes, owner reads, the audit log and the public forms, and records each gap listed in the observations above as a characterisation test, with `it.todo` entries for the target rules. Note the Partner matrix grants full `partners` access, so a partner can read other partners today.
 
 ## Open questions
 
