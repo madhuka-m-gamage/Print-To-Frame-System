@@ -42,8 +42,9 @@ vi.mock('firebase/firestore', () => ({
 }));
 vi.mock('@/services/firestoreSync', () => ({
   COLLECTIONS: new Proxy({}, { get: (_t, key) => String(key).toLowerCase() }),
-  subscribeToCollection: vi.fn((name, setter) => {
-    if (name === 'partners') setter([partnerRecord]);
+  subscribeToCollection: vi.fn(() => () => {}),
+  subscribeToQuery: vi.fn((_q, setter) => {
+    setter([partnerRecord]);
     return () => {};
   }),
   addDocument: vi.fn(async () => {}),

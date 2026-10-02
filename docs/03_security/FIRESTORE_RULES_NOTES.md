@@ -27,7 +27,7 @@
 | `invoices` | `invoices` view, or own (`customerId` / `partnerId` == token email) | `invoices` create / edit; delete Admin |
 | `receipts` | `receipts` view, or own | `receipts` create / edit; delete Admin |
 | `customers` | `customers` view | create / edit; delete: `customers` delete or Admin |
-| `partners` | `partners` view, or own (doc id == token email) | create / edit; delete: `partners` delete or Admin |
+| `partners` | `partners` view for a non-Partner role, or own (`ownsPartner`: doc id or `email` == token email) | create / edit for a non-Partner role; an active Partner updates its own record's profile fields only (`name, contactPerson, phone, address, company, bankName, accountNumber, accountName, branchName, photoURL, documents, updatedAt`), never `commissionRate`, `status`, `email` or balances (SEC-7); delete: `partners` delete or Admin |
 | `projects` | `projects` view, or own customer | create / edit; delete Admin |
 | `logistics` | `logistics` view, or own customer | create / edit; delete Admin |
 | `pricing` | authenticated | Admin |
@@ -58,7 +58,7 @@
 - `/typing_indicators` (SEC-12): one document per user, id = the caller's email. Read only when the caller's email is in the document's `participants` (a document without `participants` is denied); create and update only on your own document, with `fromId` = you and a two-entry `participants` that includes you; delete only your own. The app's listener queries `participants array-contains <me>`, which these rules serve; a whole-collection read is refused.
 - `/pendingUsers` and `/partner_applications` may also be reviewed by roles with `agents` edit.
 - `/leads`: read with `leads` or `pipeline`; create and update check `pipeline` when the document is a deal (`isDeal`), else `leads`; delete follows `leads` delete. Invoices, receipts, projects and logistics deletes follow their own `delete` permission.
-- Not done: limiting the Partner role to its own `partners` document (the Partners screen still lists the whole collection), and field limits on what a partner may edit about themselves.
+- Done in SEC-7 (not deployed): the Partner role reaches only its own `partners` document, with field limits on what it may edit; `App.jsx` queries `where('email', '==', identifier)` for a Partner. The match is exact, so a partner `email` stored with capitals no longer matches the (lowercase) login email; the Register Partner form now saves the email lowercased.
 
 ## Storage rules (`storage.rules`, DEC-3; deployed 2026-09-27)
 
@@ -75,7 +75,7 @@ Editing `firestore.rules` and pushing to `staging` or `main` only changes the fi
 
 ## Tests
 
-`npm run test:rules` runs `tests/integration/*` against local Firestore, Auth and Storage emulators (needs Java; project id `demo-print2frame-test`). `firestoreRules.test.js` covers role-escalation prevention. `typingIndicators.test.js` (SEC-12) covers the typing indicator rules. `rulesAccess.test.js` (B4) covers permission-gated writes, owner reads, the audit log and the public forms, and records each gap listed in the observations above as a characterisation test, with `it.todo` entries for the target rules. Note the Partner matrix grants full `partners` access, so a partner can read other partners today.
+`npm run test:rules` runs `tests/integration/*` against local Firestore, Auth and Storage emulators (needs Java; project id `demo-print2frame-test`). `firestoreRules.test.js` covers role-escalation prevention. `typingIndicators.test.js` (SEC-12) covers the typing indicator rules. `rulesAccess.test.js` (B4) covers permission-gated writes, owner reads, the audit log and the public forms, and records each gap listed in the observations above as a characterisation test, with `it.todo` entries for the target rules. Its SEC-7 block covers a Partner limited to its own `partners` record.
 
 ## Open questions
 

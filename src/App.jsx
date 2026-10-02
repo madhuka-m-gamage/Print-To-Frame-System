@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import { initAuth, logout, emailLogin, emailRegister, db } from "./services/firebase";
 import { doc, getDoc, setDoc, collection, getDocs, deleteDoc, onSnapshot, query, where } from "firebase/firestore";
-import { subscribeToCollection, addDocument, updateDocument, batchWrite, COLLECTIONS, generateInvoiceId, deriveReceiptId, createDocumentIfAbsent } from "./services/firestoreSync";
+import { subscribeToCollection, subscribeToQuery, addDocument, updateDocument, batchWrite, COLLECTIONS, generateInvoiceId, deriveReceiptId, createDocumentIfAbsent } from "./services/firestoreSync";
 import { toast } from "./shared/utils/toast";
 import { isFullyPaid } from "./features/invoicing/invoiceSettlement";
 import { newUserAction, shouldEvict, canSignIn } from "./features/auth/authFlow";
@@ -318,7 +318,10 @@ function App() {
     const listen = (allowed, name, setter) => (allowed ? subscribeToCollection(name, setter) : noop);
 
     const unsubCustomers = listen(canRead('customers'), COLLECTIONS.CUSTOMERS, setCustomers);
-    const unsubPartners = listen(canRead('partners'), COLLECTIONS.PARTNERS, setPartners);
+    // A Partner may read only its own record (SEC-7), found by its login email.
+    const unsubPartners = currentUser.role === 'Partner' && canRead('partners')
+      ? subscribeToQuery(query(collection(db, COLLECTIONS.PARTNERS), where('email', '==', currentUser.identifier)), setPartners)
+      : listen(canRead('partners'), COLLECTIONS.PARTNERS, setPartners);
     const unsubProjects = listen(canRead('projects'), COLLECTIONS.PROJECTS, setProjects);
     const unsubLogistics = listen(canRead('logistics'), COLLECTIONS.LOGISTICS, setLogisticsJobs);
     const unsubLeads = listen(canRead('leads') || canRead('pipeline'), COLLECTIONS.LEADS, setLeads);

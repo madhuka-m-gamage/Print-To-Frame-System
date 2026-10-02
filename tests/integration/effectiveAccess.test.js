@@ -27,7 +27,12 @@ import {
  */
 
 // Cells a pending rules change is meant to flip: { role, probe, op, deployed, next }.
-const EXPECTED_RULE_CHANGES = [];
+const EXPECTED_RULE_CHANGES = [
+  // SEC-7: a Partner reads and edits only its own partners record.
+  { role: 'Partner', probe: 'partners', op: 'read', deployed: true, next: false },
+  { role: 'Partner', probe: 'partners', op: 'create', deployed: true, next: false },
+  { role: 'Partner', probe: 'partners', op: 'update', deployed: true, next: false },
+];
 
 const ROLES = Object.keys(PERMISSIONS_FIXTURE);
 

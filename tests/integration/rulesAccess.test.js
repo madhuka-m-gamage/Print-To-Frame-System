@@ -118,16 +118,6 @@ describe('settings, audit log and public forms (correct today)', () => {
 });
 
 describe('known gaps in today\'s rules (characterisation)', () => {
-  // The Partner role holds view and edit on partners in the matrix (Phase 7 3.2 removed
-  // create, delete and export), so a partner can still read every other partner: the rule
-  // checks the module permission, not whose record it is. Not changed in 3.5: limiting it to
-  // the partner's own record needs the Partners screen to query its own document first.
-  it('lets a Partner read another partner\'s document because the matrix grants partners view', async () => {
-    await seedDoc('partners', 'p2@example.com', { name: 'P2' });
-    const db = await dbAs('Partner', 'p1@example.com');
-    await assertSucceeds(getDoc(doc(db, 'partners', 'p2@example.com')));
-  });
-
   // Flipped in Phase 7 3.5 (rbac finding 5): quotations follow the quotations permission.
   it('gates quotations by the quotations permission', async () => {
     await seedDoc('quotations', 'QT-1', { total: 1 });
@@ -356,7 +346,72 @@ describe('known gaps in today\'s rules (characterisation)', () => {
   });
 });
 
+describe('a Partner is limited to its own partners record (SEC-7)', () => {
+  const OWN = { name: 'Own Studio', email: 'p1@example.com', commissionRate: 38, status: 'Active', pending: 0, paid: 0 };
+
+  beforeEach(async () => {
+    await seedDoc('partners', 'P-1', OWN);
+    await seedDoc('partners', 'P-2', { name: 'Other', email: 'p2@example.com', commissionRate: 38 });
+  });
+
+  it('lets staff read every partner', async () => {
+    const db = await dbAs('Sales');
+    await assertSucceeds(getDoc(doc(db, 'partners', 'P-1')));
+    await assertSucceeds(getDocs(collection(db, 'partners')));
+  });
+
+  it('lets a Partner read only the record whose email (or id) is its login email', async () => {
+    const db = await dbAs('Partner', 'p1@example.com');
+    await assertSucceeds(getDoc(doc(db, 'partners', 'P-1')));
+    await assertSucceeds(getDocs(query(collection(db, 'partners'), where('email', '==', 'p1@example.com'))));
+    await assertFails(getDoc(doc(db, 'partners', 'P-2')));
+    await assertFails(getDocs(collection(db, 'partners')));
+  });
+
+  it('does not match a partner email that differs in case from the login email', async () => {
+    await seedDoc('partners', 'P-3', { name: 'Mixed', email: 'Mixed@Example.com' });
+    const db = await dbAs('Partner', 'mixed@example.com');
+    await assertFails(getDoc(doc(db, 'partners', 'P-3')));
+  });
+
+  it('lets a Partner update its profile fields only', async () => {
+    const db = await dbAs('Partner', 'p1@example.com');
+    await assertSucceeds(updateDoc(doc(db, 'partners', 'P-1'), {
+      name: 'New', contactPerson: 'N', phone: '+94', address: 'Kandy', company: 'Co',
+      bankName: 'B', accountNumber: '1', accountName: 'A', branchName: 'Br', photoURL: 'x', documents: {}, updatedAt: 'now',
+    }));
+    await assertFails(updateDoc(doc(db, 'partners', 'P-1'), { commissionRate: 60 }));
+    await assertFails(updateDoc(doc(db, 'partners', 'P-1'), { status: 'Inactive' }));
+    await assertFails(updateDoc(doc(db, 'partners', 'P-1'), { pending: 1000 }));
+    await assertFails(updateDoc(doc(db, 'partners', 'P-1'), { paid: 1000 }));
+    await assertFails(updateDoc(doc(db, 'partners', 'P-1'), { email: 'p2@example.com' }));
+  });
+
+  it('denies a Partner updating another partner or creating a partner', async () => {
+    const db = await dbAs('Partner', 'p1@example.com');
+    await assertFails(updateDoc(doc(db, 'partners', 'P-2'), { name: 'Hijack' }));
+    await assertFails(setDoc(doc(db, 'partners', 'P-9'), { name: 'New', email: 'p1@example.com' }));
+  });
+
+  it('lets staff with partners edit change the commission rate', async () => {
+    await assertSucceeds(updateDoc(doc(await dbAs('Manager'), 'partners', 'P-1'), { commissionRate: 45 }));
+  });
+
+  it('denies a user who is neither staff nor the partner', async () => {
+    const db = await dbAs('Customer', 'p1-not@example.com');
+    await assertFails(getDoc(doc(db, 'partners', 'P-1')));
+    await assertFails(updateDoc(doc(db, 'partners', 'P-1'), { name: 'X' }));
+  });
+
+  it('lets a Partner read only its own referral claims by partnerEmail', async () => {
+    await seedDoc('referral_claims', 'c1', { partnerEmail: 'p1@example.com' });
+    await seedDoc('referral_claims', 'c2', { partnerEmail: 'p2@example.com' });
+    const db = await dbAs('Partner', 'p1@example.com');
+    await assertSucceeds(getDocs(query(collection(db, 'referral_claims'), where('partnerEmail', '==', 'p1@example.com'))));
+    await assertFails(getDocs(collection(db, 'referral_claims')));
+  });
+});
+
 describe('target behaviour to enable with the Phase 7 rules changes', () => {
-  it.todo('follow-up: a Partner role limited to its own partners record (needs the Partners screen to query its own document, and field limits so a partner cannot edit its own commission rate)');
   it.todo('held: an Active partner readable by anyone (partners D-5) needs a public profile document, not the full partner record');
 });

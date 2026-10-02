@@ -8,7 +8,8 @@ import {
   Lock, KeyRound
 } from 'lucide-react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/services/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import { db, storage } from '@/services/firebase';
 import { toast } from '@/shared/utils/toast';
 import DeleteModal from '@/shared/components/DeleteModal';
 import { PageHeader, FilterBar, StatusBadge, ModalWrapper, UserAvatar, ImageCropModal } from '@/shared/ui';
@@ -16,6 +17,7 @@ import EmailTemplateModal from '@/shared/components/EmailTemplateModal';
 import PartnerQRModal from './PartnerQRModal';
 import { 
   subscribeToCollection, 
+  subscribeToQuery,
   addDocument, 
   updateDocument, 
   deleteDocument,
@@ -31,6 +33,9 @@ import { deleteUserAccount, resetUserPassword } from '@/features/admin/adminUser
 import { logActivity } from '@/services/auditLog';
 import { invoicesForLineage } from '@/features/leads/leadLineage';
 import { DEFAULT_REFERRAL_COMMISSION_RATE, sqFtFromPricing } from '@/features/quotations/quotePricing';
+
+// The fields firestore.rules lets a Partner change on its own record (SEC-7).
+const PARTNER_EDITABLE_FIELDS = ['name', 'contactPerson', 'phone', 'address', 'company', 'bankName', 'accountNumber', 'accountName', 'branchName', 'photoURL', 'documents'];
 
 export default function Partners({ 
   partners = [], 
@@ -91,14 +96,17 @@ export default function Partners({
   });
   const [isSubmittingClaim, setIsSubmittingClaim] = useState(false);
 
+  const partnerIdentifier = isPartnerUser ? currentUser?.identifier : null;
   useEffect(() => {
-    const unsubClaims = subscribeToCollection(COLLECTIONS.REFERRAL_CLAIMS, (data) => {
-      setClaims(data || []);
-    });
+    const onClaims = (data) => setClaims(data || []);
+    // A Partner may read only its own claims (SEC-7).
+    const unsubClaims = partnerIdentifier
+      ? subscribeToQuery(query(collection(db, COLLECTIONS.REFERRAL_CLAIMS), where('partnerEmail', '==', partnerIdentifier)), onClaims)
+      : subscribeToCollection(COLLECTIONS.REFERRAL_CLAIMS, onClaims);
     return () => {
       unsubClaims();
     };
-  }, []);
+  }, [partnerIdentifier]);
 
   const [newPartner, setNewPartner] = useState({
     name: '',
@@ -463,6 +471,7 @@ export default function Partners({
     const partnerId = newPartner.partnerId.trim() || ('P-' + String(Date.now()).slice(-4));
     const partnerPayload = {
       ...newPartner,
+      email: newPartner.email.trim().toLowerCase(),
       partnerId,
       commissionRate: Number(newPartner.commissionRate) || DEFAULT_REFERRAL_COMMISSION_RATE,
       createdAt: new Date().toISOString(),
@@ -538,10 +547,12 @@ export default function Partners({
     if (!editFormData || !selectedPartner) return;
     setIsSavingPartner(true);
     try {
-      const payload = {
-        ...editFormData,
-        commissionRate: Number(editFormData.commissionRate) || DEFAULT_REFERRAL_COMMISSION_RATE,
-      };
+      const payload = isPartnerUser
+        ? Object.fromEntries(PARTNER_EDITABLE_FIELDS.filter((key) => key in editFormData).map((key) => [key, editFormData[key]]))
+        : {
+            ...editFormData,
+            commissionRate: Number(editFormData.commissionRate) || DEFAULT_REFERRAL_COMMISSION_RATE,
+          };
       const docId = selectedPartner._firestoreId || selectedPartner.id || selectedPartner.partnerId;
       await updateDocument(COLLECTIONS.PARTNERS, docId, payload);
 
@@ -1664,6 +1675,7 @@ export default function Partners({
                     type="text"
                     value={editFormData.brNumber || ''}
                     onChange={(e) => setEditFormData(p => ({ ...p, brNumber: e.target.value }))}
+                    disabled={isPartnerUser}
                     className="w-full p-2.5 bg-surface-container-low border border-outline-variant/60 rounded-xl text-on-surface font-mono"
                   />
                 </div>
@@ -1685,6 +1697,7 @@ export default function Partners({
                     className="w-full p-2.5 bg-surface-container-low border border-outline-variant/60 rounded-xl text-on-surface font-mono"
                   />
                 </div>
+                {!isPartnerUser && (
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-on-surface-variant mb-1">Commission Rate (LKR / SqFt)</label>
                   <input
@@ -1697,6 +1710,7 @@ export default function Partners({
                     className="w-full p-2.5 bg-surface-container-low border border-outline-variant/60 rounded-xl text-on-surface font-mono font-bold"
                   />
                 </div>
+                )}
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-on-surface-variant mb-1">Bank Name</label>
                   <input
