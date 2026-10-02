@@ -8,7 +8,11 @@ const partnerUser = {
   isApproved: true, status: 'Active', contactNumber: '0772222222', location: 'Kandy', company: 'Kasun Frames',
 };
 const partnerRecord = { id: 'P-0001', _firestoreId: 'partner-doc-1', partnerId: 'P-0001', email: 'partner@example.com', name: 'Old Name', phone: '0711111111' };
-const authState = { callback: null };
+const customerUser = {
+  identifier: 'nimal@example.com', email: 'nimal@example.com', name: 'Nimal', role: 'Customer', nic: '912345678V',
+  isApproved: true, status: 'Active', contactNumber: '', location: '',
+};
+const authState = { callback: null, user: null };
 
 vi.mock('@/services/firebase', () => ({
   db: {},
@@ -26,8 +30,8 @@ vi.mock('firebase/firestore', () => ({
   collection: vi.fn(() => ({})),
   query: vi.fn(() => ({})),
   where: vi.fn(() => ({})),
-  getDoc: vi.fn(async () => ({ exists: () => true, data: () => ({ ...partnerUser }) })),
-  getDocs: vi.fn(async () => ({ docs: [{ id: 'partner-doc-1' }], forEach: () => {} })),
+  getDoc: vi.fn(async () => ({ exists: () => true, data: () => ({ ...(authState.user || partnerUser) }) })),
+  getDocs: vi.fn(async () => ({ docs: [{ id: 'customer-doc-1' }], forEach: () => {} })),
   setDoc: vi.fn(async () => {}),
   updateDoc: vi.fn(async () => {}),
   deleteDoc: vi.fn(async () => {}),
@@ -60,11 +64,12 @@ vi.mock('@/features/messaging/MessagingContext', () => ({
 
 const { default: App } = await import('@/App');
 const { updateDocument } = await import('@/services/firestoreSync');
-const { updateDoc } = await import('firebase/firestore');
+const { updateDoc, getDocs, where } = await import('firebase/firestore');
 
 beforeEach(() => {
   globalThis.__TEST_PERMISSIONS__ = DEFAULT_PERMISSIONS;
   localStorage.clear();
+  authState.user = null;
   vi.clearAllMocks();
 });
 
@@ -87,5 +92,45 @@ describe('Partner profile save', () => {
       name: 'Kasun Studio', contactPerson: 'Kasun Studio', phone: '0772222222', address: 'Kandy', company: 'Kasun Frames',
     }));
     expect(updateDoc).not.toHaveBeenCalled();
+  });
+});
+
+describe('Partner profile save, clearing fields', () => {
+  it('writes an emptied phone, address and company to the partners record', async () => {
+    authState.user = { ...partnerUser, contactNumber: '', location: '', company: '' };
+    render(<PermissionsProvider><App /></PermissionsProvider>);
+    await waitFor(() => expect(authState.callback).toBeTruthy());
+    await act(async () => { await authState.callback({ email: 'partner@example.com', displayName: 'Kasun Studio' }, 'token'); });
+
+    fireEvent.click(await screen.findByTitle('My Profile'));
+    fireEvent.change(await screen.findByPlaceholderText('Kadawatha, Sri Lanka'), { target: { value: '' } });
+    fireEvent.click(await screen.findByText('Save Profile Changes'));
+
+    await waitFor(() => expect(updateDocument.mock.calls.some(([name]) => name === 'partners')).toBe(true));
+    const [, , updates] = updateDocument.mock.calls.find(([name]) => name === 'partners');
+    expect(updates).toEqual(expect.objectContaining({ phone: '', address: '', company: '' }));
+  });
+});
+
+describe('Customer profile save', () => {
+  it('goes through handleUpdateUser: no direct customers write from UserProfile, and emptied fields are cleared', async () => {
+    authState.user = customerUser;
+    render(<PermissionsProvider><App /></PermissionsProvider>);
+    await waitFor(() => expect(authState.callback).toBeTruthy());
+    await act(async () => { await authState.callback({ email: 'nimal@example.com', displayName: 'Nimal' }, 'token'); });
+
+    fireEvent.click(await screen.findByTitle('My Profile'));
+    fireEvent.change(await screen.findByPlaceholderText('Kadawatha, Sri Lanka'), { target: { value: '' } });
+    fireEvent.click(await screen.findByText('Save Profile Changes'));
+
+    await waitFor(() => expect(updateDocument.mock.calls.some(([name]) => name === 'customers')).toBe(true));
+    const customerWrites = updateDocument.mock.calls.filter(([name]) => name === 'customers');
+    expect(customerWrites).toHaveLength(1);
+    expect(customerWrites[0][1]).toBe('customer-doc-1');
+    expect(customerWrites[0][2]).toEqual(expect.objectContaining({ name: 'Nimal', phone: '', address: '' }));
+    expect(updateDoc).not.toHaveBeenCalled();
+    // the rules let a client read only rows whose email matches their token, so the lookup is by email alone
+    expect(where.mock.calls.filter(([field]) => field === 'nic')).toHaveLength(0);
+    expect(getDocs).toHaveBeenCalled();
   });
 });

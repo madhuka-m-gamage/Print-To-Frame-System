@@ -17,10 +17,11 @@ One self-service profile page plus a theme toggle. There is no separate settings
 ## Triggers and side effects
 
 - Photos are cropped to base64 and stored inline in `photoURL` (no Storage).
-- A Partner's `partners` record is written only by `handleUpdateUser` in `App.jsx` (name, contact person, phone, photo, and address and company when set); `UserProfile.jsx` updates `customers` itself for Customer and Business Client (FEA-8, decision 2).
+- Partner and customer records are written only by `handleUpdateUser` in `App.jsx` (FEA-8, FEA-13): a Partner's `partners` record by id; a Customer or Business Client's `customers` record found by `email` alone (the rules let a client read only rows whose email or nic equals their token email, so a query on the real NIC is denied). Phone, address and company are written even when empty, so clearing a field clears it. `UserProfile.jsx` writes only `users`.
 
 ## Before you edit
 
+- The form defaults an empty location to the placeholder `Kadawatha, Sri Lanka`, so a profile with no location saves that text unless the user clears the field.
 - Password change is a stub (toast only).
 - Role, status and email are protected only by the client payload; rules block role / status changes for non-admins.
 - `src/constants/companyInfo.js` is unused.

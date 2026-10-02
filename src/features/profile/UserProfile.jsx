@@ -6,9 +6,8 @@ import {
   Smartphone, AlertCircle, RefreshCw, ExternalLink,
   MessageSquare, Calculator
 } from 'lucide-react';
-import { doc, updateDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/services/firebase';
-import { COLLECTIONS } from '@/services/firestoreSync';
 import { toast } from '@/shared/utils/toast';
 import { logActivity } from '@/services/auditLog';
 import { PageHeader, StatusBadge, ImageCropModal } from '@/shared/ui';
@@ -128,38 +127,7 @@ export default function UserProfile({ currentUser, onUpdateUser, onSignOut, setA
       const userDocRef = doc(db, 'users', String(currentUser.identifier).trim().toLowerCase());
       await setDoc(userDocRef, updatedProfile, { merge: true });
 
-      // Cross-Collection Profile Sync (Finding 9)
-      try {
-        // A Partner's partners record is mirrored by handleUpdateUser in App.jsx (onUpdateUser below).
-        if (isCustomer) {
-          const customersCol = collection(db, COLLECTIONS.CUSTOMERS);
-          const emailQuery = (currentUser.email || currentUser.identifier || '').trim().toLowerCase();
-          const custQueries = [];
-          if (emailQuery) {
-            custQueries.push(getDocs(query(customersCol, where('email', '==', emailQuery))));
-          }
-          const nicVal = (currentUser.nic || currentUser.clientNIC || '').trim();
-          if (nicVal) {
-            custQueries.push(getDocs(query(customersCol, where('nic', '==', nicVal))));
-          }
-          const results = await Promise.all(custQueries);
-          const matchedDocIds = new Set();
-          results.forEach(snap => snap.docs.forEach(d => matchedDocIds.add(d.id)));
-
-          const customerUpdate = {
-            name: formData.name.trim() || currentUser.name,
-            photoURL: formData.photoURL || '',
-          };
-          if (formData.contactNumber.trim()) customerUpdate.phone = formData.contactNumber.trim();
-          if (formData.location.trim()) customerUpdate.address = formData.location.trim();
-
-          for (const docId of matchedDocIds) {
-            await updateDoc(doc(db, COLLECTIONS.CUSTOMERS, docId), customerUpdate);
-          }
-        }
-      } catch (syncErr) {
-        console.warn('Cross-collection directory sync notice:', syncErr);
-      }
+      // Partner and customer records are mirrored by handleUpdateUser in App.jsx (onUpdateUser below).
 
       // Update in-memory user
       if (onUpdateUser) {
