@@ -29,6 +29,6 @@ Full map: [README.md](README.md). Audit findings & open questions: [FINDINGS.md]
 ## Before you edit
 
 - `firestore.rules` on this branch (not yet deployed live): `messages` reads need `messages:view` and being a participant (or Admin); creates must be sent as yourself into your own conversation; recipients may update only `readBy` and `updatedAt`. `typing_indicators` is still readable and writable by any signed-in user (Wave B follow-up in BACKLOG FEA-6).
-- `markChatAsRead` and `markAllAsRead` still send one `updateDocument` per message (the `writeBatch` half of D-MSG-02 is open).
+- `markChatAsRead` and `markAllAsRead` send read receipts through `batchWrite` in chunks of 500 (one `update` of `readBy` per unread message, no per-message `updateDocument`); a failed chunk is logged with `console.warn` (D-MSG-02 closed, FEA-12).
 - Conversations are derived from `channelId`; there is no thread document.
 - Tests: `tests/component/MessagingContext.test.jsx`, `Messages.test.jsx`, `MiniChatDrawer.test.jsx`, `FloatingMessageToast.test.jsx`, `NotificationsView.test.jsx`, `App.messagingGate.test.jsx`, `tests/unit/messageFilters.test.js`.

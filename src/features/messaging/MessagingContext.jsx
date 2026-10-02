@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { db } from '@/services/firebase';
 import { collection, query, where, onSnapshot, documentId } from 'firebase/firestore';
-import { addDocument, updateDocument, COLLECTIONS } from '@/services/firestoreSync';
+import { addDocument, batchWrite, COLLECTIONS } from '@/services/firestoreSync';
 import { triggerBrowserNotification } from '@/App';
 import { playMessageChime } from './audioAlert';
 import { buildReplyTo } from './messageFilters';
@@ -189,6 +189,17 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
     ];
   }, [messages, pendingSends]);
 
+  const BATCH_LIMIT = 500;
+  const sendReadReceipts = async (unreadMsgs, myId) => {
+    const ops = unreadMsgs.map((m) => ({
+      type: 'update', collection: COLLECTIONS.MESSAGES, docId: m._firestoreId,
+      data: { readBy: [...(m.readBy || []), myId] },
+    }));
+    const chunks = [];
+    for (let i = 0; i < ops.length; i += BATCH_LIMIT) chunks.push(ops.slice(i, i + BATCH_LIMIT));
+    await Promise.all(chunks.map((chunk) => batchWrite(chunk).catch(e => console.warn("Read sync error:", e))));
+  };
+
   // 5. Action: Mark Conversation as Read
   const markChatAsRead = useCallback(async (contactId) => {
     if (!currentUser?.identifier || !contactId) return;
@@ -203,16 +214,7 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
              !(m.readBy || []).map(r => String(r).toLowerCase()).includes(myId)
     );
 
-    if (unreadMsgs.length) {
-      for (const m of unreadMsgs) {
-        const readBy = m.readBy || [];
-        if (!readBy.map(r => String(r).toLowerCase()).includes(myId)) {
-          updateDocument(COLLECTIONS.MESSAGES, m._firestoreId, {
-            readBy: [...readBy, myId]
-          }).catch(e => console.warn("Read sync error:", e));
-        }
-      }
-    }
+    await sendReadReceipts(unreadMsgs, myId);
   }, [currentUser, messages]);
 
   // 5b. Action: Mark All Messages as Read across all conversations
@@ -226,19 +228,7 @@ export function MessagingProvider({ children, currentUser, users = [], activeTab
       return fromId !== myId && !readBy.includes(myId);
     });
 
-    if (unreadMsgs.length) {
-      await Promise.all(
-        unreadMsgs.map((m) => {
-          const readBy = m.readBy || [];
-          if (!readBy.map(r => String(r).toLowerCase()).includes(myId)) {
-            return updateDocument(COLLECTIONS.MESSAGES, m._firestoreId, {
-              readBy: [...readBy, myId]
-            }).catch(e => console.warn("Read sync error:", e));
-          }
-          return Promise.resolve();
-        })
-      );
-    }
+    await sendReadReceipts(unreadMsgs, myId);
   }, [currentUser, messages]);
 
   // Helper: Dynamically resolve complete user profile from global users list
