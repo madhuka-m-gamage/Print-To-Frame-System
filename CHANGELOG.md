@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Wave A3 run review (docs only): PLAN.md Run calibration rewritten (two small Sonnet items in parallel took about 8 min and about 100k tokens each; Sonnet·low and Sonnet·medium cost the same within noise), the model-policy evidence table updated (money-small 2 runs, small-ui 3 runs), five proposed skill changes listed for approval, and MON-10 added (per-line invoice rows can differ from the rounded total by a cent; owner decision first).
+
 - Printed and emailed Advance / Final figures (invoice print draft amount, invoice template, email template modal, Gemini invoice prompt) now use `splitInvoiceAmounts`, so they match the stored amounts to the cent (MON-9; unit +15).
 
 - none

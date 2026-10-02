@@ -52,6 +52,7 @@ Every item implicitly includes these.
 | MON-7 | List and alert defaulted-commission leads | money | M | rules | no | FEA-2 |
 | MON-8 | Round the 75 / 25 invoice split to cents | money | S | no | **yes** | none |
 | MON-9 | Printed and emailed Advance / Final figures use the rounded split | money | S | no | no | MON-8 |
+| MON-10 | Per-line invoice rows sum to the rounded Advance | money | S | no | **yes** | MON-9 |
 | FEA-1 | Real partner payout (step 4.1) | feature | M | rules | no | LIVE-1 (to work live) |
 | FEA-2 | Persistent notifications and claim resolution (step 4.3) | feature | L | rules | no | none |
 | FEA-3 | Fabrication board statuses: Cancelled, On Hold, Archived, Other (done) | feature | M | no | DEC-4 | none |
@@ -198,6 +199,11 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 - **Why (found by MON-8, 2026-10-02):** `invoiceTemplate.js`, `invoicePrintData.js` and `EmailTemplateModal.jsx` still derive the displayed Advance and Final with `* 0.75` / `* 0.25`, so a printed or emailed figure can differ from the stored amount by one cent now that stored amounts come from `splitInvoiceAmounts` (`src/features/quotations/splitInvoiceAmounts.js`).
 - **Build:** use `splitInvoiceAmounts` in all three, or print the stored `amount`; a unit test on `invoicePrintData` for a total such as LKR 33,333.33. No decision needed (follows the MON-8 decision).
 - **Done (MON-9):** `invoicePrintData.js`, `invoiceTemplate.js` (totals), `EmailTemplateModal.jsx` (via `buildSplitTokens` in `emailTemplates.js`) and `gemini.js` `generateAdvanceInvoice` now use `splitInvoiceAmounts`. Known remaining: the per-line rows in `invoiceTemplate.js` (~line 242) still scale each line by 0.75 / 0.25 and can differ from the total by a cent; left unchanged on purpose.
+
+### MON-10: Per-line invoice rows sum to the rounded Advance
+- **Why (found by MON-9, 2026-10-02):** the per-line rows in `invoiceTemplate.js` (about line 242) scale each line by 0.75 or 0.25, so the lines can differ from the rounded Advance or Final total by a cent. A test in `tests/unit/displaySplit.test.js` pins the current behaviour.
+- **Owner decision first:** show each line at full value with the 75% / 25% only in the totals, or spread the rounding across the lines so they sum to the total? The first is simpler and cannot drift; the second keeps today's layout.
+- **Build:** after the decision, change the row calculation and flip the pinning test.
 
 ## Features
 

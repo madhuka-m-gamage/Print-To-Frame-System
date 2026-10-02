@@ -47,8 +47,8 @@ One line per task type that has been run. The review appends here; the policy de
 
 | Task type | Runs | Picks used | Fix rounds | Findings / rework |
 |---|---|---|---|---|
-| money-small | 1 (MON-8) | Sonnet·low (owner override of the Sonnet·medium default) | 0 | 1 out-of-scope finding (MON-9), no rework |
-| small-ui | 2 (FEA-12, FEA-13) | Sonnet·medium | 0 | FEA-13: the claim in BACKLOG proved wrong, fixed by verifying first |
+| money-small | 2 (MON-8, MON-9) | Sonnet·low both (owner overrides of the Sonnet·medium default) | 0 | MON-8: 1 out-of-scope finding (MON-9); MON-9: per-line rows deliberately untouched (cent drift, MON-10), no rework |
+| small-ui | 3 (FEA-12, FEA-13, FEA-14) | Sonnet·medium | 0 | FEA-13: the claim in BACKLOG proved wrong, fixed by verifying first; FEA-14: the userId link split out as FEA-15 on the owner's decision |
 | config | 1 (ENG-7) | Sonnet·low | 0 | none |
 
 ## Learned
