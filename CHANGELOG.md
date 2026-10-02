@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Decision 0005 (proposed, docs only): spec for the `agent-run` repo skill (plan, run and review batched agent runs) and its prerequisite PR (change fragments, per-slot test ports, shared `node_modules`).
+
 - Wave A run review (docs only): PLAN.md gains a Run calibration section (estimated vs actual time and usage per item, tuning rules for the next run) and a Wave A2 line; BACKLOG gains MON-8 (round the 75/25 invoice split, owner decision), FEA-12 (batched read receipts), FEA-13 (profile sync fixes), SEC-12 (`typing_indicators` rules, Wave B) and ENG-7 (component coverage and e2e on staging PRs), plus two LIVE-1 post-deploy checks; ENG-5 marked skipped by the owner.
 
 - TST-3: more component coverage where money moves. New `tests/component/QuotationBuilder.test.jsx` (13 tests: line maths, the 75 / 25 split, saving and cloning quotes, the Advance and Final invoices handed to `onSaveInvoice` with ids from `generateInvoiceId`, the guards and the double click), new `tests/component/Leads.test.jsx` (13 tests: pipeline value, `onSaveInvoice` wiring through the lead card, conversion to a deal with `D` and `PTF` ids, customer order count, `dealId` stamped on invoices) and 6 more in `tests/component/Customers.test.jsx` (billing panel, register, delete). Tests and docs only, no source change. One characterisation: the 75 / 25 split is not rounded to cents (BACKLOG TST-3). `npm run coverage` (unit and API) is 13.41% of `src` and `api` statements; the component layer alone is 41.9%, with `QuotationBuilder.jsx` 59.6%, `Customers.jsx` 56.9% and `Leads.jsx` 45.8%. `TESTING.md` coverage map and register refreshed for Wave A. Suite: unit 259, API 80, component 156, rules 62 (+1 skipped, +2 todo).
