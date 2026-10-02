@@ -17,11 +17,11 @@ One self-service profile page plus a theme toggle. There is no separate settings
 ## Triggers and side effects
 
 - Photos are cropped to base64 and stored inline in `photoURL` (no Storage).
-- Partner and customer records are written only by `handleUpdateUser` in `App.jsx` (FEA-8, FEA-13): a Partner's `partners` record by id; a Customer or Business Client's `customers` record found by `email` alone (the rules let a client read only rows whose email or nic equals their token email, so a query on the real NIC is denied). Phone, address and company are written even when empty, so clearing a field clears it. `UserProfile.jsx` writes only `users`.
+- Partner and customer records are written only by `handleUpdateUser` in `App.jsx` (FEA-8, FEA-13): a Partner's `partners` record by id; a Customer or Business Client's `customers` record found by `userId == auth uid` first, then by `email` (FEA-15; the rules let a client read only rows linked by `userId` or whose email or nic equals their token email, so a query on the real NIC is denied). Phone, address and company are written even when empty, so clearing a field clears it. `UserProfile.jsx` writes only `users`.
 
 ## Before you edit
 
-- An empty location stays empty (FEA-14); `Kadawatha, Sri Lanka` is only the input's placeholder. A customer whose `customers.email` differs from the login email is still not synced (needs a userId link, FEA-15).
+- An empty location stays empty (FEA-14); `Kadawatha, Sri Lanka` is only the input's placeholder. A customer whose `customers.email` differs from the login email is synced only when the row carries their `userId` (FEA-15).
 - Password change is a stub (toast only).
 - Role, status and email are protected only by the client payload; rules block role / status changes for non-admins.
 - `src/constants/companyInfo.js` is unused.

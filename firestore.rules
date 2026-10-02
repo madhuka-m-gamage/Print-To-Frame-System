@@ -259,13 +259,20 @@ service cloud.firestore {
     }
 
     // ── Customers ────────────────────────────────────────
+    // A client owns the row linked to their login by userId (the Auth uid, FEA-15), or
+    // whose email or nic equals their login email.
+    function ownsCustomer() {
+      return isAuthenticated()
+        && (resource.data.get('userId', '') == request.auth.uid
+          || resource.data.email == request.auth.token.email || resource.data.nic == request.auth.token.email);
+    }
+
     match /customers/{customerId} {
       allow read: if checkPermission('customers', 'view') || checkPermission('customers', 'read')
-        || (isAuthenticated() && (resource.data.email == request.auth.token.email || resource.data.nic == request.auth.token.email));
+        || ownsCustomer();
       // A client may keep their own profile up to date (customers Decision 9), and only
       // the fields UserProfile.jsx syncs, never order or financial fields.
-      allow update: if isAuthenticated()
-        && (resource.data.email == request.auth.token.email || resource.data.nic == request.auth.token.email)
+      allow update: if ownsCustomer()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'photoURL', 'phone', 'address']);
       allow create, update: if checkPermission('customers', 'create') || checkPermission('customers', 'edit') || checkPermission('customers', 'write');
       allow delete: if checkPermission('customers', 'delete') || isAdmin();

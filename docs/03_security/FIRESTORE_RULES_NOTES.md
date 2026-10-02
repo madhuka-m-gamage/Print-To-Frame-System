@@ -27,7 +27,7 @@
 | `counters` | any authenticated | any authenticated |
 | `invoices` | `invoices` view, or own (`customerId` / `partnerId` == token email), or the referring partner of the lead its `leadId` names (SEC-8) | `invoices` create / edit; delete Admin |
 | `receipts` | `receipts` view, or own | `receipts` create / edit; delete Admin |
-| `customers` | `customers` view | create / edit; delete: `customers` delete or Admin |
+| `customers` | `customers` view, or own (`ownsCustomer`: `userId` == auth uid (FEA-15), or `email` / `nic` == token email) | create / edit; an owner updates only `name, photoURL, phone, address`; delete: `customers` delete or Admin |
 | `partners` | `partners` view for a non-Partner role, or own (`ownsPartner`: doc id or `email` == token email) | create / edit for a non-Partner role; an active Partner updates its own record's profile fields only (`name, contactPerson, phone, address, company, bankName, accountNumber, accountName, branchName, photoURL, documents, updatedAt`), never `commissionRate`, `status`, `email` or balances (SEC-7); delete: `partners` delete or Admin |
 | `projects` | `projects` view, or own customer | create / edit; delete Admin |
 | `logistics` | `logistics` view, or own customer | create / edit; delete Admin |
