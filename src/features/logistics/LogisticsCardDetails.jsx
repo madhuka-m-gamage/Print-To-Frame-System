@@ -43,9 +43,8 @@ import {
   getWhatsAppUrl,
   formatDispatchMessage,
   calculateCODFromInvoices,
-  FLEET_VEHICLES,
-  DRIVER_DIRECTORY 
 } from './logisticsEngine';
+import { useFleetDirectory } from './useFleetDirectory';
 
 export default function LogisticsCardDetails({ 
   job, 
@@ -58,6 +57,7 @@ export default function LogisticsCardDetails({
   onCollectCod,
   collectorName = ''
 }) {
+  const { vehicles, drivers } = useFleetDirectory();
   // Find linked customer record
   const matchedCustomer = useMemo(() => {
     if (!customers || customers.length === 0) return null;
@@ -143,7 +143,7 @@ export default function LogisticsCardDetails({
 
   // 1-Tap WhatsApp Alert
   const handleSendWhatsAppAlert = () => {
-    const matchedDriver = DRIVER_DIRECTORY.find(d => d.name === formData.driver);
+    const matchedDriver = drivers.find(d => d.name === formData.driver);
     const msg = formatDispatchMessage({
       customerName: formData.customer,
       location: formData.location,
@@ -645,7 +645,7 @@ export default function LogisticsCardDetails({
                   className="w-full px-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-xs font-semibold focus:ring-2 focus:ring-primary/50 text-on-surface"
                 >
                   <option value="">-- Select Driver --</option>
-                  {DRIVER_DIRECTORY.map(d => (
+                  {drivers.map(d => (
                     <option key={d.name} value={d.name}>{d.name} ({d.phone})</option>
                   ))}
                 </select>
@@ -662,7 +662,7 @@ export default function LogisticsCardDetails({
                   className="w-full px-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-xs font-semibold focus:ring-2 focus:ring-primary/50 text-on-surface"
                 >
                   <option value="">-- Select Vehicle --</option>
-                  {FLEET_VEHICLES.map(v => (
+                  {vehicles.map(v => (
                     <option key={v.id} value={v.name}>{v.name} - {v.capacity}</option>
                   ))}
                 </select>
