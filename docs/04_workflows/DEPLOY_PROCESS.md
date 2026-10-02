@@ -14,7 +14,7 @@ Push to the `staging` branch; Vercel builds a preview deployment. Check the prev
 
 ## Production
 
-Merge `staging` into `main` and push; Vercel deploys `main` to `portal.print2frame.xyz`. Needs explicit confirmation (see [GIT_WORKFLOW.md](GIT_WORKFLOW.md)).
+Merge `staging` into `main` (PR, merge commit); Vercel deploys `main` to the project `print-to-frame-system`. The live `portal.print2frame.xyz` still deploys the old repository `madhukagamage6/Print-To-Frame-ERP-System` until backlog item LIVE-3 reconnects it here, so merging to `main` here does not change the live site. The domain-to-project link is a Vercel setting and was not verified from the repo. Needs explicit confirmation (see [GIT_WORKFLOW.md](GIT_WORKFLOW.md)).
 
 ## Firestore rules deployment
 
