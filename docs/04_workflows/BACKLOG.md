@@ -407,6 +407,7 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 
 ### ENG-6: Documentation that no longer matches reality
 - Root `CLAUDE.md`, "Branching & deployment workflow": it says `main` is production and mentions two skills under `.agents/skills/`. Today production deploys from the original repository, and `.agents/skills/` is not in this repository. Correct it (see LIVE-3). Also re-check `docs/04_workflows/DEPLOY_PROCESS.md` and `GIT_WORKFLOW.md` once the deploy path is settled. **Partly done in Milestone 1** (PLAN, handoff, git workflow, root `CLAUDE.md`, README, index, module maps); re-check again after LIVE-3.
+- **Re-checked (ENG-6 PR):** root `CLAUDE.md` and `GIT_WORKFLOW.md` were already correct (no `.agents/skills/` reference remains; the live site is described as deploying the old repository). Fixed `DEPLOY_PROCESS.md` "Production", which still said `main` deploys to `portal.print2frame.xyz`. Re-check once more after LIVE-3.
 
 ---
 
