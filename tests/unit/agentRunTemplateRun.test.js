@@ -29,6 +29,17 @@ describe('agent-run workflow template at run time', () => {
     expect(prompts['Final docs']).toContain('Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>');
   });
 
+  it('a second workflow uses slots 3 and 4 and runs its final e2e on slot 3', async () => {
+    const prompts = {};
+    await runTemplate({ slotOffset: 2, lanes: [[it2('A')], [it2('B')]] }, async (prompt, opts) => {
+      prompts[opts.label] = prompt;
+      return opts.label === 'Final docs' ? { prUrl: 'p', e2e: 'ok' } : merged(opts.label);
+    });
+    expect(prompts.A).toContain('testSlot.mjs 3 >');
+    expect(prompts.B).toContain('testSlot.mjs 4 >');
+    expect(prompts['Final docs']).toContain('node tests/tools/testSlot.mjs 3 > /tmp/p2f-slot3.env && . /tmp/p2f-slot3.env && npm run test:e2e');
+  });
+
   it('takes each item slot from its lane, whatever args say', async () => {
     const prompts = [];
     await runTemplate({ lanes: [[it2('A', { slot: 7 })], [it2('B')]] }, async (prompt, opts) => {

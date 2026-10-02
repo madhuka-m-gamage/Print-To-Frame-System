@@ -55,16 +55,21 @@ describe('test slots', () => {
     expect(slotEnv(1).TMPDIR).not.toBe(slotEnv(2).TMPDIR);
   });
 
-  it('refuses slots outside 0..2 and non-integers', () => {
-    for (const bad of [-1, 3, 1.5, NaN, '1a']) expect(() => slotPorts(bad)).toThrow(/slot must be an integer from 0 to 2/);
+  it('refuses slots outside 0..4 and non-integers', () => {
+    for (const bad of [-1, 5, 1.5, NaN, '1a']) expect(() => slotPorts(bad)).toThrow(/slot must be an integer from 0 to 4/);
   });
 
   it('the CLI refuses a missing, blank or out-of-range slot with a non-zero exit and no exports', () => {
-    for (const argv of [[], [''], ['3'], ['abc']]) {
+    for (const argv of [[], [''], ['5'], ['abc']]) {
       const r = spawnSync(process.execPath, ['tests/tools/testSlot.mjs', ...argv], { encoding: 'utf8' });
       expect(r.status).not.toBe(0);
       expect(r.stdout).not.toContain('export ');
     }
+  });
+
+  it('slots 3 and 4 exist for a second workflow and their ports do not collide', () => {
+    expect(MAX_SLOT).toBe(4);
+    expect(slotEnv(4)).toMatchObject({ P2F_DEV_PORT: '3040', P2F_FIRESTORE_PORT: '8120', P2F_AUTH_PORT: '9139', P2F_STORAGE_PORT: '9239' });
   });
 
   it('vite takes its dependency cache dir from the slot, so linked worktrees do not share it', () => {

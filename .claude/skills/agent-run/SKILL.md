@@ -8,7 +8,7 @@ description: Plan, run and review a batch of backlog items in this repo as paral
 Three stages. Never skip the approval between Plan and Run.
 
 ## Hard rules (every run)
-No deploys, nothing to main, no live data, no console or config changes. Tests first and seen failing. CI green to merge. e2e coverage never weakened. Merge staging in, never rebase or force-push. One owner per PR (agents switch Auto-fix off on their own PRs; the orchestrator never pushes to a branch whose agent is running). Skill and model-policy changes only with the owner's approval. At most 2 lanes on this machine.
+No deploys, nothing to main, no live data, no console or config changes. Tests first and seen failing. CI green to merge. e2e coverage never weakened. Merge staging in, never rebase or force-push. One owner per PR (agents switch Auto-fix off on their own PRs; the orchestrator never pushes to a branch whose agent is running). Skill and model-policy changes only with the owner's approval. At most 2 lanes per workflow (the Workflow tool runs CPUs − 2 agents at once, 2 on this machine); for more parallelism launch a second workflow alongside (lanes 3-4, test slots 3-4), never more than 2 workflows.
 
 ## Rates (seed values; PLAN.md "Run calibration" wins when it has newer ones)
 - Sonnet agent: about 54k subagent tokens per 1% of the 5-hour window (measured 2026-10-02), floor about 1.7% per agent (about 90k tokens just to start), small item 7-14 min and 1.7-2.0% of the window.
@@ -17,7 +17,7 @@ No deploys, nothing to main, no live data, no console or config changes. Tests f
 
 ## Stage 1: Plan (in plan mode)
 1. `git fetch origin`. Read PLAN.md (roadmap, "Run calibration", carry-overs), each item's BACKLOG section and dependencies, TESTING.md "Planning a change" for each item, `gh pr list`, `gh run list --branch staging --limit 1`, `git log origin/main..origin/staging`, `java -version`, and the meter (`mcp__ccd_session_mgmt__get_usage`).
-2. Classify each item with `model-policy.md`; estimate minutes and window % per item from the rates above; write `<scratchpad>/items.json` (`id, minutes, files, deps`; `files` and `deps` always arrays, `[]` when empty) and run `node .claude/skills/agent-run/scripts/lanes.mjs <scratchpad>/items.json`.
+2. Classify each item with `model-policy.md`; estimate minutes and window % per item from the rates above; write `<scratchpad>/items.json` (`id, minutes, files, deps`; `files` and `deps` always arrays, `[]` when empty) and run `node .claude/skills/agent-run/scripts/lanes.mjs <scratchpad>/items.json 4` (or `2` for a small batch). Lanes 1-2 form workflow A, lanes 3-4 workflow B; items that share a file are always in one lane, so the two workflows never touch the same files.
 3. Fill every section of `plan-template.md` into the plan file.
 4. Confirm model and effort for every row with AskUserQuestion, one question per row (final docs included), at most 4 questions per call:
    - **Question text**: the item's decision-card facts in 3-4 short lines (what changes, decisions still open, safety net, blast radius), then the pick and why.
@@ -31,7 +31,7 @@ No deploys, nothing to main, no live data, no console or config changes. Tests f
 1. Read the meter again; if the projected peak (section 15) exceeds 80%, stop and report.
 2. Confirm the keep-awake preference is on (ccd_settings) or call `mcp__ccd_host__request_keep_awake` with `until: "session_idle"`.
 3. Build `args`: `brief` = the text of `agent-brief.md`; `lanes` from section 6 with each item's `branch` (`claude/<id-lowercase>-<topic>`), `slot` (lane number, 1 or 2), `model`, `effort`, `backlog` (its BACKLOG section text), `files`, `notes` (module CLAUDE.md "Before you edit" bullets), `testPlan` (section 9 row); `final` = `{ model, effort }` from the final-docs row of section 8; `guardOutputTokens` from section 15 (may be null); `mainCheckout` = the primary checkout, the first path in `git worktree list` (it is only linked when its `package-lock.json` matches). Model values `opus` or `sonnet`; effort `high`, `medium` or `low`.
-4. `node .claude/skills/agent-run/scripts/check-workflow.mjs .claude/skills/agent-run/workflow-template.js`, then launch Workflow with `scriptPath` = the template and `args`. Post the run ID, and append launch time, meter %, weekly %, run ID and the workflow output-file path to section 15 of the plan file so the review can run after a restart.
+4. `node .claude/skills/agent-run/scripts/check-workflow.mjs .claude/skills/agent-run/workflow-template.js`, then launch Workflow with `scriptPath` = the template and `args` (workflow A: lanes 1-2, `slotOffset` 0). With 4 lanes, launch workflow B in the same turn with lanes 3-4 and `slotOffset: 2`; each workflow opens its own final docs PR. Post the run ID, and append launch time, meter %, weekly %, run ID and the workflow output-file path to section 15 of the plan file so the review can run after a restart.
 5. While it runs, leave agent PRs alone. Auto-fix events about an agent's PR get a one-line reply only.
 
 ## Stage 3: Review (when the workflow returns)

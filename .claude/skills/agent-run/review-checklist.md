@@ -25,5 +25,6 @@ Add a **Pick outcome** column per item: the pick used, fix rounds, catch-ups, re
 - Skill or model policy: a "proposed skill changes" list for the owner; never edit the skill or policy without approval.
 
 ## 5. Ship and report
+- With two workflows there are two final docs PRs: merge the first after its CI, then merge `origin/staging` into the second (both fold into CHANGELOG, the BACKLOG status line, TESTING and PLAN.md, so keep both sides), and add the review to the second.
 - `git fetch origin`, check out the final step's open docs PR branch in a clean worktree, commit the calibration and BACKLOG items, wait for CI, `gh pr merge <n> --merge`. If the workflow returned `final: null` (nothing merged) or `final: { error }` (the final agent failed), branch `claude/run-review-<date>` from `origin/staging`, fold any fragments still in `docs/04_workflows/changes/` as its README says, and open the docs PR yourself. Items with status `not-started` stay in the comparison table with their reason.
 - Chat report: the comparison table, top 3 tuning changes, new BACKLOG items, proposed skill and policy changes, promotion recommendation (owner decides).

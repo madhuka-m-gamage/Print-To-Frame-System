@@ -11,7 +11,7 @@ Per decision: question, recommended default, effect of "no".
 ## 5. Carry-overs
 From PLAN.md Run calibration "Tuning" (not yet adopted) and the last review's findings.
 ## 6. Lanes and order
-Output of `scripts/lanes.mjs`: lane, slot, items in order, lane minutes.
+Output of `scripts/lanes.mjs`: lane, slot, items in order, lane minutes, and which workflow runs it (A: lanes 1-2, slots 1-2; B: lanes 3-4, slots 3-4).
 ## 7. Conflict map
 Item, files it touches, why it shares a lane.
 ## 8. Model and effort per item
@@ -52,7 +52,7 @@ The hard rules from SKILL.md, verbatim; rollback: revert the item's merge commit
 ## 12. Time per sub-step and wall-clock
 From the rolling rates; range.
 ## 13. Timeline
-Clock times per lane; window reset marked.
+Clock times per lane (up to 4 lanes in 2 workflows); window reset marked.
 ## 14. Usage as % of the 5-hour window
 Meter now, per item, curve across the reset, weekly effect, calibration source and accuracy.
 ## 15. Usage guard
