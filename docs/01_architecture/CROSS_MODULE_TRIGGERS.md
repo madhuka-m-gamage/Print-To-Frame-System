@@ -95,7 +95,7 @@ Link fields: invoice `quotationId`; lead / deal / job ids (`leadId`, `dealId`, `
 
 - Lead save auto-creates a customer (exact email or phone match for dedupe), `Leads.jsx`.
 - Fabrication "Dispatch to Logistics" (manual) creates a `logistics` task and flags the project; Deals and Leads have their own manual create-job buttons. Completing a logistics job changes nothing else.
-- Every `toast.*` call also emits a session-only notification feed entry (`src/shared/utils/toast.js`).
+- A `toast.*` call with `notify: true` emits a notification that `App.jsx` stores as a `notifications` document for the signed-in user (`src/shared/utils/toast.js`); plain toasts do not (FEA-7).
 
 ## Not found (searched, absent)
 

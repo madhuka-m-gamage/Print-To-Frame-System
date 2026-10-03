@@ -5,6 +5,7 @@ import { PermissionsProvider, DEFAULT_PERMISSIONS } from '@/context/PermissionsC
 
 const adminUser = { identifier: 'admin@example.com', name: 'Admin User', role: 'Admin', isApproved: true, status: 'Active' };
 const authState = { callback: null };
+const feed = { push: null };
 
 vi.mock('@/services/firebase', () => ({
   db: {},
@@ -34,7 +35,7 @@ vi.mock('firebase/firestore', () => ({
 vi.mock('@/services/firestoreSync', () => ({
   COLLECTIONS: new Proxy({}, { get: (_t, key) => String(key).toLowerCase() }),
   subscribeToCollection: vi.fn(() => () => {}),
-  subscribeToQuery: vi.fn(() => () => {}),
+  subscribeToQuery: vi.fn((_q, cb) => { feed.push = cb; return () => {}; }),
   addDocument: vi.fn(async () => {}),
   updateDocument: vi.fn(async () => {}),
   batchWrite: vi.fn(async () => {}),
@@ -52,7 +53,6 @@ vi.mock('@/features/messaging/MessagingContext', () => ({
 }));
 
 const { default: App } = await import('@/App');
-const { emitNotification } = await import('@/shared/utils/events');
 
 const bells = () => screen.queryAllByLabelText('Notifications');
 
@@ -74,7 +74,8 @@ describe('App sign-out', () => {
     await signIn();
 
     await waitFor(() => expect(bells().length).toBeGreaterThan(0));
-    act(() => { emitNotification({ title: 'Commission cleared', message: 'LKR 5,000 for Kasun', type: 'success' }); });
+    await waitFor(() => expect(feed.push).toBeTruthy());
+    act(() => { feed.push([{ _firestoreId: 'n1', recipientEmail: 'admin@example.com', title: 'Commission cleared', type: 'commission', read: false, date: '2026-10-03T00:00:00.000Z' }]); });
     await waitFor(() => expect(bells()[0]).toHaveTextContent('1'));
 
     fireEvent.click((await screen.findAllByText('Sign Out'))[0]);

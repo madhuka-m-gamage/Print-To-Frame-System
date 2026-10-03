@@ -93,7 +93,7 @@ describe('commission cleared notification (FEA-2)', () => {
   it('writes one notification to the partner from findPartnerForLead, role Partner, unread', async () => {
     await markPaid();
     await waitFor(() => expect(sync.addDocument).toHaveBeenCalled());
-    const calls = sync.addDocument.mock.calls.filter(([c]) => c === 'notifications');
+    const calls = sync.addDocument.mock.calls.filter(([c, d]) => c === 'notifications' && d.type === 'commission');
     expect(calls).toHaveLength(1);
     expect(calls[0][1]).toMatchObject({
       recipientEmail: 'studio@example.com',
@@ -110,7 +110,7 @@ describe('commission cleared notification (FEA-2)', () => {
   it('does not also add a local in-memory commission notification for the signed-in user', async () => {
     await markPaid();
     await waitFor(() => expect(sync.addDocument).toHaveBeenCalled());
-    fireEvent.click(await screen.findByLabelText('Notifications'));
+    fireEvent.click((await screen.findAllByLabelText('Notifications'))[0]);
     expect(screen.queryByText(/Commission Eligible/)).not.toBeInTheDocument();
   });
 
@@ -118,6 +118,6 @@ describe('commission cleared notification (FEA-2)', () => {
     DATA.partners[0].email = '';
     await markPaid();
     await waitFor(() => expect(toast.warning).toHaveBeenCalledWith(expect.stringMatching(/no email/i)));
-    expect(sync.addDocument.mock.calls.filter(([c]) => c === 'notifications')).toHaveLength(0);
+    expect(sync.addDocument.mock.calls.filter(([c, d]) => c === 'notifications' && d.type === 'commission')).toHaveLength(0);
   });
 });

@@ -61,6 +61,29 @@ describe('NotificationsView delete (FEA-18)', () => {
     expect(setNotifications).toHaveBeenCalled();
   });
 
+  it('drops messages the user has already read, so Mark Messages Read clears them (FEA-7)', () => {
+    Object.assign(ctx, {
+      messages: [
+        { _firestoreId: 'm1', fromId: 'alice@example.com', senderName: 'Alice', text: 'Old news', timestamp: 1, readBy: ['bob@example.com'] },
+        { _firestoreId: 'm2', fromId: 'alice@example.com', senderName: 'Alice', text: 'Fresh news', timestamp: 2, readBy: [] },
+      ],
+    });
+    renderWithProviders(<NotificationsView notifications={[]} setNotifications={vi.fn()} users={[me, alice]} currentUser={me} />);
+    expect(screen.getByText('Fresh news')).toBeInTheDocument();
+    expect(screen.queryByText('Old news')).not.toBeInTheDocument();
+  });
+
+  it('shows the commission badge and its own icon (FEA-7)', () => {
+    const notifications = [
+      { id: 'a', title: 'Commission Eligible', message: 'paid', type: 'commission', recipientEmail: 'bob@example.com', date: '2026-10-03T00:00:00.000Z' },
+      { id: 'b', title: 'Plain', message: 'sys', type: 'system', date: '2026-10-03T00:00:00.000Z' },
+    ];
+    const { container } = renderWithProviders(<NotificationsView notifications={notifications} setNotifications={vi.fn()} users={[me]} currentUser={me} />);
+    expect(screen.getByText('COMMISSION')).toBeInTheDocument();
+    const types = [...container.querySelectorAll('[data-icon-type]')].map((i) => i.getAttribute('data-icon-type')).sort();
+    expect(types).toEqual(['commission', 'system']);
+  });
+
   it('removes a session-only entry without touching Firestore', () => {
     const setNotifications = vi.fn();
     const notifications = [{ id: 'l1', title: 'Local toast', message: 'x', type: 'info', date: '2026-10-03T00:00:00.000Z' }];
