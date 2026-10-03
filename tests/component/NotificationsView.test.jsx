@@ -1,9 +1,11 @@
 import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
-import { screen } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../helpers/renderWithProviders';
 
 const ctx = {};
+const deleteDocument = vi.fn(async () => {});
+vi.mock('@/services/firestoreSync', () => ({ deleteDocument: (...a) => deleteDocument(...a), COLLECTIONS: { NOTIFICATIONS: 'notifications' } }));
 vi.mock('@/features/messaging/MessagingContext', () => ({ useMessaging: () => ctx }));
 
 const { default: NotificationsView } = await import('@/features/dashboard/NotificationsView');
@@ -41,5 +43,30 @@ describe('NotificationsView persisted notifications (FEA-2)', () => {
     expect(screen.getByText('Mine')).toBeInTheDocument();
     expect(screen.getByText('Local toast')).toBeInTheDocument();
     expect(screen.queryByText('Theirs')).not.toBeInTheDocument();
+  });
+});
+
+describe('NotificationsView delete (FEA-18)', () => {
+  beforeEach(() => {
+    deleteDocument.mockClear();
+    Object.assign(ctx, { messages: [], openMiniChat: vi.fn(), markAllAsRead: vi.fn(), resolveUserProfile: (u) => u });
+  });
+
+  it('deletes a persisted notification in Firestore and removes it locally', async () => {
+    const setNotifications = vi.fn();
+    const notifications = [{ id: 'a', _firestoreId: 'a', title: 'Mine', message: 'x', type: 'commission', recipientEmail: 'bob@example.com', date: '2026-10-03T00:00:00.000Z' }];
+    renderWithProviders(<NotificationsView notifications={notifications} setNotifications={setNotifications} users={[me]} currentUser={me} />);
+    fireEvent.click(screen.getByTitle('Dismiss Alert'));
+    await waitFor(() => expect(deleteDocument).toHaveBeenCalledWith('notifications', 'a'));
+    expect(setNotifications).toHaveBeenCalled();
+  });
+
+  it('removes a session-only entry without touching Firestore', () => {
+    const setNotifications = vi.fn();
+    const notifications = [{ id: 'l1', title: 'Local toast', message: 'x', type: 'info', date: '2026-10-03T00:00:00.000Z' }];
+    renderWithProviders(<NotificationsView notifications={notifications} setNotifications={setNotifications} users={[me]} currentUser={me} />);
+    fireEvent.click(screen.getByTitle('Dismiss Alert'));
+    expect(deleteDocument).not.toHaveBeenCalled();
+    expect(setNotifications).toHaveBeenCalled();
   });
 });

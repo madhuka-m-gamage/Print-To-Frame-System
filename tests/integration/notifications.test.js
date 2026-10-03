@@ -4,8 +4,8 @@ import { collection, doc, getDoc, getDocs, query, where, setDoc, updateDoc, dele
 import { setupRulesEnv, clearAll, seedPermissions, asRole, unauthedFirestore } from '../helpers/emulator';
 
 // FEA-2 (notifications NOTIF-04, partners D-11): a persisted notification is read by the
-// addressed recipientEmail or an Admin, created by staff with invoices edit, and the
-// recipient may flip only the read flag.
+// addressed recipientEmail or an Admin, created by any active staff user with the
+// required fields, and the recipient may flip only the read flag or delete it (FEA-18).
 
 let testEnv;
 
@@ -59,16 +59,22 @@ describe('notifications rules (FEA-2)', () => {
     await assertFails(getDoc(doc(unauthedFirestore(testEnv), 'notifications', 'N-1')));
   });
 
-  it.each(['Admin', 'Manager', 'Sales', 'Accounts'])('lets %s (invoices edit) create a notification', async (role) => {
-    await assertSucceeds(setDoc(doc(await dbAs(role), 'notifications', 'N-new'), notif()));
-  });
-
-  it.each(['Support', 'Operations', 'Logistics', 'Partner', 'Customer', 'Business Client'])(
-    'rejects %s (no invoices edit) creating a notification',
+  it.each(['Admin', 'Manager', 'Sales', 'Accounts', 'Support', 'Operations', 'Logistics'])(
+    'lets active staff (%s), with or without invoices edit, create a notification',
     async (role) => {
-      await assertFails(setDoc(doc(await dbAs(role), 'notifications', 'N-new'), notif()));
+      await assertSucceeds(setDoc(doc(await dbAs(role), 'notifications', 'N-new'), notif()));
     }
   );
+
+  it.each(['Partner', 'Customer', 'Business Client'])('rejects %s creating a notification', async (role) => {
+    await assertFails(setDoc(doc(await dbAs(role), 'notifications', 'N-new'), notif()));
+  });
+
+  it.each(['recipientEmail', 'type', 'title', 'createdAt'])('rejects a create missing %s', async (field) => {
+    const data = notif();
+    delete data[field];
+    await assertFails(setDoc(doc(await dbAs('Sales'), 'notifications', 'N-new'), data));
+  });
 
   it('rejects a signed-out create', async () => {
     await assertFails(setDoc(doc(unauthedFirestore(testEnv), 'notifications', 'N-new'), notif()));
@@ -91,8 +97,14 @@ describe('notifications rules (FEA-2)', () => {
     await assertFails(updateDoc(doc(await dbAs('Support'), 'notifications', 'N-1'), { read: true }));
   });
 
-  it('rejects the recipient and staff deleting a notification', async () => {
-    await assertFails(deleteDoc(doc(await dbAs('Partner', 'own@example.com'), 'notifications', 'N-1')));
+  it('lets the recipient delete their own notification', async () => {
+    await assertSucceeds(deleteDoc(doc(await dbAs('Partner', 'own@example.com'), 'notifications', 'N-1')));
+  });
+
+  it('rejects anyone else deleting it, including staff, an Admin and a signed-out caller', async () => {
+    await assertFails(deleteDoc(doc(await dbAs('Partner', 'other@example.com'), 'notifications', 'N-1')));
     await assertFails(deleteDoc(doc(await dbAs('Sales'), 'notifications', 'N-1')));
+    await assertFails(deleteDoc(doc(await dbAs('Admin'), 'notifications', 'N-1')));
+    await assertFails(deleteDoc(doc(unauthedFirestore(testEnv), 'notifications', 'N-1')));
   });
 });

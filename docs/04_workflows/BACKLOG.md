@@ -232,6 +232,7 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 ### MON-13: QuotationBuilder reports success after a refused invoice save
 - **Why (found by MON-4, 2026-10-03; predates it):** `src/features/quotations/QuotationBuilder.jsx` does not await `onSaveInvoice`, so when the MON-4 guard refuses a save it still shows "invoice generated" and marks the quotation Invoiced.
 - **Build:** await the save and stop on `false`; component test.
+- **Done (2026-10-03):** both invoice calls (Advance and Final) in `QuotationBuilder.jsx` now `await onSaveInvoice(...)`. A `false` result (the MON-4 guard refusal, or any save error already toasted by `handleSaveInvoice`) stops quietly: no success toast, the quotation is not marked Invoiced, and the button is usable again. A rejected save shows an error toast and stops the same way. Any other result (`true`, or `undefined` from a handler that returns nothing) behaves as before. Tests: component 4 added (false and rejected for both invoice types) plus 2 for the true path.
 
 ### MON-14: Concurrent payouts of different referrals overwrite the partner balance
 - **Why (found by MON-11, 2026-10-03):** two admins paying out *different* referrals of one partner at the same moment both compute `pending` and `settled` from the screen copy; the later write wins. Lead statuses and payout records stay correct. Payout guards cannot be removed, so a payout reversal would also need an Admin path.
@@ -363,6 +364,7 @@ Source: `docs/02_modules/notifications/FINDINGS.md`. NOTIF-01 (sign-out leak) is
 ### FEA-18: Persistent notifications: delete, and partners with no email
 - **Why (found by FEA-2, 2026-10-03):** deleting a persisted notification in `NotificationsView` is local only (the rules allow no delete), so it returns on the next snapshot; the commission notification is skipped when the partner record has no email.
 - **Build:** let the recipient delete (or hide) their own notification in the rules and the view; decide the fallback for a partner with no email. **Live:** rules deploy.
+- **Done (repo part):** recipient deletes own notification (rules + view, Firestore delete); create widened to active staff with required fields; no-email partner gives the marking staff member a warning toast and stores nothing. Rules deploy still pending (LIVE-1).
 
 ### FEA-19: Claim resolution may link a lead that names another partner
 - **Why (found by FEA-2, 2026-10-03):** the claim modal in `Partners.jsx` links any lead, including one whose `partnerId` already names a different partner, which would move that lead's commission.

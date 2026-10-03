@@ -7,6 +7,8 @@ import { useMessaging } from '@/features/messaging/MessagingContext';
 import { PageHeader, FilterBar, StatusBadge, UserAvatar, TwoToneIcon } from '@/shared/ui';
 import { formatDateTime } from '@/shared/utils/dateUtils';
 import { getIncomingMessages } from '@/features/messaging/messageFilters';
+import { deleteDocument, COLLECTIONS } from '@/services/firestoreSync';
+import { toast } from '@/shared/utils/toast';
 
 export default function NotificationsView({ notifications: allNotifications = [], setNotifications, users = [], setActiveTab, currentUser }) {
   const [filterType, setFilterType] = useState('ALL'); // 'ALL' | 'SYSTEM' | 'MESSAGES'
@@ -18,19 +20,35 @@ export default function NotificationsView({ notifications: allNotifications = []
     return allNotifications.filter(n => !n.recipientEmail || n.recipientEmail.toLowerCase() === me);
   }, [allNotifications, currentUser]);
 
+  const clearSystemAlerts = async () => {
+    const persisted = notifications.filter(n => n._firestoreId);
+    const results = await Promise.allSettled(persisted.map(n => deleteDocument(COLLECTIONS.NOTIFICATIONS, n._firestoreId)));
+    const failed = new Set(persisted.filter((_, i) => results[i].status === 'rejected').map(n => n.id));
+    if (failed.size) toast.error('Some notifications could not be deleted.');
+    setNotifications((prev) => prev.filter(n => failed.has(n.id)));
+  };
+
   const handleClearAll = async () => {
     if (filterType === 'SYSTEM') {
-      setNotifications([]);
+      await clearSystemAlerts();
     } else if (filterType === 'MESSAGES') {
       if (markAllAsRead) await markAllAsRead();
     } else {
-      setNotifications([]);
+      await clearSystemAlerts();
       if (markAllAsRead) await markAllAsRead();
     }
   };
 
-  const handleDelete = (id) => {
-    setNotifications((prev) => prev.filter(n => n.id !== id));
+  const handleDelete = async (item) => {
+    if (item._firestoreId) {
+      try {
+        await deleteDocument(COLLECTIONS.NOTIFICATIONS, item._firestoreId);
+      } catch {
+        toast.error('Could not delete the notification.');
+        return;
+      }
+    }
+    setNotifications((prev) => prev.filter(n => n.id !== item.id));
   };
 
   // Convert direct messages to notification feed items with resolved sender profile & photoURL
@@ -203,7 +221,7 @@ export default function NotificationsView({ notifications: allNotifications = []
 
                     {!isMessage && (
                       <button
-                        onClick={() => handleDelete(item.id)}
+                        onClick={() => handleDelete(item)}
                         className="p-2 text-on-surface-variant hover:text-status-danger-on hover:bg-status-danger-bg rounded-xl border border-transparent hover:border-status-danger-border transition-colors cursor-pointer"
                         title="Dismiss Alert"
                       >
