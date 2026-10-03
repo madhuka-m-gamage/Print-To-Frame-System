@@ -1,9 +1,11 @@
 // What to do with a signed-in user who has neither a users nor a pendingUsers document.
 // A registration in progress writes its own complete pending record right after the account is
 // created, so the auth listener must not race it with a bare shell record or sign the user out.
-export function newUserAction({ isBootstrapAdmin, registering }) {
+// The rules refuse a pending request from an unverified email (SEC-15).
+export function newUserAction({ isBootstrapAdmin, registering, emailVerified }) {
   if (isBootstrapAdmin) return 'create_admin';
   if (registering) return 'wait_for_registration';
+  if (!emailVerified) return 'verify_email';
   return 'queue_pending';
 }
 

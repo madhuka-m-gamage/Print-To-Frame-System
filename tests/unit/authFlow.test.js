@@ -5,14 +5,21 @@ describe('newUserAction', () => {
   it('always creates the record for a bootstrap admin', () => {
     expect(newUserAction({ isBootstrapAdmin: true, registering: false })).toBe('create_admin');
     expect(newUserAction({ isBootstrapAdmin: true, registering: true })).toBe('create_admin');
+    expect(newUserAction({ isBootstrapAdmin: true, registering: false, emailVerified: false })).toBe('create_admin');
   });
 
   it('leaves a sign-up in progress alone instead of racing it with a shell record', () => {
     expect(newUserAction({ isBootstrapAdmin: false, registering: true })).toBe('wait_for_registration');
   });
 
-  it('queues any other first-time sign-in for approval', () => {
-    expect(newUserAction({ isBootstrapAdmin: false, registering: false })).toBe('queue_pending');
+  it('queues a verified first-time sign-in for approval', () => {
+    expect(newUserAction({ isBootstrapAdmin: false, registering: false, emailVerified: true })).toBe('queue_pending');
+  });
+
+  // SEC-15: the rules refuse a pending request from an unverified email.
+  it('asks an unverified first-time sign-in to verify the email first', () => {
+    expect(newUserAction({ isBootstrapAdmin: false, registering: false, emailVerified: false })).toBe('verify_email');
+    expect(newUserAction({ isBootstrapAdmin: false, registering: false })).toBe('verify_email');
   });
 });
 

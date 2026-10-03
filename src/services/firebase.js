@@ -6,7 +6,7 @@
 
 import { initializeApp } from 'firebase/app';
 import { getFirestore, connectFirestoreEmulator, collection, addDoc, getDocs, updateDoc, doc, deleteDoc, getDocFromServer } from 'firebase/firestore';
-import { getAuth, connectAuthEmulator, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, connectAuthEmulator, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import { emulatorPorts } from './emulatorPorts';
 
@@ -198,5 +198,9 @@ export const emailLogin = async (email, password) => {
 
 export const emailRegister = async (email, password) => {
   return await createUserWithEmailAndPassword(auth, email, password);
+};
+
+export const sendVerificationEmail = async (user) => {
+  return await sendEmailVerification(user);
 };
 

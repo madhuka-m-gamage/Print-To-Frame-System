@@ -20,7 +20,9 @@ afterAll(async () => {
 const seed = (id, data) =>
   testEnv.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), 'pendingUsers', id), data));
 
-const applicant = (uid, email) => testEnv.authenticatedContext(uid, { email }).firestore();
+// SEC-15: a pending request needs a verified email, so the default applicant is verified.
+const applicant = (uid, email, emailVerified = true) =>
+  testEnv.authenticatedContext(uid, { email, email_verified: emailVerified }).firestore();
 
 const record = (email, uid) => ({ identifier: email, name: 'Applicant', role: 'Business Client', status: 'Pending', uid });
 
@@ -54,6 +56,57 @@ describe('pendingUsers create is bound to the caller (SEC-13)', () => {
   it('allows a create with the own email as id and the own uid', async () => {
     const db = applicant('uid-new', 'new@example.com');
     await assertSucceeds(setDoc(doc(db, 'pendingUsers', 'new@example.com'), record('new@example.com', 'uid-new')));
+  });
+});
+
+describe('pendingUsers create needs a verified email (SEC-15)', () => {
+  it('refuses a create from an unverified email/password login', async () => {
+    const db = applicant('uid-new', 'new@example.com', false);
+    await assertFails(setDoc(doc(db, 'pendingUsers', 'new@example.com'), record('new@example.com', 'uid-new')));
+  });
+
+  it('refuses a create when the token has no email_verified claim', async () => {
+    const db = testEnv.authenticatedContext('uid-new', { email: 'new@example.com' }).firestore();
+    await assertFails(setDoc(doc(db, 'pendingUsers', 'new@example.com'), record('new@example.com', 'uid-new')));
+  });
+
+  it('allows a create from a verified login (email link opened, or Google)', async () => {
+    const db = applicant('uid-new', 'new@example.com', true);
+    await assertSucceeds(setDoc(doc(db, 'pendingUsers', 'new@example.com'), record('new@example.com', 'uid-new')));
+  });
+
+  it('still refuses a verified create carrying another uid or email (SEC-13)', async () => {
+    const db = applicant('uid-new', 'new@example.com', true);
+    await assertFails(setDoc(doc(db, 'pendingUsers', 'new@example.com'), record('new@example.com', 'uid-victim')));
+    await assertFails(setDoc(doc(db, 'pendingUsers', 'victim@example.com'), record('victim@example.com', 'uid-new')));
+  });
+});
+
+// SEC-15: the sign-up form data waits in registrationDrafts/{uid} until the email is verified.
+describe('registrationDrafts are private to their own uid (SEC-15)', () => {
+  const draft = { identifier: 'new@example.com', name: 'Applicant', role: 'Partner', mobile: '0771234567' };
+
+  it('lets an unverified login write, read and delete its own draft', async () => {
+    const db = applicant('uid-new', 'new@example.com', false);
+    await assertSucceeds(setDoc(doc(db, 'registrationDrafts', 'uid-new'), draft));
+    await assertSucceeds(getDoc(doc(db, 'registrationDrafts', 'uid-new')));
+    await assertSucceeds(deleteDoc(doc(db, 'registrationDrafts', 'uid-new')));
+  });
+
+  it("refuses another login's draft, even an Admin's", async () => {
+    await testEnv.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), 'registrationDrafts', 'uid-new'), draft));
+    const other = applicant('uid-other', 'other@example.com');
+    await assertFails(getDoc(doc(other, 'registrationDrafts', 'uid-new')));
+    await assertFails(setDoc(doc(other, 'registrationDrafts', 'uid-new'), draft));
+    await assertFails(deleteDoc(doc(other, 'registrationDrafts', 'uid-new')));
+    const admin = (await asRole(testEnv, 'Admin', 'admin@example.com')).firestore();
+    await assertFails(getDoc(doc(admin, 'registrationDrafts', 'uid-new')));
+  });
+
+  it('refuses a signed-out caller', async () => {
+    const anon = unauthedFirestore(testEnv);
+    await assertFails(setDoc(doc(anon, 'registrationDrafts', 'uid-new'), draft));
+    await assertFails(getDoc(doc(anon, 'registrationDrafts', 'uid-new')));
   });
 });
 

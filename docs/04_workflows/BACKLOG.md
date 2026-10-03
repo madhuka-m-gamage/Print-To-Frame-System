@@ -232,6 +232,7 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 ### MON-13: QuotationBuilder reports success after a refused invoice save
 - **Why (found by MON-4, 2026-10-03; predates it):** `src/features/quotations/QuotationBuilder.jsx` does not await `onSaveInvoice`, so when the MON-4 guard refuses a save it still shows "invoice generated" and marks the quotation Invoiced.
 - **Build:** await the save and stop on `false`; component test.
+- **Done (2026-10-03):** both invoice calls (Advance and Final) in `QuotationBuilder.jsx` now `await onSaveInvoice(...)`. A `false` result (the MON-4 guard refusal, or any save error already toasted by `handleSaveInvoice`) stops quietly: no success toast, the quotation is not marked Invoiced, and the button is usable again. A rejected save shows an error toast and stops the same way. Any other result (`true`, or `undefined` from a handler that returns nothing) behaves as before. Tests: component 4 added (false and rejected for both invoice types) plus 2 for the true path.
 
 ### MON-14: Concurrent payouts of different referrals overwrite the partner balance
 - **Why (found by MON-11, 2026-10-03):** two admins paying out *different* referrals of one partner at the same moment both compute `pending` and `settled` from the screen copy; the later write wins. Lead statuses and payout records stay correct. Payout guards cannot be removed, so a payout reversal would also need an Admin path.
@@ -440,6 +441,7 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 ### SEC-15: Require a verified email for a pending registration
 - **Why (found by SEC-13, 2026-10-03):** email/password sign-up does not verify the address, so whoever first creates the Auth account for an email can still file that email's `pendingUsers` request with their own uid. SEC-14 also leaves the Partner receipt read unused: the app does not subscribe a Partner to receipts (matrix `receipts: none`).
 - **Owner decision (2026-10-03): require a verified email.** Email sign-up sends a verification mail, and the `pendingUsers` create rule requires `request.auth.token.email_verified == true` (Google sign-in is already verified); the app tells an unverified user to check their mail. **Live:** rules deploy.
+- **Done (2026-10-03, rules not deployed):** sign-up sends the verification mail and parks the form data in `registrationDrafts/{uid}` (own uid only; chosen over the Auth profile, which cannot hold role, mobile, company or specialty); the first verified sign-in files `pendingUsers` from it and deletes it; an unverified first sign-in is resent the mail and told to verify. Google and bootstrap admins unchanged. Deploy the rules together with the SPA, since the deployed rules refuse the draft write. Tests: `tests/integration/pendingUsersUid.test.js`, `tests/component/App.registration.test.jsx`, `tests/unit/authFlow.test.js`.
 ## Tests
 
 ### TST-1: Component tests for the lead card
