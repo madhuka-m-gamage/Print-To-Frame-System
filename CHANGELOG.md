@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Wave B run B3 review (docs only): Run calibration rewritten (first four-lane run, 58 min, meter +45%); FEA-17 fragment folded after the review merged #129; new BACKLOG items MON-12, MON-13, MON-14, FEA-18, FEA-19, SEC-15; skill proposals P1-P4 listed for the owner. The parallel-by-function policy merged cleanly but let a behind branch break `staging` (fixed by SEC-14).
+
+- Customers (FEA-17): an Admin can link a customers row to a Customer or Business Client login from the detail panel (sets `userId`, audit-logged); component 2 new.
+
 - **SEC-14: dead `partnerId == token email` read clause removed; a Partner reads its referred leads' receipts** (rules not deployed, LIVE-1). `firestore.rules`: the clause is gone from `invoices` and `receipts` (`partnerId` holds a partner code, never an email); `receipts` read now also allows the referring partner of the lead its `leadId` names, the SEC-8 lead check shared as `isReferringPartnerOfLeadId`. Receipts copy `leadId` from their invoice. No app change (a Partner is not yet subscribed to receipts). Also unbreaks staging's `App.invoiceGuard.test.jsx` (MON-4 x FEA-2): adds the `subscribeToQuery`, `query` and `where` mocks. Tests: new `tests/integration/partnerReceipts.test.js` (8); no `EXPECTED_RULE_CHANGES` cell flips. Rules 186 after catch-up (+1 skipped, 1 todo).
 
 - **SEC-13: a pending registration is bound to its own login** (rules not deployed, LIVE-1). `firestore.rules` `pendingUsers`: create needs a signed-in caller whose token email is the document id and whose auth uid is the record's `uid` (signed-out creates are refused); an applicant update must keep `uid` or set it to their own. No app change: the auth listener's shell record and `handleRegister`'s overwrite already run signed in with the uid. Tests: new `tests/integration/pendingUsersUid.test.js` (11), `rulesAccess.test.js` anonymous pending sign-up flipped to refused; no `EXPECTED_RULE_CHANGES` cell flips (pendingUsers is not probed). Rules 125 (+1 skipped, 1 todo), e2e 10.
