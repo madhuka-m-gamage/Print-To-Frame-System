@@ -22,4 +22,5 @@ An in-app feed: toasts become session-only entries through a browser `EventTarge
 
 - Entries vanish on reload and are visible only to the user whose browser fired them. Sign-out clears the list and unread count (`handleSignOut`), and the messages part of the feed drops the user's own messages (`getIncomingMessages`).
 - Session-only entries carry no `read` and count in a local counter; persisted ones count by `read: false` and add to the badge. `NotificationsView` shows an entry only if it has no `recipientEmail` or the address is the signed-in user's.
-- Deleting a persisted entry in the view is local only (rules allow no delete); it reappears when the snapshot next changes.
+- Deleting a persisted entry in the view deletes the Firestore doc (FEA-18; only the recipient may delete); session-only entries are removed locally. "Clear all" deletes the persisted system alerts the same way.
+- Create is open to any active staff user (not Partner, Business Client, Customer) with `recipientEmail`, `type`, `title`, `createdAt` present. When the referring partner has no email, `handleMarkInvoicePaid` shows a warning toast and stores no notification (FEA-18).

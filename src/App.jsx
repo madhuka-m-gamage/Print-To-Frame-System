@@ -641,6 +641,8 @@ function App() {
             } catch (notifErr) {
               console.error("Failed to save the commission notification:", notifErr);
             }
+          } else {
+            toast.warning('The referring partner has no email on file, so no commission notification was sent.');
           }
         }
       }
