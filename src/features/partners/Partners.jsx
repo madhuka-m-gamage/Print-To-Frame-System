@@ -682,6 +682,10 @@ export default function Partners({
     verifiedBy: currentUser?.identifier || 'Admin',
   });
 
+  const claimOwnerIds = resolvingClaim
+    ? [resolvingClaim.partnerId, ...partners.filter(p => [p.partnerId, p.id, p._firestoreId].includes(resolvingClaim.partnerId)).flatMap(p => [p.partnerId, p.id, p._firestoreId])].filter(Boolean)
+    : null;
+
   const handleResolveClaim = async (mode) => {
     const claim = resolvingClaim;
     const claimPartner = partners.find(p => [p.partnerId, p.id, p._firestoreId].includes(claim.partnerId));
@@ -1927,9 +1931,14 @@ export default function Partners({
                 className="w-full bg-surface-container border border-outline-variant rounded-xl px-3 py-2 text-xs text-on-surface"
               >
                 <option value="">Select a lead...</option>
-                {leads.map(l => (
-                  <option key={l.id} value={l.id}>{l.id} · {l.name || 'Unnamed'}{l.phone ? ` · ${l.phone}` : ''}</option>
-                ))}
+                {leads.map(l => {
+                  const ownedByOther = claimOwnerIds && [l.partnerId, l.agentId].some(id => id && !claimOwnerIds.includes(id));
+                  return (
+                    <option key={l.id} value={l.id} disabled={ownedByOther}>
+                      {l.id} · {l.name || 'Unnamed'}{l.phone ? ` · ${l.phone}` : ''}{ownedByOther ? ' · belongs to another partner' : ''}
+                    </option>
+                  );
+                })}
               </select>
               <button
                 type="button"

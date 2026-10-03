@@ -366,6 +366,7 @@ Source: `docs/02_modules/notifications/FINDINGS.md`. NOTIF-01 (sign-out leak) is
 ### FEA-19: Claim resolution may link a lead that names another partner
 - **Why (found by FEA-2, 2026-10-03):** the claim modal in `Partners.jsx` links any lead, including one whose `partnerId` already names a different partner, which would move that lead's commission.
 - **Build:** filter or warn on leads already attributed to another partner; component test.
+- **Done (2026-10-03):** the Existing lead options in the claim modal are disabled with "belongs to another partner" when `partnerId` or `agentId` names someone other than the claimant; component test in `Partners.claims.test.jsx`. Only the picker is guarded; the rules do not stop an Admin writing a lead directly.
 ## Security
 
 Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file overrides another; Firestore rules combine with OR, so only a broad `allow` widens access.
