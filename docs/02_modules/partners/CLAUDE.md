@@ -21,6 +21,7 @@ Partner / referral network: public application, admin approval, QR referral link
 - The default partner commission is `DEFAULT_REFERRAL_COMMISSION_RATE` (LKR 38.00 per sq ft, `src/features/quotations/quotePricing.js`, owner decision DEC-1): new partners, applications, the ledger, payment-cleared and deal-completion fallbacks, and email previews all use it.
 - Commission accrues when the deal is Completed (`Deals.jsx`); eligibility at full payment (`App.jsx`, and the Partners screen through `invoicesForLineage`).
 - "Disburse Payout" (`handleDisbursePayout`, FEA-1) builds the payout with `buildPayout` (`payout.js`, eligible referrals only) and commits one `batchWrite`: a `partner_payouts` record with a `TXN-######` reference, `payoutStatus: 'Paid'` on each lead, and the partner's `pending` reduced and `settled` increased; then logs `PAYOUT_DISBURSED`. Only an Admin may write `partner_payouts` (rules), and it works live only once those rules are deployed (LIVE-1).
+- The same batch creates a `payout_guards/<lead doc id>` document per paid lead (MON-11, `COLLECTIONS.PAYOUT_GUARDS`). The rules make guards create-only (Admin, with the named `partner_payouts` record in the same write), so a second payout of a paid lead is refused as a whole. Balances are still computed from the screen copy: concurrent payouts of different referrals can overwrite each other's `pending`/`settled`.
 
 ## Before you edit
 

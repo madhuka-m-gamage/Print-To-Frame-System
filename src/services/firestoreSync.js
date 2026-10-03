@@ -30,6 +30,7 @@ export const COLLECTIONS = {
   PARTNERS: 'partners',
   PARTNER_APPLICATIONS: 'partner_applications',
   PARTNER_PAYOUTS: 'partner_payouts',
+  PAYOUT_GUARDS: 'payout_guards',
   PROJECTS: 'projects',
   LOGISTICS: 'logistics',
   INVOICES: 'invoices',

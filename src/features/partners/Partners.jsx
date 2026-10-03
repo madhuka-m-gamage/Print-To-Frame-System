@@ -333,13 +333,16 @@ export default function Partners({
     const settled = Math.round(((Number(partner.settled) || 0) + amount) * 100) / 100;
     const leadDocIds = new Set(payoutLeads.map(l => l._firestoreId || l.id));
 
+    const payoutId = `${partner.partnerId}-${Date.now()}`;
+    const createdAt = new Date().toISOString();
+
     setDisbursingPartnerId(partner.partnerId);
     try {
       await batchWrite([
         {
           type: 'set',
           collection: COLLECTIONS.PARTNER_PAYOUTS,
-          docId: `${partner.partnerId}-${Date.now()}`,
+          docId: payoutId,
           data: {
             partnerId: partner.partnerId,
             partnerEmail: partner.email || '',
@@ -347,10 +350,17 @@ export default function Partners({
             amount,
             reference,
             leadIds,
-            createdAt: new Date().toISOString(),
+            createdAt,
             createdBy: currentUser?.identifier || currentUser?.email || '',
           },
         },
+        // Create-only per lead (MON-11): if another admin already paid this lead, the rules refuse the whole batch.
+        ...payoutLeads.map(l => ({
+          type: 'set',
+          collection: COLLECTIONS.PAYOUT_GUARDS,
+          docId: l._firestoreId || l.id,
+          data: { payoutId, partnerId: partner.partnerId, reference, createdAt },
+        })),
         ...payoutLeads.map(l => ({
           type: 'update',
           collection: COLLECTIONS.LEADS,
