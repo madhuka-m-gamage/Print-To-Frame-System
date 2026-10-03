@@ -259,6 +259,16 @@ service cloud.firestore {
       allow delete: if checkPermission('invoices', 'delete');
     }
 
+    // ── Invoice guards (MON-4) ───────────────────────────
+    // <rootLeadId>_<Advance|Final>, written in the same transaction as the invoice. Create
+    // only, never changed or removed, so a second Advance or Final for a lead is refused.
+    match /invoice_guards/{guardId} {
+      allow read: if checkPermission('invoices', 'read');
+      // 'write' accepts create or edit, the same roles the invoices create rule lets through.
+      allow create: if checkPermission('invoices', 'write');
+      allow update, delete: if false;
+    }
+
     // ── Receipts (payment-received records issued against paid invoices) ──
     match /receipts/{receiptId} {
       allow read: if checkPermission('receipts', 'view') || checkPermission('receipts', 'read')
@@ -412,6 +422,19 @@ service cloud.firestore {
       allow create: if isAuthenticated();
       allow read: if isAdmin();
       allow update, delete: if false;
+    }
+
+    // ── Notifications (persisted, addressed to one recipient) ──────────────
+    // Written by staff who can edit invoices (the commission-cleared event). The recipient
+    // reads its own and may only mark them read; an Admin reads all (notifications NOTIF-04).
+    match /notifications/{notificationId} {
+      allow read: if isAdmin()
+        || (isAuthenticated() && resource.data.get('recipientEmail', '') == request.auth.token.email);
+      allow create: if checkPermission('invoices', 'edit');
+      allow update: if isActiveUser()
+        && resource.data.get('recipientEmail', '') == request.auth.token.email
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow delete: if false;
     }
 
     // ── Test Connection ──────────────────────────────────

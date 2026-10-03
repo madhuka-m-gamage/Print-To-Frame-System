@@ -70,7 +70,7 @@ import {
   defaultInvoices,
 } from "./services/dataDefaults";
 import { Toaster } from "sonner";
-import { subscribeToNotifications, emitNotification } from "./shared/utils/events";
+import { subscribeToNotifications } from "./shared/utils/events";
 import { logActivity } from "./services/auditLog";
 import { ErrorBoundary } from "./shared/components/ErrorBoundary";
 import LoadingSpinner from "./shared/components/LoadingSpinner";
@@ -208,7 +208,9 @@ function App() {
 
   // Global Notifications State
   const [notificationsList, setNotificationsList] = useState([]);
-  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+  const [localUnreadCount, setUnreadNotificationsCount] = useState(0);
+  const persistedUnread = notificationsList.filter((n) => n._firestoreId && !n.read);
+  const unreadNotificationsCount = localUnreadCount + persistedUnread.length;
 
   useEffect(() => {
     const unsub = subscribeToNotifications((item) => {
@@ -223,6 +225,20 @@ function App() {
 
   // Current User Session
   const [currentUser, setCurrentUser] = useState(null);
+
+  // Persisted notifications addressed to this user (FEA-2), merged into the feed with the
+  // in-memory ones; opening the Notifications tab marks them read.
+  const notificationsUser = currentUser?.isApproved ? currentUser.identifier : '';
+  useEffect(() => {
+    if (!notificationsUser) return;
+    return subscribeToQuery(
+      query(collection(db, COLLECTIONS.NOTIFICATIONS), where('recipientEmail', '==', notificationsUser)),
+      (docs) => setNotificationsList((prev) => [
+        ...docs.map((d) => ({ ...d, id: d._firestoreId })),
+        ...prev.filter((n) => !n._firestoreId),
+      ].sort((a, b) => new Date(b.date) - new Date(a.date)))
+    );
+  }, [notificationsUser]);
 
   // Approved User List
   const [users, setUsers] = useState([]);
@@ -281,6 +297,14 @@ function App() {
       }
     }
   }, [currentUser, activeTab]);
+  useEffect(() => {
+    if (activeTab !== 'notifications') return;
+    persistedUnread.forEach((n) => {
+      updateDocument(COLLECTIONS.NOTIFICATIONS, n._firestoreId, { read: true }).catch((err) => console.error("Failed to mark notification read:", err));
+    });
+  // persistedUnread is rebuilt each render; its length changes only when the feed does.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, persistedUnread.length]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
 
@@ -398,9 +422,25 @@ function App() {
         dueDate: invoiceData.dueDate || new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
       };
       
-      // Save directly to Firestore
-      await addDocument(COLLECTIONS.INVOICES, cleanInvoice, docId);
-      
+      // MON-4: one Advance and one Final per root lead, enforced by a guard document
+      // written in the same transaction, so two sessions racing cannot both create one.
+      const rootLeadId = cleanInvoice.originalLeadId || cleanInvoice.leadId;
+      if (rootLeadId && (cleanInvoice.type === 'Advance' || cleanInvoice.type === 'Final')) {
+        try {
+          await createDocumentIfAbsent(COLLECTIONS.INVOICES, docId, cleanInvoice, {
+            collectionName: COLLECTIONS.INVOICE_GUARDS,
+            docId: `${rootLeadId}_${cleanInvoice.type}`,
+            data: { invoiceId: docId, type: cleanInvoice.type, rootLeadId },
+          });
+        } catch (err) {
+          if (err.message !== 'ALREADY_EXISTS') throw err;
+          toast.error(`${cleanInvoice.type} invoice already exists for lead ${rootLeadId}, so ${docId} was not created.`);
+          return false;
+        }
+      } else {
+        await addDocument(COLLECTIONS.INVOICES, cleanInvoice, docId);
+      }
+
       // Optimistic local state update
       setInvoices(prev => {
         const existingIdx = prev.findIndex(inv => inv.id === docId || inv._firestoreId === docId);
@@ -584,15 +624,24 @@ function App() {
           const dealVal = Number(targetLead.value || 0);
           const commAmount = sqFt > 0 ? sqFt * commRate : (dealVal / 850) * commRate;
 
-          const notif = {
-            id: `notif_comm_${Date.now()}`,
-            title: 'Commission Eligible: Full Payment Cleared',
-            message: `100% payment cleared for client ${targetLead.name || 'Referred Client'} (Deal ${targetLead.id}). Commission of LKR ${commAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })} is now eligible for month-end payout!`,
-            date: new Date().toISOString(),
-            type: 'commission',
-            partnerId: getLeadPartnerId(targetLead),
-          };
-          emitNotification(notif);
+          const recipientEmail = String(referredPartner?.email || '').toLowerCase();
+          if (recipientEmail) {
+            try {
+              await addDocument(COLLECTIONS.NOTIFICATIONS, {
+                recipientEmail,
+                targetRole: 'Partner',
+                type: 'commission',
+                title: 'Commission Eligible: Full Payment Cleared',
+                message: `100% payment cleared for client ${targetLead.name || 'Referred Client'} (Deal ${targetLead.id}). Commission of LKR ${commAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })} is now eligible for month-end payout!`,
+                leadId: targetLead.id,
+                read: false,
+                date: new Date().toISOString(),
+                createdBy: currentUser?.identifier || '',
+              });
+            } catch (notifErr) {
+              console.error("Failed to save the commission notification:", notifErr);
+            }
+          }
         }
       }
 

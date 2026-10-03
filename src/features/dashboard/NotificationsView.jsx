@@ -8,10 +8,15 @@ import { PageHeader, FilterBar, StatusBadge, UserAvatar, TwoToneIcon } from '@/s
 import { formatDateTime } from '@/shared/utils/dateUtils';
 import { getIncomingMessages } from '@/features/messaging/messageFilters';
 
-export default function NotificationsView({ notifications = [], setNotifications, users = [], setActiveTab, currentUser }) {
+export default function NotificationsView({ notifications: allNotifications = [], setNotifications, users = [], setActiveTab, currentUser }) {
   const [filterType, setFilterType] = useState('ALL'); // 'ALL' | 'SYSTEM' | 'MESSAGES'
   const [searchQuery, setSearchQuery] = useState('');
   const { messages, openMiniChat, resolveUserProfile, markAllAsRead } = useMessaging();
+
+  const notifications = useMemo(() => {
+    const me = currentUser?.identifier?.toLowerCase();
+    return allNotifications.filter(n => !n.recipientEmail || n.recipientEmail.toLowerCase() === me);
+  }, [allNotifications, currentUser]);
 
   const handleClearAll = async () => {
     if (filterType === 'SYSTEM') {

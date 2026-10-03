@@ -20,6 +20,8 @@ vi.mock('@/services/firebase', () => ({
 vi.mock('firebase/firestore', () => ({
   doc: vi.fn(() => ({})),
   collection: vi.fn(() => ({})),
+  query: vi.fn((ref, ...constraints) => ({ ref, constraints })),
+  where: vi.fn((field, op, value) => ({ field, op, value })),
   getDoc: vi.fn(async () => ({ exists: () => true, data: () => ({ ...adminUser }) })),
   getDocs: vi.fn(async () => ({ docs: [], forEach: () => {} })),
   setDoc: vi.fn(async () => {}),
@@ -32,6 +34,7 @@ vi.mock('firebase/firestore', () => ({
 vi.mock('@/services/firestoreSync', () => ({
   COLLECTIONS: new Proxy({}, { get: (_t, key) => String(key).toLowerCase() }),
   subscribeToCollection: vi.fn(() => () => {}),
+  subscribeToQuery: vi.fn(() => () => {}),
   addDocument: vi.fn(async () => {}),
   updateDocument: vi.fn(async () => {}),
   batchWrite: vi.fn(async () => {}),
