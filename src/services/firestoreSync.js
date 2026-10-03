@@ -33,6 +33,7 @@ export const COLLECTIONS = {
   PROJECTS: 'projects',
   LOGISTICS: 'logistics',
   INVOICES: 'invoices',
+  INVOICE_GUARDS: 'invoice_guards',
   RECEIPTS: 'receipts',
   QUOTATIONS: 'quotations',
   MESSAGES: 'messages',
@@ -138,18 +139,24 @@ export async function addDocument(collectionName, data, customId) {
  * "Generate Receipt" clicks racing before the caller's own in-memory list
  * has refreshed (e.g. the card was closed before the real-time listener
  * caught up, then reopened and clicked again) must not both succeed.
+ * An optional guard ({ collectionName, docId, data }) is a second document checked and
+ * written in the same transaction, so a deterministic guard id refuses a second document
+ * that has a different id of its own (MON-4: one Advance and one Final invoice per lead).
  * @param {string} collectionName
  * @param {string} docId
  * @param {object} data
- * @throws {Error} with message 'ALREADY_EXISTS' if the document is already present
+ * @param {{collectionName: string, docId: string, data: object}} [guard]
+ * @throws {Error} with message 'ALREADY_EXISTS' if the document or its guard is already present
  * @returns {Promise<string>} the document id
  */
-export async function createDocumentIfAbsent(collectionName, docId, data) {
+export async function createDocumentIfAbsent(collectionName, docId, data, guard) {
   const docRef = doc(db, collectionName, docId);
+  const guardRef = guard ? doc(db, guard.collectionName, guard.docId) : null;
   try {
     await runTransaction(db, async (transaction) => {
       const snap = await transaction.get(docRef);
-      if (snap.exists()) {
+      const guardSnap = guardRef ? await transaction.get(guardRef) : null;
+      if (snap.exists() || guardSnap?.exists()) {
         throw new Error('ALREADY_EXISTS');
       }
       transaction.set(docRef, {
@@ -157,6 +164,9 @@ export async function createDocumentIfAbsent(collectionName, docId, data) {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
+      if (guardRef) {
+        transaction.set(guardRef, { ...guard.data, createdAt: serverTimestamp() });
+      }
     });
     return docId;
   } catch (error) {

@@ -26,6 +26,7 @@
 | `quotations` | **any authenticated user** | **any authenticated user** |
 | `counters` | any authenticated | any authenticated |
 | `invoices` | `invoices` view, or own (`customerId` / `partnerId` == token email), or the referring partner of the lead its `leadId` names (SEC-8) | `invoices` create / edit; delete Admin |
+| `invoice_guards` | `invoices` view | create: `invoices` create / edit (`write`); update / delete denied to everyone (MON-4; rules deploy pending) |
 | `receipts` | `receipts` view, or own | `receipts` create / edit; delete Admin |
 | `customers` | `customers` view, or own (`ownsCustomer`: `userId` == auth uid (FEA-15), or `email` / `nic` == token email) | create / edit; an owner updates only `name, photoURL, phone, address`; delete: `customers` delete or Admin |
 | `partners` | `partners` view for a non-Partner role, or own (`ownsPartner`: doc id or `email` == token email) | create / edit for a non-Partner role; an active Partner updates its own record's profile fields only (`name, contactPerson, phone, address, company, bankName, accountNumber, accountName, branchName, photoURL, documents, updatedAt`), never `commissionRate`, `status`, `email` or balances (SEC-7); delete: `partners` delete or Admin |
@@ -77,7 +78,7 @@ Editing `firestore.rules` and pushing to `staging` or `main` only changes the fi
 
 ## Tests
 
-`npm run test:rules` runs `tests/integration/*` against local Firestore, Auth and Storage emulators (needs Java; project id `demo-print2frame-test`). `firestoreRules.test.js` covers role-escalation prevention. `typingIndicators.test.js` (SEC-12) covers the typing indicator rules. `rulesAccess.test.js` (B4) covers permission-gated writes, owner reads, the audit log and the public forms, and records each gap listed in the observations above as a characterisation test, with `it.todo` entries for the target rules. Its SEC-7 block covers a Partner limited to its own `partners` record; `partnerScopedReads.test.js` (SEC-8) covers a Partner's own referred leads and their invoices.
+`npm run test:rules` runs `tests/integration/*` against local Firestore, Auth and Storage emulators (needs Java; project id `demo-print2frame-test`). `firestoreRules.test.js` covers role-escalation prevention. `typingIndicators.test.js` (SEC-12) covers the typing indicator rules. `rulesAccess.test.js` (B4) covers permission-gated writes, owner reads, the audit log and the public forms, and records each gap listed in the observations above as a characterisation test, with `it.todo` entries for the target rules. Its SEC-7 block covers a Partner limited to its own `partners` record; `partnerScopedReads.test.js` (SEC-8) covers a Partner's own referred leads and their invoices. `invoiceGuards.test.js` (MON-4) covers the create-only invoice guards, including two racing sessions.
 
 ## Open questions
 

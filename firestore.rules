@@ -249,6 +249,16 @@ service cloud.firestore {
       allow delete: if checkPermission('invoices', 'delete');
     }
 
+    // ── Invoice guards (MON-4) ───────────────────────────
+    // <rootLeadId>_<Advance|Final>, written in the same transaction as the invoice. Create
+    // only, never changed or removed, so a second Advance or Final for a lead is refused.
+    match /invoice_guards/{guardId} {
+      allow read: if checkPermission('invoices', 'read');
+      // 'write' accepts create or edit, the same roles the invoices create rule lets through.
+      allow create: if checkPermission('invoices', 'write');
+      allow update, delete: if false;
+    }
+
     // ── Receipts (payment-received records issued against paid invoices) ──
     match /receipts/{receiptId} {
       allow read: if checkPermission('receipts', 'view') || checkPermission('receipts', 'read')
