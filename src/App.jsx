@@ -28,7 +28,7 @@ import {
   Moon,
   Handshake,
 } from "lucide-react";
-import { initAuth, logout, emailLogin, emailRegister, db, auth } from "./services/firebase";
+import { initAuth, logout, emailLogin, emailRegister, sendVerificationEmail, db, auth } from "./services/firebase";
 import { doc, getDoc, setDoc, collection, getDocs, deleteDoc, onSnapshot, query, where } from "firebase/firestore";
 import { subscribeToCollection, subscribeToQuery, addDocument, updateDocument, batchWrite, COLLECTIONS, generateInvoiceId, deriveReceiptId, createDocumentIfAbsent } from "./services/firestoreSync";
 import { toast } from "./shared/utils/toast";
@@ -771,14 +771,18 @@ function App() {
             } else {
               console.log("3. User not found, checking admin conditions");
               const isAdminEmail = isSuperAdminEmail(emailKey);
-              const action = newUserAction({ isBootstrapAdmin: isAdminEmail, registering: registeringRef.current });
+              const action = newUserAction({ isBootstrapAdmin: isAdminEmail, registering: registeringRef.current, emailVerified: user.emailVerified });
 
               // Only the bootstrap-admin emails skip the pendingUsers approval queue.
               // Every other first-time sign-in — Google OAuth included — must be
               // approved by an admin, same as the email/password path below.
               if (action === 'wait_for_registration') {
-                // handleRegister writes the complete pending record and signs the user out itself.
+                // handleRegister sends the verification mail, saves the draft and signs the user out itself.
                 return;
+              } else if (action === 'verify_email') {
+                await sendVerificationEmail(user).catch(console.warn);
+                logout();
+                setLoginError(`Please verify your email address first. We sent a verification link to ${emailKey}; open it, then sign in again.`);
               } else if (action === 'create_admin') {
                 console.log("4. Creating new admin user profile");
                 const newUser = {
@@ -795,15 +799,23 @@ function App() {
                 setCurrentUser(newUser);
               } else {
                 console.log("4. Creating pendingUser profile");
+                // An email sign-up left its form data in a draft until the address was verified (SEC-15).
+                const draftRef = doc(db, COLLECTIONS.REGISTRATION_DRAFTS, user.uid);
+                const draftDoc = await getDoc(draftRef);
+                const draft = draftDoc.exists() ? draftDoc.data() : {};
                 const pendingUser = {
                   identifier: emailKey,
                   password: "",
-                  name: user.displayName || emailKey,
-                  role: "Customer",
+                  name: draft.name || user.displayName || emailKey,
+                  role: draft.role || "Customer",
                   status: 'Pending',
                   uid: user.uid,
                 };
+                for (const field of ['mobile', 'company', 'specialty']) {
+                  if (draft[field] !== undefined) pendingUser[field] = draft[field];
+                }
                 await setDoc(doc(db, COLLECTIONS.PENDING_USERS, emailKey), pendingUser);
+                if (draftDoc.exists()) await deleteDoc(draftRef);
                 console.log("5. Created pending successfully");
                 logActivity(emailKey, user.displayName || emailKey, 'REGISTER', 'Auth', 'New user registered and is pending approval.');
                 logout();
@@ -946,18 +958,16 @@ function App() {
       // Create user in Firebase Auth (throws if already exists)
       const credential = await emailRegister(regData.identifier, regData.password);
       
-      // At this point, the user is authenticated and onAuthStateChanged will fire.
-      // We explicitly overwrite any basic pendingUser document created by initAuth
-      // with our complete registration data including requested role and mobile.
-      const completeRegData = { ...regData };
-      delete completeRegData.password; // Don't store plaintext password
-      if (credential?.user?.uid) completeRegData.uid = credential.user.uid;
-      
-      await setDoc(doc(db, COLLECTIONS.PENDING_USERS, regData.identifier), completeRegData);
-      
+      // SEC-15: the pending request needs a verified email, so the form data waits in a draft
+      // owned by this uid and the first verified sign-in turns it into the request.
+      const draft = { ...regData };
+      delete draft.password;
+      await sendVerificationEmail(credential.user);
+      await setDoc(doc(db, COLLECTIONS.REGISTRATION_DRAFTS, credential.user.uid), draft);
+
       // Awaited before signing out: an audit write started after the session ends can be rejected.
-      await logActivity(regData.identifier, regData.name, 'REGISTER', 'Auth', 'User requested access via registration form.');
-      setRegisterSuccess("Registration submitted successfully. Please wait for admin approval.");
+      await logActivity(regData.identifier, regData.name, 'REGISTER', 'Auth', 'User signed up via registration form; awaiting email verification.');
+      setRegisterSuccess(`Account created. We sent a verification link to ${regData.identifier}; open it, then sign in to send your request for admin approval.`);
       setLoginError("");
       
       await logout(); // Sign out immediately since they are pending approval

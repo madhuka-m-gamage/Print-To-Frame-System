@@ -150,7 +150,10 @@ service cloud.firestore {
     match /pendingUsers/{userId} {
       // SEC-13: a request is bound to the login that files it, so an approval can never
       // link someone else's email to the filer's uid (FEA-15 customers userId clause).
+      // SEC-15: and only once that email is verified, so the first Auth account made for an
+      // address cannot file its request unless it can read that mailbox.
       allow create: if isAuthenticated() && request.auth.token.email == userId
+        && request.auth.token.email_verified == true
         && request.resource.data.get('uid', null) == request.auth.uid;
       allow read: if isAuthenticated() && request.auth.token.email == userId;
       // An applicant may finish their own registration record (auth DP-02), but never
@@ -160,6 +163,13 @@ service cloud.firestore {
         && (request.resource.data.get('uid', null) == resource.data.get('uid', null)
           || request.resource.data.get('uid', null) == request.auth.uid);
       allow read, update, delete: if isAdmin() || checkPermission('agents', 'edit');
+    }
+
+    // ── Registration drafts (SEC-15) ─────────────────────
+    // The sign-up form data waits here, keyed by the new login's uid, until the email is
+    // verified and the first verified sign-in files the pendingUsers request from it.
+    match /registrationDrafts/{draftUid} {
+      allow read, write: if isAuthenticated() && request.auth.uid == draftUid;
     }
 
     // ── Partner Applications (public "Register Partner" request form) ────

@@ -440,6 +440,7 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 ### SEC-15: Require a verified email for a pending registration
 - **Why (found by SEC-13, 2026-10-03):** email/password sign-up does not verify the address, so whoever first creates the Auth account for an email can still file that email's `pendingUsers` request with their own uid. SEC-14 also leaves the Partner receipt read unused: the app does not subscribe a Partner to receipts (matrix `receipts: none`).
 - **Owner decision (2026-10-03): require a verified email.** Email sign-up sends a verification mail, and the `pendingUsers` create rule requires `request.auth.token.email_verified == true` (Google sign-in is already verified); the app tells an unverified user to check their mail. **Live:** rules deploy.
+- **Done (2026-10-03, rules not deployed):** sign-up sends the verification mail and parks the form data in `registrationDrafts/{uid}` (own uid only; chosen over the Auth profile, which cannot hold role, mobile, company or specialty); the first verified sign-in files `pendingUsers` from it and deletes it; an unverified first sign-in is resent the mail and told to verify. Google and bootstrap admins unchanged. Deploy the rules together with the SPA, since the deployed rules refuse the draft write. Tests: `tests/integration/pendingUsersUid.test.js`, `tests/component/App.registration.test.jsx`, `tests/unit/authFlow.test.js`.
 ## Tests
 
 ### TST-1: Component tests for the lead card
