@@ -71,10 +71,13 @@ vi.mock('@/features/invoicing/Invoices', () => ({
 
 const { default: App } = await import('@/App');
 const sync = await import('@/services/firestoreSync');
+const { toast } = await import('@/shared/utils/toast');
+vi.spyOn(toast, 'warning');
 
 beforeEach(() => {
   vi.clearAllMocks();
   globalThis.__TEST_PERMISSIONS__ = DEFAULT_PERMISSIONS;
+  DATA.partners[0].email = 'studio@example.com';
   localStorage.clear();
 });
 
@@ -109,5 +112,12 @@ describe('commission cleared notification (FEA-2)', () => {
     await waitFor(() => expect(sync.addDocument).toHaveBeenCalled());
     fireEvent.click(await screen.findByLabelText('Notifications'));
     expect(screen.queryByText(/Commission Eligible/)).not.toBeInTheDocument();
+  });
+
+  it('warns the staff member and stores nothing when the partner has no email (FEA-18)', async () => {
+    DATA.partners[0].email = '';
+    await markPaid();
+    await waitFor(() => expect(toast.warning).toHaveBeenCalledWith(expect.stringMatching(/no email/i)));
+    expect(sync.addDocument.mock.calls.filter(([c]) => c === 'notifications')).toHaveLength(0);
   });
 });

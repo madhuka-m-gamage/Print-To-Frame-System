@@ -364,6 +364,7 @@ Source: `docs/02_modules/notifications/FINDINGS.md`. NOTIF-01 (sign-out leak) is
 ### FEA-18: Persistent notifications: delete, and partners with no email
 - **Why (found by FEA-2, 2026-10-03):** deleting a persisted notification in `NotificationsView` is local only (the rules allow no delete), so it returns on the next snapshot; the commission notification is skipped when the partner record has no email.
 - **Build:** let the recipient delete (or hide) their own notification in the rules and the view; decide the fallback for a partner with no email. **Live:** rules deploy.
+- **Done (repo part):** recipient deletes own notification (rules + view, Firestore delete); create widened to active staff with required fields; no-email partner gives the marking staff member a warning toast and stores nothing. Rules deploy still pending (LIVE-1).
 
 ### FEA-19: Claim resolution may link a lead that names another partner
 - **Why (found by FEA-2, 2026-10-03):** the claim modal in `Partners.jsx` links any lead, including one whose `partnerId` already names a different partner, which would move that lead's commission.
