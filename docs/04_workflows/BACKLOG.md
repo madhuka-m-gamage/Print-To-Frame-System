@@ -227,6 +227,7 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 ### MON-12: Invoice guard of a cancelled or deleted invoice blocks its replacement
 - **Why (found by MON-4, 2026-10-03):** `invoice_guards/<rootLeadId>_<Advance|Final>` is never removed (the rules allow no update or delete), so after an Advance or Final is cancelled or deleted, a replacement for the same lead is refused. Older invoices that carry the Deal id in `leadId` have no guard, so only the client checks cover them.
 - **Owner decision (2026-10-03): the guard checks the invoice's status.** A new guard may replace an existing one when the invoice the old guard names is Cancelled or no longer exists (the rule reads it with `get()`/`exists()`); no Admin cleanup step. **Live:** rules deploy.
+- **Done (2026-10-03):** `createDocumentIfAbsent` reads the invoice the existing guard names and, when it is Cancelled or gone, writes the new invoice and replaces the guard in the same transaction; the `invoice_guards` update rule allows only that hand-over (same `rootLeadId` and `type`, a new invoice created in the same write, the named invoice Cancelled or absent before it). Delete stays refused. Rules not deployed (LIVE-1).
 
 ### MON-13: QuotationBuilder reports success after a refused invoice save
 - **Why (found by MON-4, 2026-10-03; predates it):** `src/features/quotations/QuotationBuilder.jsx` does not await `onSaveInvoice`, so when the MON-4 guard refuses a save it still shows "invoice generated" and marks the quotation Invoiced.
@@ -235,6 +236,7 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 ### MON-14: Concurrent payouts of different referrals overwrite the partner balance
 - **Why (found by MON-11, 2026-10-03):** two admins paying out *different* referrals of one partner at the same moment both compute `pending` and `settled` from the screen copy; the later write wins. Lead statuses and payout records stay correct. Payout guards cannot be removed, so a payout reversal would also need an Admin path.
 - **Build:** `increment()` for the balance fields in the payout batch (rules allow the delta), emulator test. **Live:** rules deploy if the rule changes.
+- **Done (2026-10-03):** `handleDisbursePayout` writes `pending: increment(-amount)`, `settled: increment(amount)`. The partners rule already accepted the Admin increment and refuses a Partner's, so `firestore.rules` is unchanged and no rules deploy is needed for this item. `pending` is no longer floored at 0. Tests: component (batch uses increment), rules `payoutGuard.test.js` MON-14 block (both orders, same-referral still refused, Partner refused).
 ## Features
 
 ### FEA-1: Real partner payout (step 4.1, partners D-1)
@@ -366,6 +368,7 @@ Source: `docs/02_modules/notifications/FINDINGS.md`. NOTIF-01 (sign-out leak) is
 ### FEA-19: Claim resolution may link a lead that names another partner
 - **Why (found by FEA-2, 2026-10-03):** the claim modal in `Partners.jsx` links any lead, including one whose `partnerId` already names a different partner, which would move that lead's commission.
 - **Build:** filter or warn on leads already attributed to another partner; component test.
+- **Done (2026-10-03):** the Existing lead options in the claim modal are disabled with "belongs to another partner" when `partnerId` or `agentId` names someone other than the claimant; component test in `Partners.claims.test.jsx`. Only the picker is guarded; the rules do not stop an Admin writing a lead directly.
 ## Security
 
 Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file overrides another; Firestore rules combine with OR, so only a broad `allow` widens access.

@@ -8,6 +8,7 @@ import { PermissionsProvider, DEFAULT_PERMISSIONS } from '@/context/PermissionsC
 
 const authState = { callback: null };
 const saved = { results: [] };
+const store = new Map();
 
 vi.mock('@/services/firebase', () => ({
   db: {}, auth: { currentUser: null }, storage: {},
@@ -24,6 +25,15 @@ vi.mock('firebase/firestore', () => ({
   getDocs: vi.fn(async () => ({ docs: [], forEach: () => {} })),
   setDoc: vi.fn(async () => {}),
   deleteDoc: vi.fn(async () => {}),
+  serverTimestamp: vi.fn(() => 'ts'),
+  runTransaction: vi.fn(async (_db, body) => {
+    const writes = [];
+    await body({
+      get: async ({ path }) => ({ exists: () => store.has(path), data: () => store.get(path) }),
+      set: ({ path }, data) => writes.push([path, data]),
+    });
+    writes.forEach(([path, data]) => store.set(path, data));
+  }),
   onSnapshot: vi.fn((_ref, onNext) => {
     onNext({ exists: () => true, data: () => DEFAULT_PERMISSIONS, docs: [], forEach: () => {}, size: 0 });
     return () => {};
@@ -55,6 +65,7 @@ vi.mock('@/features/leads/Leads', () => ({
       <button onClick={async () => saved.results.push(await onSaveInvoice(invoice({ id: 'INV-ADV-0001', type: 'Advance' })))}>save advance</button>
       <button onClick={async () => saved.results.push(await onSaveInvoice(invoice({ id: 'INV-FIN-0001', type: 'Final', leadId: 'L-001', dealId: 'D-001', originalLeadId: 'L-001' })))}>save final</button>
       <button onClick={async () => saved.results.push(await onSaveInvoice(invoice({ id: 'INV-0001', type: 'Custom' })))}>save other</button>
+      <button onClick={async () => saved.results.push(await onSaveInvoice(invoice({ id: 'INV-FIN-0002', type: 'Final', leadId: 'L-001', dealId: 'D-001', originalLeadId: 'L-001' })))}>save replacement final</button>
     </div>
   ),
 }));
@@ -80,6 +91,7 @@ const click = async (label) => {
 
 beforeEach(() => {
   saved.results = [];
+  store.clear();
   createDocumentIfAbsent.mockReset();
   createDocumentIfAbsent.mockResolvedValue('ok');
   addDocument.mockClear();
@@ -116,5 +128,30 @@ describe('handleSaveInvoice guard (MON-4)', () => {
     expect(await click('save other')).toBe(true);
     expect(createDocumentIfAbsent).not.toHaveBeenCalled();
     expect(addDocument).toHaveBeenCalledWith('invoices', expect.objectContaining({ id: 'INV-0001' }), 'INV-0001');
+  });
+});
+
+// MON-12: the real createDocumentIfAbsent over an in-memory transaction store.
+describe('replacing the guard of a cancelled Final (MON-12)', () => {
+  beforeEach(async () => {
+    const actual = await vi.importActual('@/services/firestoreSync');
+    createDocumentIfAbsent.mockImplementation(actual.createDocumentIfAbsent);
+  });
+
+  it('accepts a replacement Final after the first one is cancelled', async () => {
+    await openLeads();
+    expect(await click('save final')).toBe(true);
+    store.set('invoices/INV-FIN-0001', { ...store.get('invoices/INV-FIN-0001'), status: 'Cancelled' });
+    expect(await click('save replacement final')).toBe(true);
+    expect(store.get('invoice_guards/L-001_Final')).toMatchObject({ invoiceId: 'INV-FIN-0002' });
+    expect(store.has('invoices/INV-FIN-0002')).toBe(true);
+  });
+
+  it('still refuses a second Final while the first one is live', async () => {
+    await openLeads();
+    expect(await click('save final')).toBe(true);
+    expect(await click('save replacement final')).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/Final invoice already exists for lead L-001/));
+    expect(store.has('invoices/INV-FIN-0002')).toBe(false);
   });
 });

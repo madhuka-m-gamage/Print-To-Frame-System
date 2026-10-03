@@ -7,6 +7,7 @@ import { setupRulesEnv, clearAll, seedPermissions, asRole, unauthedFirestore } f
 // invoice_guards/<rootLeadId>_<Advance|Final>, so a second one for the same lead fails
 // even when two sessions race. Mirrors createDocumentIfAbsent's transaction shape
 // (src/services/firestoreSync.js), which imports the production Firebase app.
+// MON-12: a guard whose invoice is Cancelled or gone may be replaced by a new invoice's.
 
 let testEnv;
 
@@ -32,11 +33,37 @@ async function createGuardedInvoice(db, invoiceId, type = 'Advance') {
   const guardRef = doc(db, 'invoice_guards', `L-001_${type}`);
   await runTransaction(db, async (tx) => {
     const [invoiceSnap, guardSnap] = [await tx.get(invoiceRef), await tx.get(guardRef)];
-    if (invoiceSnap.exists() || guardSnap.exists()) throw new Error('ALREADY_EXISTS');
+    let guardHeld = guardSnap.exists();
+    if (guardHeld) {
+      const named = await tx.get(doc(db, 'invoices', guardSnap.data().invoiceId));
+      guardHeld = named.exists() && named.data().status !== 'Cancelled';
+    }
+    if (invoiceSnap.exists() || guardHeld) throw new Error('ALREADY_EXISTS');
     tx.set(invoiceRef, { id: invoiceId, leadId: 'L-001', type, amount: 750, createdAt: serverTimestamp() });
     tx.set(guardRef, { ...guard(invoiceId, type), createdAt: serverTimestamp() });
   });
 }
+
+// Skips the client-side check, so only the rules stand between it and the guard.
+async function forceGuardedInvoice(db, invoiceId, type = 'Advance', guardData = guard(invoiceId, type)) {
+  await runTransaction(db, async (tx) => {
+    tx.set(doc(db, 'invoices', invoiceId), { id: invoiceId, leadId: 'L-001', type, amount: 750, createdAt: serverTimestamp() });
+    tx.set(doc(db, 'invoice_guards', `L-001_${type}`), { ...guardData, createdAt: serverTimestamp() });
+  });
+}
+
+const setInvoice = (id, data) => testEnv.withSecurityRulesDisabled(async (ctx) => {
+  const ref = doc(ctx.firestore(), 'invoices', id);
+  await (data ? updateDoc(ref, data) : deleteDoc(ref));
+});
+
+const guardInvoiceId = async () => {
+  let id;
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    id = (await getDoc(doc(ctx.firestore(), 'invoice_guards', 'L-001_Final'))).data().invoiceId;
+  });
+  return id;
+};
 
 const exists = async (path, id) => {
   let found;
@@ -91,12 +118,74 @@ describe('invoice_guards rules (MON-4)', () => {
     await assertFails(getDoc(doc(await dbAs('Partner'), 'invoice_guards', 'L-001_Advance')));
   });
 
-  it('refuses everyone updating or deleting a guard', async () => {
+  it('refuses everyone updating or deleting a guard whose invoice is live', async () => {
     await createGuardedInvoice(await dbAs('Admin'), 'INV-ADV-0001');
     for (const role of ['Admin', 'Manager', 'Accounts']) {
       const db = await dbAs(role);
       await assertFails(updateDoc(doc(db, 'invoice_guards', 'L-001_Advance'), { invoiceId: 'INV-ADV-0009' }));
       await assertFails(deleteDoc(doc(db, 'invoice_guards', 'L-001_Advance')));
     }
+  });
+
+  describe('replacing the guard of a cancelled or deleted invoice (MON-12)', () => {
+    it('lets a new Final replace the guard when the named invoice is Cancelled', async () => {
+      const db = await dbAs('Accounts');
+      await createGuardedInvoice(db, 'INV-FIN-0001', 'Final');
+      await setInvoice('INV-FIN-0001', { status: 'Cancelled' });
+      await assertSucceeds(createGuardedInvoice(db, 'INV-FIN-0002', 'Final'));
+      expect(await guardInvoiceId()).toBe('INV-FIN-0002');
+    });
+
+    it('lets a new Final replace the guard when the named invoice no longer exists', async () => {
+      const db = await dbAs('Admin');
+      await createGuardedInvoice(db, 'INV-FIN-0001', 'Final');
+      await setInvoice('INV-FIN-0001', null);
+      await assertSucceeds(createGuardedInvoice(db, 'INV-FIN-0002', 'Final'));
+      expect(await guardInvoiceId()).toBe('INV-FIN-0002');
+    });
+
+    it('refuses replacing the guard while the named invoice is live, whatever its other status', async () => {
+      const db = await dbAs('Admin');
+      await createGuardedInvoice(db, 'INV-FIN-0001', 'Final');
+      await assertFails(forceGuardedInvoice(db, 'INV-FIN-0002', 'Final'));
+      await setInvoice('INV-FIN-0001', { status: 'Paid' });
+      await assertFails(forceGuardedInvoice(db, 'INV-FIN-0002', 'Final'));
+      expect(await exists('invoices', 'INV-FIN-0002')).toBe(false);
+      expect(await guardInvoiceId()).toBe('INV-FIN-0001');
+    });
+
+    it('refuses a replacement that writes no new invoice or moves the guard to another lead', async () => {
+      const db = await dbAs('Admin');
+      await createGuardedInvoice(db, 'INV-FIN-0001', 'Final');
+      await setInvoice('INV-FIN-0001', { status: 'Cancelled' });
+      await assertFails(setDoc(doc(db, 'invoice_guards', 'L-001_Final'), guard('INV-FIN-0009', 'Final')));
+      await assertFails(forceGuardedInvoice(db, 'INV-FIN-0002', 'Final', { ...guard('INV-FIN-0002', 'Final'), rootLeadId: 'L-002' }));
+    });
+
+    it('refuses a replacement by a role that cannot create invoices', async () => {
+      await createGuardedInvoice(await dbAs('Admin'), 'INV-FIN-0001', 'Final');
+      await setInvoice('INV-FIN-0001', { status: 'Cancelled' });
+      await assertFails(setDoc(doc(await dbAs('Support'), 'invoice_guards', 'L-001_Final'), guard('INV-FIN-0002', 'Final')));
+    });
+
+    it('still refuses deleting the guard of a cancelled invoice', async () => {
+      const db = await dbAs('Admin');
+      await createGuardedInvoice(db, 'INV-FIN-0001', 'Final');
+      await setInvoice('INV-FIN-0001', { status: 'Cancelled' });
+      await assertFails(deleteDoc(doc(db, 'invoice_guards', 'L-001_Final')));
+    });
+
+    it('lets only one of two racing replacements win', async () => {
+      const [a, b] = [await dbAs('Admin'), await dbAs('Accounts')];
+      await createGuardedInvoice(a, 'INV-FIN-0001', 'Final');
+      await setInvoice('INV-FIN-0001', { status: 'Cancelled' });
+      const results = await Promise.allSettled([
+        createGuardedInvoice(a, 'INV-FIN-0002', 'Final'),
+        createGuardedInvoice(b, 'INV-FIN-0003', 'Final'),
+      ]);
+      expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+      const written = [await exists('invoices', 'INV-FIN-0002'), await exists('invoices', 'INV-FIN-0003')];
+      expect(written.filter(Boolean)).toHaveLength(1);
+    });
   });
 });
