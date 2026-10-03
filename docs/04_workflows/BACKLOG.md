@@ -235,6 +235,7 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 ### MON-14: Concurrent payouts of different referrals overwrite the partner balance
 - **Why (found by MON-11, 2026-10-03):** two admins paying out *different* referrals of one partner at the same moment both compute `pending` and `settled` from the screen copy; the later write wins. Lead statuses and payout records stay correct. Payout guards cannot be removed, so a payout reversal would also need an Admin path.
 - **Build:** `increment()` for the balance fields in the payout batch (rules allow the delta), emulator test. **Live:** rules deploy if the rule changes.
+- **Done (2026-10-03):** `handleDisbursePayout` writes `pending: increment(-amount)`, `settled: increment(amount)`. The partners rule already accepted the Admin increment and refuses a Partner's, so `firestore.rules` is unchanged and no rules deploy is needed for this item. `pending` is no longer floored at 0. Tests: component (batch uses increment), rules `payoutGuard.test.js` MON-14 block (both orders, same-referral still refused, Partner refused).
 ## Features
 
 ### FEA-1: Real partner payout (step 4.1, partners D-1)

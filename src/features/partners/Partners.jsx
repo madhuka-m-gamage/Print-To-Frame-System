@@ -8,7 +8,7 @@ import {
   Lock, KeyRound
 } from 'lucide-react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, increment } from 'firebase/firestore';
 import { db, storage } from '@/services/firebase';
 import { toast } from '@/shared/utils/toast';
 import DeleteModal from '@/shared/components/DeleteModal';
@@ -334,8 +334,6 @@ export default function Partners({
 
     const reference = 'TXN-' + String(Date.now()).slice(-6);
     const partnerDocId = partner._firestoreId || partner.id || partner.partnerId;
-    const pending = Math.max(0, Math.round(((Number(partner.pending) || 0) - amount) * 100) / 100);
-    const settled = Math.round(((Number(partner.settled) || 0) + amount) * 100) / 100;
     const leadDocIds = new Set(payoutLeads.map(l => l._firestoreId || l.id));
 
     const payoutId = `${partner.partnerId}-${Date.now()}`;
@@ -372,7 +370,8 @@ export default function Partners({
           docId: l._firestoreId || l.id,
           data: { payoutStatus: 'Paid', payoutReference: reference },
         })),
-        { type: 'update', collection: COLLECTIONS.PARTNERS, docId: partnerDocId, data: { pending, settled } },
+        // Deltas, not totals from this screen (MON-14): a concurrent payout of another referral of this partner still counts.
+        { type: 'update', collection: COLLECTIONS.PARTNERS, docId: partnerDocId, data: { pending: increment(-amount), settled: increment(amount) } },
       ]);
     } catch (err) {
       console.error('Payout error:', err);
@@ -386,7 +385,10 @@ export default function Partners({
       setLeads(prev => prev.map(l => (leadDocIds.has(l._firestoreId || l.id) ? { ...l, payoutStatus: 'Paid', payoutReference: reference } : l)));
     }
     if (setPartners) {
-      setPartners(prev => prev.map(p => (p.partnerId === partner.partnerId ? { ...p, pending, settled } : p)));
+      const round2 = (n) => Math.round(n * 100) / 100;
+      setPartners(prev => prev.map(p => (p.partnerId === partner.partnerId
+        ? { ...p, pending: round2((Number(p.pending) || 0) - amount), settled: round2((Number(p.settled) || 0) + amount) }
+        : p)));
     }
     logActivity(currentUser?.identifier, currentUser?.name, 'PAYOUT_DISBURSED', 'Partners', `Disbursed LKR ${amount.toFixed(2)} to ${partner.name} for ${leadIds.length} referral(s) (Ref: ${reference})`);
     toast.success(`Payout of LKR ${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })} disbursed to ${partner.name} (Ref: ${reference})`);
