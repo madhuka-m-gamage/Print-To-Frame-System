@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- MON-12: an Advance or Final invoice guard (`invoice_guards/<rootLeadId>_<type>`) is handed to the next invoice for that lead once the invoice it names is Cancelled or deleted, in the same transaction (`createDocumentIfAbsent`, `firestore.rules` `invoice_guards` update rule); a live invoice keeps blocking and guards still cannot be deleted. Rules not deployed (LIVE-1). Tests: unit +3, component +2, rules +7.
+
+- MON-13: the quotation screen waits for the invoice save and stops when it is refused (MON-4 guard, or a save error): no "invoice generated" message and the quotation is not marked Invoiced, for both the 75% Advance and the 25% Final button. Tests: component 6 added.
+
+- FEA-5: Fabrication sends a stored revision alert (`type: 'revision'`, defect category and notes) to the linked deal's `salesOwnerEmail` when a job goes to Revision, and Completed cards get an "Email client: QA passed" button that previews and sends `fabrication_ready_inspection` (now the ninth entry of `SENDABLE_TEMPLATES` in `api/send-email.js`, staff only). Lead conversion stamps `salesOwnerEmail` on the new deal. Tests: API 84, component 226.
+
+- MON-14: "Disburse Payout" moves the partner's `pending` and `settled` with `increment()` deltas instead of totals from the screen copy, so two admins paying out different referrals of one partner at once both count. No rule change (the partners rule already accepts the Admin increment and refuses a Partner's); `pending` is no longer floored at 0. Tests: component 1 changed, rules 4 added.
+
+- Claim resolution (FEA-19): leads already attributed to another partner are disabled in the Resolve Referral Claim lead picker, so a claim can no longer move another partner's commission; component 1 new test.
+
 - `agent-run` (owner-approved B3 proposals P1-P4): an agent re-checks `git merge-base --is-ancestor origin/staging HEAD` right before merging and catches up if `staging` moved (a behind branch broke `staging` in B3); each final step folds only its own workflow's fragments; the brief's Docs line reads correctly; `security` and `money` default to Opus·medium (model-policy). Owner decisions recorded: MON-12 (guard checks the invoice's status), SEC-15 (require a verified email). Unit +3.
 
 - Wave B run B3 review (docs only): Run calibration rewritten (first four-lane run, 58 min, meter +45%); FEA-17 fragment folded after the review merged #129; new BACKLOG items MON-12, MON-13, MON-14, FEA-18, FEA-19, SEC-15; skill proposals P1-P4 listed for the owner. The parallel-by-function policy merged cleanly but let a behind branch break `staging` (fixed by SEC-14).
