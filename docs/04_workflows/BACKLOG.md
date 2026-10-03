@@ -54,6 +54,9 @@ Every item implicitly includes these.
 | MON-9 | Printed and emailed Advance / Final figures use the rounded split | money | S | no | no | MON-8 |
 | MON-10 | Per-line invoice rows sum to the rounded Advance | money | S | no | **yes** | MON-9 |
 | MON-11 | Server-side guard against a double partner payout | money | M | rules | no | MON-4 |
+| MON-12 | Invoice guard of a cancelled or deleted invoice blocks its replacement | money | S | rules | yes | MON-4 |
+| MON-13 | QuotationBuilder reports success after a refused invoice save | money | S | no | no | MON-4 |
+| MON-14 | Concurrent payouts of different referrals overwrite the partner balance | money | S | rules | no | MON-11 |
 | FEA-1 | Real partner payout (step 4.1) | feature | M | rules | no | LIVE-1 (to work live) |
 | FEA-2 | Persistent notifications and claim resolution (step 4.3) | feature | L | rules | no | none |
 | FEA-3 | Fabrication board statuses: Cancelled, On Hold, Archived, Other (done) | feature | M | no | DEC-4 | none |
@@ -71,6 +74,8 @@ Every item implicitly includes these.
 | FEA-15 | Link customers to logins with a userId | security/ux | M | rules | no | LIVE-1 |
 | FEA-16 | Await the typing-indicator write | ux | S | no | no | none |
 | FEA-17 | Admin action to link a customers row to a login | ux | S | no | no | FEA-15 |
+| FEA-18 | Persistent notifications: delete, and partners with no email | ux | S | rules | no | FEA-2 |
+| FEA-19 | Claim resolution may link a lead that names another partner | ux | S | no | no | FEA-2 |
 | SEC-1 | Check the recipient in `api/send-email.js` | security | S | api | no | none |
 | SEC-2 | Restrict `api/generate.js` to staff roles | security | S | api | no | none |
 | SEC-3 | Make the dev proxy safe | security | S | no | no | none |
@@ -85,6 +90,7 @@ Every item implicitly includes these.
 | SEC-12 | Scope `typing_indicators` rules to the chat's participants | security | S | rules | no | none |
 | SEC-13 | Bind a pending registration to its own login uid | security | S | rules | no | none |
 | SEC-14 | Remove the dead `partnerId == token email` read clause on invoices and receipts | security | S | rules | no | none |
+| SEC-15 | Require a verified email for a pending registration | security | S | rules | yes | SEC-13 |
 | TST-1 | Component tests for the lead card (done) | tests | M | no | no | none |
 | TST-2 | End-to-end journeys (money, RBAC) (done) | tests | L | no | no | none |
 | TST-3 | Tests for Leads, QuotationBuilder, Customers; refresh the coverage map (done) | tests | M | no | no | none |
@@ -101,7 +107,7 @@ Every item implicitly includes these.
 | LIVE-3 | One canonical repository and one deploy path | rollout | M | **yes** | yes | DEC-6 |
 | LIVE-4 | Give the tooling access to the live Vercel project | rollout | S | Vercel | owner | none |
 
-**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, SEC-11, TST-1, TST-2, FEA-6, FEA-3, ENG-4, FEA-8, FEA-11 and TST-3 done. Wave A2: MON-8, ENG-7, FEA-13 and FEA-12 done. Wave A3: MON-9 and FEA-14 done. Wave B so far: FEA-1, SEC-7, SEC-12, SEC-8, FEA-4, FEA-15 and FEA-16 done (rules not deployed). ENG-6 re-checked, open until LIVE-3. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
+**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, SEC-11, TST-1, TST-2, FEA-6, FEA-3, ENG-4, FEA-8, FEA-11 and TST-3 done. Wave A2: MON-8, ENG-7, FEA-13 and FEA-12 done. Wave A3: MON-9 and FEA-14 done. Wave B so far: FEA-1, SEC-7, SEC-12, SEC-8, FEA-4, FEA-15, FEA-16, MON-4, MON-11, FEA-2, SEC-13, SEC-14 and FEA-17 done (rules not deployed). ENG-6 re-checked, open until LIVE-3. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
 
 ---
 
@@ -217,6 +223,18 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 - **Build:** a deterministic guard document per lead payout (or a transaction that re-reads each lead's `payoutStatus` and the partner balances) in the same write, with an emulator test that a second payout of the same referrals is refused. **Live:** rules deploy.
 - **Done (B3, rules not deployed):** chose the deterministic guard document. `handleDisbursePayout` adds one `payout_guards/<lead doc id>` set per paid lead (`{ payoutId, partnerId, reference, createdAt }`) to its existing `batchWrite`; the new `payout_guards` rules block allows an Admin to create a guard only when its `partner_payouts/<payoutId>` exists after the write (`existsAfter`), and allows no update or delete. A second payout of any already-paid lead writes over an existing guard, which the rules evaluate as an update and refuse, so the whole batch fails, including the lead status and the partner balance update; balances drop only once. Why the guard rather than a transaction: it is enforced by the rules (a transaction only protects clients that use it), keeps the one-batch shape FEA-1 and its tests rely on, and follows the MON-4 pattern. Tests: `tests/integration/payoutGuard.test.js` (second and overlapping payouts refused, balances unchanged, guard immutable, non-Admin roles refused, Partner cannot read guards), `tests/component/Partners.test.jsx` (the batch carries the guard). **Not covered:** two admins paying *different* referrals of the same partner at the same moment still both compute `pending`/`settled` from the screen copy, so one balance update can overwrite the other (the lead statuses and payout records stay correct). A guard cannot be removed, so reversing a payout needs a future Admin path (none exists today). **Live:** deploy the rules (LIVE-1).
 
+
+### MON-12: Invoice guard of a cancelled or deleted invoice blocks its replacement
+- **Why (found by MON-4, 2026-10-03):** `invoice_guards/<rootLeadId>_<Advance|Final>` is never removed (the rules allow no update or delete), so after an Advance or Final is cancelled or deleted, a replacement for the same lead is refused. Older invoices that carry the Deal id in `leadId` have no guard, so only the client checks cover them.
+- **Owner decision first:** let an Admin delete a guard, or tie the guard to a non-cancelled invoice (the rule reads the named invoice's status). **Live:** rules deploy.
+
+### MON-13: QuotationBuilder reports success after a refused invoice save
+- **Why (found by MON-4, 2026-10-03; predates it):** `src/features/quotations/QuotationBuilder.jsx` does not await `onSaveInvoice`, so when the MON-4 guard refuses a save it still shows "invoice generated" and marks the quotation Invoiced.
+- **Build:** await the save and stop on `false`; component test.
+
+### MON-14: Concurrent payouts of different referrals overwrite the partner balance
+- **Why (found by MON-11, 2026-10-03):** two admins paying out *different* referrals of one partner at the same moment both compute `pending` and `settled` from the screen copy; the later write wins. Lead statuses and payout records stay correct. Payout guards cannot be removed, so a payout reversal would also need an Admin path.
+- **Build:** `increment()` for the balance fields in the payout batch (rules allow the delta), emulator test. **Live:** rules deploy if the rule changes.
 ## Features
 
 ### FEA-1: Real partner payout (step 4.1, partners D-1)
@@ -339,6 +357,14 @@ Source: `docs/02_modules/notifications/FINDINGS.md`. NOTIF-01 (sign-out leak) is
 - **Build:** an Admin action on the customer record to pick the matching login and set `userId`; component test.
 - **Done (2026-10-03):** "Linked login" select plus "Link login" button in the `Customers.jsx` detail card, Admin only; 2 component tests.
 
+
+### FEA-18: Persistent notifications: delete, and partners with no email
+- **Why (found by FEA-2, 2026-10-03):** deleting a persisted notification in `NotificationsView` is local only (the rules allow no delete), so it returns on the next snapshot; the commission notification is skipped when the partner record has no email.
+- **Build:** let the recipient delete (or hide) their own notification in the rules and the view; decide the fallback for a partner with no email. **Live:** rules deploy.
+
+### FEA-19: Claim resolution may link a lead that names another partner
+- **Why (found by FEA-2, 2026-10-03):** the claim modal in `Partners.jsx` links any lead, including one whose `partnerId` already names a different partner, which would move that lead's commission.
+- **Build:** filter or warn on leads already attributed to another partner; component test.
 ## Security
 
 Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file overrides another; Firestore rules combine with OR, so only a broad `allow` widens access.
@@ -405,6 +431,10 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 - **Build:** remove the clause (or replace it with the SEC-8 lead-based check for receipts if Partners should see them; owner call) and update the effective-access expectations.
 - **Done 2026-10-03 (rules not deployed, LIVE-1):** owner chose both. The clause is removed from `invoices` and `receipts`; `receipts` gains a Partner read through its `leadId` (receipts copy `leadId` from the invoice in `handleGenerateReceipt`), sharing the SEC-8 check as `isReferringPartnerOfLeadId`. New `tests/integration/partnerReceipts.test.js` (8); no `EXPECTED_RULE_CHANGES` cell flips (the probe documents carry no `partnerId` or `leadId`). Not done: the app does not subscribe a Partner to `receipts` (matrix `receipts: none`), so a Partner sees no receipt screen yet. Found on catch-up: `staging` failed `tests/component/App.invoiceGuard.test.jsx` (MON-4) after FEA-2 merged, because FEA-2's `App.jsx` calls `subscribeToQuery` / `query` / `where`, which that test's mocks lacked; SEC-14 added the three mocks (test-only, no app change).
 
+
+### SEC-15: Require a verified email for a pending registration
+- **Why (found by SEC-13, 2026-10-03):** email/password sign-up does not verify the address, so whoever first creates the Auth account for an email can still file that email's `pendingUsers` request with their own uid. SEC-14 also leaves the Partner receipt read unused: the app does not subscribe a Partner to receipts (matrix `receipts: none`).
+- **Owner decision first:** require `request.auth.token.email_verified` on `pendingUsers` create (and send verification mail at sign-up), or accept the risk because an Admin approves each request. **Live:** rules deploy.
 ## Tests
 
 ### TST-1: Component tests for the lead card
