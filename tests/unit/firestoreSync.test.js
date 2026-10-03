@@ -11,7 +11,8 @@ vi.mock('firebase/firestore', () => ({
   serverTimestamp: vi.fn(), writeBatch: vi.fn(), runTransaction: vi.fn(),
 }));
 
-const { deriveReceiptId, generateSequentialId } = await import('@/services/firestoreSync');
+const { deriveReceiptId, generateSequentialId, createDocumentIfAbsent } = await import('@/services/firestoreSync');
+const firestore = await import('firebase/firestore');
 
 describe('firestoreSync pure helpers', () => {
   describe('deriveReceiptId', () => {
@@ -44,5 +45,37 @@ describe('firestoreSync pure helpers', () => {
     it('reads a custom id field', () => {
       expect(generateSequentialId('Q', [{ quoteNo: 'Q-002' }], 'quoteNo')).toBe('Q-003');
     });
+  });
+});
+
+describe('createDocumentIfAbsent with a guard document (MON-4)', () => {
+  const runWith = (existing) => {
+    const sets = [];
+    firestore.doc.mockImplementation((_db, collectionName, id) => ({ path: `${collectionName}/${id}` }));
+    firestore.runTransaction.mockImplementation(async (_db, body) => body({
+      get: async (ref) => ({ exists: () => existing.includes(ref.path) }),
+      set: (ref, data) => sets.push([ref.path, data]),
+    }));
+    return sets;
+  };
+  const guard = { collectionName: 'invoice_guards', docId: 'L-001_Advance', data: { invoiceId: 'INV-ADV-0001' } };
+
+  it('writes the document and its guard in the same transaction', async () => {
+    const sets = runWith([]);
+    await createDocumentIfAbsent('invoices', 'INV-ADV-0001', { amount: 750 }, guard);
+    expect(sets.map(([path]) => path)).toEqual(['invoices/INV-ADV-0001', 'invoice_guards/L-001_Advance']);
+    expect(sets[1][1]).toMatchObject({ invoiceId: 'INV-ADV-0001' });
+  });
+
+  it('writes nothing and throws ALREADY_EXISTS when the guard is already there', async () => {
+    const sets = runWith(['invoice_guards/L-001_Advance']);
+    await expect(createDocumentIfAbsent('invoices', 'INV-ADV-0002', { amount: 750 }, guard)).rejects.toThrow('ALREADY_EXISTS');
+    expect(sets).toEqual([]);
+  });
+
+  it('still writes a single document when no guard is passed', async () => {
+    const sets = runWith([]);
+    await createDocumentIfAbsent('receipts', 'REC-ADV-0001', { amount: 750 });
+    expect(sets.map(([path]) => path)).toEqual(['receipts/REC-ADV-0001']);
   });
 });

@@ -422,9 +422,25 @@ function App() {
         dueDate: invoiceData.dueDate || new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
       };
       
-      // Save directly to Firestore
-      await addDocument(COLLECTIONS.INVOICES, cleanInvoice, docId);
-      
+      // MON-4: one Advance and one Final per root lead, enforced by a guard document
+      // written in the same transaction, so two sessions racing cannot both create one.
+      const rootLeadId = cleanInvoice.originalLeadId || cleanInvoice.leadId;
+      if (rootLeadId && (cleanInvoice.type === 'Advance' || cleanInvoice.type === 'Final')) {
+        try {
+          await createDocumentIfAbsent(COLLECTIONS.INVOICES, docId, cleanInvoice, {
+            collectionName: COLLECTIONS.INVOICE_GUARDS,
+            docId: `${rootLeadId}_${cleanInvoice.type}`,
+            data: { invoiceId: docId, type: cleanInvoice.type, rootLeadId },
+          });
+        } catch (err) {
+          if (err.message !== 'ALREADY_EXISTS') throw err;
+          toast.error(`${cleanInvoice.type} invoice already exists for lead ${rootLeadId}, so ${docId} was not created.`);
+          return false;
+        }
+      } else {
+        await addDocument(COLLECTIONS.INVOICES, cleanInvoice, docId);
+      }
+
       // Optimistic local state update
       setInvoices(prev => {
         const existingIdx = prev.findIndex(inv => inv.id === docId || inv._firestoreId === docId);
