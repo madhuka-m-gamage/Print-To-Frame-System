@@ -269,14 +269,32 @@ service cloud.firestore {
       allow delete: if checkPermission('invoices', 'delete');
     }
 
-    // ── Invoice guards (MON-4) ───────────────────────────
-    // <rootLeadId>_<Advance|Final>, written in the same transaction as the invoice. Create
-    // only, never changed or removed, so a second Advance or Final for a lead is refused.
+    // ── Invoice guards (MON-4, MON-12) ───────────────────
+    // <rootLeadId>_<Advance|Final>, written in the same transaction as the invoice, so a
+    // second Advance or Final for a lead is refused. Never removed; it may only be handed
+    // to a new invoice written in the same transaction once the invoice it names is
+    // Cancelled or gone (get() reads the state before the write).
+    function guardedInvoicePath(invoiceId) {
+      return /databases/$(database)/documents/invoices/$(invoiceId);
+    }
+    function guardedInvoiceReleased(invoiceId) {
+      return !exists(guardedInvoicePath(invoiceId))
+        || get(guardedInvoicePath(invoiceId)).data.get('status', '') == 'Cancelled';
+    }
+
     match /invoice_guards/{guardId} {
       allow read: if checkPermission('invoices', 'read');
       // 'write' accepts create or edit, the same roles the invoices create rule lets through.
       allow create: if checkPermission('invoices', 'write');
-      allow update, delete: if false;
+      allow update: if checkPermission('invoices', 'write')
+        && request.resource.data.rootLeadId == resource.data.rootLeadId
+        && request.resource.data.type == resource.data.type
+        && request.resource.data.invoiceId is string
+        && request.resource.data.invoiceId != resource.data.invoiceId
+        && !exists(guardedInvoicePath(request.resource.data.invoiceId))
+        && existsAfter(guardedInvoicePath(request.resource.data.invoiceId))
+        && guardedInvoiceReleased(resource.data.invoiceId);
+      allow delete: if false;
     }
 
     // ── Receipts (payment-received records issued against paid invoices) ──
