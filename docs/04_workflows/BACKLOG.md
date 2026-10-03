@@ -232,6 +232,7 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 ### MON-13: QuotationBuilder reports success after a refused invoice save
 - **Why (found by MON-4, 2026-10-03; predates it):** `src/features/quotations/QuotationBuilder.jsx` does not await `onSaveInvoice`, so when the MON-4 guard refuses a save it still shows "invoice generated" and marks the quotation Invoiced.
 - **Build:** await the save and stop on `false`; component test.
+- **Done (2026-10-03):** both invoice calls (Advance and Final) in `QuotationBuilder.jsx` now `await onSaveInvoice(...)`. A `false` result (the MON-4 guard refusal, or any save error already toasted by `handleSaveInvoice`) stops quietly: no success toast, the quotation is not marked Invoiced, and the button is usable again. A rejected save shows an error toast and stops the same way. Any other result (`true`, or `undefined` from a handler that returns nothing) behaves as before. Tests: component 4 added (false and rejected for both invoice types) plus 2 for the true path.
 
 ### MON-14: Concurrent payouts of different referrals overwrite the partner balance
 - **Why (found by MON-11, 2026-10-03):** two admins paying out *different* referrals of one partner at the same moment both compute `pending` and `settled` from the screen copy; the later write wins. Lead statuses and payout records stay correct. Payout guards cannot be removed, so a payout reversal would also need an Admin path.

@@ -257,27 +257,34 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
         return;
       }
       const invoiceDate = new Date().toISOString().split('T')[0];
-      onSaveInvoice({
-        id: invId,
-        ...invoiceLineageFields(lead),
-        partnerId: lead.partnerId || lead.agentId || '',
-        linkedJobNo: lead.jobNo || lead.linkedJobNo || '',
-        jobNo: lead.jobNo || lead.linkedJobNo || '',
-        quotationId: activeQuote?._firestoreId || activeQuote?.id || '',
-        customerName: lead.name || 'Direct Customer',
-        company: lead.company || '',
-        phone: lead.phone || '',
-        date: invoiceDate,
-        amount: advanceDue,
-        totalValue: grandTotal,
-        advancePaid: 0,
-        balanceDue: balanceDue,
-        type: 'Advance',
-        status: 'Unpaid',
-        aiDraft: lead.jobScope || 'Custom steel framing 75% advance invoice',
-        dueDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
-        lineItems: lineItems.map(({ id, ...rest }) => rest),
-      });
+      let saved;
+      try {
+        saved = await onSaveInvoice({
+          id: invId,
+          ...invoiceLineageFields(lead),
+          partnerId: lead.partnerId || lead.agentId || '',
+          linkedJobNo: lead.jobNo || lead.linkedJobNo || '',
+          jobNo: lead.jobNo || lead.linkedJobNo || '',
+          quotationId: activeQuote?._firestoreId || activeQuote?.id || '',
+          customerName: lead.name || 'Direct Customer',
+          company: lead.company || '',
+          phone: lead.phone || '',
+          date: invoiceDate,
+          amount: advanceDue,
+          totalValue: grandTotal,
+          advancePaid: 0,
+          balanceDue: balanceDue,
+          type: 'Advance',
+          status: 'Unpaid',
+          aiDraft: lead.jobScope || 'Custom steel framing 75% advance invoice',
+          dueDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+          lineItems: lineItems.map(({ id, ...rest }) => rest),
+        });
+      } catch (err) {
+        toast.error('Failed to save the invoice: ' + err.message);
+        return;
+      }
+      if (saved === false) return;
       toast.success('75% Advance invoice generated & linked!');
       const quoteDocId = activeQuote?._firestoreId || activeQuote?.id;
       if (quoteDocId && status === 'Accepted') {
@@ -313,27 +320,34 @@ export default function QuotationBuilder({ lead, allQuotations = [], onSaveInvoi
         return;
       }
       const invoiceDate = new Date().toISOString().split('T')[0];
-      onSaveInvoice({
-        id: invId,
-        ...invoiceLineageFields(lead),
-        partnerId: lead.partnerId || lead.agentId || '',
-        linkedJobNo: lead.jobNo || lead.linkedJobNo || '',
-        jobNo: lead.jobNo || lead.linkedJobNo || '',
-        quotationId: activeQuote?._firestoreId || activeQuote?.id || '',
-        customerName: lead.name || 'Direct Customer',
-        company: lead.company || '',
-        phone: lead.phone || '',
-        date: invoiceDate,
-        amount: balanceDue,
-        totalValue: grandTotal,
-        advancePaid: advanceDue,
-        balanceDue: balanceDue,
-        type: 'Final',
-        status: 'Unpaid',
-        aiDraft: lead.jobScope || 'Custom steel framing 25% final settlement invoice',
-        dueDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
-        lineItems: lineItems.map(({ id, ...rest }) => rest),
-      });
+      let saved;
+      try {
+        saved = await onSaveInvoice({
+          id: invId,
+          ...invoiceLineageFields(lead),
+          partnerId: lead.partnerId || lead.agentId || '',
+          linkedJobNo: lead.jobNo || lead.linkedJobNo || '',
+          jobNo: lead.jobNo || lead.linkedJobNo || '',
+          quotationId: activeQuote?._firestoreId || activeQuote?.id || '',
+          customerName: lead.name || 'Direct Customer',
+          company: lead.company || '',
+          phone: lead.phone || '',
+          date: invoiceDate,
+          amount: balanceDue,
+          totalValue: grandTotal,
+          advancePaid: advanceDue,
+          balanceDue: balanceDue,
+          type: 'Final',
+          status: 'Unpaid',
+          aiDraft: lead.jobScope || 'Custom steel framing 25% final settlement invoice',
+          dueDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+          lineItems: lineItems.map(({ id, ...rest }) => rest),
+        });
+      } catch (err) {
+        toast.error('Failed to save the invoice: ' + err.message);
+        return;
+      }
+      if (saved === false) return;
       toast.success('25% Final Settlement invoice generated & linked!');
     } finally {
       setIsConvertingFinal(false);
