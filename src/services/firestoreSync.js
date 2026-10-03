@@ -144,6 +144,8 @@ export async function addDocument(collectionName, data, customId) {
  * An optional guard ({ collectionName, docId, data }) is a second document checked and
  * written in the same transaction, so a deterministic guard id refuses a second document
  * that has a different id of its own (MON-4: one Advance and one Final invoice per lead).
+ * The guard's data.invoiceId names a document in collectionName; once that document is
+ * Cancelled or gone, the guard is handed to the new document (MON-12).
  * @param {string} collectionName
  * @param {string} docId
  * @param {object} data
@@ -158,7 +160,13 @@ export async function createDocumentIfAbsent(collectionName, docId, data, guard)
     await runTransaction(db, async (transaction) => {
       const snap = await transaction.get(docRef);
       const guardSnap = guardRef ? await transaction.get(guardRef) : null;
-      if (snap.exists() || guardSnap?.exists()) {
+      let guardHeld = Boolean(guardSnap?.exists());
+      const heldBy = guardHeld && guardSnap.data()?.invoiceId;
+      if (heldBy) {
+        const named = await transaction.get(doc(db, collectionName, heldBy));
+        guardHeld = named.exists() && named.data().status !== 'Cancelled';
+      }
+      if (snap.exists() || guardHeld) {
         throw new Error('ALREADY_EXISTS');
       }
       transaction.set(docRef, {

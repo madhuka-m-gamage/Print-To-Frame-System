@@ -49,11 +49,11 @@ describe('firestoreSync pure helpers', () => {
 });
 
 describe('createDocumentIfAbsent with a guard document (MON-4)', () => {
-  const runWith = (existing) => {
+  const runWith = (existing, store = {}) => {
     const sets = [];
     firestore.doc.mockImplementation((_db, collectionName, id) => ({ path: `${collectionName}/${id}` }));
     firestore.runTransaction.mockImplementation(async (_db, body) => body({
-      get: async (ref) => ({ exists: () => existing.includes(ref.path) }),
+      get: async (ref) => ({ exists: () => existing.includes(ref.path) || ref.path in store, data: () => store[ref.path] }),
       set: (ref, data) => sets.push([ref.path, data]),
     }));
     return sets;
@@ -77,5 +77,28 @@ describe('createDocumentIfAbsent with a guard document (MON-4)', () => {
     const sets = runWith([]);
     await createDocumentIfAbsent('receipts', 'REC-ADV-0001', { amount: 750 });
     expect(sets.map(([path]) => path)).toEqual(['receipts/REC-ADV-0001']);
+  });
+
+  describe('replacing a stale guard (MON-12)', () => {
+    const oldGuard = { 'invoice_guards/L-001_Advance': { invoiceId: 'INV-ADV-0001' } };
+
+    it('replaces the guard in the same transaction when the invoice it names is Cancelled', async () => {
+      const sets = runWith([], { ...oldGuard, 'invoices/INV-ADV-0001': { status: 'Cancelled' } });
+      await createDocumentIfAbsent('invoices', 'INV-ADV-0002', { amount: 750 }, { ...guard, data: { invoiceId: 'INV-ADV-0002' } });
+      expect(sets.map(([path]) => path)).toEqual(['invoices/INV-ADV-0002', 'invoice_guards/L-001_Advance']);
+      expect(sets[1][1]).toMatchObject({ invoiceId: 'INV-ADV-0002' });
+    });
+
+    it('replaces the guard when the invoice it names no longer exists', async () => {
+      const sets = runWith([], oldGuard);
+      await createDocumentIfAbsent('invoices', 'INV-ADV-0002', { amount: 750 }, { ...guard, data: { invoiceId: 'INV-ADV-0002' } });
+      expect(sets.map(([path]) => path)).toEqual(['invoices/INV-ADV-0002', 'invoice_guards/L-001_Advance']);
+    });
+
+    it('keeps refusing while the invoice it names is live', async () => {
+      const sets = runWith([], { ...oldGuard, 'invoices/INV-ADV-0001': { status: 'Paid' } });
+      await expect(createDocumentIfAbsent('invoices', 'INV-ADV-0002', { amount: 750 }, guard)).rejects.toThrow('ALREADY_EXISTS');
+      expect(sets).toEqual([]);
+    });
   });
 });
