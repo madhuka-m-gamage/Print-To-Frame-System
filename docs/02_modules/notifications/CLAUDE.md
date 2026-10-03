@@ -4,7 +4,7 @@ Full map: [README.md](README.md). Cross-module chains: [CROSS_MODULE_TRIGGERS.md
 
 ## What it does
 
-An in-app feed: toasts become session-only entries through a browser `EventTarget`; the commission-cleared event is a persisted `notifications` document addressed to the partner (FEA-2); messages are merged in.
+An in-app feed of persisted `notifications` documents (commission-cleared to the partner, FEA-2; a toast marked `notify` to the signed-in user, FEA-7) with unread chat messages merged in. Plain toasts are not in the feed.
 
 ## Code
 
@@ -16,11 +16,11 @@ An in-app feed: toasts become session-only entries through a browser `EventTarge
 
 ## Triggers and side effects
 
-- Every `toast.*` call also emits a feed entry. Browser `Notification` API only for chat messages. No FCM, email or WhatsApp channel.
+- A plain `toast.*` call is toast-only (FEA-7). `toast.x(msg, { notify: true, description })` emits on the `EventTarget` bus; `App.jsx` stores it as a `notifications` document for the signed-in user (`recipientEmail`, `targetRole`, `type`, `title`, `message`, `read: false`, `date`, `createdBy`; `addDocument` adds `createdAt`) and the subscription shows it. Events that use `notify`: the "deal fully settled" toast in `handleMarkInvoicePaid`. Other persisted event: commission cleared (written directly, not through a toast). Browser `Notification` API only for chat messages. No FCM, email or WhatsApp channel.
 
 ## Before you edit
 
-- Entries vanish on reload and are visible only to the user whose browser fired them. Sign-out clears the list and unread count (`handleSignOut`), and the messages part of the feed drops the user's own messages (`getIncomingMessages`).
-- Session-only entries carry no `read` and count in a local counter; persisted ones count by `read: false` and add to the badge. `NotificationsView` shows an entry only if it has no `recipientEmail` or the address is the signed-in user's.
+- Sign-out clears the list and unread count (`handleSignOut`), and the messages part of the feed drops the user's own messages (`getIncomingMessages`).
+- The badge is the count of persisted entries with `read: false`; there is no session-only counter or entry any more. The chat-message part of the feed shows only messages the user has not read (`readBy`), so "Mark Messages Read" empties it. `NotificationsView` shows an entry only if it has no `recipientEmail` or the address is the signed-in user's.
 - Deleting a persisted entry in the view deletes the Firestore doc (FEA-18; only the recipient may delete); session-only entries are removed locally. "Clear all" deletes the persisted system alerts the same way.
 - Create is open to any active staff user (not Partner, Business Client, Customer) with `recipientEmail`, `type`, `title`, `createdAt` present. When the referring partner has no email, `handleMarkInvoicePaid` shows a warning toast and stores no notification (FEA-18).
