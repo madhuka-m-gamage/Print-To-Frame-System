@@ -402,6 +402,7 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 ### SEC-14: Remove the dead `partnerId == token email` read clause
 - **Why (found by SEC-8, 2026-10-02):** the `invoices` and `receipts` read rules allow `resource.data.partnerId == request.auth.token.email`, but `partnerId` holds a partner code such as `P-1`, never an email, so the clause never matches. SEC-8 now scopes Partner invoice reads through the lead; receipts have no Partner read.
 - **Build:** remove the clause (or replace it with the SEC-8 lead-based check for receipts if Partners should see them; owner call) and update the effective-access expectations.
+- **Done 2026-10-03 (rules not deployed, LIVE-1):** owner chose both. The clause is removed from `invoices` and `receipts`; `receipts` gains a Partner read through its `leadId` (receipts copy `leadId` from the invoice in `handleGenerateReceipt`), sharing the SEC-8 check as `isReferringPartnerOfLeadId`. New `tests/integration/partnerReceipts.test.js` (8); no `EXPECTED_RULE_CHANGES` cell flips (the probe documents carry no `partnerId` or `leadId`). Not done: the app does not subscribe a Partner to `receipts` (matrix `receipts: none`), so a Partner sees no receipt screen yet. Found on catch-up: `staging` failed `tests/component/App.invoiceGuard.test.jsx` (MON-4) after FEA-2 merged, because FEA-2's `App.jsx` calls `subscribeToQuery` / `query` / `where`, which that test's mocks lacked; SEC-14 added the three mocks (test-only, no app change).
 
 ## Tests
 

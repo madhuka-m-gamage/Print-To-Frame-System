@@ -245,11 +245,16 @@ service cloud.firestore {
 
     // ── Invoices ─────────────────────────────────────────
     // SEC-8: a referring partner reads an invoice through its leadId, the lead it names.
+    // SEC-14: receipts copy leadId from their invoice and use the same check.
+    function isReferringPartnerOfLeadId(leadId) {
+      return isAuthenticated() && leadId is string && leadId != ''
+        && exists(/databases/$(database)/documents/leads/$(leadId))
+        && isReferringPartnerOf(get(/databases/$(database)/documents/leads/$(leadId)).data);
+    }
+
     match /invoices/{invoiceId} {
-      allow read: if checkPermission('invoices', 'view') || checkPermission('invoices', 'read') || (isAuthenticated() && resource.data.customerId == request.auth.token.email) || (isAuthenticated() && resource.data.partnerId == request.auth.token.email)
-        || (isAuthenticated() && resource.data.get('leadId', '') is string && resource.data.get('leadId', '') != ''
-          && exists(/databases/$(database)/documents/leads/$(resource.data.leadId))
-          && isReferringPartnerOf(get(/databases/$(database)/documents/leads/$(resource.data.leadId)).data));
+      allow read: if checkPermission('invoices', 'view') || checkPermission('invoices', 'read') || (isAuthenticated() && resource.data.customerId == request.auth.token.email)
+        || isReferringPartnerOfLeadId(resource.data.get('leadId', ''));
       allow create, update: if checkPermission('invoices', 'create') || checkPermission('invoices', 'edit') || checkPermission('invoices', 'write');
       allow delete: if checkPermission('invoices', 'delete');
     }
@@ -268,7 +273,7 @@ service cloud.firestore {
     match /receipts/{receiptId} {
       allow read: if checkPermission('receipts', 'view') || checkPermission('receipts', 'read')
         || (isAuthenticated() && resource.data.customerId == request.auth.token.email)
-        || (isAuthenticated() && resource.data.partnerId == request.auth.token.email);
+        || isReferringPartnerOfLeadId(resource.data.get('leadId', ''));
       allow create, update: if checkPermission('receipts', 'create') || checkPermission('receipts', 'edit') || checkPermission('receipts', 'write');
       allow delete: if checkPermission('receipts', 'delete');
     }

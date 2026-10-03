@@ -36,6 +36,9 @@ const EXPECTED_RULE_CHANGES = [
   // scoped read is covered in partnerScopedReads.test.js.
   // FEA-15 flips no cell here: the probe customers row carries no userId, so a client's
   // userId-linked read and update are covered in customerUserId.test.js.
+  // SEC-14 flips no cell here: the probe invoices and receipts carry no partnerId or leadId,
+  // so the removed partnerId clause and the lead-scoped receipt read are covered in
+  // partnerReceipts.test.js.
 ];
 
 const ROLES = Object.keys(PERMISSIONS_FIXTURE);
