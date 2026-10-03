@@ -199,6 +199,7 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 ### MON-7: List and alert defaulted-commission leads
 - **Why:** a quote with no partner rate uses LKR 30.00, sets `pricingMetadata.commissionRateDefaulted` and shows a warning only to whoever applied the pricing.
 - **Build:** a filtered list (Leads or Partners screen) of leads where the flag is true, and a stored notification to Admins and Managers (needs FEA-2's notifications collection). Query key: `pricingMetadata.commissionRateDefaulted == true`.
+- **Done (MON-7):** the pricing default is applied in `LeadCardDetails.jsx` (`applyPricingToLead`), not `QuotationBuilder.jsx`. Leads screen FilterBar has a "Defaulted commission (N)" toggle (client-side filter on the flag). Applying a defaulted rate writes one `commission` notification per active Admin and Manager (`users` prop, passed from `App.jsx` through `Leads` and `Deals`). Not deduplicated: re-applying pricing notifies again.
 
 ---
 

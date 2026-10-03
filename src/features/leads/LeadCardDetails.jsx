@@ -7,6 +7,7 @@ import {
   PhoneCall, Mic, Square, Radio, RotateCcw, Receipt
 } from 'lucide-react';
 import { toast } from '@/shared/utils/toast';
+import { addDocument, COLLECTIONS } from '@/services/firestoreSync';
 import { calculateCost, determineTier } from '@/features/quotations/pricingEngine';
 import { getQuotePricingTerms, DEFAULT_REFERRAL_COMMISSION_RATE } from '@/features/quotations/quotePricing';
 import { extractCallScope } from '@/services/gemini';
@@ -39,6 +40,7 @@ export default function LeadCardDetails({
   onConvert,
   partners = [], 
   customers = [],
+  users = [],
   currentUser,
   allQuotations = [],
   isDeal = false,
@@ -449,6 +451,21 @@ export default function LeadCardDetails({
       if (pricingTerms.commissionDefaulted) {
         toast.warning(`No commission rate on file for this partner, so LKR ${DEFAULT_REFERRAL_COMMISSION_RATE.toFixed(2)} per sq ft was used.`, {
           description: 'An Admin or Manager should check and update the partner\'s rate.'
+        });
+        const recipients = new Map(users
+          .filter(u => ['Admin', 'Manager'].includes(u.role) && u.status === 'Active' && u.identifier)
+          .map(u => [String(u.identifier).toLowerCase(), u.role]));
+        recipients.forEach((targetRole, recipientEmail) => {
+          addDocument(COLLECTIONS.NOTIFICATIONS, {
+            recipientEmail,
+            targetRole,
+            type: 'commission',
+            title: 'Default commission rate used',
+            message: `A quote for ${formData.company || formData.name || lead.id} used the default LKR ${DEFAULT_REFERRAL_COMMISSION_RATE.toFixed(2)} per sq ft because the partner has no commission rate on file.`,
+            leadId: lead.id,
+            read: false,
+            createdBy: currentUser?.identifier || '',
+          }).catch(err => console.error('Failed to save the default commission notification:', err));
         });
       }
     }

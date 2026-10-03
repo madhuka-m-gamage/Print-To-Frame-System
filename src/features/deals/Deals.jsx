@@ -183,6 +183,7 @@ export default function Deals({
   setLeads,
   currentUser,
   partners = [],
+  users = [],
   setPartners,
   projects = [],
   setProjects,
@@ -742,6 +743,7 @@ export default function Deals({
           onSaveInvoice={onSaveInvoice}
           onMarkInvoicePaid={onMarkInvoicePaid}
           partners={partners}
+          users={users}
           customers={customers}
           currentUser={currentUser}
           allQuotations={quotations}
