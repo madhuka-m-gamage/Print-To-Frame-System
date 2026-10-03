@@ -227,6 +227,7 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 ### MON-12: Invoice guard of a cancelled or deleted invoice blocks its replacement
 - **Why (found by MON-4, 2026-10-03):** `invoice_guards/<rootLeadId>_<Advance|Final>` is never removed (the rules allow no update or delete), so after an Advance or Final is cancelled or deleted, a replacement for the same lead is refused. Older invoices that carry the Deal id in `leadId` have no guard, so only the client checks cover them.
 - **Owner decision (2026-10-03): the guard checks the invoice's status.** A new guard may replace an existing one when the invoice the old guard names is Cancelled or no longer exists (the rule reads it with `get()`/`exists()`); no Admin cleanup step. **Live:** rules deploy.
+- **Done (2026-10-03):** `createDocumentIfAbsent` reads the invoice the existing guard names and, when it is Cancelled or gone, writes the new invoice and replaces the guard in the same transaction; the `invoice_guards` update rule allows only that hand-over (same `rootLeadId` and `type`, a new invoice created in the same write, the named invoice Cancelled or absent before it). Delete stays refused. Rules not deployed (LIVE-1).
 
 ### MON-13: QuotationBuilder reports success after a refused invoice save
 - **Why (found by MON-4, 2026-10-03; predates it):** `src/features/quotations/QuotationBuilder.jsx` does not await `onSaveInvoice`, so when the MON-4 guard refuses a save it still shows "invoice generated" and marks the quotation Invoiced.
