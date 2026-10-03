@@ -40,52 +40,43 @@ One item per fresh session: branch `claude/<topic>` from `staging` → tests fir
 | Wave C | `[##########]` 1/1 | TST-2 done |
 
 ## Run calibration (overwritten after each agent run)
-Last run: 2026-10-03, Wave B run B3 (MON-4, MON-11, SEC-13, SEC-14 on Opus·medium; FEA-2, FEA-17 Sonnet·medium; final docs Sonnet·medium x2), **two workflows, four lanes** (first use). 8 agents, 1.04M subagent tokens (Opus 551k, Sonnet 493k). Launch 16:02 IST; last docs PR 17:00 (58 min, estimate 45). Run IDs `wf_5d4b2b3d-e63` (A), `wf_36583e25-df0` (B). Meter 22% → 67% (+45%, estimate 40), weekly 48% → 54% (+6). The meter delta includes the orchestrating session (FEA-17 rescue, review); no other app was reported.
+Last run: 2026-10-03, Wave B run B4 (MON-12, MON-14, SEC-15 on Opus·medium; MON-13, FEA-5, FEA-19, FEA-18, FEA-7, MON-7 Sonnet·medium; final docs Sonnet·medium x2), two workflows, four lanes. First launch 20:30 (runs `wf_590e0d48-25f`, `wf_76323422-c3c`) lost to a power-off at about 21:00 with nothing committed (meter 0% → 31%); the four first-in-lane diffs were saved as patches and the relaunch (21:09, `wf_87a485a1-6bf`, `wf_471c46ed-fcf`) resumed from them. Relaunch: 11 agents, 1.37M subagent tokens (Opus 394k, Sonnet 980k), last docs PR 22:29 (80 min, estimate 60). Meter 31% → 97% (+66%, estimate 47%); weekly 62% → 71%. Whole B4 including the lost launch: about 97% of one window.
 
-| Item | Model·effort | Est. min | Actual min | Est. % | Actual % (21.6k / 54k rates) | Fix rounds / catch-ups | Pick outcome |
-|---|---|---|---|---|---|---|---|
-| MON-4 | Opus·medium | 27 | 38.9 | ~7.6 | ~7.2 (155k) | 0 / 2 | sufficient: extended `createDocumentIfAbsent` with a guard doc in the same transaction; 3 findings (MON-12, MON-13) |
-| MON-11 | Opus·medium | 27 | 26.0 | ~7.6 | ~6.1 (132k) | 0 / 1 | sufficient: per-lead guard doc enforced by rules (`existsAfter` of the payout); 1 finding (MON-14) |
-| FEA-2 | Sonnet·medium (owner override of Opus·medium) | 25 | 38.2 | ~4.5 | ~3.2 (174k) | 0 / 1 | sufficient, with a process miss: wrote the rules block before running its rules tests (never saw them fail); 3 findings (FEA-18, FEA-19) |
-| FEA-17 | Sonnet·medium | 13 | 9.1 (+~10 review rescue) | ~2.7 | ~2.0 (109k) | 0 / 1 | sufficient; returned pr-open-blocked because `staging` was red (not its fault); the review merged staging in and merged #129 |
-| SEC-13 | Opus·medium | 15 | 19.2 | ~6 | ~5.5 (119k) | 0 / 0 | sufficient: no App change needed; 1 finding (SEC-15) |
-| SEC-14 | Opus·medium | 15 | 36.8 | ~6 | ~6.7 (145k) | 1 / 2 | sufficient: shared `isReferringPartnerOfLeadId`; its fix round repaired the `staging` break (mock in MON-4's test) |
-| Final docs A / B | Sonnet·medium | 3-12 | 2.6 / 1.9 | ~2 each | ~2.0 / 1.9 | n/a | sufficient; both folded every fragment on staging, so A's PR #128 duplicated B's #130 and was closed |
-| **Run (to last docs PR)** | | **45** | **58** | **40** | **~35** (rates) / 45 (meter) | | |
+| Item | Model·effort | Est. min | Actual min | Tokens | Fix rounds / catch-ups | Pick outcome |
+|---|---|---|---|---|---|---|
+| MON-12 | Opus·medium | 18 | 27.4 | 132k | 0 / 1 | sufficient: guard hand-over checked in the transaction and the rules (get/exists before, existsAfter for the new invoice) |
+| MON-13 | Sonnet·medium | 10 | 15.6 | 114k | 0 / 1 | sufficient |
+| FEA-5 | Sonnet·medium | 20 | 25.3 | 156k | 0 / 2 | sufficient: added `salesOwnerEmail` at lead conversion (no owner field existed) |
+| MON-14 | Opus·medium | 18 | 16.6 | 108k | 0 / 0 | sufficient: no rules change needed; did not switch Auto-fix off (judged the tool owner-only) |
+| FEA-19 | Sonnet·medium | 10 | 5.6 | 101k | 0 / 0 | sufficient |
+| FEA-18 | Sonnet·medium | 12 | 37.6 | 109k | 0 / 1 | sufficient; reused the patch, fixed its toast mock; time includes waiting on load |
+| FEA-7 | Sonnet·medium | 20 | 24.0 | 161k | 0 / 1 | sufficient: only commission-cleared and deal-fully-settled stay notifications |
+| MON-7 | Sonnet·medium | 18 | 16.8 | 133k | 0 / 1 | sufficient: the default is applied in `LeadCardDetails.jsx`, not QuotationBuilder |
+| SEC-15 | Opus·medium | 30 | 54.2 | 154k | 0 / 2 | sufficient: `registrationDrafts/{uid}` holds the form until verification |
+| Final docs A / B | Sonnet·medium | 2-6 | 2.0 / 1.7 | 102k / 104k | n/a | sufficient; P2 worked (disjoint fragments) |
+| **Run (relaunch)** | | **60** | **80** | **1.37M** | | meter +66% vs 47% |
 
-Flagged (more than 30% off): MON-4 time (+44%, **scope**: transaction helper extended, 20 new tests, 2 catch-ups), FEA-2 time (+53%, **estimate model**: an L item with three surfaces on Sonnet takes about as long as an Opus M item), SEC-14 time (+145%, **catch-up and CI**: it repaired the staging break). Meter +12% over estimate: **estimate model** (orchestration and the rescue cost about 5%, and Opus may be cheaper per 1% than 21.6k, see below).
+Flagged (more than 30% off): MON-12 (+52%), MON-13 (+56%), FEA-18 (+213%), SEC-15 (+81%), run wall-clock (+33%) and usage (+40%). Causes: **environment** (load average 9-11 with four lanes of emulators: rules setup hooks timed out at 10 s and were re-run, FEA-18 and SEC-15 waited on reruns) and **estimate model** (the per-model token rates below).
 
-**Parallel by function (owner decision, first use):** App.jsx and Partners.jsx edits in different lanes merged with **no textual conflict** (one docs conflict in FIRESTORE_RULES_NOTES, kept both sides). But it produced a **semantic break**: FEA-2 added a `subscribeToQuery` listener to App.jsx, and MON-4's new App test mocked `firestoreSync` without it. Each PR was green on its own branch; MON-4 merged without catching up FEA-2 (GitHub allows a behind branch to merge), so `staging` went red (4 component tests) until SEC-14's fix round. Tuning 9 below.
+**P1 (catch up before merge) worked:** 9 items, 13 catch-ups, no `staging` break; the combined `staging` passes the full suite. **P2 worked:** the two docs PRs folded disjoint fragments; only the shared summary lines conflicted, resolved in the review.
 
 **Rolling rates (last 3 runs)**
-| Rate | B1 (Opus + Sonnet) | B2 (Opus + Sonnet) | B3 (Opus + Sonnet, 4 lanes) | Use next |
+| Rate | B2 | B3 | B4 relaunch | Use next |
 |---|---|---|---|---|
-| Opus tokens per 1% | about 21.6k (clean) | not measurable | 17-22k (17.3k if Sonnet holds 54k and orchestration was ~4%) | 19k (unconfirmed; recheck in a clean run) |
-| Sonnet tokens per 1% | consistent with 54k | not measurable | not separable | 54k |
-| Opus M item (medium) | 26-28 min, 163-178k | 13-23 min, 159-168k | 26-39 min, 132-155k | 25-35 min, ~150k (~8%) |
-| Opus S item (medium) | 16 min | n/a | 19-37 min, 119-145k (SEC-14 includes a fix round) | 15-20 min, ~120k (~6%) |
-| Sonnet L item (medium) | n/a | n/a | 38 min, 174k (FEA-2) | 35-40 min, ~3.5% |
-| Sonnet S/M item (medium) | n/a | 12.9 min, 147k | 9 min, 109k | 9-13 min, 2-2.7% |
-| Final docs | 5.8 min | 12.3 min (rebuilt a fragment) | 1.9-2.6 min | 2-6 min, ~2% |
-| Window % per weekly % | n/a | 8 | 7.5 | 7.5-8 |
-| Concurrency | 2 | 2 | 4 (two workflows) | 4 |
+| Mixed subagent tokens per 1% of the window | not measurable | about 23k (1.04M / 45%) | about 21k (1.37M / 66%) | **21k for every model** (the per-model split below no longer fits) |
+| Opus vs Sonnet per token | 2.5x (B1) | not separable | not separable (Sonnet at 54k would leave Opus at 9k, implausible) | treat as equal until a single-model run measures them |
+| Agent floor | ~90k tokens | ~100k | ~100k (final docs 102-104k) | 100k = ~5% per agent |
+| S item | 7-9 min | 9-19 min | 5.6-17 min | 10-17 min |
+| M item | 13-39 min | 26-39 min | 16-54 min | 20-40 min; add 30% with four emulator lanes |
+| Window % per weekly % | 8 | 7.5 | 7.3 | 7.5 |
 
-**Model overrides:** the owner changed 1 of 7 picks (FEA-2 down from Opus·medium to Sonnet·medium); the six items on the remaining picks were sufficient with 0-1 fix rounds.
-
-**Pick outcomes by task type:** money (M) Opus·medium 3 runs sufficient (FEA-1, MON-4, MON-11); security Opus·medium 6 runs sufficient (SEC-12, SEC-7, SEC-8, FEA-15, SEC-13, SEC-14); design-heavy on Sonnet·medium 1 run sufficient with a tests-first miss (FEA-2); small-ui Sonnet·medium 5 runs sufficient. Security and money have now been sufficient at Opus·medium six and three times against an Opus·high default: proposed policy change P4 below.
+**Model overrides:** none (all 10 picks taken); all sufficient with 0 fix rounds.
 
 **Tuning (adopted = in effect now; not yet = needs the owner or the skill)**
-1. Adopted: wall-clock = longest lane + 2-6 (final) + 10-15 (review); with four lanes add about 10 min for cross-lane catch-ups.
-2. Adopted: the rolling rates above (Opus 19k per 1% until a clean run confirms it).
-3. Process: e2e runs in CI for code PRs into `staging` (ENG-7); CI rounds are 3-11 min.
-4. Not yet: merge the `coverage:all` reports (optional).
-5. Not yet (skill change): equal Sonnet·low and Sonnet·medium option costs in the cards.
-6. Not yet (skill change): a mid-run meter reading for the usage guard.
-7. Adopted 2026-10-03: slot run mode and required fragments (#122) worked: no agent sourced files, no fragment was missing.
-8. Declined by the owner 2026-10-02: final-step e2e retry and plan notes in the final prompt.
-9. Adopted 2026-10-03 (owner approved, P1): before `gh pr merge`, an agent must check `git merge-base --is-ancestor origin/staging HEAD`; if `staging` moved since its last green CI, merge it in, re-run the local checks and wait for CI again. B3's staging break came from merging a behind branch. (The alternative is GitHub branch protection "require branches to be up to date", a repository setting for the owner.)
-10. Adopted 2026-10-03 (owner approved, P2): each final step folds only the fragments of its own workflow's merged items, so two workflows never fold the same fragment twice (B3 closed #128 as a duplicate of #130).
-11. Adopted 2026-10-03 (owner approved, P3): fix the brief's Docs line from #122 ("it reports them and update your own"), a missing "; then".
-12. Adopted 2026-10-03 (owner approved, P4): security and money defaults from Opus·high to Opus·medium (evidence above); Opus·high stays available per row.
-13. Watch: the FEA-2 agent (Sonnet) skipped seeing its rules tests fail; the brief already requires it.
-14. Not yet (skill change): review fallback when the final docs PR is already merged.
+1. Adopted: P1-P4 (#131); they worked as intended.
+2. Adopted: plan usage with the mixed rate, about 21k subagent tokens per 1% and about 5% floor per agent; a 9-item, 11-agent run is about 65% of a window.
+3. Not yet (skill change, P5): replace the per-model rates in SKILL.md "Rates" with the mixed rate above, and require the projected peak to include +30% for four emulator lanes.
+4. Not yet (skill change, P6): raise the rules test `hookTimeout` (vitest config for `test:rules`) to 60 s, since `setupRulesEnv` times out at 10 s under four-lane load (MON-12, SEC-15).
+5. Not yet (skill change, P7): the brief should say `mcp__ccd_pr__set_monitor` is authorised by the owner for the agent's own PR (MON-14 skipped it as not user-requested).
+6. Watch: a power-off loses only uncommitted agent work; saving each interrupted diff and pointing the relaunch at it worked (MON-12, MON-14, FEA-18, SEC-15 all reused theirs).
+7. Not yet: merge the `coverage:all` reports (optional); equal Sonnet·low/medium option costs; a mid-run meter reading; review fallback when the final docs PR is already merged.

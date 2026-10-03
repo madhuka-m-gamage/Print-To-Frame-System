@@ -57,6 +57,8 @@ Every item implicitly includes these.
 | MON-12 | Invoice guard of a cancelled or deleted invoice blocks its replacement | money | S | rules | decided | MON-4 |
 | MON-13 | QuotationBuilder reports success after a refused invoice save | money | S | no | no | MON-4 |
 | MON-14 | Concurrent payouts of different referrals overwrite the partner balance | money | S | rules | no | MON-11 |
+| MON-15 | Partner balance increments: negative pending and float drift | money | S | no | no | MON-14 |
+| MON-16 | Re-applying a defaulted partner rate notifies Admins again | money | S | no | no | MON-7 |
 | FEA-1 | Real partner payout (step 4.1) | feature | M | rules | no | LIVE-1 (to work live) |
 | FEA-2 | Persistent notifications and claim resolution (step 4.3) | feature | L | rules | no | none |
 | FEA-3 | Fabrication board statuses: Cancelled, On Hold, Archived, Other (done) | feature | M | no | DEC-4 | none |
@@ -76,6 +78,7 @@ Every item implicitly includes these.
 | FEA-17 | Admin action to link a customers row to a login | ux | S | no | no | FEA-15 |
 | FEA-18 | Persistent notifications: delete, and partners with no email | ux | S | rules | no | FEA-2 |
 | FEA-19 | Claim resolution may link a lead that names another partner | ux | S | no | no | FEA-2 |
+| FEA-20 | QA-passed email fails when the deal email is not a known recipient | ux | S | api | no | FEA-5 |
 | SEC-1 | Check the recipient in `api/send-email.js` | security | S | api | no | none |
 | SEC-2 | Restrict `api/generate.js` to staff roles | security | S | api | no | none |
 | SEC-3 | Make the dev proxy safe | security | S | no | no | none |
@@ -95,6 +98,7 @@ Every item implicitly includes these.
 | TST-2 | End-to-end journeys (money, RBAC) (done) | tests | L | no | no | none |
 | TST-3 | Tests for Leads, QuotationBuilder, Customers; refresh the coverage map (done) | tests | M | no | no | none |
 | TST-4 | Manual check: Picker attach and staff uploads on a deployment | tests | S | deployment | owner | none |
+| TST-5 | Rules test setup timeout under parallel lanes | tests | S | no | no | none |
 | ENG-1 | Split the very large files | health | L | no | no | TST-1, TST-3 |
 | ENG-2 | Add Prettier | health | S | no | no | ENG-1 |
 | ENG-3 | Repository hygiene | health | S | no | partly | DEC-9 |
@@ -201,6 +205,10 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 - **Build:** a filtered list (Leads or Partners screen) of leads where the flag is true, and a stored notification to Admins and Managers (needs FEA-2's notifications collection). Query key: `pricingMetadata.commissionRateDefaulted == true`.
 - **Done (MON-7):** the pricing default is applied in `LeadCardDetails.jsx` (`applyPricingToLead`), not `QuotationBuilder.jsx`. Leads screen FilterBar has a "Defaulted commission (N)" toggle (client-side filter on the flag). Applying a defaulted rate writes one `commission` notification per active Admin and Manager (`users` prop, passed from `App.jsx` through `Leads` and `Deals`). Not deduplicated: re-applying pricing notifies again.
 
+
+### MON-16: Re-applying a defaulted partner rate notifies Admins again
+- **Why (found by MON-7, 2026-10-03):** each time pricing is re-applied with the default rate, every active Admin and Manager gets another `commission` notification for the same lead. (The MON-7 text above says LKR 30.00; the code default is `DEFAULT_REFERRAL_COMMISSION_RATE` = 38.)
+- **Build:** notify only when `commissionRateDefaulted` changes from false to true on the lead; component test.
 ---
 
 ### MON-8: Round the 75 / 25 invoice split to cents
@@ -239,6 +247,10 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 - **Why (found by MON-11, 2026-10-03):** two admins paying out *different* referrals of one partner at the same moment both compute `pending` and `settled` from the screen copy; the later write wins. Lead statuses and payout records stay correct. Payout guards cannot be removed, so a payout reversal would also need an Admin path.
 - **Build:** `increment()` for the balance fields in the payout batch (rules allow the delta), emulator test. **Live:** rules deploy if the rule changes.
 - **Done (2026-10-03):** `handleDisbursePayout` writes `pending: increment(-amount)`, `settled: increment(amount)`. The partners rule already accepted the Admin increment and refuses a Partner's, so `firestore.rules` is unchanged and no rules deploy is needed for this item. `pending` is no longer floored at 0. Tests: component (batch uses increment), rules `payoutGuard.test.js` MON-14 block (both orders, same-referral still refused, Partner refused).
+
+### MON-15: Partner balance increments: negative pending and float drift
+- **Why (found by MON-14, 2026-10-03):** the payout now moves `pending` and `settled` with `increment()`. The old code clamped `pending` at 0 and rounded to 2 decimals; increments do neither, so a stale `pending` smaller than the payout shows a negative balance, and fractional commissions can drift.
+- **Build:** round each payout amount to cents before the increment (reuse the MON-8 rounding helper) and refuse a payout larger than the re-read `pending`; component and emulator tests.
 ## Features
 
 ### FEA-1: Real partner payout (step 4.1, partners D-1)
@@ -373,6 +385,10 @@ Source: `docs/02_modules/notifications/FINDINGS.md`. NOTIF-01 (sign-out leak) is
 - **Why (found by FEA-2, 2026-10-03):** the claim modal in `Partners.jsx` links any lead, including one whose `partnerId` already names a different partner, which would move that lead's commission.
 - **Build:** filter or warn on leads already attributed to another partner; component test.
 - **Done (2026-10-03):** the Existing lead options in the claim modal are disabled with "belongs to another partner" when `partnerId` or `agentId` names someone other than the claimant; component test in `Partners.claims.test.jsx`. Only the picker is guarded; the rules do not stop an Admin writing a lead directly.
+
+### FEA-20: QA-passed email fails when the deal email is not a known recipient
+- **Why (found by FEA-5, 2026-10-03):** `/api/send-email` refuses an address with no `users`, `pendingUsers`, `customers`, `partners` or `partner_applications` record. The QA-passed email uses the customer matched by NIC, else the deal's email, so a deal whose email exists only on the lead fails with the server's recipient error. Deals converted before FEA-5 have no `salesOwnerEmail`, so their Revision alert is a toast only (live data is test-only, DEC-5, so no back-fill is planned).
+- **Build:** resolve the recipient from the deal's customer record first and show a clear message when none matches; component test.
 ## Security
 
 Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file overrides another; Firestore rules combine with OR, so only a broad `allow` widens access.
@@ -463,6 +479,10 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 ### TST-4: Manual check of Picker attach and staff uploads on a deployment
 - On this repository's Vercel deployment (not the old portal): as the super admin, attach a Drive file to a quotation through the Picker; as an Operations user, upload a blueprint on a fabrication card; as an Admin, upload a partner document; submit a public partner registration with a BR copy. Each should succeed; as a Partner, the vault upload should be refused. Record the result in `CHANGELOG.md`.
 
+
+### TST-5: Rules test setup timeout under parallel lanes
+- **Why (found by MON-12 and SEC-15, 2026-10-03):** with four agent lanes running emulators (load average 9-11), the first rules test file's `beforeAll` (`setupRulesEnv`) timed out at the 10 s default and passed on rerun. CI was unaffected.
+- **Build:** set `hookTimeout` to 60 s for the rules project in the vitest config; no test change.
 ---
 
 ## Engineering health
