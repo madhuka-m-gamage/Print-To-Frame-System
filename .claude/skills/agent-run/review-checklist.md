@@ -12,6 +12,7 @@ Table per item: est. min, actual min, est. %, actual %. Flag > 30% off with one 
 Add a **Pick outcome** column per item: the pick used, fix rounds, catch-ups, reviewer findings, rework, and one verdict: `sufficient`, `over-spec'd` (could have been lower with the same result) or `under-spec'd` (needed fix rounds or rework a higher pick likely avoids). Append each item to the "Evidence by task type" table in `model-policy.md`.
 
 ## 3. Calibration (overwrite PLAN.md "## Run calibration")
+- First run `usage-estimate ... record <label> <session id>` and `... cost <session id>` for the run's real API-priced cost and main-versus-agent split; compare the projection with the meter movement.
 - Last run: date, items, agents, wall-clock, meter start → end, weekly start → end, run ID.
 - The comparison table.
 - Rolling rates (last 3 runs, one row each plus average): min per S / M / L item; min per CI round; min per catch-up; % per S / M / L item by model; agent startup floor %; output tokens per 1%; window % per weekly %; concurrency. Models share one rate until two runs with different Opus/Sonnet mixes exist; say so in the table.

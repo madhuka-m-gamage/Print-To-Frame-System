@@ -54,9 +54,9 @@ From the rolling rates; range.
 ## 13. Timeline
 Clock times per lane (up to 4 lanes in 2 workflows); window reset marked.
 ## 14. Usage as % of the 5-hour window
-Meter now, per item, curve across the reset, weekly effect, calibration source and accuracy.
+Meter now, per item, curve across the reset, weekly effect, calibration source and accuracy. Per-item and run totals come from `usage-estimate ... estimate --items N` ($0.305 per 1%, about ±10%); state the script's output and its overhead ratio (1.0 default, measured after three recorded runs).
 ## 15. Usage guard
-Projected peak = meter now + the sum over agents of (floor + item tokens / tokens-per-1%) + about 1% orchestration, using the rates in SKILL.md or the newer PLAN.md calibration (section 14 lists the per-item values); the launch check stops above 80%. Output-token threshold = (80% − meter now − final and review share) × output tokens per 1% from the calibration; until a review has measured output tokens per 1%, set it to null (guard off) and say so. After launch, append: launch time, meter %, weekly %, run ID, workflow output-file path.
+Projected peak = meter now + the `usage-estimate` projection for the run (agents and overhead; section 14 lists the per-item values); the launch check stops above 80%. Output-token threshold = (80% − meter now − final and review share) × output tokens per 1% from the calibration; until a review has measured output tokens per 1%, set it to null (guard off) and say so. After launch, append: launch time, meter %, weekly %, run ID, workflow output-file path.
 ## 16. Risks and fallbacks per item
 Risk, fallback, effect on time and usage. Standing risk: both lanes share one linked `node_modules`, so Vite and Vitest caches under `node_modules/.vite` are shared (unverified).
 ## 17. Security and money watch-list

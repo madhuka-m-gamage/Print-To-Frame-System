@@ -10,10 +10,11 @@ Three stages. Never skip the approval between Plan and Run.
 ## Hard rules (every run)
 No deploys, nothing to main, no live data, no console or config changes. Tests first and seen failing. CI green to merge. e2e coverage never weakened. Merge staging in, never rebase or force-push. One owner per PR (agents switch Auto-fix off on their own PRs; the orchestrator never pushes to a branch whose agent is running). Skill and model-policy changes only with the owner's approval. At most 2 lanes per workflow (the Workflow tool runs CPUs − 2 agents at once, 2 on this machine); for more parallelism launch a second workflow alongside (lanes 3-4, test slots 3-4), never more than 2 workflows.
 
-## Rates (seed values; PLAN.md "Run calibration" wins when it has newer ones)
-- Sonnet agent: about 54k subagent tokens per 1% of the 5-hour window (measured 2026-10-02), floor about 1.7% per agent (about 90k tokens just to start), small item 7-14 min and 1.7-2.0% of the window.
-- Opus agent (medium effort): about 21.6k subagent tokens per 1% of the 5-hour window (measured 2026-10-02, run B1, 3 agents), about 2.5× Sonnet per token; small item 14-18 min and about 6%, medium item 25-30 min and about 8%. Opus at high effort is not yet measured: estimate it from these figures and mark it unmeasured.
-- Projected peak = meter now + sum over agents of (floor + item tokens / tokens-per-1%) + about 1% for orchestration. The launch check stops above 80%.
+## Rates (from the user-level `usage-estimate` skill; PLAN.md "Run calibration" wins when it has newer ones)
+- Run `python3 ~/.claude/skills/usage-estimate/scripts/usage.py estimate --items <N>` for the projected % of the 5-hour window. It prices work in API dollars at $0.305 per 1% (fit on 18 meter gaps, about ±10%), with about $1.6 of agent cost per item plus overhead (orchestrator, retries) of 1.0× that until three runs are recorded. Opus and Sonnet share the one rate; do not split by model.
+- If the script is missing, fall back to PLAN.md "Run calibration" and say so in section 14.
+- Projected peak = meter now + the estimate. The launch check stops above 80%.
+- After every run, record it: `python3 ~/.claude/skills/usage-estimate/scripts/usage.py record <run label> <orchestrator session id>`. It logs main-versus-agent cost so the overhead ratio becomes measured.
 
 ## Stage 1: Plan (in plan mode)
 1. `git fetch origin`. Read PLAN.md (roadmap, "Run calibration", carry-overs), each item's BACKLOG section and dependencies, TESTING.md "Planning a change" for each item, `gh pr list`, `gh run list --branch staging --limit 1`, `git log origin/main..origin/staging`, `java -version`, and the meter (`mcp__ccd_session_mgmt__get_usage`).

@@ -75,7 +75,7 @@ Flagged (more than 30% off): MON-12 (+52%), MON-13 (+56%), FEA-18 (+213%), SEC-1
 **Tuning (adopted = in effect now; not yet = needs the owner or the skill)**
 1. Adopted: P1-P4 (#131); they worked as intended.
 2. Adopted: plan usage with the mixed rate, about 21k subagent tokens per 1% and about 5% floor per agent; a 9-item, 11-agent run is about 65% of a window.
-3. Not yet (skill change, P5): replace the per-model rates in SKILL.md "Rates" with the mixed rate above, and require the projected peak to include +30% for four emulator lanes.
+3. Adopted (P5, replaced by the user-level `usage-estimate` skill, 2026-10-04): `agent-run` Rates now call it: one rate of $0.305 per 1% in API-priced dollars (±10%, 18 meter gaps), no per-model split. Check: its 9-item estimate is 94% against B4's measured 97% (including the lost launch). Not yet: the +30% for four emulator lanes (no time model yet).
 4. Not yet (skill change, P6): raise the rules test `hookTimeout` (vitest config for `test:rules`) to 60 s, since `setupRulesEnv` times out at 10 s under four-lane load (MON-12, SEC-15).
 5. Not yet (skill change, P7): the brief should say `mcp__ccd_pr__set_monitor` is authorised by the owner for the agent's own PR (MON-14 skipped it as not user-requested).
 6. Watch: a power-off loses only uncommitted agent work; saving each interrupted diff and pointing the relaunch at it worked (MON-12, MON-14, FEA-18, SEC-15 all reused theirs).
