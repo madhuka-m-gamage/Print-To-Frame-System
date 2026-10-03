@@ -340,6 +340,18 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // ── Payout Guards (one per paid lead, MON-11) ──────────────────────────
+    // Create-only and keyed by the lead's document id, written in the same batch as
+    // the partner_payouts record it names. A second payout of the same lead writes
+    // over an existing guard, which is an update and is refused, so the whole batch
+    // (lead status and partner balances included) fails.
+    match /payout_guards/{leadId} {
+      allow read: if isAdmin() || (checkPermission('partners', 'view') && !hasRole('Partner'));
+      allow create: if isAdmin()
+        && request.resource.data.get('payoutId', '') is string
+        && existsAfter(/databases/$(database)/documents/partner_payouts/$(request.resource.data.get('payoutId', '')));
+    }
+
     // ── Fabrication / Projects ───────────────────────────
     match /projects/{projectId} {
       allow read: if checkPermission('projects', 'view') || checkPermission('projects', 'read') || (isAuthenticated() && resource.data.customerId == request.auth.token.email);
