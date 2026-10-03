@@ -443,16 +443,20 @@ service cloud.firestore {
     }
 
     // ── Notifications (persisted, addressed to one recipient) ──────────────
-    // Written by staff who can edit invoices (the commission-cleared event). The recipient
-    // reads its own and may only mark them read; an Admin reads all (notifications NOTIF-04).
+    // Written by any active staff user (the commission-cleared event; Partner, Business Client
+    // and Customer cannot). The recipient reads its own, may only mark them read, and may delete
+    // them; an Admin reads all (notifications NOTIF-04, FEA-18).
     match /notifications/{notificationId} {
       allow read: if isAdmin()
         || (isAuthenticated() && resource.data.get('recipientEmail', '') == request.auth.token.email);
-      allow create: if checkPermission('invoices', 'edit');
+      allow create: if (isAdmin()
+          || (isActiveUser() && !(callerDoc().get('role', '') in ['Partner', 'Business Client', 'Customer'])))
+        && request.resource.data.keys().hasAll(['recipientEmail', 'type', 'title', 'createdAt']);
       allow update: if isActiveUser()
         && resource.data.get('recipientEmail', '') == request.auth.token.email
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
-      allow delete: if false;
+      allow delete: if isActiveUser()
+        && resource.data.get('recipientEmail', '') == request.auth.token.email;
     }
 
     // ── Test Connection ──────────────────────────────────
