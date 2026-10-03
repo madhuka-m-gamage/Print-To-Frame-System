@@ -53,7 +53,9 @@ export default function NotificationsView({ notifications: allNotifications = []
 
   // Convert direct messages to notification feed items with resolved sender profile & photoURL
   const messageItems = useMemo(() => {
-    return getIncomingMessages(messages, currentUser?.identifier).slice(-30).reverse().map(msg => {
+    const me = String(currentUser?.identifier || '').trim().toLowerCase();
+    const unread = getIncomingMessages(messages, me).filter(msg => !(msg.readBy || []).some(r => String(r).trim().toLowerCase() === me));
+    return unread.slice(-30).reverse().map(msg => {
       const senderProfile = resolveUserProfile 
         ? resolveUserProfile({ identifier: msg.fromId, name: msg.senderName, photoURL: msg.photoURL || msg.senderAvatar })
         : (users.find(u => u.identifier?.toLowerCase() === msg.fromId?.toLowerCase() || u.email?.toLowerCase() === msg.fromId?.toLowerCase() || u.name?.toLowerCase() === msg.senderName?.toLowerCase()) || null);
@@ -181,7 +183,9 @@ export default function NotificationsView({ notifications: allNotifications = []
                         <span className={`text-[9px] font-bold px-2 py-0.2 rounded border ${
                           isMessage 
                             ? 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30' 
-                            : 'bg-primary/15 text-primary border-primary/30'
+                            : item.type === 'commission'
+                              ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
+                              : 'bg-primary/15 text-primary border-primary/30'
                         }`}>
                           {isMessage ? 'Direct Chat' : item.type?.toUpperCase() || 'SYSTEM'}
                         </span>

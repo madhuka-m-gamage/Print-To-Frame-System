@@ -79,22 +79,18 @@ import { isSuperAdminEmail } from '@/features/auth/superAdmin';
 import { leadForInvoice } from '@/features/leads/leadLineage';
 
 
-export function oT() {
+export function requestNotificationPermission() {
   if (typeof window === "undefined" || !("Notification" in window)) return;
   if (Notification.permission !== "granted" && Notification.permission !== "denied") {
     Notification.requestPermission();
   }
 }
 
-export function uT(t, e = {}) {
+export let triggerBrowserNotification = (t, e = {}) => {
   if (typeof window === "undefined" || !("Notification" in window)) return;
   if (Notification.permission === "granted") {
     new Notification(t, e);
   }
-}
-
-export let triggerBrowserNotification = (t, e) => {
-  uT(t, e);
 };
 
 // Nav Link Component
@@ -208,20 +204,8 @@ function App() {
 
   // Global Notifications State
   const [notificationsList, setNotificationsList] = useState([]);
-  const [localUnreadCount, setUnreadNotificationsCount] = useState(0);
   const persistedUnread = notificationsList.filter((n) => n._firestoreId && !n.read);
-  const unreadNotificationsCount = localUnreadCount + persistedUnread.length;
-
-  useEffect(() => {
-    const unsub = subscribeToNotifications((item) => {
-      setNotificationsList((prev) => [
-        { ...item, date: new Date().toISOString(), read: false },
-        ...prev,
-      ]);
-      setUnreadNotificationsCount((prev) => prev + 1);
-    });
-    return () => unsub();
-  }, []);
+  const unreadNotificationsCount = persistedUnread.length;
 
   // Current User Session
   const [currentUser, setCurrentUser] = useState(null);
@@ -239,6 +223,24 @@ function App() {
       ].sort((a, b) => new Date(b.date) - new Date(a.date)))
     );
   }, [notificationsUser]);
+
+  // A toast marked `notify` is stored for the signed-in user; the subscription above brings it back into the feed.
+  const notificationsRole = currentUser?.role;
+  useEffect(() => {
+    if (!notificationsUser) return;
+    return subscribeToNotifications(({ title, message, type }) => {
+      addDocument(COLLECTIONS.NOTIFICATIONS, {
+        recipientEmail: notificationsUser,
+        targetRole: notificationsRole || '',
+        type: type || 'info',
+        title: title || '',
+        message: message || '',
+        read: false,
+        date: new Date().toISOString(),
+        createdBy: notificationsUser,
+      }).catch((err) => console.error("Failed to save the notification:", err));
+    });
+  }, [notificationsUser, notificationsRole]);
 
   // Approved User List
   const [users, setUsers] = useState([]);
@@ -650,7 +652,8 @@ function App() {
       toast.success(
         isFullyPaidNow
           ? `${targetInvoice.type || 'Invoice'} payment recorded — deal fully settled!`
-          : `${targetInvoice.type || 'Invoice'} payment recorded and synchronized.`
+          : `${targetInvoice.type || 'Invoice'} payment recorded and synchronized.`,
+        isFullyPaidNow ? { notify: true } : undefined
       );
       return true;
     } catch (err) {
@@ -716,7 +719,7 @@ function App() {
   }, [partners]);
 
   useEffect(() => {
-    oT(); // Request notification permissions
+    requestNotificationPermission();
     // Listen to users and pendingUsers from Firestore (Moved to separate useEffect)    // Initialize Firebase Auth
     const unsubAuth = initAuth(
       async (user, token) => {
@@ -1066,7 +1069,6 @@ function App() {
     setCurrentUser(null);
     setWorkspaceToken(null);
     setNotificationsList([]);
-    setUnreadNotificationsCount(0);
   };
 
   const handleUpdateUser = (updatedUser) => {
@@ -1170,7 +1172,7 @@ function App() {
         <div className="flex items-center gap-2">
           {/* Quick Notification Bell */}
           <button
-            onClick={() => { setActiveTab('notifications'); setUnreadNotificationsCount(0); }}
+            onClick={() => setActiveTab('notifications')}
             className="p-2 text-on-surface-variant hover:text-on-surface bg-surface-container-high rounded-xl border border-outline-variant/60 relative active:scale-95 cursor-pointer"
             aria-label="Notifications"
           >
@@ -1247,7 +1249,7 @@ function App() {
               <NavLink icon={LayoutDashboard} label="Dashboard" id="dashboard" activeTab={activeTab} setActiveTab={setActiveTab} collapsed={effectivelyCollapsed} onNavigate={() => setMobileMenuOpen(false)} />
               <NavLink
                 icon={Bell} label="Notifications" id="notifications" activeTab={activeTab}
-                setActiveTab={(id) => { setActiveTab(id); setUnreadNotificationsCount(0); }}
+                setActiveTab={setActiveTab}
                 badge={unreadNotificationsCount} collapsed={effectivelyCollapsed}
                 onNavigate={() => setMobileMenuOpen(false)}
               />
@@ -1274,7 +1276,7 @@ function App() {
                   {canAccess(currentUser?.role, 'notifications') && (
                     <NavLink
                       icon={Bell} label="Notifications" id="notifications" activeTab={activeTab}
-                      setActiveTab={(id) => { setActiveTab(id); setUnreadNotificationsCount(0); }}
+                      setActiveTab={setActiveTab}
                       badge={unreadNotificationsCount} collapsed={effectivelyCollapsed}
                       onNavigate={() => setMobileMenuOpen(false)}
                     />
@@ -1664,7 +1666,7 @@ function App() {
             </button>
 
             <button
-              onClick={() => { setActiveTab('notifications'); setUnreadNotificationsCount(0); setMobileMenuOpen(false); }}
+              onClick={() => { setActiveTab('notifications'); setMobileMenuOpen(false); }}
               className={`flex-1 py-1 flex flex-col items-center justify-center gap-0.5 rounded-xl relative transition-all cursor-pointer ${
                 activeTab === 'notifications' ? 'text-primary font-black' : 'text-on-surface-variant hover:text-on-surface'
               }`}

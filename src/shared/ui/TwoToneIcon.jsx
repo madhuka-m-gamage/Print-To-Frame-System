@@ -15,6 +15,8 @@ const ICON_CONFIG = {
   payment: { icon: DollarSign, gradient: 'from-emerald-500/25 via-teal-500/10 to-transparent', border: 'border-emerald-500/40', text: 'text-emerald-400', fill: 'fill-emerald-400/20', glow: 'shadow-[0_0_15px_rgba(52,211,153,0.2)]' },
   invoice: { icon: DollarSign, gradient: 'from-emerald-500/25 via-teal-500/10 to-transparent', border: 'border-emerald-500/40', text: 'text-emerald-400', fill: 'fill-emerald-400/20', glow: 'shadow-[0_0_15px_rgba(52,211,153,0.2)]' },
 
+  commission: { icon: DollarSign, gradient: 'from-emerald-500/25 via-teal-500/10 to-transparent', border: 'border-emerald-500/40', text: 'text-emerald-400', fill: 'fill-emerald-400/20', glow: 'shadow-[0_0_15px_rgba(52,211,153,0.2)]' },
+
   // Operations / Production
   fabrication: { icon: Hammer, gradient: 'from-purple-500/25 via-pink-500/10 to-transparent', border: 'border-purple-500/40', text: 'text-purple-400', fill: 'fill-purple-400/20', glow: 'shadow-[0_0_15px_rgba(192,132,252,0.2)]' },
   production: { icon: Hammer, gradient: 'from-purple-500/25 via-pink-500/10 to-transparent', border: 'border-purple-500/40', text: 'text-purple-400', fill: 'fill-purple-400/20', glow: 'shadow-[0_0_15px_rgba(192,132,252,0.2)]' },
@@ -52,7 +54,7 @@ export default function TwoToneIcon({ type = 'system', size = 'md', icon: Custom
   }[size] || 18;
 
   return (
-    <div className={`relative flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${config.gradient} border ${config.border} ${config.glow} ${sizeClasses} ${className}`}>
+    <div data-icon-type={ICON_CONFIG[normType] ? normType : 'system'} className={`relative flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${config.gradient} border ${config.border} ${config.glow} ${sizeClasses} ${className}`}>
       <IconComponent 
         size={iconSizes} 
         className={`${config.text} ${config.fill} stroke-[1.8] relative z-10 transition-transform duration-200 group-hover:scale-110`} 
