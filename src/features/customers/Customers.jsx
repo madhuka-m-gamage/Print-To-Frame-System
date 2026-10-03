@@ -9,7 +9,7 @@ import { generateText } from '@/services/gemini';
 import DeleteModal from '@/shared/components/DeleteModal';
 import { PageHeader, FilterBar, StatusBadge, ModalWrapper, UserAvatar, ImageCropModal } from '@/shared/ui';
 import ActivityTimeline from '@/shared/ui/ActivityTimeline';
-import { addDocument, deleteDocument, COLLECTIONS } from '@/services/firestoreSync';
+import { addDocument, updateDocument, deleteDocument, COLLECTIONS } from '@/services/firestoreSync';
 import { exportToCsv } from '@/shared/utils/csvExport';
 import { findCustomerDuplicates } from '@/shared/utils/stringMatch';
 import ContactSyncModal from './ContactSyncModal';
@@ -121,6 +121,32 @@ export default function Customers({ customers = [], setCustomers, users = [], se
   const [whatsappDraft, setWhatsappDraft] = useState('');
   const [showDraftModal, setShowDraftModal] = useState(false);
   const [deleteNic, setDeleteNic] = useState(null);
+  const [loginChoice, setLoginChoice] = useState('');
+  useEffect(() => setLoginChoice(''), [selectedCustomer?.nic]);
+
+  const loginOptions = useMemo(() => {
+    if (!selectedCustomer || currentUser?.role !== 'Admin') return [];
+    const email = (selectedCustomer.email || '').trim().toLowerCase();
+    return users
+      .filter(u => u.uid && (u.role === 'Customer' || u.role === 'Business Client'))
+      .sort((a, b) => Number(b.identifier?.toLowerCase() === email) - Number(a.identifier?.toLowerCase() === email));
+  }, [selectedCustomer, users, currentUser?.role]);
+
+  const handleLinkLogin = async () => {
+    const login = loginOptions.find(u => u.uid === loginChoice);
+    if (!login || !selectedCustomer) return;
+    const nic = selectedCustomer.nic;
+    try {
+      await updateDocument(COLLECTIONS.CUSTOMERS, nic, { userId: login.uid });
+      setCustomers?.(prev => prev.map(c => c.nic === nic ? { ...c, userId: login.uid } : c));
+      setSelectedCustomer(prev => prev && { ...prev, userId: login.uid });
+      toast.success('Customer linked to login');
+      logActivity(currentUser?.identifier, currentUser?.name, 'UPDATE', 'Customers', `Linked customer ${selectedCustomer.name} to login ${login.identifier}`);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to link customer to login');
+    }
+  };
 
   const handleCustomerPhotoUpload = (e) => {
     const file = e.target.files?.[0];
@@ -656,6 +682,30 @@ export default function Customers({ customers = [], setCustomers, users = [], se
                     </a>
                   )}
                 </div>
+
+                {currentUser?.role === 'Admin' && (
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <label htmlFor="customer-login-link" className="text-xs font-bold text-on-surface-variant">Linked login</label>
+                    <select
+                      id="customer-login-link"
+                      value={loginChoice || selectedCustomer.userId || ''}
+                      onChange={(e) => setLoginChoice(e.target.value)}
+                      className="px-3 py-2 bg-surface-container-high border border-outline-variant/60 rounded-xl text-xs text-on-surface"
+                    >
+                      <option value="">{selectedCustomer.userId ? 'Select a login' : 'Not linked'}</option>
+                      {loginOptions.map(u => (
+                        <option key={u.uid} value={u.uid}>{u.name ? `${u.name} (${u.identifier})` : u.identifier}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={handleLinkLogin}
+                      disabled={!loginChoice}
+                      className="px-4 py-2 bg-primary/15 text-primary hover:bg-primary hover:text-on-primary border border-primary/30 rounded-xl text-xs font-bold transition-all disabled:opacity-40"
+                    >
+                      Link login
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Stats & History Sub-panels */}
