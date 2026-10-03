@@ -25,6 +25,7 @@ vi.mock('firebase/firestore', () => ({
   collection: vi.fn((_db, name) => ({ name })),
   query: vi.fn((ref, ...constraints) => ({ ref, constraints })),
   where: vi.fn((field, op, value) => ({ field, op, value })),
+  increment: vi.fn((n) => ({ increment: n })),
 }));
 vi.mock('@/shared/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
@@ -99,7 +100,8 @@ describe('Partners monthly settlements', () => {
       data: { payoutId: payoutOp.docId, partnerId: 'P-1', reference: payoutOp.data.reference, createdAt: payoutOp.data.createdAt },
     });
     expect(leadOp).toEqual({ type: 'update', collection: 'leads', docId: 'D-1', data: { payoutStatus: 'Paid', payoutReference: payoutOp.data.reference } });
-    expect(partnerOp).toEqual({ type: 'update', collection: 'partners', docId: 'P-1', data: { pending: 4700, settled: 400 } });
+    // MON-14: deltas, not totals from the screen copy, so a concurrent payout of another referral is not lost.
+    expect(partnerOp).toEqual({ type: 'update', collection: 'partners', docId: 'P-1', data: { pending: { increment: -300 }, settled: { increment: 300 } } });
 
     expect(toast.success).toHaveBeenCalledWith(expect.stringContaining(payoutOp.data.reference));
     expect(logActivity).toHaveBeenCalledWith('admin@example.com', 'Admin', 'PAYOUT_DISBURSED', 'Partners', expect.stringContaining(payoutOp.data.reference));

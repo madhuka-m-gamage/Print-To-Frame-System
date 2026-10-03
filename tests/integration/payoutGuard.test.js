@@ -1,6 +1,6 @@
 import { beforeAll, afterAll, beforeEach, describe, it, expect } from 'vitest';
 import { assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, writeBatch, increment } from 'firebase/firestore';
 import { setupRulesEnv, clearAll, seedPermissions, asRole } from '../helpers/emulator';
 
 // MON-11: each paid lead gets a create-only payout_guards/{leadId} document in the
@@ -106,5 +106,48 @@ describe('payout_guards (MON-11)', () => {
     await seed('payout_guards', 'D-1', { payoutId: 'P-1-1', partnerId: 'P-1' });
     await assertSucceeds(getDoc(doc(await dbAs('Admin'), 'payout_guards', 'D-1')));
     await assertFails(getDoc(doc(await dbAs('Partner', 'own@example.com'), 'payout_guards', 'D-1')));
+  });
+});
+
+// MON-14: the batch moves the balance by the payout amount with increment(), so two
+// admins paying out different referrals from the same stale screen both count.
+const incrementBatch = (db, payoutId, leadId, amount) => {
+  const batch = writeBatch(db);
+  batch.set(doc(db, 'partner_payouts', payoutId), {
+    partnerId: 'P-1', partnerEmail: 'own@example.com', partnerName: 'Lanka Art Studio', amount,
+    reference: `TXN-${payoutId}`, leadIds: [leadId], createdAt: '2026-10-03T00:00:00.000Z', createdBy: 'admin@example.com',
+  });
+  batch.set(doc(db, 'payout_guards', leadId), { payoutId, partnerId: 'P-1', reference: `TXN-${payoutId}`, createdAt: '2026-10-03T00:00:00.000Z' });
+  batch.update(doc(db, 'leads', leadId), { payoutStatus: 'Paid', payoutReference: `TXN-${payoutId}` });
+  batch.update(doc(db, 'partners', 'P-1'), { pending: increment(-amount), settled: increment(amount) });
+  return batch.commit();
+};
+
+describe('partner balance increments (MON-14)', () => {
+  it.each([
+    ['first admin first', [['P-1-1', 'D-1', 300], ['P-1-2', 'D-2', 450]]],
+    ['second admin first', [['P-1-2', 'D-2', 450], ['P-1-1', 'D-1', 300]]],
+  ])('keeps both payouts of different referrals in the balance (%s)', async (_label, order) => {
+    const dbs = [await dbAs('Admin', 'madhukagamage6@gmail.com'), await dbAs('Admin', 'admin@example.com')];
+    for (const [i, [payoutId, leadId, amount]] of order.entries()) {
+      await assertSucceeds(incrementBatch(dbs[i], payoutId, leadId, amount));
+    }
+    expect(await readRaw('partners', 'P-1')).toMatchObject({ pending: 4250, settled: 850 });
+  });
+
+  it('still refuses a second payout of the same referral, so the balance moves once', async () => {
+    const db = await dbAs('Admin');
+    await assertSucceeds(incrementBatch(db, 'P-1-1', 'D-1', 300));
+    await assertFails(incrementBatch(db, 'P-1-2', 'D-1', 300));
+    expect(await readRaw('partners', 'P-1')).toMatchObject({ pending: 4700, settled: 400 });
+  });
+
+  it('never lets a Partner move its own balances, by increment or by value', async () => {
+    await seed('partners', 'P-1', { partnerId: 'P-1', email: 'own@example.com', name: 'Lanka Art Studio', pending: 5000, settled: 100 });
+    const db = await dbAs('Partner', 'own@example.com');
+    await assertFails(updateDoc(doc(db, 'partners', 'P-1'), { pending: increment(1000) }));
+    await assertFails(updateDoc(doc(db, 'partners', 'P-1'), { settled: increment(-100) }));
+    await assertFails(updateDoc(doc(db, 'partners', 'P-1'), { pending: 9999 }));
+    expect(await readRaw('partners', 'P-1')).toMatchObject({ pending: 5000, settled: 100 });
   });
 });
