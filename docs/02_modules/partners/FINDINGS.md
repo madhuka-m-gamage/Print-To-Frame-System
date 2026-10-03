@@ -494,6 +494,6 @@ if (r.includes('operation') || r.includes('logistics') || r.includes('fabricat')
 - [x] **D-8** — Replace "Chat" (`messages`) with "Profile" (`profile`) in `App.jsx` Mobile Quick Dock for Partner role.
 - [x] **D-9** — Add scoped read permissions in `firestore.rules` for Partner role on `/leads` and `/invoices`; scope subscriptions in `App.jsx`. (SEC-8: the partner is matched through its `partners` document, `partnerId`/`agentId` == doc id and that record's `email` == login email, not `getUserData().partnerId`, which `users` does not reliably hold; invoices through their lead's `leadId`. Live only after LIVE-1 deploys the rules.)
 - [x] **D-10** — In `LeadCardDetails.jsx`, populate both `partnerId` and `agentId` with name and rate; update `App.jsx:L529` to match `partnerId || agentId`.
-- [ ] **D-11** — Write persistent commission clearance notifications to Firestore `notifications` collection targeted to partner email/role in `App.jsx`.
-- [ ] **D-12** — Add claim linkage / conversion modal to `handleVerifyClaim` in `Partners.jsx`.
+- [x] **D-11** (FEA-2, rules not deployed until LIVE-1) — Write persistent commission clearance notifications to Firestore `notifications` collection targeted to partner email/role in `App.jsx`.
+- [x] **D-12** (FEA-2) — Add claim linkage / conversion modal to `handleVerifyClaim` in `Partners.jsx`.
 

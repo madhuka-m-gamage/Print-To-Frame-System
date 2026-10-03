@@ -22,8 +22,10 @@ import {
   updateDocument, 
   deleteDocument,
   batchWrite,
+  generateAtomicId,
   COLLECTIONS
 } from '@/services/firestoreSync';
+import { partnerFieldsFor } from './partnerLink';
 import { buildPayout } from './payout';
 import { formatPhone, validatePhone, validateEmail } from '@/shared/utils/validation';
 import { exportToCsv } from '@/shared/utils/csvExport';
@@ -95,6 +97,9 @@ export default function Partners({
     notes: '',
   });
   const [isSubmittingClaim, setIsSubmittingClaim] = useState(false);
+  const [resolvingClaim, setResolvingClaim] = useState(null);
+  const [resolveLeadId, setResolveLeadId] = useState('');
+  const [isResolvingClaim, setIsResolvingClaim] = useState(false);
 
   const partnerIdentifier = isPartnerUser ? currentUser?.identifier : null;
   useEffect(() => {
@@ -652,18 +657,66 @@ export default function Partners({
     }
   };
 
-  // Verify Claim Handler (Admin)
-  const handleVerifyClaim = async (claim) => {
+  // Resolve a claim (Admin): link it to an existing lead or convert it into a new Referral lead.
+  const closeResolveClaim = () => {
+    setResolvingClaim(null);
+    setResolveLeadId('');
+  };
+
+  const markClaimLinked = (claim, leadId) => updateDocument(COLLECTIONS.REFERRAL_CLAIMS, claim._firestoreId || claim.id, {
+    status: 'Verified & Linked',
+    linkedLeadId: leadId,
+    verifiedAt: new Date().toISOString(),
+    verifiedBy: currentUser?.identifier || 'Admin',
+  });
+
+  const handleResolveClaim = async (mode) => {
+    const claim = resolvingClaim;
+    const claimPartner = partners.find(p => [p.partnerId, p.id, p._firestoreId].includes(claim.partnerId));
+    if (!claimPartner) {
+      toast.error('The claiming partner could not be found.');
+      return;
+    }
+    setIsResolvingClaim(true);
     try {
-      await updateDocument(COLLECTIONS.REFERRAL_CLAIMS, claim._firestoreId || claim.id, {
-        status: 'Verified & Linked',
-        verifiedAt: new Date().toISOString(),
-        verifiedBy: currentUser?.email || 'Admin',
-      });
-      toast.success(`Referral for ${claim.clientName} verified & linked to ${claim.partnerName}!`);
+      const partnerFields = partnerFieldsFor(claimPartner);
+      let leadId;
+      if (mode === 'link') {
+        const lead = leads.find(l => l.id === resolveLeadId);
+        if (!lead) return;
+        leadId = lead.id;
+        await updateDocument(COLLECTIONS.LEADS, lead._firestoreId || lead.id, partnerFields);
+        setLeads(prev => prev.map(l => (l.id === lead.id ? { ...l, ...partnerFields } : l)));
+      } else {
+        leadId = await generateAtomicId('L');
+        const now = new Date().toISOString();
+        const newLead = {
+          id: leadId,
+          name: claim.clientName,
+          phone: claim.clientPhone,
+          email: '',
+          company: '',
+          jobScope: claim.notes ? `Offline referral claim: ${claim.notes}` : 'Offline referral claim',
+          source: 'Referral',
+          ...partnerFields,
+          stage: 'Intake',
+          stageEnteredAt: now,
+          value: 0,
+          totalSqFt: 0,
+          date: now.split('T')[0],
+        };
+        await addDocument(COLLECTIONS.LEADS, newLead, leadId);
+        setLeads(prev => [...prev, newLead]);
+      }
+      await markClaimLinked(claim, leadId);
+      logActivity(currentUser?.identifier, currentUser?.name, 'CLAIM_RESOLVED', 'Partners', `Referral claim for ${claim.clientName} linked to ${leadId}`);
+      toast.success(`Referral for ${claim.clientName} verified & linked to ${claim.partnerName} (${leadId})!`);
+      closeResolveClaim();
     } catch (err) {
       console.error(err);
-      toast.error('Failed to verify claim');
+      toast.error('Failed to resolve claim');
+    } finally {
+      setIsResolvingClaim(false);
     }
   };
 
@@ -881,7 +934,7 @@ export default function Partners({
 
                     {claim.status === 'Pending Verification' && (
                       <button
-                        onClick={() => handleVerifyClaim(claim)}
+                        onClick={() => setResolvingClaim(claim)}
                         className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95"
                       >
                         <CheckCircle2 size={13} /> Verify & Credit Commission
@@ -1830,6 +1883,63 @@ export default function Partners({
             </div>
           </form>
         </div>
+      </ModalWrapper>
+
+      {/* ── RESOLVE CLAIM MODAL (Admin) ────────────────────────────── */}
+      <ModalWrapper
+        isOpen={Boolean(resolvingClaim)}
+        onClose={closeResolveClaim}
+        maxWidth="max-w-md"
+        height="h-auto"
+        ariaLabel="Resolve Referral Claim"
+      >
+        {resolvingClaim && (
+          <div className="p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-outline-variant/60">
+              <h3 className="text-base font-bold text-on-surface flex items-center gap-2">
+                <CheckCircle2 size={18} className="text-primary" /> Resolve Referral Claim
+              </h3>
+              <button onClick={closeResolveClaim} className="text-on-surface-variant hover:text-on-surface p-1">
+                <X size={18} />
+              </button>
+            </div>
+            <p className="text-xs text-on-surface-variant">
+              {resolvingClaim.clientName} ({resolvingClaim.clientPhone}) claimed by {resolvingClaim.partnerName}.
+            </p>
+            <div className="space-y-2">
+              <label htmlFor="resolve-claim-lead" className="text-xs font-bold text-on-surface">Existing lead</label>
+              <select
+                id="resolve-claim-lead"
+                value={resolveLeadId}
+                onChange={(e) => setResolveLeadId(e.target.value)}
+                className="w-full bg-surface-container border border-outline-variant rounded-xl px-3 py-2 text-xs text-on-surface"
+              >
+                <option value="">Select a lead...</option>
+                {leads.map(l => (
+                  <option key={l.id} value={l.id}>{l.id} · {l.name || 'Unnamed'}{l.phone ? ` · ${l.phone}` : ''}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                disabled={!resolveLeadId || isResolvingClaim}
+                onClick={() => handleResolveClaim('link')}
+                className="w-full px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white text-xs font-bold rounded-xl"
+              >
+                Link to Lead
+              </button>
+            </div>
+            <div className="pt-3 border-t border-outline-variant/60">
+              <button
+                type="button"
+                disabled={isResolvingClaim}
+                onClick={() => handleResolveClaim('create')}
+                className="w-full px-4 py-2 bg-primary text-on-primary disabled:opacity-50 text-xs font-bold rounded-xl"
+              >
+                Create New Lead
+              </button>
+            </div>
+          </div>
+        )}
       </ModalWrapper>
 
       {/* ── IMAGE CROP MODAL (For Studio Logo / Profile Photo) ─────── */}

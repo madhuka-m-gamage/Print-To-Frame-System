@@ -43,6 +43,7 @@ export const COLLECTIONS = {
   REFERRAL_CLAIMS: 'referral_claims',
   TYPING_INDICATORS: 'typing_indicators',
   COUNTERS: 'counters',
+  NOTIFICATIONS: 'notifications',
 };
 
 // ── Subscribe to a Collection (Real-time) ────────────────────

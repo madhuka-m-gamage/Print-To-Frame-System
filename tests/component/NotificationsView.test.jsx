@@ -28,3 +28,18 @@ describe('NotificationsView message feed (D-MSG-12)', () => {
     expect(screen.queryByText('On my way')).not.toBeInTheDocument();
   });
 });
+
+describe('NotificationsView persisted notifications (FEA-2)', () => {
+  it('shows the signed-in user own notifications and hides ones addressed to someone else', () => {
+    Object.assign(ctx, { messages: [], openMiniChat: vi.fn(), markAllAsRead: vi.fn(), resolveUserProfile: (u) => u });
+    const notifications = [
+      { id: 'a', title: 'Mine', message: 'for bob', type: 'commission', recipientEmail: 'Bob@Example.com', date: '2026-10-03T00:00:00.000Z' },
+      { id: 'b', title: 'Theirs', message: 'for alice', type: 'commission', recipientEmail: 'alice@example.com', date: '2026-10-03T00:00:00.000Z' },
+      { id: 'c', title: 'Local toast', message: 'no recipient', type: 'info', date: '2026-10-03T00:00:00.000Z' },
+    ];
+    renderWithProviders(<NotificationsView notifications={notifications} setNotifications={vi.fn()} users={[me, alice]} currentUser={me} />);
+    expect(screen.getByText('Mine')).toBeInTheDocument();
+    expect(screen.getByText('Local toast')).toBeInTheDocument();
+    expect(screen.queryByText('Theirs')).not.toBeInTheDocument();
+  });
+});
