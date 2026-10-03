@@ -295,6 +295,7 @@ export default function Leads({
   customers = [],
   setCustomers,
   partners = [],
+  users = [],
   quotations = [],
   invoices = [],
   receipts = [],
@@ -682,6 +683,7 @@ export default function Leads({
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStage, setFilterStage] = useState('ALL');
+  const [defaultedOnly, setDefaultedOnly] = useState(false);
 
   // Filter leads based on search query and optional stage filter
   const nonDealLeads = leads.filter(l => !l.isDeal);
@@ -694,8 +696,10 @@ export default function Leads({
       (lead.id && lead.id.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (lead.phone && lead.phone.includes(searchQuery));
     const matchesStage = filterStage === 'ALL' || lead.stage === filterStage;
-    return matchesSearch && matchesStage;
+    const matchesDefaulted = !defaultedOnly || lead.pricingMetadata?.commissionRateDefaulted === true;
+    return matchesSearch && matchesStage && matchesDefaulted;
   });
+  const defaultedCount = nonDealLeads.filter(l => l.pricingMetadata?.commissionRateDefaulted === true).length;
 
   const filterOptions = [
     { id: 'ALL', label: 'All Stages', count: nonDealLeads.length },
@@ -776,7 +780,16 @@ export default function Leads({
         filterOptions={filterOptions}
         totalCount={nonDealLeads.length}
         filteredCount={filteredLeads.length}
-      />
+      >
+        <button
+          type="button"
+          aria-pressed={defaultedOnly}
+          onClick={() => setDefaultedOnly(v => !v)}
+          className={`text-xs font-bold px-2.5 py-1 rounded-lg border transition-colors ${defaultedOnly ? 'bg-amber-500/20 text-amber-400 border-amber-500/40' : 'text-on-surface-variant border-outline-variant hover:bg-surface-container-high'}`}
+        >
+          Defaulted commission ({defaultedCount})
+        </button>
+      </FilterBar>
 
       {/* View Content: Kanban Grid vs Sortable Table */}
       {viewMode === 'kanban' ? (
@@ -853,6 +866,7 @@ export default function Leads({
           receipts={receipts}
           onGenerateReceipt={onGenerateReceipt}
           partners={partners}
+          users={users}
           customers={customers}
           currentUser={currentUser}
           allQuotations={quotations}

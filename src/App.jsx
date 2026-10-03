@@ -1472,6 +1472,7 @@ function App() {
               customers={customers}
               setCustomers={setCustomers}
               partners={partners}
+              users={users}
               quotations={quotations}
               setQuotations={setQuotations}
               onMarkInvoicePaid={handleMarkInvoicePaid}
@@ -1492,6 +1493,7 @@ function App() {
               invoices={invoices}
               currentUser={currentUser}
               partners={partners}
+              users={users}
               setPartners={setPartners}
               customers={customers}
               setCustomers={setCustomers}
