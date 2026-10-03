@@ -4,7 +4,7 @@ Full map: [README.md](README.md). Cross-module chains: [CROSS_MODULE_TRIGGERS.md
 
 ## What it does
 
-A session-only in-app feed built on a browser `EventTarget`; most toasts and one commission event become feed entries; messages are merged in.
+An in-app feed: toasts become session-only entries through a browser `EventTarget`; the commission-cleared event is a persisted `notifications` document addressed to the partner (FEA-2); messages are merged in.
 
 ## Code
 
@@ -12,7 +12,7 @@ A session-only in-app feed built on a browser `EventTarget`; most toasts and one
 
 ## Firestore collections it owns or writes
 
-- **Nothing persisted** for system notifications. Message read state is `messages.readBy`.
+- `notifications` (FEA-2): written by `handleMarkInvoicePaid` with `recipientEmail`, `targetRole: 'Partner'`, `type: 'commission'`, `leadId`, `read`. `App.jsx` subscribes each user with `where('recipientEmail', '==', identifier)` and merges the result into the feed; opening the Notifications tab sets `read: true`. Rules rest on LIVE-1 (not deployed). Message read state is `messages.readBy`.
 
 ## Triggers and side effects
 
@@ -21,4 +21,5 @@ A session-only in-app feed built on a browser `EventTarget`; most toasts and one
 ## Before you edit
 
 - Entries vanish on reload and are visible only to the user whose browser fired them. Sign-out clears the list and unread count (`handleSignOut`), and the messages part of the feed drops the user's own messages (`getIncomingMessages`).
-- `read` on entries is never used; only the unread counter matters.
+- Session-only entries carry no `read` and count in a local counter; persisted ones count by `read: false` and add to the badge. `NotificationsView` shows an entry only if it has no `recipientEmail` or the address is the signed-in user's.
+- Deleting a persisted entry in the view is local only (rules allow no delete); it reappears when the snapshot next changes.
