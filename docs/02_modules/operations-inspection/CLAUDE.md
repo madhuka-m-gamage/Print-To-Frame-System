@@ -25,3 +25,4 @@ Inspection is the QA gate of Fabrication, not a separate module: four checks (sq
 
 - `checklist.qaPassed` is set only by the QA Inspection Gate; every other save goes through `checklistWithGuardedQa`. The inspector is always the signed-in user. Defects are appended to `defectHistory`; `defectDetails` is the active one. QA pass, defect flag and rework completion are audit logged. A failed Final invoice save aborts Completed.
 - QA pass is refused for a `Cancelled` project (`cancelledProjectBlock`, DEC-4), so it never creates a Final invoice.
+- Sending a job to Revision writes a `revision` notification to the linked deal's `salesOwnerEmail` (stamped at lead conversion; none means a warning toast and no alert). Completed cards have "Email client: QA passed", which sends `fabrication_ready_inspection` through `/api/send-email` to the customer's (else the deal's) email (FEA-5).

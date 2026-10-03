@@ -5,7 +5,7 @@ import { renderWithProviders } from '../helpers/renderWithProviders';
 import { makeProject, makeInvoice } from '../helpers/factories';
 
 vi.mock('@/services/firestoreSync', () => ({
-  COLLECTIONS: { PROJECTS: 'projects', LOGISTICS: 'logistics', INVOICES: 'invoices', LEADS: 'leads' },
+  COLLECTIONS: { PROJECTS: 'projects', LOGISTICS: 'logistics', INVOICES: 'invoices', LEADS: 'leads', NOTIFICATIONS: 'notifications' },
   addDocument: vi.fn(async () => {}),
   updateDocument: vi.fn(async () => {}),
   deleteDocument: vi.fn(async () => {}),
@@ -16,11 +16,13 @@ vi.mock('@/shared/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
   showToast: vi.fn(),
 }));
+vi.mock('@/services/mailer', () => ({ sendTemplatedEmail: vi.fn(async () => ({ sent: true })) }));
 vi.mock('@/services/auditLog', () => ({ logActivity: vi.fn(async () => {}) }));
 vi.mock('@/features/fabrication/FabricationCardDetails', () => ({ default: () => null }));
 vi.mock('@/features/fabrication/FrameBlueprintPreview', () => ({ default: () => null }));
 
-const { generateInvoiceId, generateAtomicId, updateDocument } = await import('@/services/firestoreSync');
+const { sendTemplatedEmail } = await import('@/services/mailer');
+const { generateInvoiceId, generateAtomicId, updateDocument, addDocument } = await import('@/services/firestoreSync');
 const { toast } = await import('@/shared/utils/toast');
 const { logActivity } = await import('@/services/auditLog');
 const { default: FabricationWorks } = await import('@/features/fabrication/FabricationWorks');
@@ -268,5 +270,84 @@ describe('FabricationWorks board statuses (FEA-3)', () => {
     fireEvent.click(screen.getByTitle('Unarchive job'));
     await waitFor(() => expect(updateDocument).toHaveBeenCalledTimes(1));
     expect(updateDocument.mock.calls[0][2]).toMatchObject({ archived: false });
+  });
+});
+
+describe('FEA-5 inspection follow-ups', () => {
+  const renderWith = (status, extra, props = {}) => {
+    const project = makeProject({ jobNo: 'PTF-4001', title: 'Gallery Canvas', status, ...extra });
+    return renderWithProviders(
+      <FabricationWorks projects={[project]} setProjects={vi.fn()} customers={[]} partners={[]} currentUser={admin} onSaveInvoice={vi.fn()} {...props} />,
+      { role: 'Admin' }
+    );
+  };
+  const sendToRevision = async () => {
+    fireEvent.click(screen.getByTitle('Flag Defect / Send to Revision'));
+    fireEvent.change(await screen.findByPlaceholderText(/Cut weld on top-left/), { target: { value: 'Re-weld top-left joint' } });
+    fireEvent.click(screen.getByRole('button', { name: /Confirm Revision Order/i }));
+  };
+  const deals = [{ id: 'D-77', salesOwnerEmail: 'Sales.Rep@Example.com' }];
+
+  it('notifies the deal sales owner when a linked job goes to Revision', async () => {
+    renderWith('Ready For Inspection', { dealId: 'D-77' }, { deals });
+    await sendToRevision();
+    await waitFor(() => expect(addDocument).toHaveBeenCalledTimes(1));
+    const [collection, doc] = addDocument.mock.calls[0];
+    expect(collection).toBe('notifications');
+    expect(doc).toMatchObject({ recipientEmail: 'sales.rep@example.com', targetRole: 'Sales', type: 'revision', read: false });
+    expect(doc.message).toContain('Warped / Out of Square');
+    expect(doc.message).toContain('Re-weld top-left joint');
+    expect(doc.message).toContain('PTF-4001');
+    expect(typeof doc.createdAt).toBe('string');
+  });
+
+  it('writes no notification and warns when the linked deal has no sales owner', async () => {
+    renderWith('Ready For Inspection', { dealId: 'D-77' }, { deals: [{ id: 'D-77' }] });
+    await sendToRevision();
+    await waitFor(() => expect(updateDocument).toHaveBeenCalledTimes(1));
+    expect(addDocument).not.toHaveBeenCalled();
+    expect(toast.warning).toHaveBeenCalledWith(expect.stringMatching(/no sales owner/i));
+  });
+
+  it('writes no notification for a job with no linked deal', async () => {
+    renderWith('Ready For Inspection', {}, { deals });
+    await sendToRevision();
+    await waitFor(() => expect(updateDocument).toHaveBeenCalledTimes(1));
+    expect(addDocument).not.toHaveBeenCalled();
+  });
+
+  it('previews the QA-passed email and sends it through the mailer', async () => {
+    renderWith('Completed', { customerName: 'Kasun Perera', clientNIC: '901234567V' }, { customers: [{ nic: '901234567V', name: 'Kasun Perera', email: 'kasun@example.com' }] });
+    fireEvent.click(screen.getByTitle('Email client: QA passed'));
+    expect(await screen.findByText(/Quality Assurance Passed/)).toBeInTheDocument();
+    expect(sendTemplatedEmail).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /Send email/i }));
+    await waitFor(() => expect(sendTemplatedEmail).toHaveBeenCalledTimes(1));
+    const [to, templateId, data] = sendTemplatedEmail.mock.calls[0];
+    expect(to).toBe('kasun@example.com');
+    expect(templateId).toBe('fabrication_ready_inspection');
+    expect(data).toMatchObject({ jobNo: 'PTF-4001', recipientName: 'Kasun Perera' });
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith(expect.stringMatching(/sent/i)));
+  });
+
+  it('shows the mailer error and keeps the preview open when sending fails', async () => {
+    sendTemplatedEmail.mockRejectedValueOnce(new Error('The recipient does not match any record.'));
+    renderWith('Completed', { clientNIC: '901234567V' }, { customers: [{ nic: '901234567V', name: 'Kasun', email: 'kasun@example.com' }] });
+    fireEvent.click(screen.getByTitle('Email client: QA passed'));
+    fireEvent.click(await screen.findByRole('button', { name: /Send email/i }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/does not match/)));
+    expect(screen.getByRole('button', { name: /Send email/i })).toBeInTheDocument();
+  });
+
+  it('tells the user when no client email is on file instead of opening the preview', () => {
+    renderWith('Completed', { clientNIC: 'nobody' });
+    fireEvent.click(screen.getByTitle('Email client: QA passed'));
+    expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/no email/i));
+    expect(screen.queryByRole('button', { name: /Send email/i })).toBeNull();
+  });
+
+  it('offers the email button only on Completed jobs', () => {
+    renderWith('Ongoing', {});
+    expect(screen.queryByTitle('Email client: QA passed')).toBeNull();
   });
 });

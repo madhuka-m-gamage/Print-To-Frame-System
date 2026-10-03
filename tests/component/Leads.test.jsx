@@ -140,7 +140,7 @@ describe('Leads conversion to a deal (TST-3)', () => {
     expect(sync.generateAtomicId).toHaveBeenCalledWith('PTF');
     expect(sync.updateDocument).toHaveBeenCalledWith('leads', 'L-9', expect.objectContaining({ stage: 'Completed', convertedToDeal: true, convertedDealId: 'D-000042' }));
     expect(sync.addDocument).toHaveBeenCalledWith('leads', expect.objectContaining({
-      id: 'D-000042', isDeal: true, stage: 'Waiting', originalLeadId: 'L-9', jobNo: 'PTF-000042', linkedJobNo: 'PTF-000042', value: 100000,
+      id: 'D-000042', isDeal: true, stage: 'Waiting', originalLeadId: 'L-9', jobNo: 'PTF-000042', linkedJobNo: 'PTF-000042', value: 100000, salesOwnerEmail: 'admin@example.com',
     }), 'D-000042');
     expect(sync.addDocument).toHaveBeenCalledWith('projects', expect.objectContaining({
       jobNo: 'PTF-000042', leadId: 'L-9', dealId: 'D-000042', value: 100000, status: 'Pending', customerId: 'nimal@example.com',

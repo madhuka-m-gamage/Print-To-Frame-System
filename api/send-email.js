@@ -43,6 +43,7 @@ const SENDABLE_TEMPLATES = new Set([
   'employee_approved',
   'password_reset',
   'registration_declined',
+  'fabrication_ready_inspection',
 ]);
 
 // A staff session may only mail someone the ERP already holds a record for.

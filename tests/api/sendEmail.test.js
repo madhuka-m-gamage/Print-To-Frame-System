@@ -125,6 +125,14 @@ describe('api/send-email.js payload', () => {
     expect(sendMail).toHaveBeenCalledTimes(ids.length);
   });
 
+  it('sends fabrication_ready_inspection for a staff session and renders its tokens', async () => {
+    const res = await call(await load(), { body: { to: 'a@b.co', templateId: 'fabrication_ready_inspection', data: { jobNo: 'PTF-1', recipientName: 'Kasun' } } });
+    expect(res.statusCode).toBe(200);
+    const sent = sendMail.mock.calls[0][0];
+    expect(sent.subject).toContain('PTF-1');
+    expect(sent.html).toContain('Kasun');
+  });
+
   it('returns 502 when the SMTP credentials are missing', async () => {
     delete process.env.SMTP_USER;
     delete process.env.SMTP_APP_PASSWORD;
@@ -136,6 +144,13 @@ describe('api/send-email.js payload', () => {
 
 describe('api/send-email.js who may send (AUTHORIZATION_MAP finding 1)', () => {
   const body = { to: 'a@b.co', templateId: 'password_reset', data: {} };
+
+  it.each(['Partner', 'Business Client', 'Customer'])('refuses fabrication_ready_inspection from a %s account', async (role) => {
+    getDoc.mockResolvedValue(snap({ role, isApproved: true, status: 'Active' }));
+    const res = await call(await load(), { body: { to: 'a@b.co', templateId: 'fabrication_ready_inspection', data: {} } });
+    expect(res.statusCode).toBe(403);
+    expect(sendMail).not.toHaveBeenCalled();
+  });
 
   it.each(['Partner', 'Business Client', 'Customer'])('refuses a %s account and sends nothing', async (role) => {
     getDoc.mockResolvedValue(snap({ role, isApproved: true, status: 'Active' }));
