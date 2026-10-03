@@ -148,12 +148,17 @@ service cloud.firestore {
 
     // ── Pending Users ─────────────────────────────────────
     match /pendingUsers/{userId} {
-      allow create: if true;
+      // SEC-13: a request is bound to the login that files it, so an approval can never
+      // link someone else's email to the filer's uid (FEA-15 customers userId clause).
+      allow create: if isAuthenticated() && request.auth.token.email == userId
+        && request.resource.data.get('uid', null) == request.auth.uid;
       allow read: if isAuthenticated() && request.auth.token.email == userId;
       // An applicant may finish their own registration record (auth DP-02), but never
-      // mark it approved; approval is an Admin action.
+      // mark it approved; approval is an Admin action. The uid stays, or becomes their own.
       allow update: if isAuthenticated() && request.auth.token.email == userId
-        && request.resource.data.get('isApproved', false) == false;
+        && request.resource.data.get('isApproved', false) == false
+        && (request.resource.data.get('uid', null) == resource.data.get('uid', null)
+          || request.resource.data.get('uid', null) == request.auth.uid);
       allow read, update, delete: if isAdmin() || checkPermission('agents', 'edit');
     }
 

@@ -103,10 +103,11 @@ describe('settings, audit log and public forms (correct today)', () => {
     await assertFails(deleteDoc(doc(admin, 'auditLog', 'a1')));
   });
 
-  it('lets an anonymous visitor submit a partner application and pending sign-up, but not read them', async () => {
+  // SEC-13: a pending sign-up now needs the applicant's own login (pendingUsersUid.test.js).
+  it('lets an anonymous visitor submit a partner application but not a pending sign-up, and not read them', async () => {
     const anon = unauthedFirestore(testEnv);
     await assertSucceeds(setDoc(doc(anon, 'partner_applications', 'app1'), { name: 'Z' }));
-    await assertSucceeds(setDoc(doc(anon, 'pendingUsers', 'new@example.com'), { name: 'Z' }));
+    await assertFails(setDoc(doc(anon, 'pendingUsers', 'new@example.com'), { name: 'Z' }));
     await assertFails(getDoc(doc(anon, 'partner_applications', 'app1')));
   });
 
