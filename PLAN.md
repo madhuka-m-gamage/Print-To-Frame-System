@@ -22,7 +22,7 @@ One item per fresh session: branch `claude/<topic>` from `staging` → tests fir
 - [x] **Wave A3, follow-ups found in Wave A2 (repo only):** ~~MON-9~~, ~~FEA-14~~
 - [ ] **Wave A4, follow-up found in Wave A3 (repo only):** MON-10 (owner decision first)
 - **Wave B promotion guard:** SEC-12, SEC-7, SEC-8, FEA-4, FEA-15, FEA-1, MON-4, MON-11, FEA-2, SEC-13, SEC-14 and FEA-17 (and every later Wave B item) change or rely on `firestore.rules` that are not deployed. Do not promote `staging` to `main` before the LIVE-1 rules deploy, and deploy the app before or together with the rules: an old client's whole-collection `typing_indicators` listener is refused by the SEC-12 rule, and the FEA-1 payout batch is refused by the deployed rules until they are updated.
-- [ ] **Wave B, code + rules built and tested here, live with the next rules deploy:** ~~MON-4~~, MON-5, MON-7, ~~FEA-1~~, ~~FEA-2~~, ~~FEA-4~~, FEA-5, FEA-7, FEA-9, FEA-10, SEC-6, ~~SEC-7~~, ~~SEC-8~~, ~~SEC-12~~, ~~FEA-15~~, ~~FEA-16~~, ~~MON-11~~, ~~SEC-13~~, ~~SEC-14~~, ~~FEA-17~~, MON-12, MON-13, MON-14, FEA-18, FEA-19, SEC-15 (found in B3; MON-12 and SEC-15 need the owner)
+- [ ] **Wave B, code + rules built and tested here, live with the next rules deploy:** ~~MON-4~~, MON-5, MON-7, ~~FEA-1~~, ~~FEA-2~~, ~~FEA-4~~, FEA-5, FEA-7, FEA-9, FEA-10, SEC-6, ~~SEC-7~~, ~~SEC-8~~, ~~SEC-12~~, ~~FEA-15~~, ~~FEA-16~~, ~~MON-11~~, ~~SEC-13~~, ~~SEC-14~~, ~~FEA-17~~, MON-12, MON-13, MON-14, FEA-18, FEA-19, SEC-15 (found in B3; owner decided MON-12 and SEC-15 on 2026-10-03)
 - [x] **Wave C, before restrictive rules go live:** ~~TST-2~~ (money and RBAC browser journeys)
 - [ ] **Wave D, environment and go-live (owner sittings):** LIVE-2 fresh environment (seed `DEFAULT_PERMISSIONS`, deploy Firestore + Storage rules), LIVE-3 move production here and archive the old repos, LIVE-1, LIVE-4, SEC-4, SEC-5, SEC-10, TST-4
 - [ ] **Wave E, code health after tests exist:** ENG-1, ENG-2, ENG-6
@@ -83,9 +83,9 @@ Flagged (more than 30% off): MON-4 time (+44%, **scope**: transaction helper ext
 6. Not yet (skill change): a mid-run meter reading for the usage guard.
 7. Adopted 2026-10-03: slot run mode and required fragments (#122) worked: no agent sourced files, no fragment was missing.
 8. Declined by the owner 2026-10-02: final-step e2e retry and plan notes in the final prompt.
-9. Not yet (skill change, P1): before `gh pr merge`, an agent must check `git merge-base --is-ancestor origin/staging HEAD`; if `staging` moved since its last green CI, merge it in, re-run the local checks and wait for CI again. B3's staging break came from merging a behind branch. (The alternative is GitHub branch protection "require branches to be up to date", a repository setting for the owner.)
-10. Not yet (skill change, P2): each final step folds only the fragments of its own workflow's merged items, so two workflows never fold the same fragment twice (B3 closed #128 as a duplicate of #130).
-11. Not yet (skill change, P3): fix the brief's Docs line from #122 ("it reports them and update your own"), a missing "; then".
-12. Not yet (policy change, P4): security and money defaults from Opus·high to Opus·medium (evidence above); Opus·high stays available per row.
+9. Adopted 2026-10-03 (owner approved, P1): before `gh pr merge`, an agent must check `git merge-base --is-ancestor origin/staging HEAD`; if `staging` moved since its last green CI, merge it in, re-run the local checks and wait for CI again. B3's staging break came from merging a behind branch. (The alternative is GitHub branch protection "require branches to be up to date", a repository setting for the owner.)
+10. Adopted 2026-10-03 (owner approved, P2): each final step folds only the fragments of its own workflow's merged items, so two workflows never fold the same fragment twice (B3 closed #128 as a duplicate of #130).
+11. Adopted 2026-10-03 (owner approved, P3): fix the brief's Docs line from #122 ("it reports them and update your own"), a missing "; then".
+12. Adopted 2026-10-03 (owner approved, P4): security and money defaults from Opus·high to Opus·medium (evidence above); Opus·high stays available per row.
 13. Watch: the FEA-2 agent (Sonnet) skipped seeing its rules tests fail; the brief already requires it.
 14. Not yet (skill change): review fallback when the final docs PR is already merged.

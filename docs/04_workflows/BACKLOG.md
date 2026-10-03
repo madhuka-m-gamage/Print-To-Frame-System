@@ -54,7 +54,7 @@ Every item implicitly includes these.
 | MON-9 | Printed and emailed Advance / Final figures use the rounded split | money | S | no | no | MON-8 |
 | MON-10 | Per-line invoice rows sum to the rounded Advance | money | S | no | **yes** | MON-9 |
 | MON-11 | Server-side guard against a double partner payout | money | M | rules | no | MON-4 |
-| MON-12 | Invoice guard of a cancelled or deleted invoice blocks its replacement | money | S | rules | yes | MON-4 |
+| MON-12 | Invoice guard of a cancelled or deleted invoice blocks its replacement | money | S | rules | decided | MON-4 |
 | MON-13 | QuotationBuilder reports success after a refused invoice save | money | S | no | no | MON-4 |
 | MON-14 | Concurrent payouts of different referrals overwrite the partner balance | money | S | rules | no | MON-11 |
 | FEA-1 | Real partner payout (step 4.1) | feature | M | rules | no | LIVE-1 (to work live) |
@@ -90,7 +90,7 @@ Every item implicitly includes these.
 | SEC-12 | Scope `typing_indicators` rules to the chat's participants | security | S | rules | no | none |
 | SEC-13 | Bind a pending registration to its own login uid | security | S | rules | no | none |
 | SEC-14 | Remove the dead `partnerId == token email` read clause on invoices and receipts | security | S | rules | no | none |
-| SEC-15 | Require a verified email for a pending registration | security | S | rules | yes | SEC-13 |
+| SEC-15 | Require a verified email for a pending registration | security | S | rules | decided | SEC-13 |
 | TST-1 | Component tests for the lead card (done) | tests | M | no | no | none |
 | TST-2 | End-to-end journeys (money, RBAC) (done) | tests | L | no | no | none |
 | TST-3 | Tests for Leads, QuotationBuilder, Customers; refresh the coverage map (done) | tests | M | no | no | none |
@@ -226,7 +226,7 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 
 ### MON-12: Invoice guard of a cancelled or deleted invoice blocks its replacement
 - **Why (found by MON-4, 2026-10-03):** `invoice_guards/<rootLeadId>_<Advance|Final>` is never removed (the rules allow no update or delete), so after an Advance or Final is cancelled or deleted, a replacement for the same lead is refused. Older invoices that carry the Deal id in `leadId` have no guard, so only the client checks cover them.
-- **Owner decision first:** let an Admin delete a guard, or tie the guard to a non-cancelled invoice (the rule reads the named invoice's status). **Live:** rules deploy.
+- **Owner decision (2026-10-03): the guard checks the invoice's status.** A new guard may replace an existing one when the invoice the old guard names is Cancelled or no longer exists (the rule reads it with `get()`/`exists()`); no Admin cleanup step. **Live:** rules deploy.
 
 ### MON-13: QuotationBuilder reports success after a refused invoice save
 - **Why (found by MON-4, 2026-10-03; predates it):** `src/features/quotations/QuotationBuilder.jsx` does not await `onSaveInvoice`, so when the MON-4 guard refuses a save it still shows "invoice generated" and marks the quotation Invoiced.
@@ -434,7 +434,7 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 
 ### SEC-15: Require a verified email for a pending registration
 - **Why (found by SEC-13, 2026-10-03):** email/password sign-up does not verify the address, so whoever first creates the Auth account for an email can still file that email's `pendingUsers` request with their own uid. SEC-14 also leaves the Partner receipt read unused: the app does not subscribe a Partner to receipts (matrix `receipts: none`).
-- **Owner decision first:** require `request.auth.token.email_verified` on `pendingUsers` create (and send verification mail at sign-up), or accept the risk because an Admin approves each request. **Live:** rules deploy.
+- **Owner decision (2026-10-03): require a verified email.** Email sign-up sends a verification mail, and the `pendingUsers` create rule requires `request.auth.token.email_verified == true` (Google sign-in is already verified); the app tells an unverified user to check their mail. **Live:** rules deploy.
 ## Tests
 
 ### TST-1: Component tests for the lead card

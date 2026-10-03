@@ -4,9 +4,9 @@ Owner-editable defaults. The planner classifies each item into one task type, st
 
 | Task type | Matches | Model | Effort |
 |---|---|---|---|
-| security | auth, `firestore.rules`, `storage.rules`, `api/*` access checks | Opus | high |
+| security | auth, `firestore.rules`, `storage.rules`, `api/*` access checks | Opus | medium |
 | money-small | one pure helper or one rule change on a money path, with a clear test (e.g. a rounding helper and its call sites) | Sonnet | medium |
-| money | invoices, receipts, commission, pricing, COD with several decisions or new rules | Opus | high |
+| money | invoices, receipts, commission, pricing, COD with several decisions or new rules | Opus | medium |
 | design-heavy | L items or 4+ separate decisions | Opus | medium |
 | tests | tests-only items, coverage refresh | Sonnet | medium |
 | small-ui | one module, UI behaviour, no rules | Sonnet | medium |
@@ -57,4 +57,5 @@ One line per task type that has been run. The review appends here; the policy de
 
 ## Learned
 - 2026-10-02: `money-small` added (owner approved). Evidence: MON-8 (rounding helper plus three call sites) ran on Sonnet·low with 0 fix rounds and a correct helper; one data point, so the default is Sonnet·medium, not low. Revisit after another run.
+- 2026-10-03: `security` and `money` defaults lowered from Opus·high to Opus·medium (owner approved, B3 proposal P4). Evidence: six security items (SEC-12, SEC-7, SEC-8, FEA-15, SEC-13, SEC-14) and three money items (FEA-1, MON-4, MON-11) ran on Opus·medium, all sufficient with 0 fix rounds of their own. Opus·high stays available per row.
 <!-- The review adds lines here only after the owner approves a proposed policy change: date, task type, change, evidence. -->

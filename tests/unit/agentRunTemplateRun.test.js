@@ -92,4 +92,14 @@ describe('agent-run workflow template at run time', () => {
     expect(finalPrompt).toContain('missingFragments');
     expect(out.final.missingFragments).toBe('A');
   });
+
+  it('the final step folds only its own workflow items, leaving other fragments for the other workflow', async () => {
+    let finalPrompt = '';
+    await runTemplate({ lanes: [[it2('A')], [it2('B')]] }, async (prompt, opts) => {
+      if (opts.label === 'Final docs') { finalPrompt = prompt; return { prUrl: 'p', e2e: 'ok' }; }
+      return merged(opts.label);
+    });
+    expect(finalPrompt).toContain('Fold only the fragments of A, B');
+    expect(finalPrompt).not.toContain('Fold every file');
+  });
 });
