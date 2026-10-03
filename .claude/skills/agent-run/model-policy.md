@@ -48,12 +48,12 @@ One line per task type that has been run. The review appends here; the policy de
 | Task type | Runs | Picks used | Fix rounds | Findings / rework |
 |---|---|---|---|---|
 | money-small | 2 (MON-8, MON-9) | Sonnet·low both (owner overrides of the Sonnet·medium default) | 0 | MON-8: 1 out-of-scope finding (MON-9); MON-9: per-line rows deliberately untouched (cent drift, MON-10), no rework |
-| small-ui | 5 (FEA-12, FEA-13, FEA-14, FEA-16, FEA-17) | Sonnet·medium (FEA-16 Sonnet·low) | 0 | FEA-13: the claim in BACKLOG proved wrong, fixed by verifying first; FEA-14: the userId link split out as FEA-15 on the owner's decision |
-| security | 6 (SEC-12, SEC-7, SEC-8, FEA-15, SEC-13, SEC-14) | Opus·medium (owner overrides of Opus·high; FEA-15 moved up from Sonnet·medium) | 0 (SEC-14: 1, repairing another item's test on staging) | found and fixed gaps the BACKLOG item did not name; SEC-13 found the unverified-email limit (SEC-15) |
-| money (M) | 3 (FEA-1, MON-4, MON-11) | Opus·medium | 0 | MON-4 and MON-11 chose server-enforced guard docs; findings MON-12, MON-13, MON-14, none a defect in scope |
+| small-ui | 8 (FEA-12, FEA-13, FEA-14, FEA-16, FEA-17, MON-13, FEA-19, MON-7) | Sonnet·medium (FEA-16 Sonnet·low) | 0 | FEA-13: the claim in BACKLOG proved wrong, fixed by verifying first; FEA-14: the userId link split out as FEA-15 on the owner's decision |
+| security | 7 (SEC-12, SEC-7, SEC-8, FEA-15, SEC-13, SEC-14, SEC-15) | Opus·medium (owner overrides of Opus·high; FEA-15 moved up from Sonnet·medium) | 0 (SEC-14: 1, repairing another item's test on staging) | found and fixed gaps the BACKLOG item did not name; SEC-13 found the unverified-email limit (SEC-15) |
+| money (M) | 5 (FEA-1, MON-4, MON-11, MON-12, MON-14) | Opus·medium | 0 | MON-4 and MON-11 chose server-enforced guard docs; findings MON-12, MON-13, MON-14, none a defect in scope |
 | design-heavy | 1 (FEA-2, L) | Sonnet·medium (owner override of Opus·medium) | 0 | sufficient; skipped seeing its rules tests fail; 38 min, longer than an Opus M item |
 | config / docs | 2 (ENG-7, ENG-6) | Sonnet·low | 0 | none |
-| feature with rules | 1 (FEA-4) | Sonnet·medium | 0 | none; new rules block merged in parallel with lane 1 |
+| feature with rules | 4 (FEA-4, FEA-18, FEA-5, FEA-7) | Sonnet·medium | 0 | none; FEA-18 widened a shared rule first and FEA-5, FEA-7, MON-7 relied on it without conflict |
 
 ## Learned
 - 2026-10-02: `money-small` added (owner approved). Evidence: MON-8 (rounding helper plus three call sites) ran on Sonnet·low with 0 fix rounds and a correct helper; one data point, so the default is Sonnet·medium, not low. Revisit after another run.
