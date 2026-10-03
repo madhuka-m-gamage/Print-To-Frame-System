@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `agent-run` (owner-approved B2 proposals 15 and 16): `tests/tools/testSlot.mjs` has a run mode, `node tests/tools/testSlot.mjs N -- <command>`, that starts the command with the slot environment and passes on its exit status, so agents need no sourcing or command substitution (the worktree guard refused both); the brief and the final step use it. The brief requires a change fragment for every item, even a one-line fix, and the final step returns `missingFragments` instead of rebuilding them; the review follows them up. Unit +4 (`testSlot` run mode x3, missing-fragment final step), slot assertions moved to the run-mode form.
+
 - Wave B run B2 review (docs only): Run calibration rewritten (wall-clock on estimate; the meter delta includes other usage so per-item % use the B1 rates); the parallel-by-block rules policy worked (no conflict at catch-up); new backlog items SEC-13 (bind a pending registration to its own uid), SEC-14 (dead partnerId-email read clause), FEA-17 (link a customers row to a login) and SEC-8 post-deploy checks for LIVE-1; evidence table updated; two proposed skill changes.
 
 - FEA-4: the logistics driver and vehicle pickers read `settings/fleet` (Admin edits it in the Admin panel, Fleet & Drivers tab) and fall back to the built-in lists when it is missing; new `settings/fleet` rules block (read: logistics view, write: Admin), not yet deployed. Tests: component +7, rules +10.

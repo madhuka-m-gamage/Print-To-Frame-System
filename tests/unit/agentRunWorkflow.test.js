@@ -11,15 +11,21 @@ describe('agent-run workflow template', () => {
     expect(() => checkWorkflow('export const meta = { name: "x", description: "y" }\nconst a = ;')).toThrow();
   });
 
-  it('runs every slot command in the same shell call as the slot exports', () => {
+  it('runs every slot command through the run mode of the slot script', () => {
     const brief = readFileSync('.claude/skills/agent-run/agent-brief.md', 'utf8');
-    expect(brief).toContain('node tests/tools/testSlot.mjs {{slot}} > /tmp/p2f-slot{{slot}}.env && . /tmp/p2f-slot{{slot}}.env && npm run test:rules');
-    expect(brief).toContain('node tests/tools/testSlot.mjs {{slot}} > /tmp/p2f-slot{{slot}}.env && . /tmp/p2f-slot{{slot}}.env && npm run test:e2e');
+    expect(brief).toContain('node tests/tools/testSlot.mjs {{slot}} -- npm run test:rules');
+    expect(brief).toContain('node tests/tools/testSlot.mjs {{slot}} -- npm run test:e2e');
     expect(brief).not.toContain('eval');
+    expect(brief).not.toContain('.env &&');
   });
 
   it('falls back to Sonnet low for the final step when args.final is missing', () => {
     expect(readFileSync('.claude/skills/agent-run/workflow-template.js', 'utf8')).toContain("const finalStep = args.final || { model: 'sonnet', effort: 'low' }");
+  });
+
+  it('requires a change fragment for every item, one-line fixes included', () => {
+    const brief = readFileSync('.claude/skills/agent-run/agent-brief.md', 'utf8');
+    expect(brief).toMatch(/every item, even a one-line fix/);
   });
 
   it('every {{placeholder}} in the brief is one the template fills', () => {

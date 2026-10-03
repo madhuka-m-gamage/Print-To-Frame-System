@@ -35,9 +35,9 @@ describe('agent-run workflow template at run time', () => {
       prompts[opts.label] = prompt;
       return opts.label === 'Final docs' ? { prUrl: 'p', e2e: 'ok' } : merged(opts.label);
     });
-    expect(prompts.A).toContain('testSlot.mjs 3 >');
-    expect(prompts.B).toContain('testSlot.mjs 4 >');
-    expect(prompts['Final docs']).toContain('node tests/tools/testSlot.mjs 3 > /tmp/p2f-slot3.env && . /tmp/p2f-slot3.env && npm run test:e2e');
+    expect(prompts.A).toContain('testSlot.mjs 3 --');
+    expect(prompts.B).toContain('testSlot.mjs 4 --');
+    expect(prompts['Final docs']).toContain('node tests/tools/testSlot.mjs 3 -- npm run test:e2e');
   });
 
   it('takes each item slot from its lane, whatever args say', async () => {
@@ -46,8 +46,8 @@ describe('agent-run workflow template at run time', () => {
       prompts.push(prompt);
       return opts.label === 'Final docs' ? { prUrl: 'p', e2e: 'ok' } : merged(opts.label);
     });
-    expect(prompts[0]).toContain('testSlot.mjs 1 >');
-    expect(prompts[1]).toContain('testSlot.mjs 2 >');
+    expect(prompts[0]).toContain('testSlot.mjs 1 --');
+    expect(prompts[1]).toContain('testSlot.mjs 2 --');
   });
 
   it('records items after a stopped item as not-started', async () => {
@@ -79,6 +79,17 @@ describe('agent-run workflow template at run time', () => {
       if (opts.label === 'Final docs') { finalPrompt = prompt; return { prUrl: 'p', e2e: 'ok' }; }
       return merged('A');
     });
-    expect(finalPrompt).toContain('node tests/tools/testSlot.mjs 1 > /tmp/p2f-slot1.env && . /tmp/p2f-slot1.env && npm run test:e2e');
+    expect(finalPrompt).toContain('node tests/tools/testSlot.mjs 1 -- npm run test:e2e');
+  });
+
+  it('the final step lists merged items with no change fragment instead of rebuilding them', async () => {
+    let finalPrompt = '';
+    const out = await runTemplate({ lanes: [[it2('A')], []] }, async (prompt, opts) => {
+      if (opts.label === 'Final docs') { finalPrompt = prompt; return { prUrl: 'p', e2e: 'ok', missingFragments: 'A' }; }
+      return merged('A');
+    });
+    expect(finalPrompt).toMatch(/do not write or rebuild a missing fragment/i);
+    expect(finalPrompt).toContain('missingFragments');
+    expect(out.final.missingFragments).toBe('A');
   });
 });

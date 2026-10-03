@@ -75,4 +75,22 @@ describe('test slots', () => {
   it('vite takes its dependency cache dir from the slot, so linked worktrees do not share it', () => {
     expect(readFileSync('vite.config.js', 'utf8')).toContain('process.env.P2F_VITE_CACHE_DIR');
   });
+
+  it('run mode starts the command after -- with the slot environment', () => {
+    const r = spawnSync(process.execPath, ['tests/tools/testSlot.mjs', '2', '--', process.execPath, '-e', 'console.log(process.env.P2F_DEV_PORT, process.env.P2F_FIREBASE_CONFIG)'], { encoding: 'utf8' });
+    expect(r.status).toBe(0);
+    expect(r.stdout.trim()).toBe('3020 firebase.slot2.json');
+    expect(r.stdout).not.toContain('export ');
+  });
+
+  it('run mode passes on the command exit status', () => {
+    const r = spawnSync(process.execPath, ['tests/tools/testSlot.mjs', '1', '--', process.execPath, '-e', 'process.exit(3)'], { encoding: 'utf8' });
+    expect(r.status).toBe(3);
+  });
+
+  it('run mode refuses a bad slot without starting the command', () => {
+    const r = spawnSync(process.execPath, ['tests/tools/testSlot.mjs', '9', '--', process.execPath, '-e', 'console.log("ran")'], { encoding: 'utf8' });
+    expect(r.status).not.toBe(0);
+    expect(r.stdout).not.toContain('ran');
+  });
 });

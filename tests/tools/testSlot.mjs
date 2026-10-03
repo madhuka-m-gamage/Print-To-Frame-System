@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -56,12 +57,20 @@ export function slotEnv(slot) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  if (!process.argv[2]?.trim()) throw new Error('usage: node tests/tools/testSlot.mjs <slot 0..2>');
+  if (!process.argv[2]?.trim()) throw new Error('usage: node tests/tools/testSlot.mjs <slot 0..4> [-- <command>]');
   const slot = Number(process.argv[2]);
+  const env = slotEnv(slot);
   if (slot > 0) {
     const base = JSON.parse(readFileSync('firebase.json', 'utf8'));
     writeFileSync(slotConfigPath(slot), `${JSON.stringify(slotFirebaseConfig(base, slot), null, 2)}\n`);
-    mkdirSync(slotEnv(slot).TMPDIR, { recursive: true });
+    mkdirSync(env.TMPDIR, { recursive: true });
   }
-  for (const [name, value] of Object.entries(slotEnv(slot))) console.log(`export ${name}=${value}`);
+  // Run mode starts the command itself, so agents need no eval or sourcing, which the worktree guard refuses.
+  const [sep, cmd, ...cmdArgs] = process.argv.slice(3);
+  if (sep === '--' && cmd) {
+    const r = spawnSync(cmd, cmdArgs, { stdio: 'inherit', env: { ...process.env, ...env } });
+    if (r.error) throw r.error;
+    process.exit(r.status ?? 1);
+  }
+  for (const [name, value] of Object.entries(env)) console.log(`export ${name}=${value}`);
 }

@@ -4,7 +4,7 @@ Used inside a multi-agent run (the `agent-run` skill). Each item writes one frag
 
 ## File
 
-`docs/04_workflows/changes/<ID>.md`, one per backlog item, for example `FEA-12.md`. Exactly three headings:
+`docs/04_workflows/changes/<ID>.md`, one per backlog item and required for every item, even a one-line fix, for example `FEA-12.md`. Exactly three headings:
 
     ## Changelog
     - <the bullet exactly as it should appear under "## Unreleased" in CHANGELOG.md, with test counts>
@@ -20,4 +20,4 @@ The item still edits its own `### <ID>` section of `BACKLOG.md` directly (separa
 
 ## Folding
 
-The run's final step, after every item has merged: adds each `## Changelog` bullet under `## Unreleased` in `CHANGELOG.md`, applies each `## Testing map` line to `TESTING.md`, updates the BACKLOG "Status at Milestone 1" line and `PLAN.md` from each `## Status`, then deletes the folded fragments in the same commit. Git history keeps them.
+The run's final step, after every item has merged: adds each `## Changelog` bullet under `## Unreleased` in `CHANGELOG.md`, applies each `## Testing map` line to `TESTING.md`, updates the BACKLOG "Status at Milestone 1" line and `PLAN.md` from each `## Status`, then deletes the folded fragments in the same commit. Git history keeps them. It does not write a fragment for an item that has none: it returns those items as `missingFragments`, and the review adds their lines from the item's PR.
