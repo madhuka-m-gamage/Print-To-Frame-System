@@ -60,6 +60,6 @@ Projected peak = meter now + the sum over agents of (floor + item tokens / token
 ## 16. Risks and fallbacks per item
 Risk, fallback, effect on time and usage. Standing risk: both lanes share one linked `node_modules`, so Vite and Vitest caches under `node_modules/.vite` are shared (unverified).
 ## 17. Security and money watch-list
-Items of task type security or money; always Opus.
+Items of task type security or money; always Opus (medium by default).
 ## 18. Definition of done and post-run review
 Merged PRs, fragments folded, local e2e on `staging`, review steps; optional: promotion recommendation, notifications.

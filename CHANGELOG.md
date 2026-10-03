@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `agent-run` (owner-approved B3 proposals P1-P4): an agent re-checks `git merge-base --is-ancestor origin/staging HEAD` right before merging and catches up if `staging` moved (a behind branch broke `staging` in B3); each final step folds only its own workflow's fragments; the brief's Docs line reads correctly; `security` and `money` default to Opus·medium (model-policy). Owner decisions recorded: MON-12 (guard checks the invoice's status), SEC-15 (require a verified email). Unit +3.
+
 - Wave B run B3 review (docs only): Run calibration rewritten (first four-lane run, 58 min, meter +45%); FEA-17 fragment folded after the review merged #129; new BACKLOG items MON-12, MON-13, MON-14, FEA-18, FEA-19, SEC-15; skill proposals P1-P4 listed for the owner. The parallel-by-function policy merged cleanly but let a behind branch break `staging` (fixed by SEC-14).
 
 - Customers (FEA-17): an Admin can link a customers row to a Customer or Business Client login from the detail panel (sets `userId`, audit-logged); component 2 new.

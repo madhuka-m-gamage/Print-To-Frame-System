@@ -28,6 +28,18 @@ describe('agent-run workflow template', () => {
     expect(brief).toMatch(/every item, even a one-line fix/);
   });
 
+  it('re-checks that the branch contains staging before merging, so a behind branch never lands untested', () => {
+    const brief = readFileSync('.claude/skills/agent-run/agent-brief.md', 'utf8');
+    expect(brief).toContain('git merge-base --is-ancestor origin/staging HEAD');
+    expect(brief).not.toContain('it reports them and update');
+  });
+
+  it('security and money default to Opus at medium effort', () => {
+    const policy = readFileSync('.claude/skills/agent-run/model-policy.md', 'utf8');
+    expect(policy).toMatch(/^\| security \|.*\| Opus \| medium \|$/m);
+    expect(policy).toMatch(/^\| money \|.*\| Opus \| medium \|$/m);
+  });
+
   it('every {{placeholder}} in the brief is one the template fills', () => {
     const brief = readFileSync('.claude/skills/agent-run/agent-brief.md', 'utf8');
     const used = new Set([...brief.matchAll(/\{\{(\w+)\}\}/g)].map((m) => m[1]));
