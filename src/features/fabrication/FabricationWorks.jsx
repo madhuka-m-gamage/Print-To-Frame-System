@@ -33,7 +33,8 @@ import {
   Pause,
   Play,
   Archive,
-  ArchiveRestore
+  ArchiveRestore,
+  Mail
 } from 'lucide-react';
 import { toast } from '@/shared/utils/toast';
 import Card from '@/shared/components/Card';
@@ -46,6 +47,8 @@ import { stripEmojis, sanitizeTechnicalScope } from '@/shared/utils/validation';
 import { generateText } from '@/services/gemini';
 import { getExistingFinalInvoice } from '@/shared/utils/entityUtils';
 import { logActivity } from '@/services/auditLog';
+import { sendTemplatedEmail } from '@/services/mailer';
+import { EMAIL_TEMPLATES, interpolateTemplate } from '@/constants/emailTemplates';
 import { NON_BILLABLE, resolveManualJobLink, cancelledProjectBlock, archiveBlock } from './fabricationLink';
 import { checklistWithGuardedQa, withDefectRecorded } from './qaGate';
 import { buildLogisticsTask } from '@/features/logistics/logisticsTask';
@@ -185,7 +188,8 @@ function FabricationColumn({
   onDispatchLogistics,
   onHold,
   onResume,
-  onArchive
+  onArchive,
+  onEmailQaPassed
 }) {
   const isCancelled = stage === "Cancelled";
   return (
@@ -299,6 +303,19 @@ function FabricationColumn({
                 title="Dispatch to Logistics Delivery"
               >
                 <Truck size={13} />
+              </button>
+            )}
+
+            {stage === "Completed" && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEmailQaPassed(job);
+                }}
+                className="p-1.5 rounded-lg transition-all border bg-surface-container-high text-on-surface-variant hover:text-primary hover:bg-surface-container border-outline-variant/60"
+                title="Email client: QA passed"
+              >
+                <Mail size={13} />
               </button>
             )}
 
@@ -490,6 +507,8 @@ export default function FabricationWorks({
   // generation/save completes, so a rapid second click before that could
   // otherwise trigger a second Final invoice for the same job.
   const [isApprovingQA, setIsApprovingQA] = useState(false);
+  const [qaEmail, setQaEmail] = useState(null);
+  const [isSendingQaEmail, setIsSendingQaEmail] = useState(false);
   const [qaForm, setQaForm] = useState({
     squareness: true,
     welds: true,
@@ -951,6 +970,37 @@ export default function FabricationWorks({
     }
   };
 
+  const findLinkedDeal = (job) => deals.find(d =>
+    (job.dealId && d.id === job.dealId) || (d.linkedJobNo && d.linkedJobNo === job.jobNo)
+  );
+
+  const notifySalesOwnerOfRevision = async (job, category, notes, now) => {
+    const deal = findLinkedDeal(job);
+    if (!deal) return;
+    const recipientEmail = String(deal.salesOwnerEmail || '').trim().toLowerCase();
+    if (!recipientEmail) {
+      toast.warning(`Deal ${deal.id} has no sales owner on file, so no revision alert was sent.`);
+      return;
+    }
+    try {
+      await addDocument(COLLECTIONS.NOTIFICATIONS, {
+        recipientEmail,
+        targetRole: 'Sales',
+        type: 'revision',
+        title: `Job ${job.jobNo} sent to Revision`,
+        message: `${job.jobNo} (${getFabricationTitle(job)}) failed inspection: ${category}. ${notes || 'Revision required before completion.'}`,
+        dealId: deal.id,
+        jobNo: job.jobNo,
+        read: false,
+        createdAt: now,
+        createdBy: currentUser?.identifier || ''
+      });
+    } catch (err) {
+      console.error('Failed to save the revision alert:', err);
+      toast.warning('The job moved to Revision, but the sales owner alert could not be saved.');
+    }
+  };
+
   // Confirm Defect & Send Job to Revision
   const handleConfirmRevision = async () => {
     if (!defectJob) return;
@@ -979,11 +1029,56 @@ export default function FabricationWorks({
 
     try {
       await updateDocument(COLLECTIONS.PROJECTS, targetJob._firestoreId || targetJob.jobNo, updatedJobObj);
+      await notifySalesOwnerOfRevision(targetJob, defectForm.category, defectForm.notes, now);
       logActivity(currentUser?.identifier, inspectorName, 'QA_DEFECT_FLAGGED', 'Fabrication', `Job ${targetJob.jobNo} sent to Revision: ${defectForm.category}. ${defectForm.notes || ''}`.trim());
       toast.error(`Job ${targetJob.jobNo} moved to Revision: ${defectForm.category}`);
     } catch (err) {
       console.error(err);
       toast.error("Failed to sync revision status to DB");
+    }
+  };
+
+  const handleOpenQaEmail = (job) => {
+    const nic = job.clientNIC || job.customerNic;
+    const customer = customers?.find(c => c.nic === nic);
+    const deal = findLinkedDeal(job);
+    const to = String(customer?.email || deal?.email || '').trim();
+    if (!to) {
+      toast.error(`No email on file for the client of ${job.jobNo}. Add one on the customer record first.`);
+      return;
+    }
+    const data = {
+      recipientName: customer?.name || job.customerName || 'Valued Client',
+      companyName: job.company || customer?.businessName || customer?.company || job.customerName || 'your company',
+      jobNo: job.jobNo,
+      jobScope: job.scope || job.title || 'Custom steel framing',
+      totalSqFt: job.totalSqFt || 0,
+      contactPhone: '+94 71 141 9027',
+      senderName: currentUser?.name || 'Print To Frame Admin Desk'
+    };
+    const template = EMAIL_TEMPLATES.find(t => t.id === 'fabrication_ready_inspection');
+    setQaEmail({
+      job,
+      to,
+      data,
+      subject: interpolateTemplate(template.subject, data),
+      body: interpolateTemplate(template.body, data)
+    });
+  };
+
+  const handleSendQaEmail = async () => {
+    if (!qaEmail || isSendingQaEmail) return;
+    setIsSendingQaEmail(true);
+    try {
+      await sendTemplatedEmail(qaEmail.to, 'fabrication_ready_inspection', qaEmail.data);
+      logActivity(currentUser?.identifier, inspectorName, 'QA_EMAIL_SENT', 'Fabrication', `QA passed email for job ${qaEmail.job.jobNo} sent to the client`);
+      toast.success(`QA passed email sent to ${qaEmail.to}.`);
+      setQaEmail(null);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'Failed to send the email.');
+    } finally {
+      setIsSendingQaEmail(false);
     }
   };
 
@@ -1172,6 +1267,7 @@ export default function FabricationWorks({
                 }}
                 onResume={handleResumeJob}
                 onArchive={handleArchiveJob}
+                onEmailQaPassed={handleOpenQaEmail}
                 onClientUpdate={handleGenerateUpdate}
                 updatingJobId={updatingJobId}
                 isGeneratingUpdate={isGeneratingUpdate}
@@ -1446,6 +1542,40 @@ export default function FabricationWorks({
             >
               <Pause size={14} className="mr-1.5" />
               <span>Confirm Hold</span>
+            </button>
+          </div>
+        </ModalWrapper>
+      )}
+
+      {qaEmail && (
+        <ModalWrapper
+          isOpen={!!qaEmail}
+          onClose={() => setQaEmail(null)}
+          maxWidth="max-w-lg"
+          ariaLabel="Email client: QA passed"
+        >
+          <div className="px-6 py-4 border-b border-outline-variant bg-surface-container-low">
+            <h3 className="text-base font-bold text-on-surface">Email client: QA passed</h3>
+            <p className="text-[11px] text-on-surface-variant font-mono">To: {qaEmail.to}</p>
+          </div>
+          <div className="p-6 space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar">
+            <p className="text-sm font-bold text-on-surface">{qaEmail.subject}</p>
+            <pre className="text-xs text-on-surface-variant whitespace-pre-wrap font-sans">{qaEmail.body}</pre>
+          </div>
+          <div className="p-4 border-t border-outline-variant bg-surface-container-low flex justify-end space-x-2">
+            <button
+              onClick={() => setQaEmail(null)}
+              className="px-4 py-2 bg-surface-container-high text-on-surface-variant rounded-xl font-bold text-xs hover:bg-surface-container-highest border border-outline-variant/60"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSendQaEmail}
+              disabled={isSendingQaEmail}
+              className="px-5 py-2 bg-primary text-on-primary rounded-xl font-bold text-xs hover:opacity-90 disabled:opacity-60 flex items-center"
+            >
+              <Send size={14} className="mr-1.5" />
+              <span>{isSendingQaEmail ? 'Sending...' : 'Send email'}</span>
             </button>
           </div>
         </ModalWrapper>

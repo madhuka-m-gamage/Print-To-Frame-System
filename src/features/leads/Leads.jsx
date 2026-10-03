@@ -465,6 +465,7 @@ export default function Leads({
       id: dealId,
       jobNo: jobNo,
       linkedJobNo: jobNo,
+      salesOwnerEmail: convertedLead.salesOwnerEmail || String(currentUser?.identifier || currentUser?.email || '').toLowerCase(),
       isDeal: true,
       stage: 'Waiting',
       stageEnteredAt: now,
