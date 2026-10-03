@@ -335,6 +335,7 @@ Source: `docs/02_modules/notifications/FINDINGS.md`. NOTIF-01 (sign-out leak) is
 ### FEA-17: Admin action to link a customers row to a login
 - **Why (found by FEA-15, 2026-10-02):** a plain Customer approval has no Register Client form, so no `customers` row gets a `userId`; rows made from leads, contact import or manual add stay unlinked and sync only by email.
 - **Build:** an Admin action on the customer record to pick the matching login and set `userId`; component test.
+- **Done (2026-10-03):** "Linked login" select plus "Link login" button in the `Customers.jsx` detail card, Admin only; 2 component tests.
 
 ## Security
 

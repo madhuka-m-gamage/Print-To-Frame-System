@@ -155,3 +155,34 @@ describe('Customers register and delete (TST-3)', () => {
     expect(deleteUserAccount).not.toHaveBeenCalled();
   });
 });
+
+describe('Customers link to login (FEA-17)', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const logins = [
+    { identifier: 'sunil@example.com', name: 'Sunil Login', role: 'Customer', uid: 'uid-sunil' },
+    { identifier: 'nimal@example.com', name: 'Nimal Login', role: 'Business Client', uid: 'uid-nimal' },
+    { identifier: 'staff@example.com', name: 'Staff', role: 'Sales', uid: 'uid-staff' },
+  ];
+
+  it('lets an Admin pick a login and saves its uid as userId on the customers row', async () => {
+    renderWith({ customers: [nimal], users: logins });
+    selectCustomer('Nimal Fernando');
+
+    const select = screen.getByLabelText('Linked login');
+    const options = within(select).getAllByRole('option').map(o => o.value);
+    expect(options).not.toContain('uid-staff');
+    expect(options[1]).toBe('uid-nimal');
+
+    fireEvent.change(select, { target: { value: 'uid-nimal' } });
+    fireEvent.click(screen.getByText('Link login'));
+
+    await waitFor(() => expect(sync.updateDocument).toHaveBeenCalledWith('customers', '901234567V', { userId: 'uid-nimal' }));
+  });
+
+  it('is not offered to a non-Admin', () => {
+    renderWith({ customers: [nimal], users: logins, currentUser: { role: 'Sales', name: 'S', identifier: 's@example.com' } });
+    selectCustomer('Nimal Fernando');
+    expect(screen.queryByLabelText('Linked login')).toBeNull();
+  });
+});
