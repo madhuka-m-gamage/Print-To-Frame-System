@@ -5,7 +5,7 @@ import { renderWithProviders } from '../helpers/renderWithProviders';
 import { makePartner } from '../helpers/factories';
 
 vi.mock('@/services/firestoreSync', () => ({
-  COLLECTIONS: { PARTNERS: 'partners', LEADS: 'leads', PARTNER_PAYOUTS: 'partner_payouts', REFERRAL_CLAIMS: 'referral_claims', USERS: 'users', PARTNER_APPLICATIONS: 'partner_applications' },
+  COLLECTIONS: { PARTNERS: 'partners', LEADS: 'leads', PARTNER_PAYOUTS: 'partner_payouts', PAYOUT_GUARDS: 'payout_guards', REFERRAL_CLAIMS: 'referral_claims', USERS: 'users', PARTNER_APPLICATIONS: 'partner_applications' },
   subscribeToCollection: vi.fn(() => () => {}),
   subscribeToQuery: vi.fn(() => () => {}),
   addDocument: vi.fn(async () => {}),
@@ -74,8 +74,8 @@ describe('Partners monthly settlements', () => {
     await waitFor(() => expect(toast.success).toHaveBeenCalled());
     expect(sync.batchWrite).toHaveBeenCalledTimes(1);
     const ops = sync.batchWrite.mock.calls[0][0];
-    expect(ops).toHaveLength(3);
-    const [payoutOp, leadOp, partnerOp] = ops;
+    expect(ops).toHaveLength(4);
+    const [payoutOp, guardOp, leadOp, partnerOp] = ops;
     expect(payoutOp).toEqual({
       type: 'set',
       collection: 'partner_payouts',
@@ -90,6 +90,13 @@ describe('Partners monthly settlements', () => {
         createdAt: expect.any(String),
         createdBy: 'admin@example.com',
       },
+    });
+    // MON-11: the create-only guard makes the server refuse a second payout of D-1.
+    expect(guardOp).toEqual({
+      type: 'set',
+      collection: 'payout_guards',
+      docId: 'D-1',
+      data: { payoutId: payoutOp.docId, partnerId: 'P-1', reference: payoutOp.data.reference, createdAt: payoutOp.data.createdAt },
     });
     expect(leadOp).toEqual({ type: 'update', collection: 'leads', docId: 'D-1', data: { payoutStatus: 'Paid', payoutReference: payoutOp.data.reference } });
     expect(partnerOp).toEqual({ type: 'update', collection: 'partners', docId: 'P-1', data: { pending: 4700, settled: 400 } });
