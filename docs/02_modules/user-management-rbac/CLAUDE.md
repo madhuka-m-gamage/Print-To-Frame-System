@@ -14,6 +14,7 @@ Registration queue, admin approval, role and status management, password reset, 
 ## Firestore collections it owns or writes
 
 - `users`, `pendingUsers`, `settings/permissions`, `auditLog`; sets `partner_applications` status.
+- A `pendingUsers` record's `uid` is the login that filed it (SEC-13 rules: create needs doc id = token email and `uid` = auth uid; an applicant update keeps the uid or sets it to their own), so the `uid` an approval hands to the Business Client form is trustworthy.
 
 ## Triggers and side effects
 

@@ -12,7 +12,7 @@ Firebase Auth via Google popup or email / password; an approval gate against `us
 
 ## Firestore collections it owns or writes
 
-- Reads `users`; writes `pendingUsers`, and `users` for bootstrap admins and photo sync; `auditLog` (`LOGIN`, `REGISTER`).
+- Reads `users`; writes `pendingUsers` (always signed in, doc id = the login email, `uid` = the login uid: the rules refuse anything else, SEC-13), and `users` for bootstrap admins and photo sync; `auditLog` (`LOGIN`, `REGISTER`).
 
 ## Triggers and side effects
 
