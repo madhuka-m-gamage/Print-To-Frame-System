@@ -58,10 +58,10 @@ const lead = { id: 'L-7', _firestoreId: 'L-7', name: 'Existing Lead', phone: '+9
 
 beforeEach(() => vi.clearAllMocks());
 
-const openResolve = () => {
+const openResolve = (leads = [lead]) => {
   const setLeads = vi.fn();
   renderWithProviders(
-    <Partners partners={[partner]} setPartners={vi.fn()} leads={[lead]} setLeads={setLeads} invoices={[]} projects={[]} users={[]} setUsers={vi.fn()} currentUser={admin} />,
+    <Partners partners={[partner]} setPartners={vi.fn()} leads={leads} setLeads={setLeads} invoices={[]} projects={[]} users={[]} setUsers={vi.fn()} currentUser={admin} />,
     { role: 'Admin' }
   );
   fireEvent.click(screen.getByRole('button', { name: /Referral Claims/i }));
@@ -114,5 +114,21 @@ describe('Partners claim resolution (FEA-2)', () => {
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
     expect(sync.addDocument).not.toHaveBeenCalled();
     expect(sync.updateDocument).not.toHaveBeenCalled();
+  });
+
+  it('disables leads attributed to another partner and keeps own and unattributed leads selectable (FEA-19)', () => {
+    const others = [
+      lead,
+      { id: 'L-8', _firestoreId: 'L-8', name: 'Taken By Partner', stage: 'Intake', partnerId: 'P-2' },
+      { id: 'L-9', _firestoreId: 'L-9', name: 'Taken By Agent', stage: 'Intake', agentId: 'P-3' },
+      { id: 'L-10', _firestoreId: 'L-10', name: 'Already Ours', stage: 'Intake', partnerId: 'P-1', agentId: 'P-1' },
+    ];
+    const { dialog } = openResolve(others);
+    const option = (id) => within(dialog).getByRole('option', { name: new RegExp(`^${id} `) });
+    expect(option('L-7')).not.toBeDisabled();
+    expect(option('L-10')).not.toBeDisabled();
+    expect(option('L-8')).toBeDisabled();
+    expect(option('L-8').textContent).toMatch(/another partner/i);
+    expect(option('L-9')).toBeDisabled();
   });
 });

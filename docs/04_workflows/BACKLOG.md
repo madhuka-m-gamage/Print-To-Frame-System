@@ -235,6 +235,7 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 ### MON-14: Concurrent payouts of different referrals overwrite the partner balance
 - **Why (found by MON-11, 2026-10-03):** two admins paying out *different* referrals of one partner at the same moment both compute `pending` and `settled` from the screen copy; the later write wins. Lead statuses and payout records stay correct. Payout guards cannot be removed, so a payout reversal would also need an Admin path.
 - **Build:** `increment()` for the balance fields in the payout batch (rules allow the delta), emulator test. **Live:** rules deploy if the rule changes.
+- **Done (2026-10-03):** `handleDisbursePayout` writes `pending: increment(-amount)`, `settled: increment(amount)`. The partners rule already accepted the Admin increment and refuses a Partner's, so `firestore.rules` is unchanged and no rules deploy is needed for this item. `pending` is no longer floored at 0. Tests: component (batch uses increment), rules `payoutGuard.test.js` MON-14 block (both orders, same-referral still refused, Partner refused).
 ## Features
 
 ### FEA-1: Real partner payout (step 4.1, partners D-1)
@@ -365,6 +366,7 @@ Source: `docs/02_modules/notifications/FINDINGS.md`. NOTIF-01 (sign-out leak) is
 ### FEA-19: Claim resolution may link a lead that names another partner
 - **Why (found by FEA-2, 2026-10-03):** the claim modal in `Partners.jsx` links any lead, including one whose `partnerId` already names a different partner, which would move that lead's commission.
 - **Build:** filter or warn on leads already attributed to another partner; component test.
+- **Done (2026-10-03):** the Existing lead options in the claim modal are disabled with "belongs to another partner" when `partnerId` or `agentId` names someone other than the claimant; component test in `Partners.claims.test.jsx`. Only the picker is guarded; the rules do not stop an Admin writing a lead directly.
 ## Security
 
 Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file overrides another; Firestore rules combine with OR, so only a broad `allow` widens access.
