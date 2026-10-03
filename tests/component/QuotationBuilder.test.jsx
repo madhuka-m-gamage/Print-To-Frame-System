@@ -173,6 +173,54 @@ describe('QuotationBuilder quote to invoice (TST-3)', () => {
     expect(sync.updateDocument).not.toHaveBeenCalledWith('quotations', expect.anything(), { status: 'Invoiced' });
   });
 
+  describe('when the invoice save is refused (MON-13)', () => {
+    const cases = [
+      ['Advance', /75% Advance Invoice/, 'generated & linked', 'Accepted'],
+      ['Final', /25% Final Settlement/, 'Final Settlement invoice generated', 'Invoiced'],
+    ];
+    const invoiced = { status: 'Invoiced' };
+    const renderFor = (type, quoteStatus, onSaveInvoice) => {
+      const lead = makeLead({ id: 'L-9' });
+      const target = type === 'Final' ? makeDeal({ lead, id: 'D-9', jobNo: 'PTF-7' }) : lead;
+      return render(target, { allQuotations: [quoteFor(lead, { status: quoteStatus })], onSaveInvoice });
+    };
+
+    it.each(cases)('%s: a false result shows no success toast and leaves the quote alone', async (_type, button, successText, quoteStatus) => {
+      const onSaveInvoice = vi.fn(async () => false);
+      renderFor(_type, quoteStatus, onSaveInvoice);
+      fireEvent.click(screen.getByRole('button', { name: button }));
+      await waitFor(() => expect(onSaveInvoice).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(screen.getByRole('button', { name: button }).disabled).toBe(false));
+      expect(toast.success.mock.calls.some(([m]) => String(m).includes(successText))).toBe(false);
+      expect(sync.updateDocument).not.toHaveBeenCalledWith('quotations', expect.anything(), invoiced);
+    });
+
+    it.each(cases)('%s: a rejected save shows an error and no success toast', async (_type, button, successText, quoteStatus) => {
+      const onSaveInvoice = vi.fn(async () => { throw new Error('boom'); });
+      renderFor(_type, quoteStatus, onSaveInvoice);
+      fireEvent.click(screen.getByRole('button', { name: button }));
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('boom')));
+      expect(toast.success.mock.calls.some(([m]) => String(m).includes(successText))).toBe(false);
+      expect(sync.updateDocument).not.toHaveBeenCalledWith('quotations', expect.anything(), invoiced);
+    });
+
+    it('Advance: a true result still toasts success and marks the quote Invoiced', async () => {
+      const onSaveInvoice = vi.fn(async () => true);
+      const lead = makeLead({ id: 'L-9' });
+      render(lead, { allQuotations: [quoteFor(lead)], onSaveInvoice });
+      fireEvent.click(screen.getByRole('button', { name: /75% Advance Invoice/ }));
+      await waitFor(() => expect(sync.updateDocument).toHaveBeenCalledWith('quotations', 'QT-000001', invoiced));
+      expect(toast.success).toHaveBeenCalledWith('75% Advance invoice generated & linked!');
+    });
+
+    it('Final: a true result still toasts success', async () => {
+      const onSaveInvoice = vi.fn(async () => true);
+      renderFor('Final', 'Invoiced', onSaveInvoice);
+      fireEvent.click(screen.getByRole('button', { name: /25% Final Settlement/ }));
+      await waitFor(() => expect(toast.success).toHaveBeenCalledWith('25% Final Settlement invoice generated & linked!'));
+    });
+  });
+
   it('does not double-raise an invoice while the first is still being numbered', async () => {
     let release;
     sync.generateInvoiceId.mockImplementationOnce(() => new Promise((resolve) => { release = resolve; }));
