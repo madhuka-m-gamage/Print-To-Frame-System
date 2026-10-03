@@ -18,6 +18,8 @@ vi.mock('@/services/firebase', () => ({
 vi.mock('firebase/firestore', () => ({
   doc: vi.fn((_db, ...parts) => ({ path: parts.join('/') })),
   collection: vi.fn((_db, name) => ({ path: name })),
+  query: vi.fn((ref, ...constraints) => ({ ref, constraints })),
+  where: vi.fn((field, op, value) => ({ field, op, value })),
   getDoc: vi.fn(async () => ({ exists: () => true, data: () => ({ identifier: 'sales@example.com', name: 'Sales', role: 'Sales', isApproved: true, status: 'Active' }) })),
   getDocs: vi.fn(async () => ({ docs: [], forEach: () => {} })),
   setDoc: vi.fn(async () => {}),
@@ -30,6 +32,7 @@ vi.mock('firebase/firestore', () => ({
 vi.mock('@/services/firestoreSync', () => ({
   COLLECTIONS: { INVOICES: 'invoices', INVOICE_GUARDS: 'invoice_guards', LEADS: 'leads' },
   subscribeToCollection: vi.fn(() => () => {}),
+  subscribeToQuery: vi.fn(() => () => {}),
   addDocument: vi.fn(async () => {}), updateDocument: vi.fn(async () => {}), batchWrite: vi.fn(async () => {}),
   generateInvoiceId: vi.fn(async () => 'INV-ADV-0001'), deriveReceiptId: vi.fn((id) => `REC-${id}`),
   createDocumentIfAbsent: vi.fn(async () => {}),

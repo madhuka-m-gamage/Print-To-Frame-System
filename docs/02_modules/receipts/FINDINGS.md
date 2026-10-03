@@ -182,6 +182,7 @@ match /receipts/{receiptId} {
      - `cleanReceipt` does not save a `customerId` field.
      - `invoice.partnerId` is not populated on invoices, leaving `receipt.partnerId` as `""`.
      - System partner IDs are formatted as code strings (`PTF-P1001`), not email addresses (`request.auth.token.email`).
+   - **`partnerId` clause resolved (SEC-14, 2026-10-03, rules not deployed):** removed; a Partner reads the receipts of its referred leads through `leadId` instead. The `customerId` clause is unchanged here.
 3. **Manager Delete Rejection:**
    - `PermissionsContext.jsx` grants `Manager` delete rights on receipts.
    - `firestore.rules` enforces `allow delete: if isAdmin()`, causing silent failures or permission exceptions when Managers attempt receipt deletion.
