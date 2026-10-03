@@ -26,3 +26,4 @@ Receipts are proof-of-payment records generated from a Paid invoice; the id is d
 - Id mapping: `INV-ADV-0007` -> `REC-ADV-0007`; other ids become `REC-<invoiceId>`.
 
 - A receipt can only be generated for a Paid invoice (`handleGenerateReceipt` in `src/App.jsx`), for the full invoice amount (the field is read-only), with optional notes. Invoices raised from deals, quotations and fabrication carry `partnerId` so receipts inherit it.
+- SEC-14 (rules not deployed): a receipt is readable by the referring partner of the lead its `leadId` names (copied from the invoice by `handleGenerateReceipt`; keep it set). `partnerId` grants nothing in the rules. The app does not subscribe a Partner to receipts yet.
