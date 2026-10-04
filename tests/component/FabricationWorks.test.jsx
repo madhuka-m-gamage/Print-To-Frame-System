@@ -339,11 +339,37 @@ describe('FEA-5 inspection follow-ups', () => {
     expect(screen.getByRole('button', { name: /Send email/i })).toBeInTheDocument();
   });
 
-  it('tells the user when no client email is on file instead of opening the preview', () => {
-    renderWith('Completed', { clientNIC: 'nobody' });
+  it('tells the user to register the customer when no customer record matches', () => {
+    renderWith('Completed', { clientNIC: 'nobody', customerName: 'Kasun Perera' });
+    fireEvent.click(screen.getByTitle('Email client: QA passed'));
+    expect(toast.error).toHaveBeenCalledWith('No customer record for Kasun Perera; register the customer first.');
+    expect(screen.queryByRole('button', { name: /Send email/i })).toBeNull();
+    expect(sendTemplatedEmail).not.toHaveBeenCalled();
+  });
+
+  it('tells the user when the matched customer has no email', () => {
+    renderWith('Completed', { clientNIC: '901234567V' }, { customers: [{ nic: '901234567V', name: 'Kasun' }] });
     fireEvent.click(screen.getByTitle('Email client: QA passed'));
     expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/no email/i));
     expect(screen.queryByRole('button', { name: /Send email/i })).toBeNull();
+  });
+
+  it('sends to the stored customer email when the job AUTO NIC differs from the customer (FEA-20)', async () => {
+    renderWith('Completed', { customerName: 'Kasun Perera', clientNIC: 'AUTO-222222', customerId: 'kasun.perera@example.com' },
+      { customers: [{ nic: 'AUTO-111111', name: 'Kasun Perera', email: 'Kasun.Perera@Example.com' }] });
+    fireEvent.click(screen.getByTitle('Email client: QA passed'));
+    fireEvent.click(await screen.findByRole('button', { name: /Send email/i }));
+    await waitFor(() => expect(sendTemplatedEmail).toHaveBeenCalledTimes(1));
+    expect(sendTemplatedEmail.mock.calls[0][0]).toBe('Kasun.Perera@Example.com');
+  });
+
+  it('no longer falls back to the deal email when no customer record matches (FEA-20)', () => {
+    renderWith('Completed', { customerName: 'Kasun Perera', clientNIC: 'AUTO-222222', dealId: 'D-77' },
+      { deals: [{ id: 'D-77', email: 'lead-only@example.com' }] });
+    fireEvent.click(screen.getByTitle('Email client: QA passed'));
+    expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/register the customer first/));
+    expect(screen.queryByRole('button', { name: /Send email/i })).toBeNull();
+    expect(sendTemplatedEmail).not.toHaveBeenCalled();
   });
 
   it('offers the email button only on Completed jobs', () => {
