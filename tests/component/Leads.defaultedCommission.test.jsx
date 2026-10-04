@@ -77,6 +77,24 @@ describe('Applying pricing notifies Admins and Managers (MON-7)', () => {
     expect(calls[0][1]).toMatchObject({ type: 'commission', read: false });
   });
 
+  it('does not notify again when pricing is re-applied before a save (MON-16)', async () => {
+    const partner = makePartner({ id: 'P-1', partnerId: 'P-1', commissionRate: 0 });
+    apply(makeLead({ source: 'Referral', partnerId: 'P-1', agentId: 'P-1' }), [partner]);
+    await waitFor(() => expect(sync.addDocument).toHaveBeenCalledTimes(3));
+    fireEvent.click(screen.getByText('Apply Calculator Results to Lead Quotation'));
+    fireEvent.click(screen.getByText('Apply Calculator Results to Lead Quotation'));
+    await new Promise(r => setTimeout(r, 20));
+    expect(sync.addDocument).toHaveBeenCalledTimes(3);
+  });
+
+  it('does not notify for a lead already flagged as defaulted (MON-16)', async () => {
+    const partner = makePartner({ id: 'P-1', partnerId: 'P-1', commissionRate: 0 });
+    apply(makeLead({ source: 'Referral', partnerId: 'P-1', agentId: 'P-1', pricingMetadata: { commissionRateDefaulted: true } }), [partner]);
+    await screen.findByText(/Calculated Final Amount/);
+    await new Promise(r => setTimeout(r, 20));
+    expect(sync.addDocument).not.toHaveBeenCalled();
+  });
+
   it('writes none when the partner has a rate', async () => {
     const partner = makePartner({ id: 'P-2', partnerId: 'P-2', commissionRate: 45 });
     apply(makeLead({ source: 'Referral', partnerId: 'P-2', agentId: 'P-2' }), [partner]);

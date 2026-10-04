@@ -435,6 +435,7 @@ export default function LeadCardDetails({
 
   const applyPricingToLead = () => {
     if (activePricing) {
+      const wasDefaulted = formData.pricingMetadata?.commissionRateDefaulted === true;
       const fixedValue = Number(activePricing.finalAmount.toFixed(2));
       setFormData(prev => ({
         ...prev,
@@ -452,6 +453,7 @@ export default function LeadCardDetails({
         toast.warning(`No commission rate on file for this partner, so LKR ${DEFAULT_REFERRAL_COMMISSION_RATE.toFixed(2)} per sq ft was used.`, {
           description: 'An Admin or Manager should check and update the partner\'s rate.'
         });
+        if (wasDefaulted) return;
         const recipients = new Map(users
           .filter(u => ['Admin', 'Manager'].includes(u.role) && u.status === 'Active' && u.identifier)
           .map(u => [String(u.identifier).toLowerCase(), u.role]));
