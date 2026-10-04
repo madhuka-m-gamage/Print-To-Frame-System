@@ -1,0 +1,19 @@
+{
+  "baseBranch": "staging",
+  "productionBranch": "main",
+  "branchPattern": "claude/<id>-<topic>",
+  "trackerFiles": {
+    "plan": "PLAN.md",
+    "backlog": "docs/04_workflows/BACKLOG.md",
+    "testingGuide": "docs/04_workflows/TESTING.md",
+    "changelog": "CHANGELOG.md"
+  },
+  "changeFragmentDir": "docs/04_workflows/changes",
+  "localChecks": ["npm run lint"],
+  "fullGate": "CI on the pull request (unit, API, component, rules); never merge before CI has finished",
+  "testSlots": { "prefix": "node tests/tools/testSlot.mjs {slot} --", "count": 4 },
+  "finalChecks": ["npm run test:e2e"],
+  "prerequisites": ["java -version"],
+  "extraHardRules": ["no firebase deploy, console or config changes"],
+  "maxLanesPerWorkflow": 2
+}

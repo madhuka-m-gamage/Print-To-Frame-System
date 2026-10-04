@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `agent-run` is now a user-level skill (`~/.claude/skills/agent-run/`) that reads a per-project profile; this repo's profile is `.claude/agent-run.json` and its model policy and evidence log are `.claude/agent-run/model-policy.md` (docs and config only, no app code). The repo copy of the skill in `.claude/skills/agent-run/` stays until the global one is confirmed to win in a new session.
+
 - TST-5 (owner-approved P6): `vitest.config.js` sets `hookTimeout` to 60 s so a rules file's `setupRulesEnv` survives parallel emulator lanes; P7 (brief wording for `set_monitor`) declined. Unit +1.
 
 - Usage estimation moved to a user-level `usage-estimate` skill (docs and skill text only): one rate of $0.305 per 1% of the 5-hour window in API-priced dollars (back-tested within ±10 points on 18 meter gaps), replacing the per-model token rates in `agent-run`; the skill's Rates section, plan-template sections 14-15 and review-checklist section 3 now call it. The statusline now also logs the meter to `~/.claude/usage-estimate/meter.jsonl` for later calibration.
