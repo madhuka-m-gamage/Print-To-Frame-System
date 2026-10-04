@@ -67,7 +67,7 @@ Flagged (more than 30% off): SEC-6 (−60%), FEA-20 (−31%), MON-16 (−40%), r
 
 **Tuning**
 1. Adopted: P1-P6 (see git history of this section).
-2. Not yet: +30% for four emulator lanes; two-lane runs need no uplift (B5).
-3. Not yet: re-run `usage.py calibrate`; B5 cost $0.53 per meter-1% vs the $0.305 fit.
-4. Not yet: the workflow tool refuses a `scriptPath` in the plugin cache; the orchestrator copied the template into the working tree. Skill fix proposed.
+2. Adopted 2026-10-04: two-lane runs need no time uplift (B5); not yet: +30% for four emulator lanes (no time model).
+3. In progress: statusLine now runs the usage-estimate logger (2026-10-04, chains the previous statusline); `usage.py calibrate` next session once `~/.claude/usage-estimate/meter.jsonl` has readings. B5 cost $0.53 per meter-1% vs the $0.305 fit; B5 follow-up (SEC-16, DOC-LIVE1, final) moved the meter 47% → 62%.
+4. Adopted 2026-10-04: agent-run launches the workflow from a copy of the template in the working directory and the review deletes it (madhuka-m-gamage/Claude#6, global-skills 1.0.1; reaches the installed plugin after that repo's staging → main promotion).
 5. Not yet: merging `coverage:all` reports; equal Sonnet·low/medium option costs; review fallback when the final docs PR is already merged.
