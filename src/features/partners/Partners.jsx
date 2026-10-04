@@ -26,7 +26,7 @@ import {
   COLLECTIONS
 } from '@/services/firestoreSync';
 import { partnerFieldsFor } from './partnerLink';
-import { buildPayout } from './payout';
+import { buildPayout, roundCents } from './payout';
 import { formatPhone, validatePhone, validateEmail } from '@/shared/utils/validation';
 import { exportToCsv } from '@/shared/utils/csvExport';
 import { usePermissions } from '@/context/PermissionsContext';
@@ -331,6 +331,11 @@ export default function Partners({
       toast.info(`No eligible commission to disburse for ${partner.name}`);
       return;
     }
+    const pending = roundCents(Number(partner.pending) || 0);
+    if (amount > pending) {
+      toast.error(`Payout of LKR ${amount.toLocaleString()} for ${partner.name} is larger than the pending balance of LKR ${pending.toLocaleString()}; nothing was recorded.`);
+      return;
+    }
 
     const reference = 'TXN-' + String(Date.now()).slice(-6);
     const partnerDocId = partner._firestoreId || partner.id || partner.partnerId;
@@ -375,7 +380,9 @@ export default function Partners({
       ]);
     } catch (err) {
       console.error('Payout error:', err);
-      toast.error(`Payout for ${partner.name} failed; nothing was recorded.`);
+      toast.error(err?.code === 'permission-denied'
+        ? `Payout for ${partner.name} was refused: a referral was already paid or the pending balance is too low. Nothing was recorded.`
+        : `Payout for ${partner.name} failed; nothing was recorded.`);
       return;
     } finally {
       setDisbursingPartnerId(null);

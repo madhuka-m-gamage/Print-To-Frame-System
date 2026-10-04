@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildPayout } from '@/features/partners/payout';
+import { buildPayout, roundCents } from '@/features/partners/payout';
 
 const partner = { partnerId: 'P-1', name: 'Lanka Art Studio', pending: 1000 };
 const eligible = (id, amount, extra = {}) => ({
@@ -52,5 +52,13 @@ describe('buildPayout', () => {
 
   it('treats a missing calculatedCommAmount as zero', () => {
     expect(buildPayout([eligible('D-1', undefined)], partner)).toEqual({ leads: [expect.objectContaining({ id: 'D-1' })], amount: 0, leadIds: ['D-1'] });
+  });
+});
+
+describe('roundCents (MON-15)', () => {
+  it('rounds to two decimals and removes float drift', () => {
+    expect(roundCents(0.1 + 0.2)).toBe(0.3);
+    expect(roundCents(30.369)).toBe(30.37);
+    expect(roundCents(535)).toBe(535);
   });
 });

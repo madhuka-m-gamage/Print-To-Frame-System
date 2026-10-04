@@ -57,11 +57,11 @@ describe('Partners monthly settlements', () => {
   const deal = { id: 'D-1', _firestoreId: 'D-1', name: 'Deal Client', partnerId: 'P-1', source: 'Referral', stage: 'Completed', isDeal: true, originalLeadId: 'L-1', value: 1000, totalSqFt: 10 };
   const paidInvoices = [{ id: 'INV-ADV-1', leadId: 'L-1', amount: 750, status: 'Paid' }, { id: 'INV-FIN-1', leadId: 'D-1', amount: 250, status: 'Paid' }];
 
-  const renderSettlements = ({ leads = [deal], invoices = paidInvoices } = {}) => {
+  const renderSettlements = ({ leads = [deal], invoices = paidInvoices, partners = [partner] } = {}) => {
     const setLeads = vi.fn();
     const setPartners = vi.fn();
     renderWithProviders(
-      <Partners partners={[partner]} setPartners={setPartners} leads={leads} setLeads={setLeads} invoices={invoices} projects={[]} users={[]} setUsers={vi.fn()} currentUser={admin} />,
+      <Partners partners={partners} setPartners={setPartners} leads={leads} setLeads={setLeads} invoices={invoices} projects={[]} users={[]} setUsers={vi.fn()} currentUser={admin} />,
       { role: 'Admin' }
     );
     fireEvent.click(screen.getByRole('button', { name: /Monthly Settlements/i }));
@@ -131,6 +131,25 @@ describe('Partners monthly settlements', () => {
     expect(setLeads).not.toHaveBeenCalled();
     expect(setPartners).not.toHaveBeenCalled();
     expect(logActivity).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  // MON-15: increments do not clamp, so a payout larger than the live pending balance is refused before any write.
+  it('refuses a payout larger than the partner pending balance and writes nothing', async () => {
+    const { setLeads, setPartners, button } = renderSettlements({ partners: [{ ...partner, pending: 200 }] });
+    fireEvent.click(button);
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/pending balance/i)));
+    expect(sync.batchWrite).not.toHaveBeenCalled();
+    expect(setLeads).not.toHaveBeenCalled();
+    expect(setPartners).not.toHaveBeenCalled();
+    expect(logActivity).not.toHaveBeenCalled();
+  });
+
+  it('explains a batch the server refused instead of a generic failure', async () => {
+    sync.batchWrite.mockRejectedValueOnce(Object.assign(new Error('Missing or insufficient permissions.'), { code: 'permission-denied' }));
+    const { button } = renderSettlements();
+    fireEvent.click(button);
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/refused/i)));
     expect(toast.success).not.toHaveBeenCalled();
   });
 
