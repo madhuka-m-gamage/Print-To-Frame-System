@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- TST-5 (owner-approved P6): `vitest.config.js` sets `hookTimeout` to 60 s so a rules file's `setupRulesEnv` survives parallel emulator lanes; P7 (brief wording for `set_monitor`) declined. Unit +1.
+
 - Usage estimation moved to a user-level `usage-estimate` skill (docs and skill text only): one rate of $0.305 per 1% of the 5-hour window in API-priced dollars (back-tested within ±10 points on 18 meter gaps), replacing the per-model token rates in `agent-run`; the skill's Rates section, plan-template sections 14-15 and review-checklist section 3 now call it. The statusline now also logs the meter to `~/.claude/usage-estimate/meter.jsonl` for later calibration.
 
 - Wave B run B4 review (docs only): Run calibration rewritten (power-off, relaunch from saved patches, 80 min, meter +66%; per-model token rates replaced by a mixed rate); new BACKLOG items MON-15, MON-16, FEA-20, TST-5; skill proposals P5-P7 for the owner. P1 and P2 worked: no `staging` break, disjoint fragment folds.
