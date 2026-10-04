@@ -259,6 +259,7 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 ### MON-17: Partner Edit modal writes stale balances
 - **Why (found by MON-15, 2026-10-04):** the staff Edit modal's `handleSavePartnerDetails` (`Partners.jsx`) spreads the whole `editFormData`, including `pending` and `settled` as loaded, so saving a profile edit overwrites a payout or accrual made since the modal opened.
 - **Build:** save only the edited profile fields (leave `pending`, `settled` and `totalSqFt` out of the update); component test.
+- **Done (MON-17, 2026-10-04):** checked first: the Edit modal has no input for `pending`, `settled` or `totalSqFt`, so nothing relied on it and all three are omitted. Component test added (payload has none of the keys; local merge keeps current balances).
 ## Features
 
 ### FEA-1: Real partner payout (step 4.1, partners D-1)
