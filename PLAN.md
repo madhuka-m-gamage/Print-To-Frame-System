@@ -35,7 +35,7 @@ One item per fresh session: branch `claude/<topic>` from `staging` → tests fir
 | Wave A2 | `[##########]` 4/4 | MON-8, ENG-7, FEA-13, FEA-12 done |
 | Wave A4 | `[----------]` 0/1 | MON-10 found in Wave A3; needs the owner |
 | Wave A3 | `[##########]` 2/2 | MON-9, FEA-14 done; FEA-15 split out to Wave B and now done; next up: Wave B (needs the rules deploy), Wave D with the owner |
-| Wave B | `[#########-]` 24/27 | FEA-1, SEC-7, SEC-12, SEC-8, FEA-4, FEA-15, FEA-16, MON-4, MON-11, FEA-2, SEC-13, SEC-14, FEA-17, MON-12, MON-13, FEA-5, MON-14, FEA-19, FEA-18, FEA-7, MON-7, SEC-15, SEC-6, SEC-16 done, plus the B5 follow-ups MON-15, MON-16, FEA-20 (rules not deployed, owner step); next up: MON-5, FEA-9, FEA-10 |
+| Wave B | `[#########-]` 24/27 | FEA-1, SEC-7, SEC-12, SEC-8, FEA-4, FEA-15, FEA-16, MON-4, MON-11, FEA-2, SEC-13, SEC-14, FEA-17, MON-12, MON-13, FEA-5, MON-14, FEA-19, FEA-18, FEA-7, MON-7, SEC-15, SEC-6, SEC-16 done, plus the B5 follow-ups MON-15, MON-16, FEA-20, FEA-21, MON-17 (rules not deployed, owner step); next up: MON-5, FEA-9, FEA-10 |
 | Waves D, E | `[----------]` 0% | Wave D needs the owner; ENG-6 re-checked, open until LIVE-3 |
 | Wave C | `[##########]` 1/1 | TST-2 done |
 
