@@ -51,6 +51,7 @@ import { sendTemplatedEmail } from '@/services/mailer';
 import { EMAIL_TEMPLATES, interpolateTemplate } from '@/constants/emailTemplates';
 import { NON_BILLABLE, resolveManualJobLink, cancelledProjectBlock, archiveBlock } from './fabricationLink';
 import { checklistWithGuardedQa, withDefectRecorded } from './qaGate';
+import { resolveQaRecipient } from './qaRecipient';
 import { buildLogisticsTask } from '@/features/logistics/logisticsTask';
 import { STEEL_PROFILES, calculateCutList, mmToFtIn } from './cutListEngine';
 import { splitInvoiceAmounts } from '@/features/quotations/splitInvoiceAmounts';
@@ -1039,11 +1040,13 @@ export default function FabricationWorks({
   };
 
   const handleOpenQaEmail = (job) => {
-    const nic = job.clientNIC || job.customerNic;
-    const customer = customers?.find(c => c.nic === nic);
-    const deal = findLinkedDeal(job);
-    const to = String(customer?.email || deal?.email || '').trim();
-    if (!to) {
+    const customer = resolveQaRecipient(job, customers);
+    if (!customer) {
+      toast.error(`No customer record for ${job.customerName || job.jobNo}; register the customer first.`);
+      return;
+    }
+    const to = customer.email || '';
+    if (!to.trim()) {
       toast.error(`No email on file for the client of ${job.jobNo}. Add one on the customer record first.`);
       return;
     }
