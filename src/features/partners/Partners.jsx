@@ -578,10 +578,11 @@ export default function Partners({
     if (!editFormData || !selectedPartner) return;
     setIsSavingPartner(true);
     try {
+      const { pending, settled, totalSqFt, ...profileFields } = editFormData;
       const payload = isPartnerUser
         ? Object.fromEntries(PARTNER_EDITABLE_FIELDS.filter((key) => key in editFormData).map((key) => [key, editFormData[key]]))
         : {
-            ...editFormData,
+            ...profileFields,
             commissionRate: Number(editFormData.commissionRate) || DEFAULT_REFERRAL_COMMISSION_RATE,
           };
       const docId = selectedPartner._firestoreId || selectedPartner.id || selectedPartner.partnerId;

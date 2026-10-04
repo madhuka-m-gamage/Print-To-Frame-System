@@ -266,4 +266,23 @@ describe('Partners public profile mirror', () => {
     expect(publicOp).toEqual({ type: 'set', collection: 'partner_public', docId: 'P-1', data: { name: 'Lanka Art Studio', status: 'Inactive', logo: 'logo.png' } });
     expect(sync.updateDocument).not.toHaveBeenCalled();
   });
+  // MON-17: the form holds balances as loaded; a payout since then must survive a profile edit.
+  it('a staff Edit save leaves pending, settled and totalSqFt out of the update', async () => {
+    const setPartners = vi.fn();
+    const partner = makePartner({ partnerId: 'P-1', _firestoreId: 'P-1', id: 'P-1', name: 'Lanka Art Studio', pending: 5000, settled: 100, totalSqFt: 40 });
+    renderWithProviders(
+      <Partners partners={[partner]} setPartners={setPartners} leads={[]} setLeads={vi.fn()} invoices={[]} projects={[]} users={[]} setUsers={vi.fn()} currentUser={admin} />,
+      { role: 'Admin' }
+    );
+    fireEvent.click(screen.getAllByRole('button', { name: /^Edit$/ })[0]);
+    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
+
+    await vi.waitFor(() => expect(sync.batchWrite).toHaveBeenCalledTimes(1));
+    const [partnerOp] = sync.batchWrite.mock.calls[0][0];
+    for (const key of ['pending', 'settled', 'totalSqFt']) expect(partnerOp.data).not.toHaveProperty(key);
+
+    const updater = setPartners.mock.calls[0][0];
+    const current = { ...partner, pending: 3000, settled: 2100, totalSqFt: 55 };
+    expect(updater([current])[0]).toMatchObject({ pending: 3000, settled: 2100, totalSqFt: 55 });
+  });
 });
