@@ -39,4 +39,14 @@ describe('FabricationCardDetails (Phase 7 6.4c)', () => {
     expect(screen.getByDisplayValue('1219')).toHaveProperty('readOnly', true);
     expect(screen.getByDisplayValue('914')).toHaveProperty('readOnly', true);
   });
+
+  it('shows the customer record when the job NIC differs but the customer id matches (FEA-21)', () => {
+    const customer = { nic: 'AUTO-CUST', email: 'kasun@example.com', name: 'Kasun Registered' };
+    renderWithProviders(
+      <FabricationCardDetails job={makeProject({ jobNo: 'PTF-1', status: 'Ongoing', clientNIC: 'AUTO-JOB', customerId: 'kasun@example.com', customerName: 'Typed Name' })} onClose={vi.fn()} onSave={vi.fn()} customers={[customer]} />,
+      { role: 'Operations' }
+    );
+    expect(screen.getAllByText('Kasun Registered').length).toBeGreaterThan(0);
+    expect(screen.queryAllByText('Typed Name')).toHaveLength(0);
+  });
 });

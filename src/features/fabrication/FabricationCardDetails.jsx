@@ -38,6 +38,7 @@ import { toast } from '@/shared/utils/toast';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/services/firebase';
 import { stripEmojis, sanitizeTechnicalScope } from '@/shared/utils/validation';
+import { resolveQaRecipient } from './qaRecipient';
 import { calculateCutList, defaultFrameDimensions, mmToFtIn, STEEL_PROFILES } from './cutListEngine';
 
 export default function FabricationCardDetails({ 
@@ -198,7 +199,7 @@ export default function FabricationCardDetails({
     onClose();
   };
 
-  const client = customers.find(c => c.nic === job.customerNic || c.nic === job.clientNIC);
+  const client = resolveQaRecipient(job, customers);
   const clientName = client?.name || client?.businessName || job.customerName || "Direct Customer";
   const clientPhone = client?.phone || job.phone || "N/A";
   const clientNic = client?.nic || job.customerNic || job.clientNIC || "N/A";
