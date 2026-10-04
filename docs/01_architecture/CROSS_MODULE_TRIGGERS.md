@@ -77,7 +77,7 @@ Link fields: invoice `quotationId`; lead / deal / job ids (`leadId`, `dealId`, `
 
 | Step | Trigger | Function | Effect |
 |---|---|---|---|
-| 6a | Client submits the public referral form | `ReferralForm.jsx` | Lead `source: 'Referral'`, stage Intake, tagged with the partner id and rate |
+| 6a | Client submits the public referral form | `ReferralForm.jsx` | Lead `source: 'Referral'`, stage Intake, tagged with the partner id, `commissionRate: 0`; the partner name comes from `partner_public/{ref}` (SEC-6) |
 | 6b | Deal moves from Hand Over to Completed | `Deals.jsx` | `partners.pending += totalSqFt * commissionRate` (default `DEFAULT_REFERRAL_COMMISSION_RATE`, LKR 38.00 / sq ft) |
 | 6c | Advance and Final both Paid | `handleMarkInvoicePaid` | `referralStatus: 'Eligible for Payout'`; one-time `commission` notification written to the `notifications` collection for the partner's `email` (persisted, FEA-2; skipped when the partner has no email) |
 | 6d | Admin clicks "Disburse Payout" | `Partners.jsx` `handleDisbursePayout` (FEA-1) | One `batchWrite`: `partner_payouts` record (`TXN-######`), `payoutStatus: 'Paid'` on each eligible lead, partner `pending` reduced and `settled` increased; `PAYOUT_DISBURSED` audit entry |

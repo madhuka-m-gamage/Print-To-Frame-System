@@ -8,7 +8,7 @@ import {
   Lock, KeyRound
 } from 'lucide-react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, query, where, increment } from 'firebase/firestore';
+import { collection, query, where, increment, serverTimestamp } from 'firebase/firestore';
 import { db, storage } from '@/services/firebase';
 import { toast } from '@/shared/utils/toast';
 import DeleteModal from '@/shared/components/DeleteModal';
@@ -27,6 +27,7 @@ import {
 } from '@/services/firestoreSync';
 import { partnerFieldsFor } from './partnerLink';
 import { buildPayout, roundCents } from './payout';
+import { partnerPublicOps } from './partnerPublic';
 import { formatPhone, validatePhone, validateEmail } from '@/shared/utils/validation';
 import { exportToCsv } from '@/shared/utils/csvExport';
 import { usePermissions } from '@/context/PermissionsContext';
@@ -425,7 +426,10 @@ export default function Partners({
     if (selectedPartner) {
       const docId = selectedPartner._firestoreId || selectedPartner.id || selectedPartner.partnerId;
       try {
-        await updateDocument(COLLECTIONS.PARTNERS, docId, { photoURL: croppedBase64 });
+        await batchWrite([
+          { type: 'update', collection: COLLECTIONS.PARTNERS, docId, data: { photoURL: croppedBase64 } },
+          ...partnerPublicOps(docId, { ...selectedPartner, photoURL: croppedBase64 }, { asOwner: isPartnerUser }),
+        ]);
         if (setPartners) {
           setPartners(prev => prev.map(p => (p.id === docId || p.partnerId === selectedPartner.partnerId) ? { ...p, photoURL: croppedBase64 } : p));
         }
@@ -502,7 +506,10 @@ export default function Partners({
     };
 
     try {
-      await addDocument(COLLECTIONS.PARTNERS, partnerPayload, partnerId);
+      await batchWrite([
+        { type: 'set', collection: COLLECTIONS.PARTNERS, docId: partnerId, data: { ...partnerPayload, createdAt: serverTimestamp() } },
+        ...partnerPublicOps(partnerId, partnerPayload),
+      ]);
       if (setPartners) {
         setPartners(prev => [...prev, { ...partnerPayload, id: partnerId }]);
       }
@@ -578,7 +585,10 @@ export default function Partners({
             commissionRate: Number(editFormData.commissionRate) || DEFAULT_REFERRAL_COMMISSION_RATE,
           };
       const docId = selectedPartner._firestoreId || selectedPartner.id || selectedPartner.partnerId;
-      await updateDocument(COLLECTIONS.PARTNERS, docId, payload);
+      await batchWrite([
+        { type: 'update', collection: COLLECTIONS.PARTNERS, docId, data: payload },
+        ...partnerPublicOps(docId, { ...selectedPartner, ...payload }, { asOwner: isPartnerUser }),
+      ]);
 
       if (setPartners) {
         setPartners(prev => prev.map(p => (p.id === docId || p.partnerId === selectedPartner.partnerId) ? { ...p, ...payload } : p));
@@ -611,7 +621,10 @@ export default function Partners({
     const matchingUser = email ? users.find(u => u.identifier?.toLowerCase() === email && u.role === 'Partner') : null;
 
     try {
-      await deleteDocument(COLLECTIONS.PARTNERS, deletePartnerId);
+      await batchWrite([
+        { type: 'delete', collection: COLLECTIONS.PARTNERS, docId: deletePartnerId },
+        ...partnerPublicOps(deletePartnerId, null),
+      ]);
       if (setPartners) {
         setPartners(prev => prev.filter(p => (p._firestoreId !== deletePartnerId && p.id !== deletePartnerId && p.partnerId !== deletePartnerId)));
       }

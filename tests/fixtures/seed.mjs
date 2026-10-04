@@ -92,6 +92,8 @@ await db.doc('partners/P-1001').set({
   contactPerson: 'Nimal', phone: '+9471 234 5678', email: SEED_USERS.partner, address: 'Colombo',
   commissionRate: 53.5, status: 'Active', createdAt: now,
 });
+// SEC-6: the public mirror the anonymous referral form reads.
+await db.doc('partner_public/P-1001').set({ name: 'Seed Art Studio', status: 'Active', logo: '', updatedAt: now });
 
 await db.doc('customers/NIC-900000001V').set({
   id: 'NIC-900000001V', nic: '900000001V', name: 'Kasun Perera', email: 'kasun@example.com',

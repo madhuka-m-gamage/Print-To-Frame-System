@@ -64,7 +64,9 @@ vi.mock('@/features/messaging/MessagingContext', () => ({
 }));
 
 const { default: App } = await import('@/App');
-const { updateDocument } = await import('@/services/firestoreSync');
+const { updateDocument, batchWrite } = await import('@/services/firestoreSync');
+
+const partnerBatches = () => batchWrite.mock.calls.map(([ops]) => ops).filter((ops) => ops.some((op) => op.collection === 'partners'));
 const { updateDoc, getDocs, where } = await import('firebase/firestore');
 const { auth } = await import('@/services/firebase');
 
@@ -79,7 +81,7 @@ beforeEach(() => {
 describe('Partner profile save', () => {
   // profile-settings FINDINGS decision 2: handleUpdateUser in App.jsx is the one path
   // that mirrors a Partner's profile into partners; UserProfile.jsx no longer writes it.
-  it('updates the partners record once, through handleUpdateUser, with phone, address and company', async () => {
+  it('updates the partners record once, through handleUpdateUser, with phone, address and company, plus its public mirror (SEC-6)', async () => {
     render(<PermissionsProvider><App /></PermissionsProvider>);
     await waitFor(() => expect(authState.callback).toBeTruthy());
     await act(async () => { await authState.callback({ email: 'partner@example.com', displayName: 'Kasun Studio' }, 'token'); });
@@ -87,13 +89,14 @@ describe('Partner profile save', () => {
     fireEvent.click(await screen.findByTitle('My Profile'));
     fireEvent.click(await screen.findByText('Save Profile Changes'));
 
-    await waitFor(() => expect(updateDocument).toHaveBeenCalled());
-    const partnerWrites = updateDocument.mock.calls.filter(([name]) => name === 'partners');
-    expect(partnerWrites).toHaveLength(1);
-    expect(partnerWrites[0][1]).toBe('partner-doc-1');
-    expect(partnerWrites[0][2]).toEqual(expect.objectContaining({
+    await waitFor(() => expect(partnerBatches()).toHaveLength(1));
+    expect(updateDocument.mock.calls.filter(([name]) => name === 'partners')).toHaveLength(0);
+    const [partnerOp, publicOp] = partnerBatches()[0];
+    expect(partnerOp).toMatchObject({ type: 'update', collection: 'partners', docId: 'partner-doc-1' });
+    expect(partnerOp.data).toEqual(expect.objectContaining({
       name: 'Kasun Studio', contactPerson: 'Kasun Studio', phone: '0772222222', address: 'Kandy', company: 'Kasun Frames',
     }));
+    expect(publicOp).toEqual({ type: 'update', collection: 'partner_public', docId: 'partner-doc-1', data: { name: 'Kasun Studio', logo: '' } });
     expect(updateDoc).not.toHaveBeenCalled();
   });
 });
@@ -109,8 +112,8 @@ describe('Partner profile save, clearing fields', () => {
     fireEvent.change(await screen.findByPlaceholderText('Kadawatha, Sri Lanka'), { target: { value: '' } });
     fireEvent.click(await screen.findByText('Save Profile Changes'));
 
-    await waitFor(() => expect(updateDocument.mock.calls.some(([name]) => name === 'partners')).toBe(true));
-    const [, , updates] = updateDocument.mock.calls.find(([name]) => name === 'partners');
+    await waitFor(() => expect(partnerBatches()).toHaveLength(1));
+    const [{ data: updates }] = partnerBatches()[0];
     expect(updates).toEqual(expect.objectContaining({ phone: '', address: '', company: '' }));
   });
 });

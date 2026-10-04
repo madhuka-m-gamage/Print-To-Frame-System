@@ -13,7 +13,7 @@ const CLAIM = {
 };
 
 vi.mock('@/services/firestoreSync', () => ({
-  COLLECTIONS: { PARTNERS: 'partners', LEADS: 'leads', PARTNER_PAYOUTS: 'partner_payouts', REFERRAL_CLAIMS: 'referral_claims', USERS: 'users', PARTNER_APPLICATIONS: 'partner_applications' },
+  COLLECTIONS: { PARTNERS: 'partners', PARTNER_PUBLIC: 'partner_public', LEADS: 'leads', PARTNER_PAYOUTS: 'partner_payouts', REFERRAL_CLAIMS: 'referral_claims', USERS: 'users', PARTNER_APPLICATIONS: 'partner_applications' },
   subscribeToCollection: vi.fn((name, cb) => { if (name === 'referral_claims') cb([CLAIM]); return () => {}; }),
   subscribeToQuery: vi.fn(() => () => {}),
   addDocument: vi.fn(async () => {}),
@@ -34,6 +34,7 @@ vi.mock('firebase/firestore', () => ({
   collection: vi.fn((_db, name) => ({ name })),
   query: vi.fn((ref, ...constraints) => ({ ref, constraints })),
   where: vi.fn((field, op, value) => ({ field, op, value })),
+  serverTimestamp: vi.fn(() => 'server-ts'),
 }));
 vi.mock('@/shared/utils/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
