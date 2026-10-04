@@ -22,7 +22,7 @@ One item per fresh session: branch `claude/<topic>` from `staging` → tests fir
 - [x] **Wave A3, follow-ups found in Wave A2 (repo only):** ~~MON-9~~, ~~FEA-14~~
 - [ ] **Wave A4, follow-up found in Wave A3 (repo only):** MON-10 (owner decision first)
 - **Wave B promotion guard:** SEC-12, SEC-7, SEC-8, FEA-4, FEA-15, FEA-1, MON-4, MON-11, FEA-2, SEC-13, SEC-14, FEA-17 and the B4 items (MON-12, MON-14, FEA-18, SEC-15) (and every later Wave B item) change or rely on `firestore.rules` that are not deployed. Do not promote `staging` to `main` before the LIVE-1 rules deploy, and deploy the app before or together with the rules: an old client's whole-collection `typing_indicators` listener is refused by the SEC-12 rule, and the FEA-1 payout batch is refused by the deployed rules until they are updated.
-- [ ] **Wave B, code + rules built and tested here, live with the next rules deploy:** ~~MON-4~~, MON-5, ~~MON-7~~, ~~FEA-1~~, ~~FEA-2~~, ~~FEA-4~~, ~~FEA-5~~, ~~FEA-7~~, FEA-9, FEA-10, ~~SEC-6~~, ~~SEC-7~~, ~~SEC-8~~, ~~SEC-12~~, ~~FEA-15~~, ~~FEA-16~~, ~~MON-11~~, ~~SEC-13~~, ~~SEC-14~~, ~~FEA-17~~, ~~MON-12~~, ~~MON-13~~, ~~MON-14~~, ~~FEA-18~~, ~~FEA-19~~, ~~SEC-15~~
+- [ ] **Wave B, code + rules built and tested here, live with the next rules deploy:** ~~MON-4~~, MON-5, ~~MON-7~~, ~~FEA-1~~, ~~FEA-2~~, ~~FEA-4~~, ~~FEA-5~~, ~~FEA-7~~, FEA-9, FEA-10, ~~SEC-6~~, ~~SEC-7~~, ~~SEC-8~~, ~~SEC-12~~, ~~FEA-15~~, ~~FEA-16~~, ~~MON-11~~, ~~SEC-13~~, ~~SEC-14~~, ~~FEA-17~~, ~~MON-12~~, ~~MON-13~~, ~~MON-14~~, ~~FEA-18~~, ~~FEA-19~~, ~~SEC-15~~, ~~SEC-16~~
 - [x] **Wave C, before restrictive rules go live:** ~~TST-2~~ (money and RBAC browser journeys)
 - [ ] **Wave D, environment and go-live (owner sittings):** LIVE-2 fresh environment (seed `DEFAULT_PERMISSIONS`, deploy Firestore + Storage rules), LIVE-3 move production here and archive the old repos, LIVE-1, LIVE-4, SEC-4, SEC-5, SEC-10, TST-4
 - [ ] **Wave E, code health after tests exist:** ENG-1, ENG-2, ENG-6
@@ -35,7 +35,7 @@ One item per fresh session: branch `claude/<topic>` from `staging` → tests fir
 | Wave A2 | `[##########]` 4/4 | MON-8, ENG-7, FEA-13, FEA-12 done |
 | Wave A4 | `[----------]` 0/1 | MON-10 found in Wave A3; needs the owner |
 | Wave A3 | `[##########]` 2/2 | MON-9, FEA-14 done; FEA-15 split out to Wave B and now done; next up: Wave B (needs the rules deploy), Wave D with the owner |
-| Wave B | `[#########-]` 23/26 | FEA-1, SEC-7, SEC-12, SEC-8, FEA-4, FEA-15, FEA-16, MON-4, MON-11, FEA-2, SEC-13, SEC-14, FEA-17, MON-12, MON-13, FEA-5, MON-14, FEA-19, FEA-18, FEA-7, MON-7, SEC-15, SEC-6 done, plus the B5 follow-ups MON-15, MON-16, FEA-20 (rules not deployed, owner step); next up: MON-5, FEA-9, FEA-10 |
+| Wave B | `[#########-]` 24/27 | FEA-1, SEC-7, SEC-12, SEC-8, FEA-4, FEA-15, FEA-16, MON-4, MON-11, FEA-2, SEC-13, SEC-14, FEA-17, MON-12, MON-13, FEA-5, MON-14, FEA-19, FEA-18, FEA-7, MON-7, SEC-15, SEC-6, SEC-16 done, plus the B5 follow-ups MON-15, MON-16, FEA-20 (rules not deployed, owner step); next up: MON-5, FEA-9, FEA-10 |
 | Waves D, E | `[----------]` 0% | Wave D needs the owner; ENG-6 re-checked, open until LIVE-3 |
 | Wave C | `[##########]` 1/1 | TST-2 done |
 
@@ -67,7 +67,7 @@ Flagged (more than 30% off): SEC-6 (−60%), FEA-20 (−31%), MON-16 (−40%), r
 
 **Tuning**
 1. Adopted: P1-P6 (see git history of this section).
-2. Not yet: +30% for four emulator lanes; two-lane runs need no uplift (B5).
-3. Not yet: re-run `usage.py calibrate`; B5 cost $0.53 per meter-1% vs the $0.305 fit.
-4. Not yet: the workflow tool refuses a `scriptPath` in the plugin cache; the orchestrator copied the template into the working tree. Skill fix proposed.
+2. Adopted 2026-10-04: two-lane runs need no time uplift (B5); not yet: +30% for four emulator lanes (no time model).
+3. In progress: statusLine now runs the usage-estimate logger (2026-10-04, chains the previous statusline); `usage.py calibrate` next session once `~/.claude/usage-estimate/meter.jsonl` has readings. B5 cost $0.53 per meter-1% vs the $0.305 fit; B5 follow-up (SEC-16, DOC-LIVE1, final) moved the meter 47% → 62%.
+4. Adopted 2026-10-04: agent-run launches the workflow from a copy of the template in the working directory and the review deletes it (madhuka-m-gamage/Claude#6, global-skills 1.0.1; reaches the installed plugin after that repo's staging → main promotion).
 5. Not yet: merging `coverage:all` reports; equal Sonnet·low/medium option costs; review fallback when the final docs PR is already merged.
