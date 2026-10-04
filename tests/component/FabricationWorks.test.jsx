@@ -377,3 +377,44 @@ describe('FEA-5 inspection follow-ups', () => {
     expect(screen.queryByTitle('Email client: QA passed')).toBeNull();
   });
 });
+
+describe('FabricationWorks converted-job customer lookup (FEA-21)', () => {
+  const customer = { id: 'c1', nic: 'AUTO-CUST', email: 'kasun@example.com', name: 'Kasun Registered', businessName: 'Kasun Co', phone: '+94700000001', leadId: 'L-0042' };
+  const converted = (extra = {}) => makeProject({ jobNo: 'PTF-4001', clientNIC: 'AUTO-JOB', customerName: 'Typed Name', customerId: 'kasun@example.com', value: 100000, ...extra });
+  const renderConverted = (job, onSaveInvoice = vi.fn()) => {
+    renderWithProviders(
+      <FabricationWorks projects={[job]} setProjects={vi.fn()} customers={[customer]} partners={[]} currentUser={admin} onSaveInvoice={onSaveInvoice} />,
+      { role: 'Admin' }
+    );
+    return onSaveInvoice;
+  };
+  const passQaFor = async (job) => {
+    const onSaveInvoice = renderConverted(job);
+    fireEvent.click(screen.getByTitle('Run QA Inspection Gate'));
+    fireEvent.click(await screen.findByRole('button', { name: /Approve & Complete/i }));
+    await waitFor(() => expect(onSaveInvoice).toHaveBeenCalled());
+    return onSaveInvoice.mock.calls[0][0];
+  };
+
+  it('uses the customer record name on the dispatch task when the NICs differ', async () => {
+    renderConverted(converted({ status: 'Completed' }));
+    fireEvent.click(screen.getByTitle('Dispatch to Logistics Delivery'));
+    await waitFor(() => expect(addDocument).toHaveBeenCalled());
+    expect(addDocument.mock.calls[0][1]).toMatchObject({ customer: 'Kasun Registered' });
+  });
+
+  it('uses the customer record on the QA-pass Final invoice when the NICs differ', async () => {
+    const invoice = await passQaFor(converted({ status: 'Ready For Inspection' }));
+    expect(invoice).toMatchObject({ customerName: 'Kasun Registered', company: 'Kasun Co' });
+  });
+
+  it('matches the Final invoice customer by lead id when there is no customer id', async () => {
+    const invoice = await passQaFor(converted({ status: 'Ready For Inspection', customerId: '', leadId: 'L-0042' }));
+    expect(invoice).toMatchObject({ customerName: 'Kasun Registered' });
+  });
+
+  it('does not put a customer matched only by phone on the Final invoice', async () => {
+    const invoice = await passQaFor(converted({ status: 'Ready For Inspection', customerId: '', customerPhone: '+94700000001' }));
+    expect(invoice).toMatchObject({ customerName: 'Typed Name' });
+  });
+});
