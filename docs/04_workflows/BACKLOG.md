@@ -401,6 +401,7 @@ Source: `docs/02_modules/notifications/FINDINGS.md`. NOTIF-01 (sign-out leak) is
 ### FEA-21: Customer lookups by NIC only miss converted jobs (fabrication F-12)
 - **Why (found by FEA-20, 2026-10-04):** lead conversion gives the new customer and the job two different random `AUTO-` NICs, so the dispatch customer name (`FabricationWorks.jsx` ~:660), the QA-pass Final invoice customer fields (~:913) and the client card (`FabricationCardDetails.jsx` ~:201) fall back to `job.customerName`.
 - **Build:** reuse `resolveQaRecipient` (`src/features/fabrication/qaRecipient.js`) for these lookups, or stamp one NIC at conversion in `Leads.jsx`; component tests.
+- **Done 2026-10-04:** the three sites call `resolveQaRecipient` (`Leads.jsx` unchanged). The QA-pass Final invoice lookup passes the job without `customerPhone`, so it matches on NIC, customerId and leadId only (a phone match could put another customer's name on an invoice); dispatch and the card keep the phone fallback. Tests: `tests/component/FabricationWorks.test.jsx`, `FabricationCardDetails.test.jsx`.
 
 ## Security
 

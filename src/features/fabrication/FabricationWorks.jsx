@@ -657,7 +657,7 @@ export default function FabricationWorks({
       toast.error('Could not generate a delivery id, please try again: ' + err.message);
       return;
     }
-    const cust = customers?.find(c => c.nic === (job.clientNIC || job.customerNic));
+    const cust = resolveQaRecipient(job, customers);
     const custName = cust?.name || cust?.businessName || job.customerName || "Direct Customer";
     
     const logisticsTask = buildLogisticsTask({
@@ -911,7 +911,8 @@ export default function FabricationWorks({
 
     // Auto-generate 25% Final Settlement Invoice if applicable
     if (needsInvoice) {
-      const cust = customers?.find(c => c.nic === (targetJob.clientNIC || targetJob.customerNic));
+      // No phone fallback: a shared phone must not put another customer's name on an invoice.
+      const cust = resolveQaRecipient({ ...targetJob, customerPhone: undefined }, customers);
       const custName = cust?.name || cust?.businessName || targetJob.customerName || "Direct Customer";
 
       const invoiceSaved = await onSaveInvoice({
