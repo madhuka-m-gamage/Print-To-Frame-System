@@ -209,6 +209,7 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 ### MON-16: Re-applying a defaulted partner rate notifies Admins again
 - **Why (found by MON-7, 2026-10-03):** each time pricing is re-applied with the default rate, every active Admin and Manager gets another `commission` notification for the same lead. (The MON-7 text above says LKR 30.00; the code default is `DEFAULT_REFERRAL_COMMISSION_RATE` = 38.)
 - **Build:** notify only when `commissionRateDefaulted` changes from false to true on the lead; component test.
+- **Done (MON-16):** `applyPricingToLead` fans out only when the previous `formData.pricingMetadata.commissionRateDefaulted` was not true; re-applying, or applying on an already-flagged lead, no longer notifies. The warning toast is unchanged. Component tests +2 in `Leads.defaultedCommission.test.jsx`.
 ---
 
 ### MON-8: Round the 75 / 25 invoice split to cents
