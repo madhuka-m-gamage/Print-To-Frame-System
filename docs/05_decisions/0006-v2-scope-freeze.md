@@ -4,7 +4,7 @@ Status: accepted, 2026-10-04. The list itself is in `PLAN.md` ("Milestone 2 scop
 
 ## Context
 
-Milestone 1 closed on a fixed list (`v1.0.0`, 2026-09-27). Since then every agent run has found follow-ups, and each one was added to the open waves, so the backlog grew about as fast as it shrank (Wave B reached 32 items, many of them follow-ups found by earlier items). Without a fixed list there is no point at which Milestone 2 is done.
+Precedent: Milestone 1 closed on a fixed list (`v1.0.0`, 2026-09-27), and its left-overs (Phase 7 steps 3.3/3.4d/3.5d, 4.1, 4.3, 7 and B6) were moved to the backlog instead of holding the milestone open. Since then every agent run has found follow-ups, and each one was added to the open waves, so the backlog grew about as fast as it shrank (Wave B reached 32 items, many of them follow-ups found by earlier items). Without a fixed list there is no point at which Milestone 2 is done.
 
 The live site (`print2frame.xyz`, `portal.print2frame.xyz`) is a separate, already-built deployment of the original repository and keeps running unchanged. The new system will first go to separate preview subdomains and replace the old site only after it is satisfactory; how that cutover happens is not decided yet. The owner sees risk in setting up those deployments while code items are still open.
 
@@ -19,7 +19,7 @@ The live site (`print2frame.xyz`, `portal.print2frame.xyz`) is a separate, alrea
    - **in-scope:** a defect in v2 code or behaviour that v2 must not ship with; gets a backlog ID and joins the freeze list.
    - **after-v2:** everything else (improvements, new features, hardening that can wait); goes to "After v2" in BACKLOG.
    The agent decides the bucket; the owner overrides at review.
-6. **Burn-down.** Each run's review adds one line to the burn-down in `PLAN.md`: date, run, items closed, items added in-scope, open count.
+6. **Burn-down.** `PLAN.md` carries one line, `v2: N open · after-v2: M` (M counts new findings sent to after-v2), updated by each run's review, with one table row per run as detail.
 
 ## Why
 
