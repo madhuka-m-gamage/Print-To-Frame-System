@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- SEC-16: the owning Partner may now create its own `partner_public/{partnerId}` mirror (keys `name`, `status`, `logo`, `updatedAt`; `status` must equal its `partners` record), and `partnerPublicOps` always writes a `set` carrying status, so a Partner whose mirror was never written can save its profile, avatar and account details. Rules not deployed (LIVE-1). Tests: rules +2, unit and component cases updated (unit 347, component 252, rules 222).
+
+- docs: DOC-LIVE1 brings `docs/04_workflows/LIVE_ROLLOUT.md` up to date with the Wave B rules (per-block breakage table, app-and-rules deploy order, partner mirror caveat, post-deploy checks); BACKLOG LIVE-1 points to it. No code changes.
+
 - MON-15: partner `pending` can no longer be driven below 0 by a payout. The `partners` staff update rule refuses a write that changes `pending` and leaves it below 0 (rules not deployed, LIVE-1); Disburse Payout refuses a payout larger than the partner's current `pending` with a toast and writes nothing, and explains a refused batch; deal completion accrues a cent-rounded `pending: increment()` instead of an absolute value from the screen copy (`roundCents` now exported from `payout.js`). New backlog item MON-17 (Edit modal writes stale balances). Tests: unit +1, component +3, rules +4.
 
 - SEC-6: public partner profile (partners D-5). New `partner_public/{partnerId}` mirror (`name`, `status`, `logo`, `updatedAt`) that anyone may `get`; staff with partners create/edit write it, the owning Partner may change only `name` and `logo`, `partners` stays closed to anonymous reads (rules not deployed, LIVE-1). Every partners write path (Register Partner, Edit save, avatar crop, sign-in photo sync, `handleUpdateUser`, Delete Partner) writes the mirror in the same `batchWrite` through `partnerPublicOps`; `ReferralForm.jsx` reads only `partner_public/{ref}` and shows the generic name when it is missing or not Active. No backfill; the seed has `partner_public/P-1001`. Tests: unit +4, component +6, rules +7.
