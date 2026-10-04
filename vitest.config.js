@@ -22,6 +22,8 @@ export default defineConfig({
     // Forcing test files to run sequentially removes that cross-file race for both
     // unit and integration runs (negligible cost here given the small suite size).
     fileParallelism: false,
+    // setupRulesEnv in a rules file's beforeAll can exceed 10 s when several agent lanes run emulators at once (TST-5).
+    hookTimeout: 60000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],

@@ -111,7 +111,7 @@ Every item implicitly includes these.
 | LIVE-3 | One canonical repository and one deploy path | rollout | M | **yes** | yes | DEC-6 |
 | LIVE-4 | Give the tooling access to the live Vercel project | rollout | S | Vercel | owner | none |
 
-**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, SEC-11, TST-1, TST-2, FEA-6, FEA-3, ENG-4, FEA-8, FEA-11 and TST-3 done. Wave A2: MON-8, ENG-7, FEA-13 and FEA-12 done. Wave A3: MON-9 and FEA-14 done. Wave B so far: FEA-1, SEC-7, SEC-12, SEC-8, FEA-4, FEA-15, FEA-16, MON-4, MON-11, FEA-2, SEC-13, SEC-14, FEA-17, MON-12, MON-13, FEA-5, MON-14, FEA-19, FEA-18, FEA-7, MON-7 and SEC-15 done (rules not deployed). ENG-6 re-checked, open until LIVE-3. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
+**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, SEC-11, TST-1, TST-2, FEA-6, FEA-3, ENG-4, FEA-8, FEA-11 and TST-3 done. Wave A2: MON-8, ENG-7, FEA-13 and FEA-12 done. Wave A3: MON-9 and FEA-14 done. Wave B so far: FEA-1, SEC-7, SEC-12, SEC-8, FEA-4, FEA-15, FEA-16, MON-4, MON-11, FEA-2, SEC-13, SEC-14, FEA-17, MON-12, MON-13, FEA-5, MON-14, FEA-19, FEA-18, FEA-7, MON-7 and SEC-15 done; TST-5 done (rules not deployed). ENG-6 re-checked, open until LIVE-3. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
 
 ---
 
@@ -482,7 +482,7 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 
 ### TST-5: Rules test setup timeout under parallel lanes
 - **Why (found by MON-12 and SEC-15, 2026-10-03):** with four agent lanes running emulators (load average 9-11), the first rules test file's `beforeAll` (`setupRulesEnv`) timed out at the 10 s default and passed on rerun. CI was unaffected.
-- **Build:** set `hookTimeout` to 60 s for the rules project in the vitest config; no test change.
+- **Done (2026-10-04):** `hookTimeout: 60000` in `vitest.config.js` (shared by unit and rules runs); `tests/unit/vitestConfig.test.js` checks it.
 ---
 
 ## Engineering health
