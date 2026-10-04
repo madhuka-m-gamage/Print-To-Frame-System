@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Fabrication: the dispatch customer name, the QA-pass Final invoice customer fields and the card client details now find the customer of a converted job through `resolveQaRecipient` instead of NIC alone (F-12); the Final invoice lookup skips the phone fallback. Tests: component 5 new.
+
+- Fixed: the staff Partner Edit modal no longer writes `pending`, `settled` or `totalSqFt`, so saving a profile edit cannot overwrite a payout or accrual made since the modal opened (MON-17). Tests: component +1.
+
 - SEC-16: the owning Partner may now create its own `partner_public/{partnerId}` mirror (keys `name`, `status`, `logo`, `updatedAt`; `status` must equal its `partners` record), and `partnerPublicOps` always writes a `set` carrying status, so a Partner whose mirror was never written can save its profile, avatar and account details. Rules not deployed (LIVE-1). Tests: rules +2, unit and component cases updated (unit 347, component 252, rules 222).
 
 - docs: DOC-LIVE1 brings `docs/04_workflows/LIVE_ROLLOUT.md` up to date with the Wave B rules (per-block breakage table, app-and-rules deploy order, partner mirror caveat, post-deploy checks); BACKLOG LIVE-1 points to it. No code changes.

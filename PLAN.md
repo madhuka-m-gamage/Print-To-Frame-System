@@ -35,39 +35,39 @@ One item per fresh session: branch `claude/<topic>` from `staging` → tests fir
 | Wave A2 | `[##########]` 4/4 | MON-8, ENG-7, FEA-13, FEA-12 done |
 | Wave A4 | `[----------]` 0/1 | MON-10 found in Wave A3; needs the owner |
 | Wave A3 | `[##########]` 2/2 | MON-9, FEA-14 done; FEA-15 split out to Wave B and now done; next up: Wave B (needs the rules deploy), Wave D with the owner |
-| Wave B | `[#########-]` 24/27 | FEA-1, SEC-7, SEC-12, SEC-8, FEA-4, FEA-15, FEA-16, MON-4, MON-11, FEA-2, SEC-13, SEC-14, FEA-17, MON-12, MON-13, FEA-5, MON-14, FEA-19, FEA-18, FEA-7, MON-7, SEC-15, SEC-6, SEC-16 done, plus the B5 follow-ups MON-15, MON-16, FEA-20 (rules not deployed, owner step); next up: MON-5, FEA-9, FEA-10 |
+| Wave B | `[#########-]` 24/27 | FEA-1, SEC-7, SEC-12, SEC-8, FEA-4, FEA-15, FEA-16, MON-4, MON-11, FEA-2, SEC-13, SEC-14, FEA-17, MON-12, MON-13, FEA-5, MON-14, FEA-19, FEA-18, FEA-7, MON-7, SEC-15, SEC-6, SEC-16 done, plus the B5 follow-ups MON-15, MON-16, FEA-20, FEA-21, MON-17 (rules not deployed, owner step); next up: MON-5, FEA-9, FEA-10 |
 | Waves D, E | `[----------]` 0% | Wave D needs the owner; ENG-6 re-checked, open until LIVE-3 |
 | Wave C | `[##########]` 1/1 | TST-2 done |
 
 ## Run calibration (overwritten after each agent run)
-Last run: 2026-10-04, Wave B run B5 (MON-15, SEC-6, FEA-20 on Opus·medium; MON-16 Sonnet·medium; final docs Sonnet·medium), one workflow, two lanes, run `wf_ce3ddd03-5bd`. 5 agents, 671k subagent tokens, launch 11:58, docs PR 12:38 (42 min, estimate 65). Meter 21% → 47% (+26%, estimate 48%); weekly 85% → 88%. usage-estimate `cost`: $13.7 API-priced (main $4.05, agents $9.66, orchestrator ratio 0.42), which its $0.305/1% rate reads as 45%, against the meter's +26%.
+Last run: 2026-10-04, Wave B run B6 (FEA-21, MON-17 on Sonnet·medium; final docs Sonnet·low), one workflow, two lanes, run `wf_8db12555-122`. 3 agents, 324k subagent tokens, launch 13:32, docs PR 13:46 (14 min, estimate 25). Launched over the 80% guard on the owner's override (projected peak 90%). Meter 69% → 77% (+8%, estimate 21%); weekly 91% → 92%. usage-estimate `cost`: $3.71 API-priced (main $2.00, agents $1.71, orchestrator ratio 1.08), which its $0.305/1% rate reads as 12%, against the meter's +8%.
 
 | Item | Model·effort | Est. min | Actual min | Tokens | Fix rounds / catch-ups | Pick outcome |
 |---|---|---|---|---|---|---|
-| MON-15 | Opus·medium | 22 | 24.3 | 147k | 0 / 2 | sufficient: rules `pending >= 0` only when pending changes; accrual by `increment(roundCents)`; found MON-17 |
-| SEC-6 | Opus·medium | 40 | 16.0 | 184k | 0 / 0 | sufficient: one helper in all 6 write paths; get allowed, list refused; noted a Partner cannot create its own mirror (staff save first) |
-| FEA-20 | Opus·medium (owner override of Sonnet·medium) | 15 | 10.4 | 124k | 0 / 0 | sufficient, possibly over-spec'd; found F-12 (other NIC-only lookups) |
-| MON-16 | Sonnet·medium | 12 | 7.2 | 103k | 0 / 0 | sufficient |
-| Final docs | Sonnet·medium | 3 | 1.6 | 113k | n/a | sufficient; no missing fragments; e2e 10/10 |
-| **Run** | | **65** | **42** | **671k** | | meter +26% vs 48% |
+| FEA-21 | Sonnet·medium | 14 | 6.6 | 118k | 0 / 0 | sufficient: `resolveQaRecipient` at 3 sites; Final invoice lookup drops the phone fallback (NIC, customerId, leadId only) |
+| MON-17 | Sonnet·medium | 10 | 12.6 | 107k | 0 / 1 | sufficient: verified the modal edits no balance field, then dropped `pending`/`settled`/`totalSqFt` |
+| Final docs | Sonnet·low | 2 | 1.5 | 98k | n/a | sufficient; no missing fragments; e2e 10/10 |
+| **Run** | | **25** | **14** | **324k** | | meter +8% vs 21% |
 
-Flagged (more than 30% off): SEC-6 (−60%), FEA-20 (−31%), MON-16 (−40%), run wall-clock (−35%), usage (−46%). Causes: **environment** (two lanes, no emulator contention; P6 timeout raised) and **estimate model** (S/M minute rates from four-lane runs; dollar rate disagrees with the meter this run).
+Flagged (more than 30% off): FEA-21 (−53%), run wall-clock (−44%), usage (−62%). Causes: **estimate model** (S items on Sonnet with an existing helper run nearer 7 min; `estimate --items` prices each item at the B-wave mixed Opus/Sonnet average, so an all-Sonnet S run is over-projected about 2.5×).
 
 **Rolling rates (last 3 runs)**
-| Rate | B3 | B4 relaunch | B5 | Use next |
+| Rate | B4 relaunch | B5 | B6 | Use next |
 |---|---|---|---|---|
-| Mixed subagent tokens per 1% | ~23k | ~21k | ~26k (671k / 26%) | 23k |
-| API $ per 1% (usage-estimate) | n/a | ~$0.305 fit | ~$0.53 ($13.7 / 26%) | keep $0.305 until `calibrate` re-checks; B5 is one outlier |
-| Agent floor | ~100k | ~100k | ~103-113k | 100k |
-| S item | 9-19 min | 5.6-17 | 7-24 | 7-20 min |
-| M item | 26-39 | 16-54 | 16 (SEC-6) | 16-40; +30% with four emulator lanes |
-| Window % per weekly % | 7.5 | 7.3 | ~8.7 (26 / 3) | 7.5 |
+| Mixed subagent tokens per 1% | ~21k | ~26k | ~40k (324k / 8%, Sonnet only) | 23k mixed; ~40k Sonnet-only (one run) |
+| API $ per 1% (usage-estimate) | ~$0.305 fit | ~$0.53 | ~$0.46 ($3.71 / 8%) | keep $0.305 until `calibrate` re-checks; B5 and B6 both read higher |
+| Agent floor | ~100k | ~103-113k | ~98-118k | 100k |
+| S item | 5.6-17 min | 7-24 | 6.6-12.6 | 7-20 min (Sonnet S with a ready helper: ~7-13) |
+| M item | 16-54 | 16 | n/a | 16-40 |
+| Window % per weekly % | 7.3 | ~8.7 | ~8 (8 / 1) | 7.5 |
 
-**Model overrides:** owner changed 2 of 5 picks (FEA-20 small-ui → Opus·medium; final docs Sonnet·low → Sonnet·medium). All sufficient, 0 fix rounds.
+Models now differ: B6 was Sonnet-only, B5 mostly Opus; two runs with different mixes exist, but `estimate` still uses one rate.
+
+**Model overrides:** owner changed 0 of 3 picks; overrode the 80% launch guard. All sufficient, 0 fix rounds.
 
 **Tuning**
 1. Adopted: P1-P6 (see git history of this section).
 2. Adopted 2026-10-04: two-lane runs need no time uplift (B5); not yet: +30% for four emulator lanes (no time model).
-3. In progress: statusLine now runs the usage-estimate logger (2026-10-04, chains the previous statusline); `usage.py calibrate` next session once `~/.claude/usage-estimate/meter.jsonl` has readings. B5 cost $0.53 per meter-1% vs the $0.305 fit; B5 follow-up (SEC-16, DOC-LIVE1, final) moved the meter 47% → 62%.
+3. In progress: statusLine now runs the usage-estimate logger (2026-10-04, chains the previous statusline); `usage.py calibrate` next session once `~/.claude/usage-estimate/meter.jsonl` has readings. B5 cost $0.53 per meter-1% vs the $0.305 fit; B5 follow-up (SEC-16, DOC-LIVE1, final) moved the meter 47% → 62%. B6: meter.jsonl still empty (0 lines) at 13:47, so the desktop statusline passes no `rate_limits`; calibrate cannot run from it.
 4. Adopted 2026-10-04: agent-run launches the workflow from a copy of the template in the working directory and the review deletes it (madhuka-m-gamage/Claude#6, global-skills 1.0.1; reaches the installed plugin after that repo's staging → main promotion).
-5. Not yet: merging `coverage:all` reports; equal Sonnet·low/medium option costs; review fallback when the final docs PR is already merged.
+5. Not yet: a per-model rate in `usage.py estimate` (B6 all-Sonnet cost 8% against 21% projected); merging `coverage:all` reports; equal Sonnet·low/medium option costs; review fallback when the final docs PR is already merged.

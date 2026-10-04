@@ -179,6 +179,7 @@ Tests that deliberately lock in a known defect, with the finding that will chang
 | ~~`rulesAccess.test.js` "lets a Partner read another partner's document ..."~~ | flipped in SEC-7: a Partner is limited to its own record | partners |
 | ~~`Deals.test.jsx` creates another Final invoice when the deal already has one~~ | flipped in Phase 7 2.1: completion skips the create when `getExistingFinalInvoice` finds one | invoicing D-1, deals D-1 |
 | ~~`FabricationWorks.test.jsx` creates a Final invoice when one already exists~~ | flipped in Phase 7 2.1: App passes invoices and QA pass skips the create | invoicing D-1, fabrication F-1 |
+| ~~Fabrication dispatch/QA-pass/card customer lookup uses NIC only~~ | fixed by FEA-21 (`resolveQaRecipient`); component coverage in `FabricationWorks.test.jsx` and `FabricationCardDetails.test.jsx` | fabrication F-12 |
 | ~~`Partners.test.jsx` "shows a success toast on Disburse Payout but writes nothing"~~ | flipped in FEA-1: one batch (payout, lead updates, partner balance) | partners D-1 |
 | ~~`App.signOut.test.jsx` keeps the previous user's unread count~~ | flipped in Phase 7 1: `handleSignOut` now clears notifications, and the test asserts the count is gone | notifications NOTIF-01 |
 | ~~`validation.test.js` "formats +94 and 07 spellings the same for display, but the raw stored strings still differ"~~ | ~~stored phones are compared with exact string equality, so different spellings of one number do not match~~ | customers Decision 3 (Phase 7 6.3, `normalizePhone`) (flipped: `normalizePhone` and `phonesMatch`)|
