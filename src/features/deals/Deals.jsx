@@ -3,6 +3,7 @@ import {
   Plus, ArrowLeft, ArrowRight, Trash2, Calendar, User, DollarSign, 
   Check, LayoutGrid, List, Download, Truck 
 } from 'lucide-react';
+import { increment } from 'firebase/firestore';
 import { toast } from '@/shared/utils/toast';
 import DeleteModal from '@/shared/components/DeleteModal';
 import LeadCardDetails from '@/features/leads/LeadCardDetails';
@@ -16,6 +17,7 @@ import { projectStatusForDealStage } from './dealProjectSync';
 import { buildLogisticsTask } from '@/features/logistics/logisticsTask';
 import { logActivity } from '@/services/auditLog';
 import { findPartnerForLead, getLeadPartnerId } from '@/features/partners/partnerLink';
+import { roundCents } from '@/features/partners/payout';
 import { invoiceLineageFields } from '@/features/leads/leadLineage';
 
 const DEALS_STAGES = ["Waiting", "Fabricating", "Ready To Load", "Hand Over", "Completed"];
@@ -390,7 +392,8 @@ export default function Deals({
         const dealPartnerId = getLeadPartnerId(deal);
         if (dealPartnerId && partners.length && setPartners && !deal.commissionAccrued) {
           const agent = findPartnerForLead(deal, partners);
-          const { commissionAmount, sqFtToAdd: sqFt } = calculateDealCommission({ ...deal, value: amounts.totalValue }, agent);
+          const { commissionAmount: rawCommission, sqFtToAdd: sqFt } = calculateDealCommission({ ...deal, value: amounts.totalValue }, agent);
+          const commissionAmount = roundCents(rawCommission);
 
           if (agent) {
             setPartners(prevPartners => prevPartners.map(p =>
@@ -399,8 +402,9 @@ export default function Deals({
                 : p
             ));
             // Update partner in Firestore
+            // A delta (MON-15), so a payout or accrual made since this screen loaded is not overwritten.
             updateDocument(COLLECTIONS.PARTNERS, agent._firestoreId || agent.partnerId, {
-              pending: (agent.pending || 0) + commissionAmount,
+              pending: increment(commissionAmount),
               totalSqFt: (agent.totalSqFt || 0) + sqFt
             }).catch(err => console.error("Partner update error:", err));
 

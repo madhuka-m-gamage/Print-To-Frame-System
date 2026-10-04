@@ -1,4 +1,4 @@
-const roundCents = (n) => Math.round(n * 100) / 100;
+export const roundCents = (n) => Math.round(n * 100) / 100;
 
 const isPayable = (referral) =>
   referral.commState === 'Eligible for Payout'

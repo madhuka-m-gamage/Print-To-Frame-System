@@ -151,3 +151,37 @@ describe('partner balance increments (MON-14)', () => {
     expect(await readRaw('partners', 'P-1')).toMatchObject({ pending: 5000, settled: 100 });
   });
 });
+
+// MON-15: increments do not clamp, so the rules refuse any partners write that
+// changes pending and leaves it below 0. A doc that is already negative can still
+// take unrelated edits.
+describe('pending overdraw guard (MON-15)', () => {
+  beforeEach(async () => {
+    await seed('partners', 'P-1', { partnerId: 'P-1', name: 'Lanka Art Studio', pending: 250, settled: 100 });
+  });
+
+  it('refuses a payout batch that would leave pending below 0', async () => {
+    const db = await dbAs('Admin');
+    await assertFails(incrementBatch(db, 'P-1-1', 'D-1', 300));
+    expect(await readRaw('partners', 'P-1')).toMatchObject({ pending: 250, settled: 100 });
+    expect(await readRaw('partner_payouts', 'P-1-1')).toBeUndefined();
+    expect(await readRaw('leads', 'D-1')).not.toHaveProperty('payoutStatus');
+  });
+
+  it('allows a payout that takes pending exactly to 0', async () => {
+    const db = await dbAs('Admin');
+    await assertSucceeds(incrementBatch(db, 'P-1-1', 'D-1', 250));
+    expect(await readRaw('partners', 'P-1')).toMatchObject({ pending: 0, settled: 350 });
+  });
+
+  it('refuses a staff edit that sets pending below 0', async () => {
+    const db = await dbAs('Manager');
+    await assertFails(updateDoc(doc(db, 'partners', 'P-1'), { pending: -1 }));
+  });
+
+  it('allows a staff edit that does not touch pending on a doc already below 0', async () => {
+    await seed('partners', 'P-1', { partnerId: 'P-1', name: 'Lanka Art Studio', pending: -50, settled: 100 });
+    const db = await dbAs('Manager');
+    await assertSucceeds(updateDoc(doc(db, 'partners', 'P-1'), { name: 'Lanka Art Studio (Pvt) Ltd' }));
+  });
+});

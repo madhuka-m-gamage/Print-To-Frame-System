@@ -25,6 +25,7 @@ vi.mock('firebase/firestore', () => ({
     onNext({ exists: () => true, data: () => globalThis.__TEST_PERMISSIONS__ });
     return () => {};
   }),
+  increment: vi.fn((n) => ({ increment: n })),
 }));
 
 afterEach(() => {

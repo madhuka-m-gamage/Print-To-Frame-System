@@ -251,6 +251,11 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 ### MON-15: Partner balance increments: negative pending and float drift
 - **Why (found by MON-14, 2026-10-03):** the payout now moves `pending` and `settled` with `increment()`. The old code clamped `pending` at 0 and rounded to 2 decimals; increments do neither, so a stale `pending` smaller than the payout shows a negative balance, and fractional commissions can drift.
 - **Build:** round each payout amount to cents before the increment (reuse the MON-8 rounding helper) and refuse a payout larger than the re-read `pending`; component and emulator tests.
+- **Done (B5, 2026-10-04):** the `partners` staff update rule refuses a write that changes `pending` and leaves it below 0 (an unrelated edit of a doc that is already negative still passes); this is the atomic guard for the payout batch (rules not deployed, LIVE-1). `handleDisbursePayout` refuses a payout larger than the partner's current `pending` with a toast and writes nothing, and maps a `permission-denied` batch failure to a clear message. Deal completion rounds the commission to cents (`roundCents`, now exported from `payout.js`) and writes `pending: increment(<cents>)` instead of an absolute value from the screen copy. Recorded, not fixed: MON-17 (Edit modal writes stale balances); `totalSqFt` on completion is still an absolute value from the screen copy.
+
+### MON-17: Partner Edit modal writes stale balances
+- **Why (found by MON-15, 2026-10-04):** the staff Edit modal's `handleSavePartnerDetails` (`Partners.jsx`) spreads the whole `editFormData`, including `pending` and `settled` as loaded, so saving a profile edit overwrites a payout or accrual made since the modal opened.
+- **Build:** save only the edited profile fields (leave `pending`, `settled` and `totalSqFt` out of the update); component test.
 ## Features
 
 ### FEA-1: Real partner payout (step 4.1, partners D-1)

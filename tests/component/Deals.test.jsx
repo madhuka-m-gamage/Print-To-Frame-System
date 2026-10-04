@@ -121,8 +121,16 @@ describe('Deals Completed-stage locks and commission', () => {
     const { setLeads } = renderDeals({ dealOverrides: agentDeal, partners: [partner()], setPartners: vi.fn() });
     fireEvent.click(screen.getByRole('button', { name: /for Kasun Silva/i }));
     await waitFor(() => expect(sync.updateDocument).toHaveBeenCalledWith('leads', expect.anything(), expect.objectContaining({ stage: 'Completed', commissionAccrued: true })));
-    expect(sync.updateDocument).toHaveBeenCalledWith('partners', expect.anything(), { pending: 535, totalSqFt: 10 });
+    expect(sync.updateDocument).toHaveBeenCalledWith('partners', expect.anything(), { pending: { increment: 535 }, totalSqFt: 10 });
     expect(setLeads).toHaveBeenCalled();
+  });
+
+  // MON-15: the accrual is a cent-rounded delta, not a total from the screen copy.
+  it('accrues a cent-rounded increment even when the screen copy of pending is stale', async () => {
+    const stale = makePartner({ partnerId: 'P-1', name: 'Lanka Art Studio', commissionRate: 10.123, pending: 999, totalSqFt: 0 });
+    renderDeals({ dealOverrides: { agentId: 'P-1', totalSqFt: 3 }, partners: [stale], setPartners: vi.fn() });
+    fireEvent.click(screen.getByRole('button', { name: /for Kasun Silva/i }));
+    await waitFor(() => expect(sync.updateDocument).toHaveBeenCalledWith('partners', expect.anything(), { pending: { increment: 30.37 }, totalSqFt: 3 }));
   });
 
   // Phase 7 4.2 (partners D-10): a deal from the public referral form carries partnerId and no
@@ -130,7 +138,7 @@ describe('Deals Completed-stage locks and commission', () => {
   it('credits the partner of a deal that carries partnerId and no agentId', async () => {
     renderDeals({ dealOverrides: { partnerId: 'P-1', agentId: undefined, totalSqFt: 10 }, partners: [partner()], setPartners: vi.fn() });
     fireEvent.click(screen.getByRole('button', { name: /for Kasun Silva/i }));
-    await waitFor(() => expect(sync.updateDocument).toHaveBeenCalledWith('partners', expect.anything(), { pending: 535, totalSqFt: 10 }));
+    await waitFor(() => expect(sync.updateDocument).toHaveBeenCalledWith('partners', expect.anything(), { pending: { increment: 535 }, totalSqFt: 10 }));
   });
 
   it('credits nobody for a deal whose agent is the "Direct" placeholder', async () => {
@@ -180,6 +188,6 @@ describe('Deals completion amounts', () => {
     const partner = makePartner({ partnerId: 'P-1', name: 'Lanka Art Studio', commissionRate: 53.5, pending: 0, totalSqFt: 4 });
     renderDeals({ dealOverrides: { agentId: 'P-1', totalSqFt: 0, value: 85000 }, partners: [partner], setPartners: vi.fn() });
     fireEvent.click(screen.getByRole('button', { name: /for Kasun Silva/i }));
-    await waitFor(() => expect(sync.updateDocument).toHaveBeenCalledWith('partners', expect.anything(), { pending: 5350, totalSqFt: 4 }));
+    await waitFor(() => expect(sync.updateDocument).toHaveBeenCalledWith('partners', expect.anything(), { pending: { increment: 5350 }, totalSqFt: 4 }));
   });
 });

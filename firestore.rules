@@ -342,8 +342,11 @@ service cloud.firestore {
       allow create: if (checkPermission('partners', 'create') || checkPermission('partners', 'edit') || checkPermission('partners', 'write'))
         && !hasRole('Partner');
       // Profile fields only: never commissionRate, status, email or balances.
+      // MON-15: a write that changes pending may not leave it below 0 (increment() does not clamp).
       allow update: if ((checkPermission('partners', 'create') || checkPermission('partners', 'edit') || checkPermission('partners', 'write'))
-          && !hasRole('Partner'))
+          && !hasRole('Partner')
+          && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['pending'])
+            || request.resource.data.pending >= 0))
         || (isActiveUser() && ownsPartner(partnerId)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
                'name', 'contactPerson', 'phone', 'address', 'company', 'bankName', 'accountNumber',
