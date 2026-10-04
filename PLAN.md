@@ -22,7 +22,7 @@ One item per fresh session: branch `claude/<topic>` from `staging` → tests fir
 - [x] **Wave A3, follow-ups found in Wave A2 (repo only):** ~~MON-9~~, ~~FEA-14~~
 - [ ] **Wave A4, follow-up found in Wave A3 (repo only):** MON-10 (owner decision first)
 - **Wave B promotion guard:** SEC-12, SEC-7, SEC-8, FEA-4, FEA-15, FEA-1, MON-4, MON-11, FEA-2, SEC-13, SEC-14, FEA-17 and the B4 items (MON-12, MON-14, FEA-18, SEC-15) (and every later Wave B item) change or rely on `firestore.rules` that are not deployed. Do not promote `staging` to `main` before the LIVE-1 rules deploy, and deploy the app before or together with the rules: an old client's whole-collection `typing_indicators` listener is refused by the SEC-12 rule, and the FEA-1 payout batch is refused by the deployed rules until they are updated.
-- [ ] **Wave B, code + rules built and tested here, live with the next rules deploy:** ~~MON-4~~, MON-5, ~~MON-7~~, ~~FEA-1~~, ~~FEA-2~~, ~~FEA-4~~, ~~FEA-5~~, ~~FEA-7~~, FEA-9, FEA-10, SEC-6, ~~SEC-7~~, ~~SEC-8~~, ~~SEC-12~~, ~~FEA-15~~, ~~FEA-16~~, ~~MON-11~~, ~~SEC-13~~, ~~SEC-14~~, ~~FEA-17~~, ~~MON-12~~, ~~MON-13~~, ~~MON-14~~, ~~FEA-18~~, ~~FEA-19~~, ~~SEC-15~~
+- [ ] **Wave B, code + rules built and tested here, live with the next rules deploy:** ~~MON-4~~, MON-5, ~~MON-7~~, ~~FEA-1~~, ~~FEA-2~~, ~~FEA-4~~, ~~FEA-5~~, ~~FEA-7~~, FEA-9, FEA-10, ~~SEC-6~~, ~~SEC-7~~, ~~SEC-8~~, ~~SEC-12~~, ~~FEA-15~~, ~~FEA-16~~, ~~MON-11~~, ~~SEC-13~~, ~~SEC-14~~, ~~FEA-17~~, ~~MON-12~~, ~~MON-13~~, ~~MON-14~~, ~~FEA-18~~, ~~FEA-19~~, ~~SEC-15~~
 - [x] **Wave C, before restrictive rules go live:** ~~TST-2~~ (money and RBAC browser journeys)
 - [ ] **Wave D, environment and go-live (owner sittings):** LIVE-2 fresh environment (seed `DEFAULT_PERMISSIONS`, deploy Firestore + Storage rules), LIVE-3 move production here and archive the old repos, LIVE-1, LIVE-4, SEC-4, SEC-5, SEC-10, TST-4
 - [ ] **Wave E, code health after tests exist:** ENG-1, ENG-2, ENG-6
@@ -35,48 +35,39 @@ One item per fresh session: branch `claude/<topic>` from `staging` → tests fir
 | Wave A2 | `[##########]` 4/4 | MON-8, ENG-7, FEA-13, FEA-12 done |
 | Wave A4 | `[----------]` 0/1 | MON-10 found in Wave A3; needs the owner |
 | Wave A3 | `[##########]` 2/2 | MON-9, FEA-14 done; FEA-15 split out to Wave B and now done; next up: Wave B (needs the rules deploy), Wave D with the owner |
-| Wave B | `[########--]` 22/26 | FEA-1, SEC-7, SEC-12, SEC-8, FEA-4, FEA-15, FEA-16, MON-4, MON-11, FEA-2, SEC-13, SEC-14, FEA-17, MON-12, MON-13, FEA-5, MON-14, FEA-19, FEA-18, FEA-7, MON-7, SEC-15 done (rules not deployed, owner step); next up: MON-5, SEC-6, FEA-9, FEA-10 |
+| Wave B | `[#########-]` 23/26 | FEA-1, SEC-7, SEC-12, SEC-8, FEA-4, FEA-15, FEA-16, MON-4, MON-11, FEA-2, SEC-13, SEC-14, FEA-17, MON-12, MON-13, FEA-5, MON-14, FEA-19, FEA-18, FEA-7, MON-7, SEC-15, SEC-6 done, plus the B5 follow-ups MON-15, MON-16, FEA-20 (rules not deployed, owner step); next up: MON-5, FEA-9, FEA-10 |
 | Waves D, E | `[----------]` 0% | Wave D needs the owner; ENG-6 re-checked, open until LIVE-3 |
 | Wave C | `[##########]` 1/1 | TST-2 done |
 
 ## Run calibration (overwritten after each agent run)
-Last run: 2026-10-03, Wave B run B4 (MON-12, MON-14, SEC-15 on Opus·medium; MON-13, FEA-5, FEA-19, FEA-18, FEA-7, MON-7 Sonnet·medium; final docs Sonnet·medium x2), two workflows, four lanes. First launch 20:30 (runs `wf_590e0d48-25f`, `wf_76323422-c3c`) lost to a power-off at about 21:00 with nothing committed (meter 0% → 31%); the four first-in-lane diffs were saved as patches and the relaunch (21:09, `wf_87a485a1-6bf`, `wf_471c46ed-fcf`) resumed from them. Relaunch: 11 agents, 1.37M subagent tokens (Opus 394k, Sonnet 980k), last docs PR 22:29 (80 min, estimate 60). Meter 31% → 97% (+66%, estimate 47%); weekly 62% → 71%. Whole B4 including the lost launch: about 97% of one window.
+Last run: 2026-10-04, Wave B run B5 (MON-15, SEC-6, FEA-20 on Opus·medium; MON-16 Sonnet·medium; final docs Sonnet·medium), one workflow, two lanes, run `wf_ce3ddd03-5bd`. 5 agents, 671k subagent tokens, launch 11:58, docs PR 12:38 (42 min, estimate 65). Meter 21% → 47% (+26%, estimate 48%); weekly 85% → 88%. usage-estimate `cost`: $13.7 API-priced (main $4.05, agents $9.66, orchestrator ratio 0.42), which its $0.305/1% rate reads as 45%, against the meter's +26%.
 
 | Item | Model·effort | Est. min | Actual min | Tokens | Fix rounds / catch-ups | Pick outcome |
 |---|---|---|---|---|---|---|
-| MON-12 | Opus·medium | 18 | 27.4 | 132k | 0 / 1 | sufficient: guard hand-over checked in the transaction and the rules (get/exists before, existsAfter for the new invoice) |
-| MON-13 | Sonnet·medium | 10 | 15.6 | 114k | 0 / 1 | sufficient |
-| FEA-5 | Sonnet·medium | 20 | 25.3 | 156k | 0 / 2 | sufficient: added `salesOwnerEmail` at lead conversion (no owner field existed) |
-| MON-14 | Opus·medium | 18 | 16.6 | 108k | 0 / 0 | sufficient: no rules change needed; did not switch Auto-fix off (judged the tool owner-only) |
-| FEA-19 | Sonnet·medium | 10 | 5.6 | 101k | 0 / 0 | sufficient |
-| FEA-18 | Sonnet·medium | 12 | 37.6 | 109k | 0 / 1 | sufficient; reused the patch, fixed its toast mock; time includes waiting on load |
-| FEA-7 | Sonnet·medium | 20 | 24.0 | 161k | 0 / 1 | sufficient: only commission-cleared and deal-fully-settled stay notifications |
-| MON-7 | Sonnet·medium | 18 | 16.8 | 133k | 0 / 1 | sufficient: the default is applied in `LeadCardDetails.jsx`, not QuotationBuilder |
-| SEC-15 | Opus·medium | 30 | 54.2 | 154k | 0 / 2 | sufficient: `registrationDrafts/{uid}` holds the form until verification |
-| Final docs A / B | Sonnet·medium | 2-6 | 2.0 / 1.7 | 102k / 104k | n/a | sufficient; P2 worked (disjoint fragments) |
-| **Run (relaunch)** | | **60** | **80** | **1.37M** | | meter +66% vs 47% |
+| MON-15 | Opus·medium | 22 | 24.3 | 147k | 0 / 2 | sufficient: rules `pending >= 0` only when pending changes; accrual by `increment(roundCents)`; found MON-17 |
+| SEC-6 | Opus·medium | 40 | 16.0 | 184k | 0 / 0 | sufficient: one helper in all 6 write paths; get allowed, list refused; noted a Partner cannot create its own mirror (staff save first) |
+| FEA-20 | Opus·medium (owner override of Sonnet·medium) | 15 | 10.4 | 124k | 0 / 0 | sufficient, possibly over-spec'd; found F-12 (other NIC-only lookups) |
+| MON-16 | Sonnet·medium | 12 | 7.2 | 103k | 0 / 0 | sufficient |
+| Final docs | Sonnet·medium | 3 | 1.6 | 113k | n/a | sufficient; no missing fragments; e2e 10/10 |
+| **Run** | | **65** | **42** | **671k** | | meter +26% vs 48% |
 
-Flagged (more than 30% off): MON-12 (+52%), MON-13 (+56%), FEA-18 (+213%), SEC-15 (+81%), run wall-clock (+33%) and usage (+40%). Causes: **environment** (load average 9-11 with four lanes of emulators: rules setup hooks timed out at 10 s and were re-run, FEA-18 and SEC-15 waited on reruns) and **estimate model** (the per-model token rates below).
-
-**P1 (catch up before merge) worked:** 9 items, 13 catch-ups, no `staging` break; the combined `staging` passes the full suite. **P2 worked:** the two docs PRs folded disjoint fragments; only the shared summary lines conflicted, resolved in the review.
+Flagged (more than 30% off): SEC-6 (−60%), FEA-20 (−31%), MON-16 (−40%), run wall-clock (−35%), usage (−46%). Causes: **environment** (two lanes, no emulator contention; P6 timeout raised) and **estimate model** (S/M minute rates from four-lane runs; dollar rate disagrees with the meter this run).
 
 **Rolling rates (last 3 runs)**
-| Rate | B2 | B3 | B4 relaunch | Use next |
+| Rate | B3 | B4 relaunch | B5 | Use next |
 |---|---|---|---|---|
-| Mixed subagent tokens per 1% of the window | not measurable | about 23k (1.04M / 45%) | about 21k (1.37M / 66%) | **21k for every model** (the per-model split below no longer fits) |
-| Opus vs Sonnet per token | 2.5x (B1) | not separable | not separable (Sonnet at 54k would leave Opus at 9k, implausible) | treat as equal until a single-model run measures them |
-| Agent floor | ~90k tokens | ~100k | ~100k (final docs 102-104k) | 100k = ~5% per agent |
-| S item | 7-9 min | 9-19 min | 5.6-17 min | 10-17 min |
-| M item | 13-39 min | 26-39 min | 16-54 min | 20-40 min; add 30% with four emulator lanes |
-| Window % per weekly % | 8 | 7.5 | 7.3 | 7.5 |
+| Mixed subagent tokens per 1% | ~23k | ~21k | ~26k (671k / 26%) | 23k |
+| API $ per 1% (usage-estimate) | n/a | ~$0.305 fit | ~$0.53 ($13.7 / 26%) | keep $0.305 until `calibrate` re-checks; B5 is one outlier |
+| Agent floor | ~100k | ~100k | ~103-113k | 100k |
+| S item | 9-19 min | 5.6-17 | 7-24 | 7-20 min |
+| M item | 26-39 | 16-54 | 16 (SEC-6) | 16-40; +30% with four emulator lanes |
+| Window % per weekly % | 7.5 | 7.3 | ~8.7 (26 / 3) | 7.5 |
 
-**Model overrides:** none (all 10 picks taken); all sufficient with 0 fix rounds.
+**Model overrides:** owner changed 2 of 5 picks (FEA-20 small-ui → Opus·medium; final docs Sonnet·low → Sonnet·medium). All sufficient, 0 fix rounds.
 
-**Tuning (adopted = in effect now; not yet = needs the owner or the skill)**
-1. Adopted: P1-P4 (#131); they worked as intended.
-2. Adopted: plan usage with the mixed rate, about 21k subagent tokens per 1% and about 5% floor per agent; a 9-item, 11-agent run is about 65% of a window.
-3. Adopted (P5, replaced by the user-level `usage-estimate` skill, 2026-10-04): `agent-run` Rates now call it: one rate of $0.305 per 1% in API-priced dollars (±10%, 18 meter gaps), no per-model split. Check: its 9-item estimate is 94% against B4's measured 97% (including the lost launch). Not yet: the +30% for four emulator lanes (no time model yet).
-4. Adopted 2026-10-04 (owner approved, P6, TST-5): raise the rules test `hookTimeout` (vitest config for `test:rules`) to 60 s, since `setupRulesEnv` times out at 10 s under four-lane load (MON-12, SEC-15).
-5. Declined by the owner 2026-10-04 (P7): the brief should say `mcp__ccd_pr__set_monitor` is authorised by the owner for the agent's own PR (MON-14 skipped it as not user-requested).
-6. Watch: a power-off loses only uncommitted agent work; saving each interrupted diff and pointing the relaunch at it worked (MON-12, MON-14, FEA-18, SEC-15 all reused theirs).
-7. Not yet: merge the `coverage:all` reports (optional); equal Sonnet·low/medium option costs; a mid-run meter reading; review fallback when the final docs PR is already merged.
+**Tuning**
+1. Adopted: P1-P6 (see git history of this section).
+2. Not yet: +30% for four emulator lanes; two-lane runs need no uplift (B5).
+3. Not yet: re-run `usage.py calibrate`; B5 cost $0.53 per meter-1% vs the $0.305 fit.
+4. Not yet: the workflow tool refuses a `scriptPath` in the plugin cache; the orchestrator copied the template into the working tree. Skill fix proposed.
+5. Not yet: merging `coverage:all` reports; equal Sonnet·low/medium option costs; review fallback when the final docs PR is already merged.

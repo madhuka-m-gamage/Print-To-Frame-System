@@ -79,6 +79,7 @@ Every item implicitly includes these.
 | FEA-18 | Persistent notifications: delete, and partners with no email | ux | S | rules | no | FEA-2 |
 | FEA-19 | Claim resolution may link a lead that names another partner | ux | S | no | no | FEA-2 |
 | FEA-20 | QA-passed email fails when the deal email is not a known recipient | ux | S | api | no | FEA-5 |
+| FEA-21 | Customer lookups by NIC only miss converted jobs (fabrication F-12) | ux | S | no | no | FEA-20 |
 | SEC-1 | Check the recipient in `api/send-email.js` | security | S | api | no | none |
 | SEC-2 | Restrict `api/generate.js` to staff roles | security | S | api | no | none |
 | SEC-3 | Make the dev proxy safe | security | S | no | no | none |
@@ -94,6 +95,7 @@ Every item implicitly includes these.
 | SEC-13 | Bind a pending registration to its own login uid | security | S | rules | no | none |
 | SEC-14 | Remove the dead `partnerId == token email` read clause on invoices and receipts | security | S | rules | no | none |
 | SEC-15 | Require a verified email for a pending registration | security | S | rules | decided | SEC-13 |
+| SEC-16 | A Partner cannot save its profile until its `partner_public` mirror exists | security | S | rules | no | SEC-6 |
 | TST-1 | Component tests for the lead card (done) | tests | M | no | no | none |
 | TST-2 | End-to-end journeys (money, RBAC) (done) | tests | L | no | no | none |
 | TST-3 | Tests for Leads, QuotationBuilder, Customers; refresh the coverage map (done) | tests | M | no | no | none |
@@ -111,7 +113,7 @@ Every item implicitly includes these.
 | LIVE-3 | One canonical repository and one deploy path | rollout | M | **yes** | yes | DEC-6 |
 | LIVE-4 | Give the tooling access to the live Vercel project | rollout | S | Vercel | owner | none |
 
-**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, SEC-11, TST-1, TST-2, FEA-6, FEA-3, ENG-4, FEA-8, FEA-11 and TST-3 done. Wave A2: MON-8, ENG-7, FEA-13 and FEA-12 done. Wave A3: MON-9 and FEA-14 done. Wave B so far: FEA-1, SEC-7, SEC-12, SEC-8, FEA-4, FEA-15, FEA-16, MON-4, MON-11, FEA-2, SEC-13, SEC-14, FEA-17, MON-12, MON-13, FEA-5, MON-14, FEA-19, FEA-18, FEA-7, MON-7 and SEC-15 done; TST-5 done (rules not deployed). ENG-6 re-checked, open until LIVE-3. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
+**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, SEC-11, TST-1, TST-2, FEA-6, FEA-3, ENG-4, FEA-8, FEA-11 and TST-3 done. Wave A2: MON-8, ENG-7, FEA-13 and FEA-12 done. Wave A3: MON-9 and FEA-14 done. Wave B so far: FEA-1, SEC-7, SEC-12, SEC-8, FEA-4, FEA-15, FEA-16, MON-4, MON-11, FEA-2, SEC-13, SEC-14, FEA-17, MON-12, MON-13, FEA-5, MON-14, FEA-19, FEA-18, FEA-7, MON-7, SEC-15 and SEC-6 done, plus the follow-ups MON-15, MON-16 and FEA-20; TST-5 done (rules not deployed). ENG-6 re-checked, open until LIVE-3. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
 
 ---
 
@@ -396,6 +398,10 @@ Source: `docs/02_modules/notifications/FINDINGS.md`. NOTIF-01 (sign-out leak) is
 - **Why (found by FEA-5, 2026-10-03):** `/api/send-email` refuses an address with no `users`, `pendingUsers`, `customers`, `partners` or `partner_applications` record. The QA-passed email uses the customer matched by NIC, else the deal's email, so a deal whose email exists only on the lead fails with the server's recipient error. Deals converted before FEA-5 have no `salesOwnerEmail`, so their Revision alert is a toast only (live data is test-only, DEC-5, so no back-fill is planned).
 - **Build:** resolve the recipient from the deal's customer record first and show a clear message when none matches; component test.
 - **Done (2026-10-04):** `resolveQaRecipient` (`src/features/fabrication/qaRecipient.js`) finds the job's `customers` record by NIC, then `customerId` (email case-insensitively, or NIC), then `leadId`, then phone, and the email goes to `customer.email` as stored. Owner decision: no fallback to the deal email; no matching record shows "No customer record for <name>; register the customer first." and opens no preview. Root cause: lead conversion (`Leads.jsx`) creates the customer and the job with two different random `AUTO-` NICs. Tests: `tests/unit/qaRecipient.test.js` (5), `tests/component/FabricationWorks.test.jsx` FEA-5 block (+3, one flipped). Not fixed (finding): other NIC-only customer lookups in `FabricationWorks.jsx` (around :659 and :913) and `FabricationCardDetails.jsx` (around :201) still miss converted jobs.
+### FEA-21: Customer lookups by NIC only miss converted jobs (fabrication F-12)
+- **Why (found by FEA-20, 2026-10-04):** lead conversion gives the new customer and the job two different random `AUTO-` NICs, so the dispatch customer name (`FabricationWorks.jsx` ~:660), the QA-pass Final invoice customer fields (~:913) and the client card (`FabricationCardDetails.jsx` ~:201) fall back to `job.customerName`.
+- **Build:** reuse `resolveQaRecipient` (`src/features/fabrication/qaRecipient.js`) for these lookups, or stamp one NIC at conversion in `Leads.jsx`; component tests.
+
 ## Security
 
 Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file overrides another; Firestore rules combine with OR, so only a broad `allow` widens access.
@@ -470,6 +476,10 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 - **Why (found by SEC-13, 2026-10-03):** email/password sign-up does not verify the address, so whoever first creates the Auth account for an email can still file that email's `pendingUsers` request with their own uid. SEC-14 also leaves the Partner receipt read unused: the app does not subscribe a Partner to receipts (matrix `receipts: none`).
 - **Owner decision (2026-10-03): require a verified email.** Email sign-up sends a verification mail, and the `pendingUsers` create rule requires `request.auth.token.email_verified == true` (Google sign-in is already verified); the app tells an unverified user to check their mail. **Live:** rules deploy.
 - **Done (2026-10-03, rules not deployed):** sign-up sends the verification mail and parks the form data in `registrationDrafts/{uid}` (own uid only; chosen over the Auth profile, which cannot hold role, mobile, company or specialty); the first verified sign-in files `pendingUsers` from it and deletes it; an unverified first sign-in is resent the mail and told to verify. Google and bootstrap admins unchanged. Deploy the rules together with the SPA, since the deployed rules refuse the draft write. Tests: `tests/integration/pendingUsersUid.test.js`, `tests/component/App.registration.test.jsx`, `tests/unit/authFlow.test.js`.
+### SEC-16: A Partner cannot save its profile until its `partner_public` mirror exists
+- **Why (found by SEC-6, 2026-10-04):** the rules let the owning Partner update its mirror but not create it, and every profile save batches the mirror, so a Partner whose mirror was never written (no backfill, owner decision) has its Edit, avatar crop and `handleUpdateUser` saves refused as a whole until staff save the partner once.
+- **Build:** allow the owner to create its own mirror with the same key and status limits (status must equal the partners record), or skip the mirror op when it does not exist; rules and component tests. **Live:** rules deploy.
+
 ## Tests
 
 ### TST-1: Component tests for the lead card

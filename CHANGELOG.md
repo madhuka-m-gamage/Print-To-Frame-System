@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- MON-15: partner `pending` can no longer be driven below 0 by a payout. The `partners` staff update rule refuses a write that changes `pending` and leaves it below 0 (rules not deployed, LIVE-1); Disburse Payout refuses a payout larger than the partner's current `pending` with a toast and writes nothing, and explains a refused batch; deal completion accrues a cent-rounded `pending: increment()` instead of an absolute value from the screen copy (`roundCents` now exported from `payout.js`). New backlog item MON-17 (Edit modal writes stale balances). Tests: unit +1, component +3, rules +4.
+
+- SEC-6: public partner profile (partners D-5). New `partner_public/{partnerId}` mirror (`name`, `status`, `logo`, `updatedAt`) that anyone may `get`; staff with partners create/edit write it, the owning Partner may change only `name` and `logo`, `partners` stays closed to anonymous reads (rules not deployed, LIVE-1). Every partners write path (Register Partner, Edit save, avatar crop, sign-in photo sync, `handleUpdateUser`, Delete Partner) writes the mirror in the same `batchWrite` through `partnerPublicOps`; `ReferralForm.jsx` reads only `partner_public/{ref}` and shows the generic name when it is missing or not Active. No backfill; the seed has `partner_public/P-1001`. Tests: unit +4, component +6, rules +7.
+
+- FEA-20: the QA-passed email resolves the job's customer record (`resolveQaRecipient` in `src/features/fabrication/qaRecipient.js`: NIC, then `customerId` case-insensitively, then `leadId`, then phone) and sends to its stored email; it no longer falls back to the deal email, and a job with no customer record shows "register the customer first" and opens no preview. Fixes converted jobs whose `AUTO-` NIC differs from the customer's. Tests: unit +5 (`qaRecipient.test.js`), component +3 and one flipped (`FabricationWorks.test.jsx`).
+
+- MON-16: re-applying a defaulted partner rate no longer notifies Admins and Managers again; `LeadCardDetails` fans out the `commission` notification only when the previous `pricingMetadata.commissionRateDefaulted` was not true (the warning toast is unchanged). Tests: component +2 (`Leads.defaultedCommission.test.jsx`).
+
 - `agent-run` is now a user-level skill (`~/.claude/skills/agent-run/`) that reads a per-project profile; this repo's profile is `.claude/agent-run.json` and its model policy and evidence log are `.claude/agent-run/model-policy.md` (docs and config only, no app code). The repo copy of the skill in `.claude/skills/agent-run/` stays until the global one is confirmed to win in a new session.
 
 - TST-5 (owner-approved P6): `vitest.config.js` sets `hookTimeout` to 60 s so a rules file's `setupRulesEnv` survives parallel emulator lanes; P7 (brief wording for `set_monitor`) declined. Unit +1.
