@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- docs: Milestone 2 scope frozen (decision 0006). `PLAN.md` holds the frozen list (group A code: ENG-5, MON-10, MON-18, ENG-3, MON-5; group B live work parked) and a burn-down table; `BACKLOG.md` gains "Milestone 2 scope and After v2" (FEA-9, FEA-10, ENG-1, ENG-2 after v2; MON-6 closed), new item MON-18 (`totalSqFt` written as an absolute value on deal completion), the MON-17 index row and the owner's answers for ENG-5 (remove the scripts), MON-10 (full-price lines) and ENG-3 (delete merged branches). `LIVE_ROLLOUT.md` marked "approach under review" and its stale facts fixed; README and `PROJECT_INDEX.md` brought in line with the repo. No code changes.
+
 - Fabrication: the dispatch customer name, the QA-pass Final invoice customer fields and the card client details now find the customer of a converted job through `resolveQaRecipient` instead of NIC alone (F-12); the Final invoice lookup skips the phone fallback. Tests: component 5 new.
 
 - Fixed: the staff Partner Edit modal no longer writes `pending`, `settled` or `totalSqFt`, so saving a profile edit cannot overwrite a payout or accrual made since the modal opened (MON-17). Tests: component +1.
