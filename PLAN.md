@@ -25,6 +25,8 @@ Decision [0006](docs/05_decisions/0006-v2-scope-freeze.md). Milestone 2 is this 
 - **Wave B promotion guard:** SEC-12, SEC-7, SEC-8, FEA-4, FEA-15, FEA-1, MON-4, MON-11, FEA-2, SEC-13, SEC-14, FEA-17, the B4 items (MON-12, MON-14, FEA-18, SEC-15) and every later Wave B item change or rely on `firestore.rules` that are not deployed. Do not promote `staging` to `main` before the LIVE-1 rules deploy, and deploy the app before or together with the rules: an old client's whole-collection `typing_indicators` listener is refused by the SEC-12 rule, and the FEA-1 payout batch is refused by the deployed rules until they are updated. `main` therefore stays behind `staging` while group B is parked.
 
 ### Burn-down (one line per run)
+v2: 14 open · after-v2: 0
+
 | Date | Run | Closed | Added in-scope | Open A | Open B |
 |---|---|---|---|---|---|
 | 2026-10-04 | scope freeze | n/a | MON-18 | 5 | 9 |
