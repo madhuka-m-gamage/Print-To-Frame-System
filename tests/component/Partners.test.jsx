@@ -226,8 +226,8 @@ describe('Partners for a signed-in Partner', () => {
     expect(partnerOp).toMatchObject({ type: 'update', collection: 'partners', docId: 'P-1' });
     const editable = ['name', 'contactPerson', 'phone', 'address', 'company', 'bankName', 'accountNumber', 'accountName', 'branchName', 'photoURL', 'documents'];
     expect(Object.keys(partnerOp.data).filter((k) => !editable.includes(k))).toEqual([]);
-    // SEC-6: the owning Partner may change only name and logo on its public mirror.
-    expect(publicOp).toEqual({ type: 'update', collection: 'partner_public', docId: 'P-1', data: { name: partner.name, logo: partner.photoURL || '' } });
+    // SEC-16: a set carrying the partners status, so a missing mirror is created (rules hold status to the record).
+    expect(publicOp).toEqual({ type: 'set', collection: 'partner_public', docId: 'P-1', data: { name: partner.name, status: 'Active', logo: partner.photoURL || '' } });
     expect(sync.updateDocument).not.toHaveBeenCalled();
   });
 });

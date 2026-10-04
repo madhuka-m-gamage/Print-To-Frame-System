@@ -479,6 +479,7 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 ### SEC-16: A Partner cannot save its profile until its `partner_public` mirror exists
 - **Why (found by SEC-6, 2026-10-04):** the rules let the owning Partner update its mirror but not create it, and every profile save batches the mirror, so a Partner whose mirror was never written (no backfill, owner decision) has its Edit, avatar crop and `handleUpdateUser` saves refused as a whole until staff save the partner once.
 - **Build:** allow the owner to create its own mirror with the same key and status limits (status must equal the partners record), or skip the mirror op when it does not exist; rules and component tests. **Live:** rules deploy.
+- **Done (2026-10-04):** the owner create was chosen (owner decision). `firestore.rules` lets the owning Partner create or update `partner_public/{partnerId}` with only `name`, `status`, `logo`, `updatedAt` and `status` equal to its `partners` record (`Active` when absent); `partnerPublicOps` drops `asOwner` and always emits a `set` carrying status. Rules not deployed (LIVE-1).
 
 ## Tests
 
