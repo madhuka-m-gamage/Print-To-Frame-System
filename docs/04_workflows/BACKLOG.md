@@ -15,7 +15,7 @@
 Every item implicitly includes these.
 
 - **Repository:** `github.com/madhuka-m-gamage/Print-To-Frame-System`, checked out at the project root `Print-To-Frame-System/` (it used to be in an `erp-system/` subfolder; older docs and notes may say so).
-- **Branching:** branch from `staging`, open a pull request into `staging`. Do not push to `main` without the owner's explicit go. `staging` and `main` were made identical on 2026-09-21.
+- **Branching:** branch from `staging`, open a pull request into `staging`. Do not push to `main` without the owner's explicit go. Promotion of `staging` to `main` waits for the LIVE-1 rules deploy (see the Wave B promotion guard in `PLAN.md`).
 - **What is live:** production (`portal.print2frame.xyz`, Vercel project `print-to-frame-erp`) deploys `main` of the **original** repository `madhukagamage6/Print-To-Frame-ERP-System`, not this one, until the owner reconnects it (see LIVE-3). Merging here does not change the live site.
 - **Live-affecting actions need the owner's explicit go at that moment:** deploying `firestore.rules` or Storage rules, writing the live `settings/permissions` document, changing Vercel or Firebase configuration or environment variables, deleting data. Pushing to a branch never deploys rules. Always pass `--project print-to-frame-erp` explicitly; never run a bare `firebase deploy`.
 - **Full gate for every change:** `npm run lint`, `npm test`, `npm run test:api`, `npm run test:component`, `npm run test:rules` (needs Java), `npm run build`; add `npm run test:e2e` for anything a user clicks through. A refactor pull request changes no behaviour.
@@ -23,7 +23,7 @@ Every item implicitly includes these.
 - **Code layout:** `src/features/<domain>` for a domain's screens and logic, `src/shared` for code used by several features, `src/services` for infrastructure clients. Outside its own folder a file imports with the `@/` alias; `shared` never imports a feature. ESLint enforces this (ADR 0003).
 - **Permissions live in three places that must agree:** `src/context/PermissionsContext.jsx` (`DEFAULT_PERMISSIONS`), `firestore.rules`, `src/constants/roles.js`. The live matrix is a Firestore document, not a file.
 - **Docs in the same change:** `CHANGELOG.md` (top of "Unreleased"), the module's `docs/02_modules/<module>/CLAUDE.md`, `TESTING.md`, and tick or update the item here and in `PLAN.md`. `PROJECT_INDEX.md` when a doc is added. Single `PLAN.md` at root; no `docs/archive/`; no timestamped markdown; docs hold variable names only, never values.
-- **Commits and PRs:** commit messages end with `Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>`; pull request bodies end with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
+- **Commits and PRs:** commit messages end with a `Co-Authored-By:` line naming the model that wrote them; pull request bodies end with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
 - **Never commit secrets.** Do not paste keys, tokens or credentials into the repository, the pull requests or chat.
 
 **Status legend:** `[ ]` open, `[~]` partly done, `[x]` done. **Size:** S under a day, M 1 to 3 days, L more. **Live:** does it change the live project or need something deployed by hand?
@@ -48,17 +48,19 @@ Every item implicitly includes these.
 | MON-3 | Two remaining single-id lookups | money | S | no | no | none |
 | MON-4 | Server-side guard against duplicate invoices | money | M | rules | no | none |
 | MON-5 | Server-side numbering (counters, public-form ids) | money | L | api + rules | no | none |
-| MON-6 | Old data: leads without frame size, inline blueprints | data | M | Storage | partly | DEC-3, DEC-5 |
+| MON-6 | Old data: leads without frame size, inline blueprints (closed, moot under DEC-5) | data | M | Storage | partly | DEC-3, DEC-5 |
 | MON-7 | List and alert defaulted-commission leads | money | M | rules | no | FEA-2 |
 | MON-8 | Round the 75 / 25 invoice split to cents | money | S | no | **yes** | none |
 | MON-9 | Printed and emailed Advance / Final figures use the rounded split | money | S | no | no | MON-8 |
-| MON-10 | Per-line invoice rows sum to the rounded Advance | money | S | no | **yes** | MON-9 |
+| MON-10 | Per-line invoice rows sum to the rounded Advance | money | S | no | decided | MON-9 |
 | MON-11 | Server-side guard against a double partner payout | money | M | rules | no | MON-4 |
 | MON-12 | Invoice guard of a cancelled or deleted invoice blocks its replacement | money | S | rules | decided | MON-4 |
 | MON-13 | QuotationBuilder reports success after a refused invoice save | money | S | no | no | MON-4 |
 | MON-14 | Concurrent payouts of different referrals overwrite the partner balance | money | S | rules | no | MON-11 |
 | MON-15 | Partner balance increments: negative pending and float drift | money | S | no | no | MON-14 |
 | MON-16 | Re-applying a defaulted partner rate notifies Admins again | money | S | no | no | MON-7 |
+| MON-17 | Partner Edit modal writes stale balances (done) | money | S | no | no | MON-15 |
+| MON-18 | Deal completion overwrites the partner's `totalSqFt` | money | S | no | no | MON-15 |
 | FEA-1 | Real partner payout (step 4.1) | feature | M | rules | no | LIVE-1 (to work live) |
 | FEA-2 | Persistent notifications and claim resolution (step 4.3) | feature | L | rules | no | none |
 | FEA-3 | Fabrication board statuses: Cancelled, On Hold, Archived, Other (done) | feature | M | no | DEC-4 | none |
@@ -105,7 +107,7 @@ Every item implicitly includes these.
 | ENG-2 | Add Prettier | health | S | no | no | ENG-1 |
 | ENG-3 | Repository hygiene | health | S | no | partly | DEC-9 |
 | ENG-4 | Remove the two unused Firestore databases from `firebase.json` (done) | health | S | deploy target | no | none |
-| ENG-5 | Unsafe release scripts in `package.json` (skipped by owner 2026-10-01) | health | S | no | no | none |
+| ENG-5 | Unsafe release scripts in `package.json` (remove, owner 2026-10-04) | health | S | no | decided | none |
 | ENG-6 | Documentation that no longer matches reality | health | S | no | no | none |
 | ENG-7 | Coverage and CI gaps: component coverage, e2e on staging PRs | health | S | no | no | none |
 | LIVE-1 | Live rollout: matrix, code, rules | rollout | M | **yes** | **yes** | DEC-6 |
@@ -113,7 +115,7 @@ Every item implicitly includes these.
 | LIVE-3 | One canonical repository and one deploy path | rollout | M | **yes** | yes | DEC-6 |
 | LIVE-4 | Give the tooling access to the live Vercel project | rollout | S | Vercel | owner | none |
 
-**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, SEC-11, TST-1, TST-2, FEA-6, FEA-3, ENG-4, FEA-8, FEA-11 and TST-3 done. Wave A2: MON-8, ENG-7, FEA-13 and FEA-12 done. Wave A3: MON-9 and FEA-14 done. Wave B so far: FEA-1, SEC-7, SEC-12, SEC-8, FEA-4, FEA-15, FEA-16, MON-4, MON-11, FEA-2, SEC-13, SEC-14, FEA-17, MON-12, MON-13, FEA-5, MON-14, FEA-19, FEA-18, FEA-7, MON-7, SEC-15, SEC-6 and SEC-16 done, plus the follow-ups MON-15, MON-16, FEA-20, FEA-21 and MON-17; TST-5 done; DOC-LIVE1 done (rules not deployed). ENG-6 re-checked, open until LIVE-3. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. Order of work: the waves in [PLAN.md](../../PLAN.md).
+**Status at Milestone 1 (2026-09-27):** DEC-1..9 done (see each item). Milestone 2: MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, SEC-11, TST-1, TST-2, FEA-6, FEA-3, ENG-4, FEA-8, FEA-11 and TST-3 done. Wave A2: MON-8, ENG-7, FEA-13 and FEA-12 done. Wave A3: MON-9 and FEA-14 done. Wave B so far: FEA-1, SEC-7, SEC-12, SEC-8, FEA-4, FEA-15, FEA-16, MON-4, MON-11, FEA-2, SEC-13, SEC-14, FEA-17, MON-12, MON-13, FEA-5, MON-14, FEA-19, FEA-18, FEA-7, MON-7, SEC-15, SEC-6 and SEC-16 done, plus the follow-ups MON-15, MON-16, FEA-20, FEA-21 and MON-17; TST-5 done; DOC-LIVE1 done (rules not deployed). ENG-6 re-checked, open until LIVE-3. MON-6 is moot: live data is test-only and the fresh setup replaces it (DEC-5). ENG-3's LICENSE part is done. **Milestone 2 scope frozen 2026-10-04** (decision 0006): see [Milestone 2 scope and After v2](#milestone-2-scope-and-after-v2) below and the burn-down in [PLAN.md](../../PLAN.md).
 
 ---
 
@@ -201,6 +203,7 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 
 ### MON-6: Old data
 - Leads created before step 6.4b have no saved frame size, so their fabrication jobs stay editable until pricing is applied on the lead. Old jobs keep inline Base64 blueprints; migrate them to Storage once DEC-3 is decided. Legacy manual jobs with a value: DEC-5.
+- **Closed (v2 scope freeze, 2026-10-04):** moot; live data is test-only and the new environment starts clean (DEC-5).
 
 ### MON-7: List and alert defaulted-commission leads
 - **Why:** a quote with no partner rate uses LKR 30.00, sets `pricingMetadata.commissionRateDefaulted` and shows a warning only to whoever applied the pricing.
@@ -228,6 +231,7 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 ### MON-10: Per-line invoice rows sum to the rounded Advance
 - **Why (found by MON-9, 2026-10-02):** the per-line rows in `invoiceTemplate.js` (about line 242) scale each line by 0.75 or 0.25, so the lines can differ from the rounded Advance or Final total by a cent. A test in `tests/unit/displaySplit.test.js` pins the current behaviour.
 - **Owner decision first:** show each line at full value with the 75% / 25% only in the totals, or spread the rounding across the lines so they sum to the total? The first is simpler and cannot drift; the second keeps today's layout.
+- **Decided (owner, 2026-10-04):** each line at full value; 75% / 25% only in the totals.
 - **Build:** after the decision, change the row calculation and flip the pinning test.
 
 ### MON-11: Server-side guard against a double partner payout
@@ -260,6 +264,10 @@ Each is a question only the owner can answer. Record the answer in `PLAN.md` and
 - **Why (found by MON-15, 2026-10-04):** the staff Edit modal's `handleSavePartnerDetails` (`Partners.jsx`) spreads the whole `editFormData`, including `pending` and `settled` as loaded, so saving a profile edit overwrites a payout or accrual made since the modal opened.
 - **Build:** save only the edited profile fields (leave `pending`, `settled` and `totalSqFt` out of the update); component test.
 - **Done (MON-17, 2026-10-04):** checked first: the Edit modal has no input for `pending`, `settled` or `totalSqFt`, so nothing relied on it and all three are omitted. Component test added (payload has none of the keys; local merge keeps current balances).
+
+### MON-18: Deal completion overwrites the partner's `totalSqFt`
+- **Why (recorded by MON-15, given an ID at the v2 scope freeze 2026-10-04):** on deal completion `src/features/deals/Deals.jsx` (about line 408) writes `pending: increment(...)` but `totalSqFt: (agent.totalSqFt || 0) + sqFt` from the screen copy, so two completions for one partner close together, or a stale screen, lose square feet.
+- **Build:** write `totalSqFt: increment(sqFt)` like `pending`; component test that the update payload carries an increment, not an absolute value. No rules change.
 ## Features
 
 ### FEA-1: Real partner payout (step 4.1, partners D-1)
@@ -511,13 +519,13 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 ## Engineering health
 
 ### ENG-1: Split the very large files
-- Over 800 lines: `src/features/partners/Partners.jsx` 1,809, `src/features/leads/LeadCardDetails.jsx` 1,776, `src/features/fabrication/FabricationWorks.jsx` 1,657, `src/App.jsx` 1,641 (state, listeners and handlers mixed), `src/features/admin/AgentDatabase.jsx` 1,358, `src/features/customers/Customers.jsx` 1,113, `src/features/logistics/Logistics.jsx` 1,051, and others. **Method:** tests first (TST-1, TST-3), then extract logic and sub-components into the feature's own folder one at a time, no behaviour change, full gate each step. Start with `App.jsx` (extract the Firestore listeners and the invoice and receipt handlers into hooks under `src/`).
+- Over 800 lines (counted 2026-10-04): `src/features/partners/Partners.jsx` 2,034, `src/features/fabrication/FabricationWorks.jsx` 2,021, `src/features/leads/LeadCardDetails.jsx` 1,795, `src/App.jsx` 1,778 (state, listeners and handlers mixed), `src/features/admin/AgentDatabase.jsx` 1,405, `src/features/customers/Customers.jsx` 1,168, `src/features/logistics/Logistics.jsx` 1,061, and others. **Method:** tests first (TST-1, TST-3), then extract logic and sub-components into the feature's own folder one at a time, no behaviour change, full gate each step. Start with `App.jsx` (extract the Firestore listeners and the invoice and receipt handlers into hooks under `src/`).
 
 ### ENG-2: Add Prettier
 - Its own pull request, done after ENG-1 so the formatting churn does not bury real changes. Add `prettier` and a `format` script; the repo already has `.editorconfig` (2 spaces, LF).
 
 ### ENG-3: Repository hygiene
-- `public/portal-login-template.html` and `public/web and erp design theme.md` (unused? verify with a search first); the `@google/genai` dependency (the browser calls the AI through the server proxy, so it may be used only by `vite.config.js`; verify); about 90 stale `claude/*` branches on the remote (list with `git branch -r`, delete only merged ones with the owner's OK); a pull request template under `.github/`; `LICENSE` (DEC-9). **Milestone 1:** `LICENSE` done (DEC-9); merged `claude/*` branches cleaned.
+- `public/portal-login-template.html` and `public/web and erp design theme.md` (unused? verify with a search first); the `@google/genai` dependency (the browser calls the AI through the server proxy, so it may be used only by `vite.config.js`; verify); about 90 stale `claude/*` branches on the remote (list with `git branch -r`, delete only merged ones with the owner's OK); a pull request template under `.github/`; `LICENSE` (DEC-9). **Milestone 1:** `LICENSE` done (DEC-9); merged `claude/*` branches cleaned. **Checked 2026-10-04:** `@google/genai` is used by `api/generate.js` (keep it); 83 remote `claude/*` branches are merged into `staging` again, and the owner approved deleting them; the two `public/` files and the PR template are still open.
 
 ### ENG-4: Remove the two unused Firestore databases from `firebase.json`
 - The owner confirmed (2026-09-21) that `ai-studio-printtoframeerp-...` and `ai-studio-printtoframe-...` are unused. Removing their entries makes a rules deploy touch `(default)` only. The databases themselves can be deleted later, separately, with the owner's go. Do this before the rules deploy in LIVE-1.
@@ -525,6 +533,7 @@ Read [AUTHORIZATION_MAP.md](../03_security/AUTHORIZATION_MAP.md) first: no file 
 
 ### ENG-5: Unsafe release scripts
 - `package.json` has `push:staging` (`git add .` then commit and push) and `deploy:live` (merge and push `main`). They commit everything blindly and skip review. Replace them with the documented steps in `docs/04_workflows/DEPLOY_PROCESS.md`, or remove them, with the owner's OK.
+- **Decided (owner, 2026-10-04):** remove both scripts and the README line that mentions them (the 2026-10-01 skip is withdrawn).
 
 ### ENG-6: Documentation that no longer matches reality
 - Root `CLAUDE.md`, "Branching & deployment workflow": it says `main` is production and mentions two skills under `.agents/skills/`. Today production deploys from the original repository, and `.agents/skills/` is not in this repository. Correct it (see LIVE-3). Also re-check `docs/04_workflows/DEPLOY_PROCESS.md` and `GIT_WORKFLOW.md` once the deploy path is settled. **Partly done in Milestone 1** (PLAN, handoff, git workflow, root `CLAUDE.md`, README, index, module maps); re-check again after LIVE-3.
@@ -577,6 +586,24 @@ These change the live project. Nothing here has been applied. Each step needs th
 
 ### LIVE-4: Give the tooling access to the live Vercel project
 - The Vercel connection used in these sessions sees only the team `print-to-frame1`, whose one ERP project (`print-to-frame-system`) is a preview project. The live project is in another Vercel team, so its variables and deployments could not be read. Either connect that account to the tooling or check by hand (first check: no `VITE_FIREBASE_DATABASE_ID` override).
+
+---
+
+## Milestone 2 scope and After v2
+
+Frozen 2026-10-04 ([decision 0006](../05_decisions/0006-v2-scope-freeze.md)). Nothing joins Milestone 2 except a finding triaged **in-scope** (a v2 defect), which gets an ID and is added here.
+
+**Group A, code, no live impact (do now):** ENG-5, MON-10, MON-18, ENG-3, MON-5 (built and tested here; its rules go live with group B).
+
+**Group B, live work (parked, done later as one block):** LIVE-1, LIVE-2 (including tasks E2.1 to E2.6 and E4.1, whichever the chosen cutover needs), LIVE-3, LIVE-4, SEC-4, SEC-5, SEC-10, TST-4, ENG-6, and a rewrite of [LIVE_ROLLOUT.md](LIVE_ROLLOUT.md) for the preview-subdomain approach. Pre-flight for the block: find out what was already changed on the old live site (diff the original repository's `main` against this one, and the console's deployed Firestore rules against `firestore.rules`), because the owner has applied some fixes there and they are not recorded.
+
+**After v2 (not in Milestone 2):**
+- FEA-9 Employees HR model and FEA-10 task-assignment fields: new features, not go-live blockers; FEA-9 needs its own rules design for pay data.
+- ENG-1 split the large files: large, no user-visible change, conflicts with every open PR.
+- ENG-2 Prettier: depends on ENG-1.
+- New findings triaged **after-v2** during runs are listed here with an ID.
+
+**Closed at the freeze:** MON-6 (moot under DEC-5).
 
 ---
 

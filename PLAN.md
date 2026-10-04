@@ -16,28 +16,35 @@ Keep the x0.25 invoice print scaling; lead stage advance stays manual; Managers 
 ## How each item runs
 One item per fresh session: branch `claude/<topic>` from `staging` → tests first (seen failing) → change → `npm run lint`, `npm run test:all`, `npm run build` (+ `npm run test:e2e` when visible) → docs, module `CLAUDE.md` and `CHANGELOG.md` in the same PR → PR into `staging` → promote to `main` by PR with a merge commit when the owner says so. Live actions (rules deploys, `settings/permissions`, Vercel/Firebase config) only with the owner's go at that moment. Full detail: [GIT_WORKFLOW.md](docs/04_workflows/GIT_WORKFLOW.md), [TESTING.md](docs/04_workflows/TESTING.md).
 
-## Roadmap to Milestone 2
-- [ ] **Wave A, repo only, no live impact:** ~~MON-1~~, ~~MON-3~~, ~~MON-2~~, ~~SEC-1~~, ~~SEC-2~~, ~~SEC-3~~, ~~SEC-9~~, ~~TST-1~~, ~~TST-3~~, ~~FEA-3~~, ~~FEA-8~~, ~~FEA-6~~, ~~FEA-11~~, ~~ENG-4~~, ~~SEC-11~~ (deactivated-user sign-in), ENG-5 (skipped by owner 2026-10-01)
-- [ ] **Wave A2, follow-ups found during Wave A (repo only):** ~~MON-8~~, ~~FEA-12~~, ~~FEA-13~~, ~~ENG-7~~
-- [x] **Wave A3, follow-ups found in Wave A2 (repo only):** ~~MON-9~~, ~~FEA-14~~
-- [ ] **Wave A4, follow-up found in Wave A3 (repo only):** MON-10 (owner decision first)
-- **Wave B promotion guard:** SEC-12, SEC-7, SEC-8, FEA-4, FEA-15, FEA-1, MON-4, MON-11, FEA-2, SEC-13, SEC-14, FEA-17 and the B4 items (MON-12, MON-14, FEA-18, SEC-15) (and every later Wave B item) change or rely on `firestore.rules` that are not deployed. Do not promote `staging` to `main` before the LIVE-1 rules deploy, and deploy the app before or together with the rules: an old client's whole-collection `typing_indicators` listener is refused by the SEC-12 rule, and the FEA-1 payout batch is refused by the deployed rules until they are updated.
-- [ ] **Wave B, code + rules built and tested here, live with the next rules deploy:** ~~MON-4~~, MON-5, ~~MON-7~~, ~~FEA-1~~, ~~FEA-2~~, ~~FEA-4~~, ~~FEA-5~~, ~~FEA-7~~, FEA-9, FEA-10, ~~SEC-6~~, ~~SEC-7~~, ~~SEC-8~~, ~~SEC-12~~, ~~FEA-15~~, ~~FEA-16~~, ~~MON-11~~, ~~SEC-13~~, ~~SEC-14~~, ~~FEA-17~~, ~~MON-12~~, ~~MON-13~~, ~~MON-14~~, ~~FEA-18~~, ~~FEA-19~~, ~~SEC-15~~, ~~SEC-16~~
-- [x] **Wave C, before restrictive rules go live:** ~~TST-2~~ (money and RBAC browser journeys)
-- [ ] **Wave D, environment and go-live (owner sittings):** LIVE-2 fresh environment (seed `DEFAULT_PERMISSIONS`, deploy Firestore + Storage rules), LIVE-3 move production here and archive the old repos, LIVE-1, LIVE-4, SEC-4, SEC-5, SEC-10, TST-4
-- [ ] **Wave E, code health after tests exist:** ENG-1, ENG-2, ENG-6
+## Milestone 2 scope (frozen 2026-10-04)
+Decision [0006](docs/05_decisions/0006-v2-scope-freeze.md). Milestone 2 is this list; nothing joins it except a finding triaged **in-scope** (a v2 defect). Every run's findings are triaged fixed-in-PR / in-scope / after-v2; the agent decides, the owner overrides at review. Details and the After v2 list: [BACKLOG.md, Milestone 2 scope and After v2](docs/04_workflows/BACKLOG.md#milestone-2-scope-and-after-v2).
+
+- [ ] **Group A, code, no live impact (do now):** ENG-5 (remove the release scripts), MON-10 (lines at full price, split in totals only), MON-18 (`totalSqFt` by increment), ENG-3 (hygiene; merged-branch deletion approved), MON-5 (server-side numbering; rules go live with group B)
+- [ ] **Group B, live work (parked, one block later):** LIVE-1, LIVE-2 (with the E2/E4 tasks the cutover needs), LIVE-3, LIVE-4, SEC-4, SEC-5, SEC-10, TST-4, ENG-6, LIVE_ROLLOUT rewrite. The live site (`print2frame.xyz`, `portal.print2frame.xyz`) stays on the original repository; the new system goes to preview subdomains first and replaces it later (approach not decided). Pre-flight: find what the owner already changed on the old live site.
+- **After v2:** FEA-9, FEA-10, ENG-1, ENG-2. **Closed:** MON-6 (moot, DEC-5).
+- **Wave B promotion guard:** SEC-12, SEC-7, SEC-8, FEA-4, FEA-15, FEA-1, MON-4, MON-11, FEA-2, SEC-13, SEC-14, FEA-17, the B4 items (MON-12, MON-14, FEA-18, SEC-15) and every later Wave B item change or rely on `firestore.rules` that are not deployed. Do not promote `staging` to `main` before the LIVE-1 rules deploy, and deploy the app before or together with the rules: an old client's whole-collection `typing_indicators` listener is refused by the SEC-12 rule, and the FEA-1 payout batch is refused by the deployed rules until they are updated. `main` therefore stays behind `staging` while group B is parked.
+
+### Burn-down (one line per run)
+| Date | Run | Closed | Added in-scope | Open A | Open B |
+|---|---|---|---|---|---|
+| 2026-10-04 | scope freeze | n/a | MON-18 | 5 | 9 |
+
+## Waves (history up to the freeze)
+- [x] **Wave A:** MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, TST-1, TST-3, FEA-3, FEA-8, FEA-6, FEA-11, ENG-4, SEC-11 (ENG-5 moved to group A)
+- [x] **Wave A2:** MON-8, FEA-12, FEA-13, ENG-7
+- [x] **Wave A3:** MON-9, FEA-14
+- [x] **Wave A4:** MON-10 moved to group A after the owner's decision
+- [x] **Wave B, code + rules built and tested here, live with the next rules deploy:** MON-4, MON-7, FEA-1, FEA-2, FEA-4, FEA-5, FEA-7, SEC-6, SEC-7, SEC-8, SEC-12, FEA-15, FEA-16, MON-11, SEC-13, SEC-14, FEA-17, MON-12, MON-13, MON-14, FEA-18, FEA-19, SEC-15, SEC-16, and the follow-ups MON-15, MON-16, MON-17, FEA-20, FEA-21; TST-5, DOC-LIVE1. MON-5 moved to group A, FEA-9 and FEA-10 to After v2
+- [x] **Wave C:** TST-2 (money and RBAC browser journeys)
+- **Wave D** became group B; **Wave E** (ENG-1, ENG-2, ENG-6) split between After v2 and group B
 
 ## Progress snapshot
 | Track | Progress | Notes |
 |---|---|---|
 | Milestone 1 | `[##########]` 100% | Tagged `v1.0.0` |
-| Wave A | `[#########-]` 15/16 | MON-1, MON-3, MON-2, SEC-1, SEC-2, SEC-3, SEC-9, TST-1, TST-3, FEA-3, FEA-8, FEA-6, FEA-11, ENG-4, SEC-11 done; next up: ENG-5 (skipped by owner 2026-10-01), so Wave A is otherwise complete |
-| Wave A2 | `[##########]` 4/4 | MON-8, ENG-7, FEA-13, FEA-12 done |
-| Wave A4 | `[----------]` 0/1 | MON-10 found in Wave A3; needs the owner |
-| Wave A3 | `[##########]` 2/2 | MON-9, FEA-14 done; FEA-15 split out to Wave B and now done; next up: Wave B (needs the rules deploy), Wave D with the owner |
-| Wave B | `[#########-]` 24/27 | FEA-1, SEC-7, SEC-12, SEC-8, FEA-4, FEA-15, FEA-16, MON-4, MON-11, FEA-2, SEC-13, SEC-14, FEA-17, MON-12, MON-13, FEA-5, MON-14, FEA-19, FEA-18, FEA-7, MON-7, SEC-15, SEC-6, SEC-16 done, plus the B5 follow-ups MON-15, MON-16, FEA-20, FEA-21, MON-17 (rules not deployed, owner step); next up: MON-5, FEA-9, FEA-10 |
-| Waves D, E | `[----------]` 0% | Wave D needs the owner; ENG-6 re-checked, open until LIVE-3 |
-| Wave C | `[##########]` 1/1 | TST-2 done |
+| Waves A to C | `[##########]` done | 53 items closed (A 15, A2 4, A3 2, B 31, C 1); rules from Wave B not deployed (group B) |
+| Milestone 2 group A | `[----------]` 0/5 | ENG-5, MON-10, MON-18, ENG-3, MON-5 |
+| Milestone 2 group B | `[----------]` 0/9 | Parked until group A is done and the cutover approach is decided |
 
 ## Run calibration (overwritten after each agent run)
 Last run: 2026-10-04, Wave B run B6 (FEA-21, MON-17 on Sonnet·medium; final docs Sonnet·low), one workflow, two lanes, run `wf_8db12555-122`. 3 agents, 324k subagent tokens, launch 13:32, docs PR 13:46 (14 min, estimate 25). Launched over the 80% guard on the owner's override (projected peak 90%). Meter 69% → 77% (+8%, estimate 21%); weekly 91% → 92%. usage-estimate `cost`: $3.71 API-priced (main $2.00, agents $1.71, orchestrator ratio 1.08), which its $0.305/1% rate reads as 12%, against the meter's +8%.

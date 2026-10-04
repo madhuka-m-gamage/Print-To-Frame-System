@@ -39,17 +39,16 @@ Server-side features (AI drafting, email, creating or resetting Firebase Auth us
 | `npm test` | Unit tests (`tests/unit`) |
 | `npm run test:api` | API handler tests with mocked Firebase Admin, Gemini and SMTP |
 | `npm run test:component` | React component tests (jsdom and Testing Library) |
-| `npm run test:rules` | `firestore.rules` tests on the Firebase emulator (needs Java) |
+| `npm run test:rules` | `firestore.rules` and `storage.rules` tests on the Firebase emulators (needs Java) |
 | `npm run test:e2e` | Playwright browser tests against the emulators |
 | `npm run test:all` | Unit, API, component and rules tests in sequence |
 | `npm run coverage` | Unit and API tests with a coverage report in `coverage/` |
+| `npm run coverage:all` | Coverage for unit and API, and separately for component tests |
 | `npm run seed:emulator` | Load fake users and data into a running emulator |
-
-`push:staging` and `deploy:live` are maintainer shortcuts for the release flow below; do not run them casually.
 
 ## Testing
 
-Five layers, each with one job: unit, API, component, rules and end to end. Pick the cheapest layer that can prove the behaviour. The guide, the coverage map and how to add a test are in [docs/04_workflows/TESTING.md](docs/04_workflows/TESTING.md). CI runs lint, unit, API, component, build and rules on every pull request.
+Five layers, each with one job: unit, API, component, rules and end to end. Pick the cheapest layer that can prove the behaviour. The guide, the coverage map and how to add a test are in [docs/04_workflows/TESTING.md](docs/04_workflows/TESTING.md). CI runs lint, unit, API, component, build and rules on every pull request, and the Playwright journeys on pull requests into `staging` and `main` that change code.
 
 ## Project structure
 
@@ -69,6 +68,7 @@ src/
 tests/          unit, api, component, integration (rules), e2e, helpers, fixtures
 docs/           architecture, per-module notes, security, workflows, decisions
 firestore.rules Firestore security rules (deployed by hand, never by a push)
+storage.rules   Storage security rules (deployed by hand, likewise)
 ```
 
 Imports outside a file's own folder use the `@/` alias (`@/` means `src/`); a feature may import `shared`, `services`, `context`, `constants` and other features, but `shared` never imports a feature. The reasoning is in [docs/05_decisions/0003-source-layout.md](docs/05_decisions/0003-source-layout.md).
@@ -78,9 +78,9 @@ Access control is enforced in three places that must agree: `src/context/Permiss
 ## Branches and deploys
 
 - Work on a branch, open a pull request into `staging`. `staging` builds a Vercel preview.
-- `main` is production (`portal.print2frame.xyz`). It only receives a reviewed merge from `staging`.
+- `main` only receives a reviewed promotion from `staging`. It is not live yet: `portal.print2frame.xyz` still deploys the original repository until the go-live work (LIVE-3 in the backlog) moves it here.
 - Pushing does not deploy Firestore rules. Any change to `firestore.rules` is deployed separately by an authorised maintainer with `firebase deploy --only firestore:rules --project <project-id>`. See [docs/04_workflows/DEPLOY_PROCESS.md](docs/04_workflows/DEPLOY_PROCESS.md) and [docs/04_workflows/GIT_WORKFLOW.md](docs/04_workflows/GIT_WORKFLOW.md).
 
 ## Documentation
 
-Everything written about the system is listed in [PROJECT_INDEX.md](PROJECT_INDEX.md). Progress and open work are tracked in [PLAN.md](PLAN.md), changes in [CHANGELOG.md](CHANGELOG.md), and how to contribute in [CONTRIBUTING.md](CONTRIBUTING.md).
+Everything written about the system is listed in [PROJECT_INDEX.md](PROJECT_INDEX.md). Progress and the Milestone 2 scope are tracked in [PLAN.md](PLAN.md), open work in [BACKLOG.md](docs/04_workflows/BACKLOG.md), changes in [CHANGELOG.md](CHANGELOG.md), and how to contribute in [CONTRIBUTING.md](CONTRIBUTING.md).
