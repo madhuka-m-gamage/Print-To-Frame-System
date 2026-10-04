@@ -354,6 +354,21 @@ service cloud.firestore {
       allow delete: if checkPermission('partners', 'delete') || isAdmin();
     }
 
+    // ── Public Partner Profile (SEC-6, partners D-5) ───────────────────────
+    // A world-readable mirror of a partner's name, status and logo for the anonymous
+    // referral form, since a rule cannot hide the bank fields of a partners document.
+    // Keyed by the partners document id. The owning Partner is checked through that
+    // partners record (the mirror holds no email) and may not change status.
+    match /partner_public/{partnerId} {
+      allow get: if true;
+      allow create, update: if (checkPermission('partners', 'create') || checkPermission('partners', 'edit') || checkPermission('partners', 'write'))
+          && !hasRole('Partner')
+          && request.resource.data.keys().hasOnly(['name', 'status', 'logo', 'updatedAt']);
+      allow update: if isActiveUser() && ownsPartnerRecord(partnerId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'logo', 'updatedAt']);
+      allow delete: if (checkPermission('partners', 'delete') && !hasRole('Partner')) || isAdmin();
+    }
+
     // ── Referral Claims (partners report referrals the system missed) ──────
     // Any signed-in user may file a claim; only staff reviewers and the claiming partner
     // read them, and only an Admin resolves or removes them (partners D-6).

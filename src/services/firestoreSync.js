@@ -28,6 +28,7 @@ export const COLLECTIONS = {
   LEADS: 'leads',
   CUSTOMERS: 'customers',
   PARTNERS: 'partners',
+  PARTNER_PUBLIC: 'partner_public',
   PARTNER_APPLICATIONS: 'partner_applications',
   PARTNER_PAYOUTS: 'partner_payouts',
   PAYOUT_GUARDS: 'payout_guards',

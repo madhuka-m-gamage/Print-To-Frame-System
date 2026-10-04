@@ -5,7 +5,7 @@ import { renderWithProviders } from '../helpers/renderWithProviders';
 import { makePartner } from '../helpers/factories';
 
 vi.mock('@/services/firestoreSync', () => ({
-  COLLECTIONS: { PARTNERS: 'partners', LEADS: 'leads', PARTNER_PAYOUTS: 'partner_payouts', PAYOUT_GUARDS: 'payout_guards', REFERRAL_CLAIMS: 'referral_claims', USERS: 'users', PARTNER_APPLICATIONS: 'partner_applications' },
+  COLLECTIONS: { PARTNERS: 'partners', PARTNER_PUBLIC: 'partner_public', LEADS: 'leads', PARTNER_PAYOUTS: 'partner_payouts', PAYOUT_GUARDS: 'payout_guards', REFERRAL_CLAIMS: 'referral_claims', USERS: 'users', PARTNER_APPLICATIONS: 'partner_applications' },
   subscribeToCollection: vi.fn(() => () => {}),
   subscribeToQuery: vi.fn(() => () => {}),
   addDocument: vi.fn(async () => {}),
@@ -25,6 +25,7 @@ vi.mock('firebase/firestore', () => ({
   collection: vi.fn((_db, name) => ({ name })),
   query: vi.fn((ref, ...constraints) => ({ ref, constraints })),
   where: vi.fn((field, op, value) => ({ field, op, value })),
+  serverTimestamp: vi.fn(() => 'server-ts'),
   increment: vi.fn((n) => ({ increment: n })),
 }));
 vi.mock('@/shared/utils/toast', () => ({
@@ -220,11 +221,49 @@ describe('Partners for a signed-in Partner', () => {
     expect(screen.queryByText(/Commission Rate \(LKR \/ SqFt\)/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
 
-    await vi.waitFor(() => expect(sync.updateDocument).toHaveBeenCalled());
-    const [collectionName, docId, payload] = sync.updateDocument.mock.calls[0];
-    expect(collectionName).toBe('partners');
-    expect(docId).toBe('P-1');
+    await vi.waitFor(() => expect(sync.batchWrite).toHaveBeenCalled());
+    const [partnerOp, publicOp] = sync.batchWrite.mock.calls[0][0];
+    expect(partnerOp).toMatchObject({ type: 'update', collection: 'partners', docId: 'P-1' });
     const editable = ['name', 'contactPerson', 'phone', 'address', 'company', 'bankName', 'accountNumber', 'accountName', 'branchName', 'photoURL', 'documents'];
-    expect(Object.keys(payload).filter((k) => !editable.includes(k))).toEqual([]);
+    expect(Object.keys(partnerOp.data).filter((k) => !editable.includes(k))).toEqual([]);
+    // SEC-6: the owning Partner may change only name and logo on its public mirror.
+    expect(publicOp).toEqual({ type: 'update', collection: 'partner_public', docId: 'P-1', data: { name: partner.name, logo: partner.photoURL || '' } });
+    expect(sync.updateDocument).not.toHaveBeenCalled();
+  });
+});
+
+// SEC-6: every partners write also writes partner_public/<doc id> in the same batch.
+describe('Partners public profile mirror', () => {
+  const renderAdmin = (partners = []) => renderWithProviders(
+    <Partners partners={partners} setPartners={vi.fn()} leads={[]} setLeads={vi.fn()} invoices={[]} projects={[]} users={[]} setUsers={vi.fn()} currentUser={admin} />,
+    { role: 'Admin' }
+  );
+
+  it('Register Partner creates the partner and its public mirror in one batch', async () => {
+    renderAdmin();
+    fireEvent.click(screen.getByRole('button', { name: /Register Partner/i }));
+    fireEvent.change(screen.getByPlaceholderText('e.g. Design Ranga Framing'), { target: { name: 'name', value: 'Ranga Framing' } });
+    fireEvent.change(screen.getByPlaceholderText('e.g. P-1002 (auto-generated if empty)'), { target: { name: 'partnerId', value: 'P-1002' } });
+    fireEvent.change(screen.getByPlaceholderText('studio@example.com'), { target: { name: 'email', value: 'Ranga@Example.com' } });
+    fireEvent.click(screen.getAllByRole('button', { name: /^Register Partner$/ }).at(-1));
+
+    await vi.waitFor(() => expect(sync.batchWrite).toHaveBeenCalledTimes(1));
+    const [partnerOp, publicOp] = sync.batchWrite.mock.calls[0][0];
+    expect(partnerOp).toMatchObject({ type: 'set', collection: 'partners', docId: 'P-1002', data: { name: 'Ranga Framing', email: 'ranga@example.com', partnerId: 'P-1002', createdAt: 'server-ts' } });
+    expect(publicOp).toEqual({ type: 'set', collection: 'partner_public', docId: 'P-1002', data: { name: 'Ranga Framing', status: 'Active', logo: '' } });
+    expect(sync.addDocument).not.toHaveBeenCalled();
+  });
+
+  it('a staff Edit save writes the partner and sets its mirror, status included', async () => {
+    const partner = makePartner({ partnerId: 'P-1', _firestoreId: 'P-1', name: 'Lanka Art Studio', status: 'Inactive', photoURL: 'logo.png', accountNumber: '123' });
+    renderAdmin([partner]);
+    fireEvent.click(screen.getAllByRole('button', { name: /^Edit$/ })[0]);
+    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
+
+    await vi.waitFor(() => expect(sync.batchWrite).toHaveBeenCalledTimes(1));
+    const [partnerOp, publicOp] = sync.batchWrite.mock.calls[0][0];
+    expect(partnerOp).toMatchObject({ type: 'update', collection: 'partners', docId: 'P-1' });
+    expect(publicOp).toEqual({ type: 'set', collection: 'partner_public', docId: 'P-1', data: { name: 'Lanka Art Studio', status: 'Inactive', logo: 'logo.png' } });
+    expect(sync.updateDocument).not.toHaveBeenCalled();
   });
 });

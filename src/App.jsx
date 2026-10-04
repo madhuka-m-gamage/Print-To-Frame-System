@@ -75,6 +75,7 @@ import { logActivity } from "./services/auditLog";
 import { ErrorBoundary } from "./shared/components/ErrorBoundary";
 import LoadingSpinner from "./shared/components/LoadingSpinner";
 import { findPartnerForLead, getLeadPartnerId } from "@/features/partners/partnerLink";
+import { partnerPublicOps } from "@/features/partners/partnerPublic";
 import { isSuperAdminEmail } from '@/features/auth/superAdmin';
 import { leadForInvoice } from '@/features/leads/leadLineage';
 
@@ -743,7 +744,10 @@ function App() {
               const pMatch = partnersRef.current.find(p => p.email?.toLowerCase() === emailKey || p.partnerId === userData.partnerId);
               if (pMatch && !pMatch.photoURL) {
                 const pDocId = pMatch._firestoreId || pMatch.id || pMatch.partnerId;
-                updateDocument(COLLECTIONS.PARTNERS, pDocId, { photoURL: user.photoURL }).catch(console.warn);
+                batchWrite([
+                  { type: 'update', collection: COLLECTIONS.PARTNERS, docId: pDocId, data: { photoURL: user.photoURL } },
+                  ...partnerPublicOps(pDocId, { ...pMatch, photoURL: user.photoURL }, { asOwner: userData.role === 'Partner' }),
+                ]).catch(console.warn);
               }
             }
 
@@ -1097,7 +1101,10 @@ function App() {
           address: updatedUser.location ?? '',
           company: updatedUser.company ?? '',
         };
-        updateDocument(COLLECTIONS.PARTNERS, pDocId, pUpdates).catch(console.warn);
+        batchWrite([
+          { type: 'update', collection: COLLECTIONS.PARTNERS, docId: pDocId, data: pUpdates },
+          ...partnerPublicOps(pDocId, { ...pMatch, ...pUpdates }, { asOwner: updatedUser.role === 'Partner' }),
+        ]).catch(console.warn);
         setPartners(prev => prev.map(p => (p.id === pDocId || p.partnerId === pMatch.partnerId) ? { ...p, ...pUpdates } : p));
       }
     }

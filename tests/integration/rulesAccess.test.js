@@ -336,11 +336,9 @@ describe('known gaps in today\'s rules (characterisation)', () => {
     await assertFails(updateDoc(doc(db, 'leads', 'L-pipe'), { name: 'edited' }));
   });
 
-  // partners FINDINGS D-5 (public read of Active partners) is deliberately NOT applied in
-  // Phase 7 3.4: a partner document holds bank name, account number and branch, and a
-  // Firestore rule cannot hide fields, so the accepted rule would publish them to anyone.
-  // Held for a decision (for example a separate public partner-profile document). Until
-  // then an anonymous visitor cannot read a partner.
+  // partners FINDINGS D-5: a partner document holds bank name, account number and branch,
+  // and a Firestore rule cannot hide fields, so partners stays closed to anonymous reads.
+  // The public referral form reads partner_public instead (SEC-6, block below).
   it('denies an anonymous read of an Active partner', async () => {
     await seedDoc('partners', 'pub@example.com', { name: 'Pub', status: 'Active' });
     await assertFails(getDoc(doc(unauthedFirestore(testEnv), 'partners', 'pub@example.com')));
@@ -413,6 +411,62 @@ describe('a Partner is limited to its own partners record (SEC-7)', () => {
   });
 });
 
-describe('target behaviour to enable with the Phase 7 rules changes', () => {
-  it.todo('held: an Active partner readable by anyone (partners D-5) needs a public profile document, not the full partner record');
+// SEC-6 (partners D-5): the public referral form reads partner_public/{partnerId}, a
+// mirror holding only name, status and logo, while partners stays closed to anonymous reads.
+describe('public partner profile partner_public (SEC-6)', () => {
+  const PUBLIC = { name: 'Own Studio', status: 'Active', logo: '' };
+
+  beforeEach(async () => {
+    await seedDoc('partners', 'P-1', { name: 'Own Studio', email: 'p1@example.com', status: 'Active', bankName: 'B', accountNumber: '1' });
+    await seedDoc('partners', 'P-2', { name: 'Other', email: 'p2@example.com', status: 'Active' });
+    await seedDoc('partner_public', 'P-1', PUBLIC);
+    await seedDoc('partner_public', 'P-2', { name: 'Other', status: 'Active', logo: '' });
+  });
+
+  it('lets an anonymous visitor get a public profile while partners stays denied', async () => {
+    const anon = unauthedFirestore(testEnv);
+    await assertSucceeds(getDoc(doc(anon, 'partner_public', 'P-1')));
+    await assertFails(getDoc(doc(anon, 'partners', 'P-1')));
+  });
+
+  it('denies anonymous writes', async () => {
+    const anon = unauthedFirestore(testEnv);
+    await assertFails(setDoc(doc(anon, 'partner_public', 'P-9'), PUBLIC));
+    await assertFails(updateDoc(doc(anon, 'partner_public', 'P-1'), { name: 'X' }));
+    await assertFails(deleteDoc(doc(anon, 'partner_public', 'P-1')));
+  });
+
+  it('lets the owning Partner update name, logo and updatedAt only', async () => {
+    const db = await dbAs('Partner', 'p1@example.com');
+    await assertSucceeds(updateDoc(doc(db, 'partner_public', 'P-1'), { name: 'New', logo: 'x', updatedAt: 'now' }));
+    await assertFails(updateDoc(doc(db, 'partner_public', 'P-1'), { status: 'Inactive' }));
+    await assertFails(updateDoc(doc(db, 'partner_public', 'P-1'), { accountNumber: '1' }));
+  });
+
+  it('denies a Partner writing another partner profile, creating or deleting one', async () => {
+    const db = await dbAs('Partner', 'p1@example.com');
+    await assertFails(updateDoc(doc(db, 'partner_public', 'P-2'), { name: 'Hijack' }));
+    await assertFails(setDoc(doc(db, 'partner_public', 'P-9'), PUBLIC));
+    await assertFails(deleteDoc(doc(db, 'partner_public', 'P-1')));
+  });
+
+  it('lets staff with partners create and edit create and update, and partners delete remove', async () => {
+    const sales = await dbAs('Sales');
+    await assertSucceeds(setDoc(doc(sales, 'partner_public', 'P-3'), { ...PUBLIC, updatedAt: 'now' }));
+    await assertSucceeds(updateDoc(doc(sales, 'partner_public', 'P-1'), { status: 'Inactive' }));
+    await assertFails(deleteDoc(doc(sales, 'partner_public', 'P-1')));
+    await assertSucceeds(deleteDoc(doc(await dbAs('Manager'), 'partner_public', 'P-1')));
+  });
+
+  it('refuses staff putting a field other than name, status, logo or updatedAt on the public doc', async () => {
+    const sales = await dbAs('Sales');
+    await assertFails(setDoc(doc(sales, 'partner_public', 'P-4'), { ...PUBLIC, accountNumber: '1' }));
+    await assertFails(updateDoc(doc(sales, 'partner_public', 'P-1'), { email: 'p1@example.com' }));
+  });
+
+  it('denies a user without partners create or edit', async () => {
+    const db = await dbAs('Operations');
+    await assertFails(setDoc(doc(db, 'partner_public', 'P-5'), PUBLIC));
+    await assertFails(updateDoc(doc(db, 'partner_public', 'P-1'), { name: 'X' }));
+  });
 });

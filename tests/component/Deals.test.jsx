@@ -5,7 +5,7 @@ import { renderWithProviders } from '../helpers/renderWithProviders';
 import { makeDeal, makeInvoice, makePartner } from '../helpers/factories';
 
 vi.mock('@/services/firestoreSync', () => ({
-  COLLECTIONS: { LEADS: 'leads', INVOICES: 'invoices', PARTNERS: 'partners', LOGISTICS: 'logistics', CUSTOMERS: 'customers' },
+  COLLECTIONS: { LEADS: 'leads', INVOICES: 'invoices', PARTNERS: 'partners', PARTNER_PUBLIC: 'partner_public', LOGISTICS: 'logistics', CUSTOMERS: 'customers' },
   addDocument: vi.fn(async () => {}),
   updateDocument: vi.fn(async () => {}),
   deleteDocument: vi.fn(async () => {}),

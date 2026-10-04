@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '@/services/firebase';
-import { collection, query, where, getDocs, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { COLLECTIONS } from '@/services/firestoreSync';
 import { validatePhone, validateEmail, formatPhone } from '@/shared/utils/validation';
 import { 
@@ -35,27 +35,16 @@ export default function ReferralForm() {
     }
   }, []);
 
+  // SEC-6: an anonymous visitor may read only the public mirror, never the partners record.
   const fetchPartnerDetails = async (pid) => {
+    const generic = { name: 'Verified Partner Studio', partnerId: pid };
     try {
-      const partnersRef = collection(db, COLLECTIONS.PARTNERS);
-      const q = query(partnersRef, where('partnerId', '==', pid));
-      const querySnapshot = await getDocs(q);
-      
-      if (!querySnapshot.empty) {
-        setPartnerDetails(querySnapshot.docs[0].data());
-      } else {
-        // Fallback: check by ID or partner_applications
-        const q2 = query(partnersRef, where('id', '==', Number(pid) || 0));
-        const snap2 = await getDocs(q2);
-        if (!snap2.empty) {
-          setPartnerDetails(snap2.docs[0].data());
-        } else {
-          setPartnerDetails({ name: 'Verified Partner Studio', partnerId: pid });
-        }
-      }
+      const snap = await getDoc(doc(db, COLLECTIONS.PARTNER_PUBLIC, pid));
+      const profile = snap.exists() ? snap.data() : null;
+      setPartnerDetails(profile?.status === 'Active' ? { ...profile, partnerId: pid } : generic);
     } catch (err) {
       console.error("Error fetching partner details:", err);
-      setPartnerDetails({ name: 'Verified Partner Studio', partnerId: pid });
+      setPartnerDetails(generic);
     } finally {
       setIsLoading(false);
     }
@@ -106,7 +95,7 @@ export default function ReferralForm() {
         agentName: partnerDetails?.name || partnerId || 'Partner Referral',
         partnerId: partnerId || '',
         partnerName: partnerDetails?.name || partnerId || '',
-        commissionRate: Number(partnerDetails?.commissionRate) > 1 ? Number(partnerDetails?.commissionRate) : 0,
+        commissionRate: 0,
         stage: 'Intake',
         value: 0,
         totalSqFt: 0,
