@@ -428,7 +428,7 @@ export default function Partners({
       try {
         await batchWrite([
           { type: 'update', collection: COLLECTIONS.PARTNERS, docId, data: { photoURL: croppedBase64 } },
-          ...partnerPublicOps(docId, { ...selectedPartner, photoURL: croppedBase64 }, { asOwner: isPartnerUser }),
+          ...partnerPublicOps(docId, { ...selectedPartner, photoURL: croppedBase64 }),
         ]);
         if (setPartners) {
           setPartners(prev => prev.map(p => (p.id === docId || p.partnerId === selectedPartner.partnerId) ? { ...p, photoURL: croppedBase64 } : p));
@@ -587,7 +587,7 @@ export default function Partners({
       const docId = selectedPartner._firestoreId || selectedPartner.id || selectedPartner.partnerId;
       await batchWrite([
         { type: 'update', collection: COLLECTIONS.PARTNERS, docId, data: payload },
-        ...partnerPublicOps(docId, { ...selectedPartner, ...payload }, { asOwner: isPartnerUser }),
+        ...partnerPublicOps(docId, { ...selectedPartner, ...payload }),
       ]);
 
       if (setPartners) {

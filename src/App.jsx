@@ -746,7 +746,7 @@ function App() {
                 const pDocId = pMatch._firestoreId || pMatch.id || pMatch.partnerId;
                 batchWrite([
                   { type: 'update', collection: COLLECTIONS.PARTNERS, docId: pDocId, data: { photoURL: user.photoURL } },
-                  ...partnerPublicOps(pDocId, { ...pMatch, photoURL: user.photoURL }, { asOwner: userData.role === 'Partner' }),
+                  ...partnerPublicOps(pDocId, { ...pMatch, photoURL: user.photoURL }),
                 ]).catch(console.warn);
               }
             }
@@ -1103,7 +1103,7 @@ function App() {
         };
         batchWrite([
           { type: 'update', collection: COLLECTIONS.PARTNERS, docId: pDocId, data: pUpdates },
-          ...partnerPublicOps(pDocId, { ...pMatch, ...pUpdates }, { asOwner: updatedUser.role === 'Partner' }),
+          ...partnerPublicOps(pDocId, { ...pMatch, ...pUpdates }),
         ]).catch(console.warn);
         setPartners(prev => prev.map(p => (p.id === pDocId || p.partnerId === pMatch.partnerId) ? { ...p, ...pUpdates } : p));
       }

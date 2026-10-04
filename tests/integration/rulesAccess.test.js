@@ -443,6 +443,26 @@ describe('public partner profile partner_public (SEC-6)', () => {
     await assertFails(updateDoc(doc(db, 'partner_public', 'P-1'), { accountNumber: '1' }));
   });
 
+  // SEC-16: a Partner whose mirror was never written creates it on its own profile save.
+  it('lets the owning Partner create its missing mirror with its partners status only', async () => {
+    await seedDoc('partners', 'P-6', { name: 'New Studio', email: 'p6@example.com', status: 'Inactive' });
+    await seedDoc('partners', 'P-7', { name: 'No Status', email: 'p7@example.com' });
+    const db = await dbAs('Partner', 'p6@example.com');
+    await assertFails(setDoc(doc(db, 'partner_public', 'P-6'), { name: 'New Studio', status: 'Active', logo: '' }));
+    await assertFails(setDoc(doc(db, 'partner_public', 'P-6'), { name: 'New Studio', status: 'Inactive', logo: '', commissionRate: 38 }));
+    await assertFails(setDoc(doc(await dbAs('Partner', 'p1@example.com'), 'partner_public', 'P-6'), { name: 'X', status: 'Inactive', logo: '' }));
+    await assertSucceeds(setDoc(doc(db, 'partner_public', 'P-6'), { name: 'New Studio', status: 'Inactive', logo: 'x', updatedAt: 'now' }));
+    const noStatus = await dbAs('Partner', 'p7@example.com');
+    await assertFails(setDoc(doc(noStatus, 'partner_public', 'P-7'), { name: 'No Status', status: 'Inactive', logo: '' }));
+    await assertSucceeds(setDoc(doc(noStatus, 'partner_public', 'P-7'), { name: 'No Status', status: 'Active', logo: '' }));
+  });
+
+  it('lets the owning Partner overwrite its existing mirror with a set carrying its partners status', async () => {
+    const db = await dbAs('Partner', 'p1@example.com');
+    await assertSucceeds(setDoc(doc(db, 'partner_public', 'P-1'), { name: 'Renamed', status: 'Active', logo: 'x', updatedAt: 'now' }));
+    await assertFails(setDoc(doc(db, 'partner_public', 'P-1'), { name: 'Renamed', status: 'Inactive', logo: 'x' }));
+  });
+
   it('denies a Partner writing another partner profile, creating or deleting one', async () => {
     const db = await dbAs('Partner', 'p1@example.com');
     await assertFails(updateDoc(doc(db, 'partner_public', 'P-2'), { name: 'Hijack' }));

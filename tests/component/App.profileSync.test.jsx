@@ -96,7 +96,7 @@ describe('Partner profile save', () => {
     expect(partnerOp.data).toEqual(expect.objectContaining({
       name: 'Kasun Studio', contactPerson: 'Kasun Studio', phone: '0772222222', address: 'Kandy', company: 'Kasun Frames',
     }));
-    expect(publicOp).toEqual({ type: 'update', collection: 'partner_public', docId: 'partner-doc-1', data: { name: 'Kasun Studio', logo: '' } });
+    expect(publicOp).toEqual({ type: 'set', collection: 'partner_public', docId: 'partner-doc-1', data: { name: 'Kasun Studio', status: 'Active', logo: '' } });
     expect(updateDoc).not.toHaveBeenCalled();
   });
 });
