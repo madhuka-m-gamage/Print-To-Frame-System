@@ -109,7 +109,57 @@ Rollback: redeploy the old ruleset (`git show origin/main:firestore.rules > fire
 
 ## Step 5: restrictive rules (3.5d), separate and later
 
+The current `staging` file also contains the Wave B blocks; read [Wave B rules](#wave-b-rules-added-2026-10-04-doc-live1) first.
+
 Only after steps 1 to 4 are stable, the decisions above are made, and the RBAC journey test (B6) exists or a manual role check is agreed. The file is the current `staging` `firestore.rules`. It requires an active account for every permission, ties quotations and messages to their permissions and participants, and lets Managers administer non-Admin users. It is far stricter than what is live, so run step 4 again afterwards and be ready to roll back by redeploying the step 3 file.
+
+## Wave B rules (added 2026-10-04, DOC-LIVE1)
+
+Everything here was added to `firestore.rules` on `staging` after the additive set (commit `1776444`) and is **not deployed**. Step 5 deploys the whole `staging` file, so it carries every block below; read this section before that sitting. Sources: `firestore.rules` on `origin/staging`, `CHANGELOG.md` and the BACKLOG "Done" lines of each item.
+
+### Deploy order for Wave B
+
+1. **App and rules go together.** Three app changes break against the old rules and three rules break the old app, so promote the SPA and deploy the rules in one sitting, app first or within minutes of each other: SEC-12 (typing-indicator listener), SEC-15 (email sign-up writes a `registrationDrafts` document) and FEA-1 / MON-11 (payout batch with `payout_guards`).
+2. **Existing partners need a public mirror.** `partner_public/{partnerId}` is written only when a partners record is saved, with no backfill. Until a partner has a mirror, the anonymous referral form shows the generic name and, worse, that Partner's own profile saves (Edit modal, avatar crop, `handleUpdateUser`) are refused as a whole, because the rules let the owner update the mirror but not create it. Fix before or right after the deploy: staff open and save each existing partner once (this writes the mirror), or SEC-16 (the owner may create its mirror, not yet built; see SEC-16 in BACKLOG). Live data is test-only (DEC-5), so a fresh setup creates mirrors as partners are registered.
+3. **Partner emails are matched as stored.** SEC-7 compares the login email with the partners document `email` field; Register Partner now lowercases it, existing records are not migrated. A partner saved with capitals loses access to its own record.
+
+### Block by block
+
+| Item | Rules block | App ships without the rules | Rules ship without the app |
+|---|---|---|---|
+| SEC-7 | `partners`: a Partner reads and updates only its own record, profile fields only (never `commissionRate`, `status`, `email`, balances); staff writes refuse the Partner role | Nothing breaks; the old rules are looser, so the limit is simply not enforced yet (a Partner could still change its own `commissionRate`) | An old Partner client that subscribes to all partners is refused; Partner screens go empty |
+| SEC-8 | `leads` and `invoices` read through `isReferringPartnerOf` (`partnerId` or `agentId` names a partners document with the login email) | Partner sees all leads and invoices (the old, looser rules) until deployed; no break | An old Partner client's unscoped leads and invoices listeners are refused |
+| SEC-14 | `invoices` and `receipts`: dead `partnerId == email` clause removed; `receipts` read for a Partner through `leadId` | none | none (the removed clause never matched) |
+| SEC-12 | `typing_indicators`: read only for participants, write only to the caller's own document with two participants | New client works (it writes `participants`) | **Old client breaks quietly:** its whole-collection listener is refused and typing indicators stop until reload on the new build |
+| SEC-13 | `pendingUsers` create needs a signed-in caller, document id equal to the token email, `uid` equal to the auth uid | none | none (both existing writes already carry the uid) |
+| SEC-15 | `pendingUsers` create also needs `email_verified == true`; `registrationDrafts/{uid}` read and write by that uid only | **Email sign-up fails** (the draft write hits the catch-all and is refused) | **Old email sign-up fails** (the unverified account cannot file `pendingUsers`); Google sign-in unaffected |
+| FEA-1 | `partner_payouts` and `referral_claims` (already in the additive set) | The payout batch is refused by the old catch-all; the button looks broken | none |
+| MON-11 | `payout_guards/{leadId}`: Admin create only, with `partner_payouts/<payoutId>` existing after the write; no update or delete | The payout batch is refused | An old client's payout has no guard, so it still writes; double payout protection is off |
+| MON-14, MON-15 | `partners` staff update refuses a write that changes `pending` and leaves it below 0 (MON-14 itself needed no rules change) | An overdraw is blocked only by the client toast, not atomically | An old client's overdraw batch is refused with permission-denied |
+| MON-4, MON-12 | `invoice_guards/{rootLeadId_type}`: create with invoices write; update only as the hand-over after the named invoice is Cancelled or gone; no delete | Advance and Final invoice saves are refused (the transaction writes a guard) | none |
+| FEA-2, FEA-18 | `notifications`: addressed recipient reads, marks read and deletes; Admin reads all; active non-Partner staff create with `recipientEmail, type, title, createdAt` | Commission notifications are refused and the notification feed stays empty; the rest works | Old client still emits local toasts only; nothing breaks |
+| FEA-4 | `settings/fleet`: read with logistics view, write Admin | The fleet hook falls back to the constants; the Admin Fleet and Drivers editor cannot save | none |
+| SEC-6 | `partner_public/{partnerId}`: `get` for anyone, no list; staff create and update with keys `name, status, logo, updatedAt`; the owning Partner updates `name, logo, updatedAt`; delete with partners delete or Admin | Every partners save that batches the mirror is refused (Register Partner, Edit, avatar crop) and the anonymous referral form falls back to the generic name | Anonymous referral form still reads `partners`, which stays refused for anonymous users, so it shows the generic name (as today) |
+| SEC-16 | not on `staging` yet | see SEC-16 | see SEC-16 |
+
+Notes. Other rules on `staging` that this table does not repeat (`isActiveUser()`, the quotations, `users` and `pendingUsers` administration changes) belong to step 5 and are described there. FEA-1 also has a Manager caveat: a Manager sees the payout button, but only an Admin may write `partner_payouts`, so the click fails with a toast.
+
+### Post-deploy check list (Wave B)
+
+Run after the app and the Step 5 rules are live, each in a browser, signed out or as the named role:
+
+- [ ] **Anonymous referral link:** open `/referral?ref=<partnerId>` signed out; the page shows the partner name (not the generic text). If it shows the generic name, the partner has no mirror: save that partner once in the Partners screen.
+- [ ] **Email sign-up:** create a test account by email; a `registrationDrafts/<uid>` document exists, **no** `pendingUsers/<email>` document exists, and the app tells the user to verify. After clicking the mail link and signing in again, `pendingUsers/<email>` exists and the draft is gone.
+- [ ] **Overdraw payout refused:** as Admin, try a payout larger than the partner's `pending`; it is refused with a message and no document changes. Then pay a valid amount once and try the same referrals again: the second attempt is refused (`payout_guards`) and the balances moved only once.
+- [ ] **Deactivated account refused:** a staff account set to Deactivated cannot sign in, and an open session is signed out (`isActiveUser()`).
+- [ ] **Partner scope:** a Partner sees only its own partners record, leads and invoices, and can save its profile (this fails if its mirror is missing).
+- [ ] **Invoices:** create an Advance invoice, then a second Advance for the same lead (refused); cancel the first and a replacement works.
+- [ ] **Typing indicator:** two staff users in one chat see each other typing; a third user cannot read it.
+- [ ] **Notifications:** mark an invoice paid for a partner with an email; the partner sees the notification and can delete it.
+- [ ] **Fleet:** the Logistics pickers load with and without a `settings/fleet` document.
+- [ ] **Indexes:** the D-MSG-05 message-history query (see the BACKLOG LIVE-1 section) ran without a missing-index error.
+
+Verification and rollback for this section are those of step 5: redeploy the step 3 file (`git show origin/main:firestore.rules` for the pre-3.4 ruleset) and roll the app back in Vercel with Instant Rollback. Data written meanwhile (`registrationDrafts`, `payout_guards`, `invoice_guards`, `partner_public`) is inert under the older rules and can stay.
 
 ## After the rollout
 

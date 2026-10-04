@@ -548,6 +548,8 @@ These change the live project. Nothing here has been applied. Each step needs th
 
 - **Post-deploy checks added 2026-10-01:** the D-MSG-05 message-history query (`participants` array-contains plus a `documentId() >= msg_<since>` range) should run without a custom composite index, but the emulator does not enforce indexes, so check it once on the real project. `claude/rules-3-4d-deploy` still has the three-database `firebase.json`; deploy with `--only firestore:rules` from a branch that has ENG-4, or note that the two extra databases are unused.
 
+- **Wave B rules (added 2026-10-04, DOC-LIVE1):** per-block breakage table, deploy order, partner mirror caveat and post-deploy checks are in [LIVE_ROLLOUT.md, Wave B rules](LIVE_ROLLOUT.md#wave-b-rules-added-2026-10-04-doc-live1).
+
 - **Order with SEC-12 (added 2026-10-02):** deploy the app before or together with the rules. An old client listens to the whole `typing_indicators` collection, which the SEC-12 rule refuses; its error handler is silent, so typing indicators stop until the page reloads on the new build.
 
 - **Post-deploy checks added by SEC-8 (2026-10-02):** a partner whose `partners` document id differs from the `partnerId` on its leads is not matched; an invoice with an empty `leadId` stays hidden from its partner. Check both on the fresh data.
